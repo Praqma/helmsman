@@ -35,7 +35,7 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
 
     [apps.jenkins]
     name = "jenkins" # should be unique across all apps
-    description = "first Jira deployment"
+    description = "first Jenkins deployment"
     env = "staging" # maps to the namespace as defined in environmetns above
     enabled = true # change to false if you want to delete this app release [empty = flase]
     chart = "stable/jenkins" # changing the chart name means delete and recreate this chart
@@ -83,7 +83,7 @@ You can then change your desire, for example to remove the Jenkins release we cr
 ...
 [apps.jenkins]
     name = "jenkins" # should be unique across all apps
-    description = "first Jira deployment"
+    description = "first Jenkins deployment"
     env = "staging" # maps to the namespace as defined in environmetns above
     enabled = false # change to false if you want to delete this app release [empty = flase]
     chart = "stable/jenkins" # changing the chart name means delete and recreate this chart
