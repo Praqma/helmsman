@@ -127,7 +127,6 @@ helmsman -f example.toml -apply
 2017/11/02 20:46:36 INFO: executing command: kubectl config use-context minikube
 2017/11/02 20:46:36 INFO: executing command: helm repo add stable https://kubernetes-charts.storage.googleapis.com
 2017/11/02 20:46:38 INFO: executing command: helm repo add incubator http://storage.googleapis.com/kubernetes-charts-incubator
-2017/11/02 20:46:38 INFO: executing command: helm repo add novelda s3://novelda-helm-repo/charts
 2017/11/02 20:46:39 INFO: executing command: helm search stable/jenkins --version 0.9.0
 2017/11/02 20:46:40 INFO: executing command: kubectl create namespace staging
 2017/11/02 20:46:41 WARN: I could not create namespace [staging ]. It already exists. I am skipping this.
