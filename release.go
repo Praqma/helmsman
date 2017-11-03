@@ -13,6 +13,7 @@ type release struct {
 	Version     string
 	ValuesFile  string
 	Purge       bool
+	Test        bool
 }
 
 func (r release) print() {
@@ -25,5 +26,6 @@ func (r release) print() {
 	fmt.Println("\tversion : ", r.Version)
 	fmt.Println("\tvaluesFile : ", r.ValuesFile)
 	fmt.Println("\tpurge : ", r.Purge)
+	fmt.Println("\ttest : ", r.Test)
 	fmt.Println("------------------- ")
 }

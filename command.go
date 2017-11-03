@@ -26,7 +26,7 @@ func (c command) printFullCommand() {
 
 func (c command) exec() (int, string) {
 
-	log.Println("INFO: executing command: " + c.Args[1])
+	log.Println("INFO: executing command: " + c.Description)
 	cmd := exec.Command(c.Cmd, c.Args...)
 	var out bytes.Buffer
 	cmd.Stdout = &out

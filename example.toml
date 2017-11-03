@@ -26,21 +26,23 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
 
     [apps.jenkins]
     name = "jenkins" # should be unique across all apps
-    description = "first Jira deployment"
+    description = "jenkins"
     env = "staging" # maps to the namespace as defined in environmetns above
     enabled = true # change to false if you want to delete this app release [empty = flase]
     chart = "stable/jenkins" # changing the chart name means delete and recreate this chart
     version = "0.9.0"
     valuesFile = "values.yaml" # from this TOML file
     purge = false # will only be considered when there is a delete operation
+    test = true # run the tests whenever this release is installed/upgraded
 
 
     [apps.vault]
     name = "vault" # should be unique across all apps
-    description = "second Jira deployment"
+    description = "vault"
     env = "staging" # maps to the namespace as defined in environmetns above
     enabled = true # change to false if you want to delete this app release [empty = flase]
     chart = "incubator/vault" # don't change the chart name, create a new release instead
     version = "0.1.0"
     valuesFile = "values.yaml" # from this TOML file
     purge = false # will only be considered when there is a delete operation
+    test = true # run the tests whenever this release is installed/upgraded

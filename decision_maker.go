@@ -52,6 +52,18 @@ func decide(r release, s *state) {
 
 }
 
+func testRelease(releaseName string) {
+
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm test " + releaseName},
+		Description: "running tests for release [ " + releaseName + " ]",
+	}
+	outcome.addCommand(cmd)
+	logDecision("DECISION: release [ " + releaseName + " ] is required to be tested when installed/upgraded/rolledback. Got it!")
+
+}
+
 func installRelease(namespace string, r release) {
 
 	releaseName := r.Name
@@ -64,6 +76,9 @@ func installRelease(namespace string, r release) {
 	logDecision("DECISION: release [ " + releaseName + " ] is not present in the current k8s context. Will install it in namespace [[ " +
 		namespace + " ]]")
 
+	if r.Test {
+		testRelease(releaseName)
+	}
 }
 
 func inspectRollbackScenario(namespace string, r release) {
@@ -79,6 +94,10 @@ func inspectRollbackScenario(namespace string, r release) {
 		outcome.addCommand(cmd)
 		logDecision("DECISION: release [ " + releaseName + " ] is currently deleted and is desired to be rolledback to " +
 			"namespace [[ " + namespace + " ]] . No problem!")
+
+		if r.Test {
+			testRelease(releaseName)
+		}
 
 	} else {
 
@@ -127,6 +146,9 @@ func inspectUpgradeScenario(namespace string, r release) {
 			}
 			outcome.addCommand(cmd)
 			logDecision("DECISION: release [ " + releaseName + " ] is desired to be upgraded. Planing this for you!")
+			if r.Test {
+				testRelease(releaseName)
+			}
 
 		} else if extractChartName(r.Chart) != getReleaseChartName(releaseName) {
 			// TODO: check new chart is valid/exists
@@ -140,7 +162,6 @@ func inspectUpgradeScenario(namespace string, r release) {
 				"Nothing for me to do. Horraayyy!")
 		}
 	} else {
-		// TODO: validate new chart exists
 		reInstallRelease(namespace, r)
 		logDecision("DECISION: release [ " + releaseName + " ] is desired to be enabled in a new namespace [[ " + namespace +
 			" ]]. I am planning a purge delete of the current release from namespace [[ " + getReleaseNamespace(releaseName) + " ]] " +
@@ -165,6 +186,10 @@ func reInstallRelease(namespace string, r release) {
 		Description: "installing release [ " + releaseName + " ] in namespace [[ " + namespace + " ]]",
 	}
 	outcome.addCommand(installCmd)
+
+	if r.Test {
+		testRelease(releaseName)
+	}
 }
 
 func logDecision(decision string) {
