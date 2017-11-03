@@ -22,7 +22,7 @@ func helmExists() bool {
 		Description: "validating that helm is installed.",
 	}
 
-	exitCode, _ := cmd.exec()
+	exitCode, _ := cmd.exec(debug)
 
 	if exitCode != 0 {
 		return false

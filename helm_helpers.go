@@ -28,7 +28,7 @@ func helmReleaseExists(namespace string, releaseName string, scope string) bool 
 		Description: "listing the existing releases in namespace [ " + namespace + " ] with status [ " + scope + " ]",
 	}
 
-	if exitCode, result := cmd.exec(); exitCode == 0 {
+	if exitCode, result := cmd.exec(debug); exitCode == 0 {
 		// match, _ := regexp.MatchString(releaseName, result)
 		return strings.Contains(result, releaseName+"\n")
 	}
@@ -56,7 +56,7 @@ func getReleaseChart(releaseName string) string {
 		Args:        []string{"-c", "helm list " + releaseName},
 		Description: "inspecting the chart used for release:  " + releaseName,
 	}
-	exitCode, result := cmd.exec()
+	exitCode, result := cmd.exec(debug)
 
 	if exitCode == 0 {
 		line := strings.Split(result, "\n")[1]
@@ -83,7 +83,7 @@ func getReleaseStatus(releaseName string) string {
 		Description: "inspecting the status of release:  " + releaseName,
 	}
 
-	if exitCode, result := cmd.exec(); exitCode == 0 {
+	if exitCode, result := cmd.exec(debug); exitCode == 0 {
 		return result
 	}
 	return ""

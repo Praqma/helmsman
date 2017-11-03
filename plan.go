@@ -35,9 +35,9 @@ func (p *plan) addDecision(decision string) {
 func (p plan) execPlan() {
 	log.Println("INFO: Executing the following plan ... ")
 	p.printPlan()
-	for _, Cmd := range p.Commands {
-		log.Println("INFO: attempting: --  ", Cmd.Description)
-		Cmd.exec()
+	for _, cmd := range p.Commands {
+		log.Println("INFO: attempting: --  ", cmd.Description)
+		cmd.exec(debug)
 	}
 }
 
@@ -49,7 +49,8 @@ func (p plan) printPlanCmds() {
 }
 
 func (p plan) printPlan() {
-	fmt.Printf("Printing the current plan which was generated at: %s \n", p.Created)
+	fmt.Println("---------------")
+	fmt.Printf("Ok, I have generated a plan for you at: %s \n", p.Created)
 	for _, decision := range p.Decisions {
 		fmt.Println(decision)
 	}

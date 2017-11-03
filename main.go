@@ -7,11 +7,13 @@ import (
 )
 
 var s state
+var debug bool
 
 func main() {
 
 	file := flag.String("f", "", "desired state file name")
 	apply := flag.Bool("apply", false, "apply the plan directly")
+	flag.BoolVar(&debug, "debug", false, "show the execution logs")
 
 	flag.Parse()
 
@@ -67,7 +69,7 @@ func addNamespaces(namespaces map[string]string) {
 			Description: "creating namespace  " + namespace,
 		}
 
-		exitCode, _ := cmd.exec()
+		exitCode, _ := cmd.exec(debug)
 
 		if exitCode != 0 {
 			log.Println("WARN: I could not create namespace [" +
@@ -85,7 +87,7 @@ func validateReleaseCharts(apps map[string]release) bool {
 			Description: "validating chart " + r.Chart + "-" + r.Version + " is available in the used repos.",
 		}
 
-		exitCode, _ := cmd.exec()
+		exitCode, _ := cmd.exec(debug)
 
 		if exitCode != 0 {
 			log.Fatal("ERROR: chart "+r.Chart+"-"+r.Version+" is specified for ",
@@ -105,7 +107,7 @@ func addHelmRepos(repos map[string]string) bool {
 			Description: "adding repo " + repoName,
 		}
 
-		exitCode, _ := cmd.exec()
+		exitCode, _ := cmd.exec(debug)
 
 		if exitCode != 0 {
 			log.Fatal("ERROR: there has been a problem while adding repo [" +
@@ -125,7 +127,7 @@ func setKubeContext(context string) bool {
 		Description: "setting kubectl context to [ " + context + " ]",
 	}
 
-	exitCode, result := cmd.exec()
+	exitCode, result := cmd.exec(debug)
 
 	if exitCode != 0 {
 		log.Fatal("ERROR: there has been a problem with setting up KubeContext: " + result)

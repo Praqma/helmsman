@@ -8,14 +8,16 @@ import (
 
 var outcome plan
 
+//var debug bool
+
 func makePlan(s *state) *plan {
 
+	//debug = d
 	outcome = createPlan()
 	for _, r := range s.Apps {
 		decide(r, s)
 	}
-	// outcome.printPlan()
-	// outcome.printPlanCmds()
+
 	return &outcome
 }
 
@@ -194,7 +196,9 @@ func reInstallRelease(namespace string, r release) {
 
 func logDecision(decision string) {
 
-	log.Println(decision)
+	if debug {
+		log.Println(decision)
+	}
 	outcome.addDecision(decision)
 
 }

@@ -24,9 +24,11 @@ func (c command) printFullCommand() {
 	fmt.Println(c.Description, " by running : \"", c.Cmd, " ", c.Args, " \"")
 }
 
-func (c command) exec() (int, string) {
+func (c command) exec(debug bool) (int, string) {
 
-	log.Println("INFO: executing command: " + c.Description)
+	if debug {
+		log.Println("INFO: executing command: " + c.Description)
+	}
 	cmd := exec.Command(c.Cmd, c.Args...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
