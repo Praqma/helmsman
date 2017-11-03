@@ -46,10 +46,5 @@ func (c command) exec() (int, string) {
 		}
 	}
 
-	// err := cmd.Run()
-	// if err != nil {
-	// 	log.Fatal("ERROR: ", err)
-	// 	os.Exit(1)
-	// }
 	return 0, out.String()
 }

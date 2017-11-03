@@ -54,7 +54,7 @@ func getReleaseChart(releaseName string) string {
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", "helm list " + releaseName},
-		Description: "listing release:  " + releaseName,
+		Description: "inspecting the chart used for release:  " + releaseName,
 	}
 	exitCode, result := cmd.exec()
 
@@ -80,7 +80,7 @@ func getReleaseStatus(releaseName string) string {
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", "helm status " + releaseName},
-		Description: "displaying the status for release:  " + releaseName,
+		Description: "inspecting the status of release:  " + releaseName,
 	}
 
 	if exitCode, result := cmd.exec(); exitCode == 0 {

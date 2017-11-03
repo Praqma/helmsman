@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 	"os"
 )
 
@@ -56,4 +57,80 @@ func main() {
 	// 5) if the plan execution is successful, update the desired state and push it back to git repo (design to be validated)
 	// toTOML("newState.toml", &s)
 
+}
+
+func addNamespaces(namespaces map[string]string) {
+	for _, namespace := range namespaces {
+		cmd := command{
+			Cmd:         "bash",
+			Args:        []string{"-c", "kubectl create namespace " + namespace},
+			Description: "creating namespace  " + namespace,
+		}
+
+		exitCode, _ := cmd.exec()
+
+		if exitCode != 0 {
+			log.Println("WARN: I could not create namespace [" +
+				namespace + " ]. It already exists. I am skipping this.")
+		}
+	}
+}
+
+func validateReleaseCharts(apps map[string]release) bool {
+
+	for app, r := range apps {
+		cmd := command{
+			Cmd:         "bash",
+			Args:        []string{"-c", "helm search " + r.Chart + " --version " + r.Version},
+			Description: "validating chart " + r.Chart + "-" + r.Version + " is available in the used repos.",
+		}
+
+		exitCode, _ := cmd.exec()
+
+		if exitCode != 0 {
+			log.Fatal("ERROR: chart "+r.Chart+"-"+r.Version+" is specified for ",
+				"app ["+app+"] but is not found in the provided repos.")
+			return false
+		}
+	}
+	return true
+}
+
+func addHelmRepos(repos map[string]string) bool {
+
+	for repoName, url := range repos {
+		cmd := command{
+			Cmd:         "bash",
+			Args:        []string{"-c", "helm repo add " + repoName + " " + url},
+			Description: "adding repo " + repoName,
+		}
+
+		exitCode, _ := cmd.exec()
+
+		if exitCode != 0 {
+			log.Fatal("ERROR: there has been a problem while adding repo [" +
+				repoName + "].")
+			return false
+		}
+
+	}
+
+	return true
+}
+
+func setKubeContext(context string) bool {
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "kubectl config use-context " + context},
+		Description: "setting kubectl context to [ " + context + " ]",
+	}
+
+	exitCode, result := cmd.exec()
+
+	if exitCode != 0 {
+		log.Fatal("ERROR: there has been a problem with setting up KubeContext: " + result)
+		return false
+	}
+
+	return true
 }
