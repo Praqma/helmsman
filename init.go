@@ -11,6 +11,8 @@ func init() {
 		log.Fatal("ERROR: helm is not installed/configured correctly. Aborting!")
 		os.Exit(1)
 	}
+
+	// TODO : setup cluster connection
 }
 
 func helmExists() bool {

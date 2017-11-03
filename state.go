@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -80,7 +81,6 @@ func (s state) validate() bool {
 	return true
 }
 
-// TODO: make a smarter validation beyond checking for empty text
 func validateRelease(r release, names map[string]bool) (bool, string) {
 	_, err := os.Stat(r.ValuesFile)
 	if r.Name == "" || names[r.Name] {
@@ -91,13 +91,16 @@ func validateRelease(r release, names map[string]bool) (bool, string) {
 		return false, "chart can't be empty and must be of the format: repo/chart."
 	} else if r.Version == "" {
 		return false, "version can't be empty."
-	} else if r.ValuesFile == "" || err != nil {
-		return false, "valuesFile can't be empty and must be a valid file path."
+	} else if !isYaml(r.ValuesFile) || err != nil {
+		return false, "valuesFile must be a valid file path for a yaml file, Or can be left empty."
 	}
 
 	names[r.Name] = true
 	return true, ""
+}
 
+func isYaml(filename string) bool {
+	return filepath.Ext(strings.ToLower(filename)) == "yaml"
 }
 
 func (s state) print() {
