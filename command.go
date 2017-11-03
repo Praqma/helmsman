@@ -8,22 +8,27 @@ import (
 	"syscall"
 )
 
+// command type representing all executable commands Helmsman needs
+// to execute in order to inspect the environement/ releases/ charts etc.
 type command struct {
 	Cmd         string
 	Args        []string
 	Description string
 }
 
+//printDescription prints the description of a command
 func (c command) printDescription() {
 
 	fmt.Println(c.Description)
 }
 
+// printFullCommand prints the executable command.
 func (c command) printFullCommand() {
 
 	fmt.Println(c.Description, " by running : \"", c.Cmd, " ", c.Args, " \"")
 }
 
+// exec executes the executable command and returns the exit code and execution result
 func (c command) exec(debug bool) (int, string) {
 
 	if debug {

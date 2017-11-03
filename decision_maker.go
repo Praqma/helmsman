@@ -8,11 +8,8 @@ import (
 
 var outcome plan
 
-//var debug bool
-
+// makePlan creates a plan of the actions needed to make the desired state come true.
 func makePlan(s *state) *plan {
-
-	//debug = d
 	outcome = createPlan()
 	for _, r := range s.Apps {
 		decide(r, s)
@@ -21,6 +18,8 @@ func makePlan(s *state) *plan {
 	return &outcome
 }
 
+// decide makes a decision about what commands (actions) need to be executed
+// to make a release section of the desired state come true.
 func decide(r release, s *state) {
 
 	// check for deletion
@@ -54,6 +53,7 @@ func decide(r release, s *state) {
 
 }
 
+// testRelease creates a Helm command to test a particular release.
 func testRelease(releaseName string) {
 
 	cmd := command{
@@ -66,6 +66,7 @@ func testRelease(releaseName string) {
 
 }
 
+// installRelease creates a Helm command to install a particular release in a particular namespace.
 func installRelease(namespace string, r release) {
 
 	releaseName := r.Name
@@ -83,6 +84,9 @@ func installRelease(namespace string, r release) {
 	}
 }
 
+// inspectRollbackScenario evaluates if a rollback action needs to be taken for a given release.
+// if the release is already deleted but from a different namespace than the one specified in input,
+// it purge deletes it and create it in the spcified namespace.
 func inspectRollbackScenario(namespace string, r release) {
 
 	releaseName := r.Name
@@ -110,6 +114,9 @@ func inspectRollbackScenario(namespace string, r release) {
 	}
 }
 
+// inspectDeleteScenario evaluates if a delete action needs to be taken for a given release.
+// If the purge flage is set to true for the release in question, then it will be permenantly removed.
+// If the release is not deployed, it will be skipped.
 func inspectDeleteScenario(namespace string, r release) {
 
 	releaseName := r.Name
@@ -135,6 +142,13 @@ func inspectDeleteScenario(namespace string, r release) {
 	}
 }
 
+// inspectUpgradeScenario evaluates if a release should be upgraded.
+// - If the relase is already in the same namespace specified in the input,
+// it will be upgraded using the values file specified in the release info.
+// - If the relase is already in the same namespace specified in the input but is using a different chart,
+// it will be purge deleted and installed in the same namespace using the new chart.
+// - If the release is NOT in the same namespace specified in the input,
+// it will be purge deleted and installed in the new namespace.
 func inspectUpgradeScenario(namespace string, r release) {
 
 	releaseName := r.Name
@@ -153,7 +167,6 @@ func inspectUpgradeScenario(namespace string, r release) {
 			}
 
 		} else if extractChartName(r.Chart) != getReleaseChartName(releaseName) {
-			// TODO: check new chart is valid/exists
 			reInstallRelease(namespace, r)
 			logDecision("DECISION: release [ " + releaseName + " ] is desired to use a new Chart [ " + r.Chart +
 				" ]. I am planning a purge delete of the current release and will install it with the new chart in namespace [[ " +
@@ -171,7 +184,8 @@ func inspectUpgradeScenario(namespace string, r release) {
 	}
 }
 
-// purge delete and install
+// reInstallRelease purge deletes a release and reinstall it.
+// This is used when moving a release to another namespace or when changing the chart used for it.
 func reInstallRelease(namespace string, r release) {
 
 	releaseName := r.Name
@@ -194,6 +208,8 @@ func reInstallRelease(namespace string, r release) {
 	}
 }
 
+// logDecision adds the decisions made to the plan.
+// Depending on the debug flag being set or not, it will either log the the decision to output or not.
 func logDecision(decision string) {
 
 	if debug {
@@ -203,6 +219,8 @@ func logDecision(decision string) {
 
 }
 
+// extractChartName extracts the Helm chart name from full chart name.
+// example: it extracts "chartY" from "repoX/chartY"
 func extractChartName(releaseChart string) string {
 
 	return strings.TrimSpace(strings.Split(releaseChart, "/")[1])

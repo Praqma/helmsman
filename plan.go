@@ -6,12 +6,14 @@ import (
 	"time"
 )
 
+// plan type representing the plan of actions to make the desired state come true.
 type plan struct {
 	Commands  []command
 	Decisions []string
 	Created   time.Time
 }
 
+// createPlan initializes an empty plan
 func createPlan() plan {
 
 	p := plan{
@@ -22,16 +24,19 @@ func createPlan() plan {
 	return p
 }
 
+// addCommand adds a command type to the plan
 func (p *plan) addCommand(c command) {
 
 	p.Commands = append(p.Commands, c)
 }
 
+// addDecision adds a decision type to the plan
 func (p *plan) addDecision(decision string) {
 
 	p.Decisions = append(p.Decisions, decision)
 }
 
+// execPlan executes the commands (actions) which were added to the plan.
 func (p plan) execPlan() {
 	log.Println("INFO: Executing the following plan ... ")
 	p.printPlan()
@@ -41,6 +46,7 @@ func (p plan) execPlan() {
 	}
 }
 
+// printPlanCmds prints the actual commands that will be executed as part of a plan.
 func (p plan) printPlanCmds() {
 	fmt.Println("Printing the commands of the current plan ...")
 	for _, Cmd := range p.Commands {
@@ -48,6 +54,7 @@ func (p plan) printPlanCmds() {
 	}
 }
 
+// printPlan prints the decisions made in a plan.
 func (p plan) printPlan() {
 	fmt.Println("---------------")
 	fmt.Printf("Ok, I have generated a plan for you at: %s \n", p.Created)

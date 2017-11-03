@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// state type represents the desired state of applications on a k8s cluster.
 type state struct {
 	Settings   map[string]string
 	Metadata   map[string]string
@@ -17,6 +18,8 @@ type state struct {
 	Apps       map[string]release
 }
 
+// validate validates that the values specified in the desired state are valid according to the desired state spec.
+// check https://github.com/Praqma/Helmsman/docs/desired_state_spec.md for the detailed specification
 func (s state) validate() bool {
 
 	// settings
@@ -81,28 +84,13 @@ func (s state) validate() bool {
 	return true
 }
 
-func validateRelease(r release, names map[string]bool) (bool, string) {
-	_, err := os.Stat(r.ValuesFile)
-	if r.Name == "" || names[r.Name] {
-		return false, "release name can't be empty and must be unique."
-	} else if r.Env == "" {
-		return false, "env can't be empty."
-	} else if r.Chart == "" || !strings.ContainsAny(r.Chart, "/") {
-		return false, "chart can't be empty and must be of the format: repo/chart."
-	} else if r.Version == "" {
-		return false, "version can't be empty."
-	} else if r.ValuesFile != "" && (!isYaml(r.ValuesFile) || err != nil) {
-		return false, "valuesFile must be a valid file path for a yaml file, Or can be left empty."
-	}
-
-	names[r.Name] = true
-	return true, ""
-}
-
+// isYaml checks if the file extension of a filename/path is "yaml".
+// isYaml is case insensitive.
 func isYaml(filename string) bool {
 	return filepath.Ext(strings.ToLower(filename)) == "yaml"
 }
 
+// print prints the desired state
 func (s state) print() {
 
 	fmt.Println("Settings: ")

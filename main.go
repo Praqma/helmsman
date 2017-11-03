@@ -11,19 +11,14 @@ var debug bool
 
 func main() {
 
+	// parsing command line flags
 	file := flag.String("f", "", "desired state file name")
 	apply := flag.Bool("apply", false, "apply the plan directly")
 	flag.BoolVar(&debug, "debug", false, "show the execution logs")
 
 	flag.Parse()
 
-	// 1) init -- validate helm exists, kubeconfig is configured,
-	//add helm repos if not added, create k8s namespaces if not there ...
-	// read TOML file ...
-	// validate the desired state info are correct ...
-
-	// 3) make a plan -- and prepare a list of helm operations to perfrom
-
+	// after the init() func is run, read the TOML desired state file
 	fromTOML(*file, &s)
 	// validate the desired state content
 	s.validate() // syntax validation
@@ -54,13 +49,10 @@ func main() {
 		p.execPlan()
 	}
 
-	// 4) if planning is succcessful, execute the plan
-
-	// 5) if the plan execution is successful, update the desired state and push it back to git repo (design to be validated)
-	// toTOML("newState.toml", &s)
-
 }
 
+// addNamespaces creates a set of namespaces in your k8s cluster.
+// If a namespace with the same name exsts, it will skip it.
 func addNamespaces(namespaces map[string]string) {
 	for _, namespace := range namespaces {
 		cmd := command{
@@ -78,6 +70,9 @@ func addNamespaces(namespaces map[string]string) {
 	}
 }
 
+// validateReleaseCharts validates if the charts defined in a release are valid.
+// Valid charts are the ones that can be found in the defined repos.
+// This function uses Helm search to verify if the chart can be found or not.
 func validateReleaseCharts(apps map[string]release) bool {
 
 	for app, r := range apps {
@@ -98,6 +93,8 @@ func validateReleaseCharts(apps map[string]release) bool {
 	return true
 }
 
+// addHelmRepos adds repositories to Helm if they don't exist already.
+// Helm does not mind if a repo with the same name exists. It treats it as an update.
 func addHelmRepos(repos map[string]string) bool {
 
 	for repoName, url := range repos {
@@ -120,6 +117,7 @@ func addHelmRepos(repos map[string]string) bool {
 	return true
 }
 
+// setKubeContext sets your kubectl context to the one specified in the desired state file.
 func setKubeContext(context string) bool {
 	cmd := command{
 		Cmd:         "bash",
