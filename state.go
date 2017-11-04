@@ -32,12 +32,9 @@ func (s state) validate() bool {
 		return false
 	} else if len(s.Settings) > 1 {
 		_, err := os.Stat(s.Settings["password"])
-		if s.Settings["password"] == "" || (!isOfType(s.Settings["password"], "passwd")) || err != nil {
+		if s.Settings["password"] == "" || !isOfType(s.Settings["password"], ".passwd") || err != nil {
 			log.Fatal("ERROR: settings validation failed -- the specified password file is not valid. ",
 				"It should be a valid path and of type \".passwd\".")
-			return false
-		} else if s.Certifications[s.Settings["clientKey"]] == "" {
-			log.Fatal("ERROR: settings validation failed -- [ " + s.Settings["clientKey"] + " ] is not defined in Certifications.")
 			return false
 		} else if _, err := url.ParseRequestURI(s.Settings["clusterURI"]); err != nil {
 			log.Fatal("ERROR: settings validation failed -- clusterURI must have a valid URL.")
@@ -49,19 +46,19 @@ func (s state) validate() bool {
 	if s.Certifications != nil {
 		if len(s.Settings) > 1 && len(s.Certifications) < 2 {
 			log.Fatal("ERROR: certifications validation failed -- You want me to connect to your cluster for you ",
-				"but have not given me the keys to do so. Please add [caRt] and [caKey] under Certifications.")
+				"but have not given me the keys to do so. Please add [caCrt] and [caKey] under Certifications.")
 			return false
 		}
 		for key, value := range s.Certifications {
 			_, err1 := url.ParseRequestURI(value)
 			_, err2 := os.Stat(value)
 			if err1 != nil && err2 != nil {
-				log.Fatal("ERROR: certifications validation failed -- " + key + " must be either s3 bucket URLs or valid file path.")
+				log.Fatal("ERROR: certifications validation failed -- [ " + key + " ] must be either s3 bucket URLs or valid file path.")
 				return false
 			} else if err1 == nil {
 				// check it is valid s3 link
 				if !strings.HasPrefix(value, "s3://") {
-					log.Fatal("ERROR: certifications validation failed -- "+key+" URL can must be valid s3 bucket URL. ",
+					log.Fatal("ERROR: certifications validation failed -- [ "+key+" ] URL can must be valid s3 bucket URL. ",
 						"A valid file path is also OK!.")
 					return false
 				}

@@ -1,19 +1,19 @@
 # metadata -- add as many key/value pairs as you want
 [metadata]
-org = "someClient"
+org = "orgX"
 maintainer = "k8s-admin"
 
 # paths to the certificate for connecting to the cluster
 # You can skip this if you use Helmsman on a machine with kubectl already connected to your k8s cluster. 
 [certifications]
-caRt = "s3://my-bucket/pki/issued/ca/1234567.crt" # s3 bucket path
-caKey = "../path/ca.key" # Or, a path to the file location
+caCrt = "ca.crt" # s3 bucket path
+caKey = "ca.key" # Or, a path to the file location
 
 [settings]
 kubeContext = "minikube" # will try connect to this context first, if it does not exist, it will be created using the details below
-username = "admin"
-password = "/passwd.passwd" # read it from a file which is ignored by git. e.g. passwd.passwd
-clusterURI = "https://192.168.99.100:8443" # cluster API
+# username = "admin"
+# password = "passwd.passwd" # read it from a .passwd file which you should make it ignored by git. 
+# clusterURI = "https://192.168.99.100:8443" # cluster API
 
 
 # define your environments and thier k8s namespaces
