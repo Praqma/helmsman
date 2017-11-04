@@ -65,9 +65,9 @@ Helmsman can be used in two ways:
 
 1. In a continuous deployment pipeline. In this case Helmsman can be used in a docker container run by your CI system to maintain your desired state (which you can store in a version control repository). The docker image will be available soon.
 
-[comment]: <>(```docker run -it praqma/helmsman ```)
+[//]: # (docker run -it praqma/helmsman ```)
 
-[comment]: <>(The docker image is built from a [dockerfile](dockerfile/dockerfile).)
+[//]: # (The docker image is built from a [dockerfile](dockerfile/dockerfile).)
 
 2. As a binary application. Helmsman dependes on [Helm](https://helm.sh) and [Kubectl](https://kubernetes.io/docs/user-guide/kubectl/) being installed. See below for installation.
 
