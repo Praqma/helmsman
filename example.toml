@@ -13,7 +13,6 @@ caKey = "../path/ca.key" # Or, a path to the file location
 kubeContext = "minikube" # will try connect to this context first, if it does not exist, it will be created using the details below
 username = "admin"
 password = "/passwd.passwd" # read it from a file which is ignored by git. e.g. passwd.passwd
-clientKey = "caKey" # reference to the key in certifications
 clusterURI = "https://192.168.99.100:8443" # cluster API
 
 
