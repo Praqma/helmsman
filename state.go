@@ -47,9 +47,9 @@ func (s state) validate() bool {
 
 	// certifications
 	if s.Certifications != nil {
-		if len(s.Settings) <= 1 {
+		if len(s.Settings) > 1 && len(s.Certifications) < 2 {
 			log.Fatal("ERROR: certifications validation failed -- You want me to connect to your cluster for you ",
-				"but have not given me the keys to do so. Please add them under Certifications.")
+				"but have not given me the keys to do so. Please add [caRt] and [caKey] under Certifications.")
 			return false
 		}
 		for key, value := range s.Certifications {
