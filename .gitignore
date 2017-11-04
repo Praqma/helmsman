@@ -1,3 +1,4 @@
 *.passwd
 *.key
 *.crt
+/dist
