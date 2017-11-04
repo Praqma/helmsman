@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"strings"
 )
 
 // state type represents the desired state of applications on a k8s cluster.
@@ -46,11 +47,27 @@ func (s state) validate() bool {
 
 	// certifications
 	if s.Certifications != nil {
-		if len(s.Settings) > 1 {
+		if len(s.Settings) <= 1 {
 			log.Fatal("ERROR: certifications validation failed -- You want me to connect to your cluster for you ",
 				"but have not given me the keys to do so. Please add them under Certifications.")
 			return false
 		}
+		for key, value := range s.Certifications {
+			_, err1 := url.ParseRequestURI(value)
+			_, err2 := os.Stat(value)
+			if err1 != nil && err2 != nil {
+				log.Fatal("ERROR: certifications validation failed -- " + key + " must be either s3 bucket URLs or valid file path.")
+				return false
+			} else if err1 == nil {
+				// check it is valid s3 link
+				if !strings.HasPrefix(value, "s3://") {
+					log.Fatal("ERROR: certifications validation failed -- "+key+" URL can must be valid s3 bucket URL. ",
+						"A valid file path is also OK!.")
+					return false
+				}
+			}
+		}
+
 	}
 
 	// namespaces
