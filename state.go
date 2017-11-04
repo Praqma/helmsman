@@ -5,17 +5,16 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"path/filepath"
-	"strings"
 )
 
 // state type represents the desired state of applications on a k8s cluster.
 type state struct {
-	Settings   map[string]string
-	Metadata   map[string]string
-	Namespaces map[string]string
-	HelmRepos  map[string]string
-	Apps       map[string]release
+	Metadata       map[string]string
+	Certifications map[string]string
+	Settings       map[string]string
+	Namespaces     map[string]string
+	HelmRepos      map[string]string
+	Apps           map[string]release
 }
 
 // validate validates that the values specified in the desired state are valid according to the desired state spec.
@@ -30,6 +29,28 @@ func (s state) validate() bool {
 		log.Fatal("ERROR: settings validation failed -- you have not provided a ",
 			"kubeContext to use. Can't work without it. Sorry!")
 		return false
+	} else if len(s.Settings) > 1 {
+		_, err := os.Stat(s.Settings["password"])
+		if s.Settings["password"] == "" || (!isOfType(s.Settings["password"], "passwd")) || err != nil {
+			log.Fatal("ERROR: settings validation failed -- the specified password file is not valid. ",
+				"It should be a valid path and of type \".passwd\".")
+			return false
+		} else if s.Certifications[s.Settings["clientKey"]] == "" {
+			log.Fatal("ERROR: settings validation failed -- [ " + s.Settings["clientKey"] + " ] is not defined in Certifications.")
+			return false
+		} else if _, err := url.ParseRequestURI(s.Settings["clusterURI"]); err != nil {
+			log.Fatal("ERROR: settings validation failed -- clusterURI must have a valid URL.")
+			return false
+		}
+	}
+
+	// certifications
+	if s.Certifications != nil {
+		if len(s.Settings) > 1 {
+			log.Fatal("ERROR: certifications validation failed -- You want me to connect to your cluster for you ",
+				"but have not given me the keys to do so. Please add them under Certifications.")
+			return false
+		}
 	}
 
 	// namespaces
@@ -84,21 +105,18 @@ func (s state) validate() bool {
 	return true
 }
 
-// isYaml checks if the file extension of a filename/path is "yaml".
-// isYaml is case insensitive.
-func isYaml(filename string) bool {
-	return filepath.Ext(strings.ToLower(filename)) == "yaml"
-}
-
 // print prints the desired state
 func (s state) print() {
 
-	fmt.Println("Settings: ")
-	fmt.Println("--------- ")
-	printMap(s.Settings)
 	fmt.Println("\nMetadata: ")
 	fmt.Println("--------- ")
 	printMap(s.Metadata)
+	fmt.Println("\nCertifications: ")
+	fmt.Println("--------- ")
+	printMap(s.Certifications)
+	fmt.Println("Settings: ")
+	fmt.Println("--------- ")
+	printMap(s.Settings)
 	fmt.Println("\nNamespaces: ")
 	fmt.Println("------------- ")
 	printMap(s.Namespaces)
