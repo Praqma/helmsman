@@ -54,7 +54,18 @@ Then run Helmsman again and it will detect that you want to delete Jenkins:
 
 ```
 helmsman -f example.toml -apply
+2017/11/04 17:25:29 Parsed [[ example.toml ]] successfully and found [2] apps
+2017/11/04 17:25:44 WARN: I could not create namespace [staging ]. It already exists. I am skipping this.
+2017/11/04 17:25:44 WARN: I could not create namespace [default ]. It already exists. I am skipping this.
+---------------
+Ok, I have generated a plan for you at: 2017-11-04 17:23:44.649947467 +0100 CET m=+14.976746752
+DECISION: release [ jenkins ] is desired to be deleted and purged!. Planing this for you!
+```
 
+```
+helm list
+NAME        	REVISION	UPDATED                 	STATUS  	CHART        	NAMESPACE
+vault        	1       	Thu Nov  4 17:24:55 2017	DEPLOYED	vault-0.1.0 	staging 
 ```
 
 Similarly, if you change `enabled` back to `true`, it will figure out that you would like to roll it back. You can also change the chart or chart version and specify a values.yaml file to override the default chart values.
