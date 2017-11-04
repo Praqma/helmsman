@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -60,4 +61,14 @@ func toTOML(file string, s *state) {
 // isisOfType is case insensitive.
 func isOfType(filename string, filetype string) bool {
 	return filepath.Ext(strings.ToLower(filename)) == filetype
+}
+
+// readFile returns the content of a file as a string.
+// takes a file path as input. It throws an error and breaks the program execution if it failes to read the file.
+func readFile(filepath string) string {
+	data, err := ioutil.ReadFile(filepath)
+	if err != nil {
+		log.Fatal("ERROR: failed to read password file content: " + err.Error())
+	}
+	return string(data)
 }
