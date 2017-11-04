@@ -58,9 +58,9 @@ func toTOML(file string, s *state) {
 }
 
 // isOfType checks if the file extension of a filename/path is the same as "filetype".
-// isisOfType is case insensitive.
+// isisOfType is case insensitive. filetype should contain the "." e.g. ".yaml"
 func isOfType(filename string, filetype string) bool {
-	return filepath.Ext(strings.ToLower(filename)) == filetype
+	return filepath.Ext(strings.ToLower(filename)) == strings.ToLower(filetype)
 }
 
 // readFile returns the content of a file as a string.
