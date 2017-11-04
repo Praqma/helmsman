@@ -72,3 +72,16 @@ func readFile(filepath string) string {
 	}
 	return string(data)
 }
+
+// printHelp prints Helmsman commands
+func printHelp() {
+	fmt.Println("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
+	fmt.Println(" Usage: helmsman [options]")
+	fmt.Println()
+	fmt.Println("Options:")
+	fmt.Println("-f     specifies the desired state TOML file.")
+	fmt.Println("-debug prints all the logs during execution.")
+	fmt.Println("-apply generates and applies an action plan.")
+	fmt.Println("-help  prints Helmsman help.")
+
+}

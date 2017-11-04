@@ -9,6 +9,19 @@ import (
 // init is executed after all package vars are initialized [before the main() func in this case].
 // It checks if Helm and Kubectl exist and configures: the connection to the k8s cluster, helm repos, namespaces, etc.
 func init() {
+	// parsing command line flags
+	flag.StringVar(&file, "f", "", "desired state file name")
+	flag.BoolVar(&apply, "apply", false, "apply the plan directly")
+	flag.BoolVar(&debug, "debug", false, "show the execution logs")
+	flag.BoolVar(&help, "help", false, "show Helmsman help")
+
+	flag.Parse()
+
+	if help {
+		printHelp()
+		os.Exit(0)
+	}
+
 	if !toolExists("helm") {
 		log.Fatal("ERROR: helm is not installed/configured correctly. Aborting!")
 		os.Exit(1)
@@ -18,13 +31,6 @@ func init() {
 		log.Fatal("ERROR: kubectl is not installed/configured correctly. Aborting!")
 		os.Exit(1)
 	}
-
-	// parsing command line flags
-	flag.StringVar(&file, "f", "", "desired state file name")
-	flag.BoolVar(&apply, "apply", false, "apply the plan directly")
-	flag.BoolVar(&debug, "debug", false, "show the execution logs")
-
-	flag.Parse()
 
 	// after the init() func is run, read the TOML desired state file
 	fromTOML(file, &s)

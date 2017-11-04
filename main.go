@@ -4,6 +4,7 @@ var s state
 var debug bool
 var file string
 var apply bool
+var help bool
 
 func main() {
 
