@@ -1,0 +1,9 @@
+# .goreleaser.yml
+# Build customization
+builds:
+  - binary: helmsman
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
