@@ -31,7 +31,7 @@ func validateRelease(r release, names map[string]bool) (bool, string) {
 		return false, "chart can't be empty and must be of the format: repo/chart."
 	} else if r.Version == "" {
 		return false, "version can't be empty."
-	} else if r.ValuesFile != "" && (!isYaml(r.ValuesFile) || err != nil) {
+	} else if r.ValuesFile != "" && (!isOfType(r.ValuesFile, "yaml") || err != nil) {
 		return false, "valuesFile must be a valid file path for a yaml file, Or can be left empty."
 	}
 

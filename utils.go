@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 )
@@ -52,4 +54,10 @@ func toTOML(file string, s *state) {
 	}
 	log.Printf("Wrote %d bytes.\n", bytesWritten)
 	newFile.Close()
+}
+
+// isOfType checks if the file extension of a filename/path is the same as "filetype".
+// isisOfType is case insensitive.
+func isOfType(filename string, filetype string) bool {
+	return filepath.Ext(strings.ToLower(filename)) == filetype
 }
