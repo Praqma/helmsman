@@ -26,7 +26,7 @@ DECISION: release [ vault ] is required to be tested when installed/upgraded/rol
 ``` 
 
 ```
-helm list
+$ helm list
 NAME        	REVISION	UPDATED                 	STATUS  	CHART        	NAMESPACE
 jenkins     	1       	Thu Nov  4 17:24:05 2017	DEPLOYED	jenkins-0.9.0	staging 
 vault        	1       	Thu Nov  4 17:24:55 2017	DEPLOYED	vault-0.1.0 	staging   
@@ -53,7 +53,7 @@ You can then change your desire, for example to disable the Jenkins release that
 Then run Helmsman again and it will detect that you want to delete Jenkins:
 
 ```
-helmsman -f example.toml -apply
+$ helmsman -f example.toml -apply
 2017/11/04 17:25:29 Parsed [[ example.toml ]] successfully and found [2] apps
 2017/11/04 17:25:44 WARN: I could not create namespace [staging ]. It already exists. I am skipping this.
 2017/11/04 17:25:44 WARN: I could not create namespace [default ]. It already exists. I am skipping this.
@@ -63,7 +63,7 @@ DECISION: release [ jenkins ] is desired to be deleted and purged!. Planing this
 ```
 
 ```
-helm list
+$ helm list
 NAME        	REVISION	UPDATED                 	STATUS  	CHART        	NAMESPACE
 vault        	1       	Thu Nov  4 17:24:55 2017	DEPLOYED	vault-0.1.0 	staging 
 ```
