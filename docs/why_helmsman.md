@@ -1,4 +1,4 @@
-# Why Helmsman?
+# Why Helmsman?
 
 This document describes the reasoning and need behind the inception of Helmsman. 
 
@@ -7,13 +7,13 @@ This document describes the reasoning and need behind the inception of Helmsman.
 Helmsman was created with continous deployment automation in mind. 
 When we started using k8s, we deployed applications on our cluster directly from k8s manifest files. Initially, we had a custom shell script added to our CI to deploy the k8s resources on the cluster. That script could only create the k8s resources from the manifest files. Soon we needed to have a more flexible way to dynamically create/delete those resources. We structured our git repo and used custom file names (adding enabled or disabled into file names) and updated the shell script accordingly. It did not take long before we realized that this does not scale and is difficult to maintain. 
 
-![CI-pipeline-before-helm](https://github.com/praqma/helmsman/docs/images/CI-pipeline-before-helm.jpg )
+![CI-pipeline-before-helm](images/CI-pipeline-before-helm.jpg)
 
 ## Helm to the rescue?
 
 While looking for solutions for managing the growing number of k8s manifest files from a CI pipeline, we came to know about Helm and quickly releaized its potential. By creating Helm charts, we packaged related k8s manifests together into a single entity "a chart". This reduced the amount of files the CI script has to deal with. However, all the CI shell script could do is package a chart and install/upgrade it in our k8s cluster whenever a new commit is done into the chart's files in git. 
 
-![CI-pipeline-after-helm](https://github.com/praqma/helmsman/docs/images/CI-pipeline-after-helm.jpg)
+![CI-pipeline-after-helm](images/CI-pipeline-after-helm.jpg)
 
 But there were a couple of issues here:
 1. Helm has more to it than package and install. Operations such as rollback, running chart tests etc. are only doable from the Helm's CLI client.
@@ -32,7 +32,7 @@ In English, [Helmsman](https://www.merriam-webster.com/dictionary/helmsman) is t
 
 As the diagram below shows, we recommend having a_ desired state file_ for each k8s cluster you are managing. Along with that file, you would need to have any custom [values yaml files](https://docs.helm.sh/chart_template_guide/#values-files) for the Helm chart's you deploy on your k8s. Then you could configure your CI pipeline to use Helmsman docker container to process your desired state file whenever a commit is made to it.
 
-![CI-pipeline-helmsman](https://github.com/praqma/helmsman/docs/images/CI-pipeline-helmsman.jpg)
+![CI-pipeline-helmsman](images/CI-pipeline-helmsman.jpg)
 
 
 > Helmsman can also be used manually as a binary tool on a machine which has Helm and Kubectl installed.
