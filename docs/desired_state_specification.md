@@ -2,12 +2,12 @@
 
 This document describes the specification for how to write your Helm charts desired state file. The desired state file consists of:
 
-- [Metadata](#Metadata) [Optional] -- metadata for any human reader of the desired state file.
-- [Certifications](#Certifications) [Optional] -- only needed when you want Helmsman to connect kubectl to your cluster for you.
-- [Settings](#Settings) -- data about your k8s cluster. 
-- [Namespaces](#Namespaces) -- defines the namespaces where you want your Helm charts to be deployed.
-- [Helm Repos](#Helm-Repos) -- defines the repos where you want to get Helm charts from.
-- [Apps](#Apps) -- defines the applications/charts you want to manage in your cluster.
+- [Metadata](#metadata) [Optional] -- metadata for any human reader of the desired state file.
+- [Certifications](#certifications) [Optional] -- only needed when you want Helmsman to connect kubectl to your cluster for you.
+- [Settings](#settings) -- data about your k8s cluster. 
+- [Namespaces](#namespaces) -- defines the namespaces where you want your Helm charts to be deployed.
+- [Helm Repos](#helm-repos) -- defines the repos where you want to get Helm charts from.
+- [Apps](#apps) -- defines the applications/charts you want to manage in your cluster.
 
 ## Metadata
 
@@ -96,7 +96,7 @@ Purpose: defines the Helm repos where your charts can be found. You can add as m
 > Currently only AWS S3 buckets can be used for private repos (using the [Helm S3 plugin](https://github.com/hypnoglow/helm-s3)). For that you need to have valid AWS access keys in your environment variables. See [here](https://github.com/hypnoglow/helm-s3#note-on-aws-authentication) for more details.
 
 Options: 
-None.
+- you can define any key/value pairs.
 
 Example: 
 
@@ -117,7 +117,7 @@ Releases must have unique names which are defined under `apps`. Example: in `[ap
 Options: 
 - name        : the Helm release name. Releases must have unique names within a cluster.
 - description : a release metadata for human readers.
-- env         : the namespace where the release should be deployed. The namespace should map to one of the ones defined in [namespaces](#Namespaces).  
+- env         : the namespace where the release should be deployed. The namespace should map to one of the ones defined in [namespaces](#namespaces).  
 - enabled     : describes the required state of the release (true for enabled, false for disabled). Change to false if you want to delete this app release [empty = flase].
 - chart       : the chart name. It should contain the repo name as well. Example: repoName/chartName. Changing the chart name means delete and reinstall this release using the new Chart.
 - version     : the chart version.
