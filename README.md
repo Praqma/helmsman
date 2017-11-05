@@ -2,7 +2,10 @@
 
 Helmsman is a Helm Charts as Code tool which adds another layer of abstraction on top of [Helm](https://helm.sh) (the [Kubernetes](https://kubernetes.io/) package manager). It allows you to automate the deployment/management of your Helm charts (k8s packaged applications).
 
-You can check the documentation for more details on Helmsman's [architecture](docs/architecture.md). 
+# Why Helmsman?
+
+Helmsman was created to ease continous deployment of Helm charts. When you want to configure a continous deployment pipeline to manage multiple charts deployed on your k8s cluster(s), a CI script will quickly become complex and difficult to maintain. That's where Helmsman comes to rescue. Read more about [how Helmsman can save you time and effort in the docs](docs/why_helmsman.md).  
+
 
 # How does it work?
 
