@@ -4,12 +4,13 @@ import (
 	"flag"
 	"log"
 	"os"
+	"strings"
 )
 
 // init is executed after all package vars are initialized [before the main() func in this case].
 // It checks if Helm and Kubectl exist and configures: the connection to the k8s cluster, helm repos, namespaces, etc.
 func init() {
-	// parsing command line flags
+	//parsing command line flags
 	flag.StringVar(&file, "f", "", "desired state file name")
 	flag.BoolVar(&apply, "apply", false, "apply the plan directly")
 	flag.BoolVar(&debug, "debug", false, "show the execution logs")
@@ -31,11 +32,6 @@ func init() {
 		log.Fatal("ERROR: kubectl is not installed/configured correctly. Aborting!")
 		os.Exit(1)
 	}
-
-	// if !toolExists("aws") {
-	// 	log.Fatal("ERROR: aws cli is not installed/configured correctly. Aborting!")
-	// 	os.Exit(1)
-	// }
 
 	// after the init() func is run, read the TOML desired state file
 	fromTOML(file, &s)
@@ -172,6 +168,7 @@ func setKubeContext(context string) bool {
 // It returns true if successful, false otherwise
 func createContext() bool {
 
+	var password string
 	if s.Settings["password"] == "" || s.Settings["username"] == "" || s.Settings["clusterURI"] == "" {
 		log.Fatal("ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
 			"as you did not specify enough information in the Settings section of your desired state file.")
@@ -180,6 +177,21 @@ func createContext() bool {
 		log.Fatal("ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
 			"as you did not provide Certifications to use in your desired state file.")
 		return false
+	} else {
+		cmd := command{
+			Cmd:         "bash",
+			Args:        []string{"-c", "echo " + s.Settings["password"]},
+			Description: "reading the password from env variable.",
+		}
+
+		var exitCode int
+		exitCode, password = cmd.exec(debug)
+
+		password = strings.TrimSpace(password)
+		if exitCode != 0 || password == "" {
+			log.Fatal("ERROR: failed to read password from env variable.")
+			return false
+		}
 	}
 
 	// download certs using AWS cli
@@ -218,7 +230,7 @@ func createContext() bool {
 	cmd = command{
 		Cmd: "bash",
 		Args: []string{"-c", "kubectl config set-credentials " + s.Settings["username"] + " --username=" + s.Settings["username"] +
-			" --password=" + readFile(s.Settings["password"]) + " --client-key=ca.key"},
+			" --password=" + password + " --client-key=ca.key"},
 		Description: "creating kubectl context - setting credentials.",
 	}
 
@@ -246,7 +258,7 @@ func createContext() bool {
 	cmd = command{
 		Cmd: "bash",
 		Args: []string{"-c", "kubectl config set-context " + s.Settings["kubeContext"] + " --cluster=" + s.Settings["kubeContext"] +
-			" --user=" + s.Settings["username"] + " --password=" + readFile(s.Settings["password"])},
+			" --user=" + s.Settings["username"] + " --password=" + password},
 		Description: "creating kubectl context - setting context.",
 	}
 
