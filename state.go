@@ -50,18 +50,10 @@ func (s state) validate() bool {
 			return false
 		}
 		for key, value := range s.Certifications {
-			_, err1 := url.ParseRequestURI(value)
-			_, err2 := os.Stat(value)
-			if err1 != nil && err2 != nil {
-				log.Fatal("ERROR: certifications validation failed -- [ " + key + " ] must be either s3 bucket URLs or valid file path.")
+			_, err := url.ParseRequestURI(value)
+			if err != nil || !strings.HasPrefix(value, "s3://") {
+				log.Fatal("ERROR: certifications validation failed -- [ " + key + " ] must be a valid s3 bucket URL.")
 				return false
-			} else if err1 == nil {
-				// check it is valid s3 link
-				if !strings.HasPrefix(value, "s3://") {
-					log.Fatal("ERROR: certifications validation failed -- [ "+key+" ] URL can must be valid s3 bucket URL. ",
-						"A valid file path is also OK!.")
-					return false
-				}
 			}
 		}
 
