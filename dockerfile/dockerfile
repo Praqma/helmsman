@@ -16,12 +16,16 @@ RUN chmod +x /usr/local/bin/kubectl
 FROM alpine:3.6 
 RUN apk add --update --no-cache ca-certificates git
 
-ENV VERSION v2.7.0
+ENV HELM_VERSION v2.7.0
+# Versions: https://pypi.python.org/pypi/awscli#downloads
+ENV AWS_CLI_VERSION 1.11.131
 
-WORKDIR /
-
-RUN apk add --update -t deps curl tar gzip make bash \
-    && curl -L http://storage.googleapis.com/kubernetes-helm/helm-${VERSION}-linux-amd64.tar.gz | tar zxv -C /tmp \
+RUN apk --no-cache update \
+    && apk --no-cache add python py-pip py-setuptools ca-certificates groff less  \
+    && pip --no-cache-dir install awscli==${AWS_CLI_VERSION} \
+    && rm -rf /var/cache/apk/* \
+    && apk add --update -t deps curl tar gzip make bash \
+    && curl -L http://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar zxv -C /tmp \
     && mv /tmp/linux-amd64/helm /usr/local/bin/helm \
     && chmod +x /usr/local/bin/helm \
     && mkdir -p ~/.helm/plugins \
@@ -31,5 +35,6 @@ RUN apk add --update -t deps curl tar gzip make bash \
 COPY --from=kube /usr/local/bin/kubectl /bin/kubectl
 COPY --from=builder /go/bin/helmsman   /bin/helmsman
 
+WORKDIR /tmp
 ENTRYPOINT ["/bin/helmsman"]
  
