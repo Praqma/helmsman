@@ -68,7 +68,7 @@ func isOfType(filename string, filetype string) bool {
 func readFile(filepath string) string {
 	data, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		log.Fatal("ERROR: failed to read password file content: " + err.Error())
+		log.Fatal("ERROR: failed to read [ " + filepath + " ] file content: " + err.Error())
 	}
 	return string(data)
 }
