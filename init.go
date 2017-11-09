@@ -32,6 +32,11 @@ func init() {
 		os.Exit(1)
 	}
 
+	// if !toolExists("aws") {
+	// 	log.Fatal("ERROR: aws cli is not installed/configured correctly. Aborting!")
+	// 	os.Exit(1)
+	// }
+
 	// after the init() func is run, read the TOML desired state file
 	fromTOML(file, &s)
 
@@ -171,15 +176,53 @@ func createContext() bool {
 		log.Fatal("ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
 			"as you did not specify enough information in the Settings section of your desired state file.")
 		return false
+	} else if s.Certifications == nil || s.Certifications["caCrt"] == "" || s.Certifications["caKey"] == "" {
+		log.Fatal("ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
+			"as you did not provide Certifications to use in your desired state file.")
+		return false
 	}
+
+	// download certs using AWS cli
+	if !toolExists("aws help") {
+		log.Fatal("ERROR: aws is not installed/configured correctly. It is needed for downloading certs. Aborting!")
+		return false
+	}
+
 	cmd := command{
-		Cmd: "bash",
-		Args: []string{"-c", "kubectl config set-credentials " + s.Settings["username"] + " --username=" + s.Settings["username"] +
-			" --password=" + readFile(s.Settings["password"]) + " --client-key=" + s.Certifications["caKey"]},
-		Description: "creating kubectl context - setting credentials.",
+		Cmd:         "bash",
+		Args:        []string{"-c", "aws s3 cp " + s.Certifications["caCrt"] + " ca.crt"},
+		Description: "downloading ca.crt from S3.",
 	}
 
 	exitCode, _ := cmd.exec(debug)
+
+	if exitCode != 0 {
+		log.Fatal("ERROR: failed to download caCrt.")
+		return false
+	}
+
+	cmd = command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "aws s3 cp " + s.Certifications["caKey"] + " ca.key"},
+		Description: "downloading ca.key from S3.",
+	}
+
+	exitCode, _ = cmd.exec(debug)
+
+	if exitCode != 0 {
+		log.Fatal("ERROR: failed to download caKey.")
+		return false
+	}
+
+	// connecting to the cluster
+	cmd = command{
+		Cmd: "bash",
+		Args: []string{"-c", "kubectl config set-credentials " + s.Settings["username"] + " --username=" + s.Settings["username"] +
+			" --password=" + readFile(s.Settings["password"]) + " --client-key=ca.key"},
+		Description: "creating kubectl context - setting credentials.",
+	}
+
+	exitCode, _ = cmd.exec(debug)
 
 	if exitCode != 0 {
 		log.Fatal("ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ].")
@@ -189,7 +232,7 @@ func createContext() bool {
 	cmd = command{
 		Cmd: "bash",
 		Args: []string{"-c", "kubectl config set-cluster " + s.Settings["kubeContext"] + " --server=" + s.Settings["clusterURI"] +
-			" --certificate-authority=" + s.Certifications["caCrt"]},
+			" --certificate-authority=ca.crt"},
 		Description: "creating kubectl context - setting cluster.",
 	}
 
