@@ -31,10 +31,8 @@ func (s state) validate() bool {
 			"kubeContext to use. Can't work without it. Sorry!")
 		return false
 	} else if len(s.Settings) > 1 {
-		_, err := os.Stat(s.Settings["password"])
-		if s.Settings["password"] == "" || !isOfType(s.Settings["password"], ".passwd") || err != nil {
-			log.Fatal("ERROR: settings validation failed -- the specified password file is not valid. ",
-				"It should be a valid path and of type \".passwd\".")
+		if s.Settings["password"] == "" || !strings.HasPrefix(s.Settings["password"], "$") {
+			log.Fatal("ERROR: settings validation failed -- password should be an env variable starting with $ ")
 			return false
 		} else if _, err := url.ParseRequestURI(s.Settings["clusterURI"]); err != nil {
 			log.Fatal("ERROR: settings validation failed -- clusterURI must have a valid URL.")
