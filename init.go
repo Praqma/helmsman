@@ -167,11 +167,16 @@ func setKubeContext(context string) bool {
 // It returns true if successful, false otherwise
 func createContext() bool {
 
+	if s.Settings["password"] == "" || s.Settings["username"] == "" || s.Settings["clusterURI"] == "" {
+		log.Fatal("ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
+			"as you did not specify enough information in the Settings section of your desired state file.")
+		return false
+	}
 	cmd := command{
 		Cmd: "bash",
 		Args: []string{"-c", "kubectl config set-credentials " + s.Settings["username"] + " --username=" + s.Settings["username"] +
 			" --password=" + readFile(s.Settings["password"]) + " --client-key=" + s.Certifications["caKey"]},
-		Description: "creating kubectl context - part 1",
+		Description: "creating kubectl context - setting credentials.",
 	}
 
 	exitCode, _ := cmd.exec(debug)
@@ -185,7 +190,7 @@ func createContext() bool {
 		Cmd: "bash",
 		Args: []string{"-c", "kubectl config set-cluster " + s.Settings["kubeContext"] + " --server=" + s.Settings["clusterURI"] +
 			" --certificate-authority=" + s.Certifications["caCrt"]},
-		Description: "creating kubectl context - part 2",
+		Description: "creating kubectl context - setting cluster.",
 	}
 
 	exitCode, _ = cmd.exec(debug)
@@ -199,7 +204,7 @@ func createContext() bool {
 		Cmd: "bash",
 		Args: []string{"-c", "kubectl config set-context " + s.Settings["kubeContext"] + " --cluster=" + s.Settings["kubeContext"] +
 			" --user=" + s.Settings["username"] + " --password=" + readFile(s.Settings["password"])},
-		Description: "creating kubectl context - part 3",
+		Description: "creating kubectl context - setting context.",
 	}
 
 	exitCode, _ = cmd.exec(debug)
