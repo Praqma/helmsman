@@ -4,16 +4,16 @@ Helmsman is a Helm Charts as Code tool which adds another layer of abstraction o
 
 # Why Helmsman?
 
-Helmsman was created to ease continous deployment of Helm charts. When you want to configure a continous deployment pipeline to manage multiple charts deployed on your k8s cluster(s), a CI script will quickly become complex and difficult to maintain. That's where Helmsman comes to rescue. Read more about [how Helmsman can save you time and effort in the docs](docs/why_helmsman.md).  
+Helmsman was created to ease continous deployment of Helm charts. When you want to configure a continous deployment pipeline to manage multiple charts deployed on your k8s cluster(s), a CI script will quickly become complex and difficult to maintain. That's where Helmsman comes to rescue. Read more about [how Helmsman can save you time and effort in the docs](https://github.com/Praqma/helmsman/blob/master/docs/why_helmsman.md).  
 
 
 # How does it work?
 
-Helmsman uses a simple declarative [TOML](https://github.com/toml-lang/toml) file to allow you to describe a desired state for your k8s applications as in the [example file](example.toml).
+Helmsman uses a simple declarative [TOML](https://github.com/toml-lang/toml) file to allow you to describe a desired state for your k8s applications as in the [example file](https://github.com/Praqma/helmsman/blob/master/example.toml).
 
-The desired state file follows the [desired state specification](docs/desired_state_specification.md).
+The desired state file follows the [desired state specification](https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md).
 
-Helmsman sees what you desire, validates that your desire makes sense (e.g. that the charts you desire are available in the repos you defined), compares it with the current state of Helm and figures out what to do to make your desire come true. Below is the result of executing the [example.toml](example.toml)
+Helmsman sees what you desire, validates that your desire makes sense (e.g. that the charts you desire are available in the repos you defined), compares it with the current state of Helm and figures out what to do to make your desire come true. Below is the result of executing the [example.toml](https://github.com/Praqma/helmsman/blob/master/example.toml)
 
 ``` 
 $ helmsman -f example.toml -apply
@@ -92,7 +92,7 @@ Install Helmsman for your OS from the [releases page](https://github.com/Praqma/
 
 # Documentaion
 
-Documentation can be found under the [docs](/docs/) directory.
+Documentation can be found under the [docs](https://github.com/Praqma/helmsman/blob/master/docs/) directory.
 
 # Contributing
-Contribution and feeback/feature requests are welcome. Please check the [Contribution Guide](CONTRIBUTING.md).
+Contribution and feeback/feature requests are welcome. Please check the [Contribution Guide](https://github.com/Praqma/helmsman/blob/master/CONTRIBUTING.md).
