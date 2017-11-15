@@ -9,7 +9,7 @@ if [ $? -eq 0 ]; then
         goreleaser | grep -0 "already_exists"
         if [ $? -gt 0 ]; then
             echo "ERROR: failed to release. Terminating."
-            Exit 9
+            exit 9
         else
             echo "No new releases made. That is Ok!"
         fi    
@@ -18,5 +18,5 @@ if [ $? -eq 0 ]; then
     fi
 else
     echo "tests failed ... Aborting!"
-    Exit 9
+    exit 9
 fi
