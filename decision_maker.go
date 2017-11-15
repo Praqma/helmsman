@@ -155,16 +155,8 @@ func inspectUpgradeScenario(namespace string, r release) {
 	if getReleaseNamespace(releaseName) == namespace {
 		if extractChartName(r.Chart) == getReleaseChartName(releaseName) && r.Version != getReleaseChartVersion(releaseName) {
 			// upgrade
-			cmd := command{
-				Cmd:         "bash",
-				Args:        []string{"-c", "helm upgrade " + releaseName + " " + r.Chart + " -f " + r.ValuesFile},
-				Description: "upgrading release [ " + releaseName + " ]",
-			}
-			outcome.addCommand(cmd)
+			upgradeRelease(r)
 			logDecision("DECISION: release [ " + releaseName + " ] is desired to be upgraded. Planing this for you!")
-			if r.Test {
-				testRelease(releaseName)
-			}
 
 		} else if extractChartName(r.Chart) != getReleaseChartName(releaseName) {
 			reInstallRelease(namespace, r)
@@ -173,14 +165,30 @@ func inspectUpgradeScenario(namespace string, r release) {
 				namespace + " ]]")
 
 		} else {
+			upgradeRelease(r)
 			logDecision("DECISION: release [ " + releaseName + " ] is desired to be enabled and is currently enabled." +
-				"Nothing for me to do. Horraayyy!")
+				"I will upgrade it in case you changed your values.yaml!")
 		}
 	} else {
 		reInstallRelease(namespace, r)
 		logDecision("DECISION: release [ " + releaseName + " ] is desired to be enabled in a new namespace [[ " + namespace +
 			" ]]. I am planning a purge delete of the current release from namespace [[ " + getReleaseNamespace(releaseName) + " ]] " +
 			"and will install it for you in namespace [[ " + namespace + " ]]")
+	}
+}
+
+// upgradeRelease upgrades an existing release with the specified values.yaml
+func upgradeRelease(r release) {
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + " -f " + r.ValuesFile},
+		Description: "upgrading release [ " + r.Name + " ]",
+	}
+
+	outcome.addCommand(cmd)
+
+	if r.Test {
+		testRelease(r.Name)
 	}
 }
 
