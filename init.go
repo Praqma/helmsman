@@ -11,7 +11,7 @@ import (
 // It checks if Helm and Kubectl exist and configures: the connection to the k8s cluster, helm repos, namespaces, etc.
 func init() {
 	//parsing command line flags
-	flag.StringVar(&file, "f", "", "desired state file name")
+	flag.StringVar(&file, "f", "example.toml", "desired state file name")
 	flag.BoolVar(&apply, "apply", false, "apply the plan directly")
 	flag.BoolVar(&debug, "debug", false, "show the execution logs")
 	flag.BoolVar(&help, "help", false, "show Helmsman help")
