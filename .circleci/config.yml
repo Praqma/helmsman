@@ -24,4 +24,5 @@ jobs:
       # specify any bash command here prefixed with `run: `
       - run: go get github.com/BurntSushi/toml
       - run: go get github.com/goreleaser/goreleaser
-      - run: goreleaser 
+      - run: chmod +x .circleci/build.sh
+      - run: .circleci/build.sh
