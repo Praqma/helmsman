@@ -128,11 +128,11 @@ func Test_plan_execPlan(t *testing.T) {
 				Commands: []command{
 					{
 						Cmd:         "bash",
-						Args:        []string{"-c", "export TEST=hello world"},
+						Args:        []string{"-c", "export TEST='hello world'"},
 						Description: "Setting TEST env var.",
 					}, {
 						Cmd:         "bash",
-						Args:        []string{"-c", "export TEST=hello world, again!"},
+						Args:        []string{"-c", "export TEST='hello world, again!'"},
 						Description: "Setting TEST env var, again.",
 					},
 				},
@@ -151,7 +151,7 @@ func Test_plan_execPlan(t *testing.T) {
 			p.execPlan()
 			c := command{
 				Cmd:         "bash",
-				Args:        []string{"-c", "echo {$TEST}"},
+				Args:        []string{"-c", "echo $TEST"},
 				Description: "",
 			}
 			if _, got := c.exec(false); strings.TrimSpace(got) != "hello world, again!" {

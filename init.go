@@ -34,30 +34,17 @@ func init() {
 	}
 
 	// after the init() func is run, read the TOML desired state file
-	fromTOML(file, &s)
+	result, msg := fromTOML(file, &s)
+	if result {
+		log.Printf(msg)
+	} else {
+		log.Fatal(msg)
+	}
 
 	// validate the desired state content
-	s.validate() // syntax validation
-
-	// set the kubecontext to be used Or create it if it does not exist
-	if !setKubeContext(s.Settings["kubeContext"]) {
-		if !createContext() {
-			os.Exit(1)
-		}
+	if result, msg := s.validate(); !result { // syntax validation
+		log.Fatal(msg)
 	}
-
-	// add repos -- fails if they are not valid
-	if !addHelmRepos(s.HelmRepos) {
-		os.Exit(1)
-	}
-
-	// validate charts-versions exist in supllied repos
-	if !validateReleaseCharts(s.Apps) {
-		os.Exit(1)
-	}
-
-	// add/validate namespaces
-	addNamespaces(s.Namespaces)
 
 }
 
@@ -173,7 +160,7 @@ func createContext() bool {
 		log.Fatal("ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
 			"as you did not specify enough information in the Settings section of your desired state file.")
 		return false
-	} else if s.Certifications == nil || s.Certifications["caCrt"] == "" || s.Certifications["caKey"] == "" {
+	} else if s.Certificates == nil || s.Certificates["caCrt"] == "" || s.Certificates["caKey"] == "" {
 		log.Fatal("ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
 			"as you did not provide Certifications to use in your desired state file.")
 		return false
@@ -202,7 +189,7 @@ func createContext() bool {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "aws s3 cp " + s.Certifications["caCrt"] + " ca.crt"},
+		Args:        []string{"-c", "aws s3 cp " + s.Certificates["caCrt"] + " ca.crt"},
 		Description: "downloading ca.crt from S3.",
 	}
 
@@ -215,7 +202,7 @@ func createContext() bool {
 
 	cmd = command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "aws s3 cp " + s.Certifications["caKey"] + " ca.key"},
+		Args:        []string{"-c", "aws s3 cp " + s.Certificates["caKey"] + " ca.key"},
 		Description: "downloading ca.key from S3.",
 	}
 

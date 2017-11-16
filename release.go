@@ -20,13 +20,13 @@ type release struct {
 }
 
 // validateRelease validates if a release inside a desired state meets the specifications or not.
-// check the full specification @ https://github.com/Praqma/Helmsman/docs/desired_state_spec.md
+// check the full specification @ https://github.com/Praqma/helmsman/docs/desired_state_spec.md
 func validateRelease(r release, names map[string]bool) (bool, string) {
 	_, err := os.Stat(r.ValuesFile)
 	if r.Name == "" || names[r.Name] {
 		return false, "release name can't be empty and must be unique."
 	} else if r.Env == "" {
-		return false, "env can't be empty."
+		return false, "release targeted env (namespace) can't be empty."
 	} else if r.Chart == "" || !strings.ContainsAny(r.Chart, "/") {
 		return false, "chart can't be empty and must be of the format: repo/chart."
 	} else if r.Version == "" {
