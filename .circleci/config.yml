@@ -6,7 +6,7 @@ jobs:
   build:
     docker:
       # specify the version
-      - image: circleci/golang:1.8
+      - image: praqma/helmsman-test
       
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -17,12 +17,11 @@ jobs:
     #### expecting it in the form of
     ####   /go/src/github.com/circleci/go-tool
     ####   /go/src/bitbucket.org/circleci/go-tool
-    working_directory: /go/src/github.com/praqma/helmsman
+    working_directory: /go/src/
     steps:
       - checkout
 
       # specify any bash command here prefixed with `run: `
-      - run: go get github.com/BurntSushi/toml
-      - run: go get github.com/goreleaser/goreleaser
+      - run: git clone https://github.com/Praqma/helmsman.git
       - run: chmod +x .circleci/build.sh
       - run: .circleci/build.sh
