@@ -5,7 +5,7 @@ maintainer = "k8s-admin"
 
 # paths to the certificate for connecting to the cluster
 # You can skip this if you use Helmsman on a machine with kubectl already connected to your k8s cluster. 
-[certifications]
+[certificates]
 # caCrt = "ca.crt" # s3 bucket path
 # caKey = "ca.key" # Or, a path to the file location
 
