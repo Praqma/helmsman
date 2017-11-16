@@ -4,7 +4,6 @@ FROM golang:1.8-alpine3.6 as builder
 
 ENV KUBE_LATEST_VERSION v1.8.2
 ENV HELM_VERSION v2.7.0
-WORKDIR /go/src/
 
 RUN apk add --update ca-certificates \
     && apk add --update -t deps curl \
@@ -20,3 +19,5 @@ RUN apk add --update --no-cache ca-certificates git \
     
 RUN go get github.com/BurntSushi/toml \ 
     && go get github.com/goreleaser/goreleaser 
+
+WORKDIR /go/src/    
