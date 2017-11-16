@@ -128,15 +128,15 @@ func Test_plan_execPlan(t *testing.T) {
 				Commands: []command{
 					{
 						Cmd:         "bash",
-						Args:        []string{"-c", "TEST='hello world'"},
-						Description: "Setting TEST var.",
+						Args:        []string{"-c", "touch hello.world"},
+						Description: "Creating hello.world file.",
 					}, {
 						Cmd:         "bash",
-						Args:        []string{"-c", "TEST='hello world, again!'"},
-						Description: "Setting TEST var, again.",
+						Args:        []string{"-c", "touch hello.world1"},
+						Description: "Creating hello.world1 file.",
 					},
 				},
-				Decisions: []string{"Set TEST var to: hello world.", "Set TEST var to: hello world, again!."},
+				Decisions: []string{"Create hello.world.", "Create hello.world1."},
 				Created:   time.Now(),
 			},
 		},
@@ -151,10 +151,10 @@ func Test_plan_execPlan(t *testing.T) {
 			p.execPlan()
 			c := command{
 				Cmd:         "bash",
-				Args:        []string{"-c", "echo $TEST"},
+				Args:        []string{"-c", "ls | grep hello.world | wc -l"},
 				Description: "",
 			}
-			if _, got := c.exec(false); strings.TrimSpace(got) != "hello world, again!" {
+			if _, got := c.exec(false); strings.TrimSpace(got) != "2" {
 				t.Errorf("execPlan(): got  %v, want hello world, again!", got)
 			}
 		})
