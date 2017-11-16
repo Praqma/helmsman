@@ -1,6 +1,6 @@
 #!/bin/bash -x
 echo "running tests ..."
-go test 
+go test -v
 
 if [ $? -eq 0 ]; then
     echo "releasing ..."
