@@ -17,10 +17,6 @@ RUN apk add --update --no-cache ca-certificates git \
     && mv /tmp/linux-amd64/helm /usr/local/bin/helm \
     && chmod +x /usr/local/bin/helm \
     && rm -rf /tmp/linux-amd64
-    # && mkdir -p ~/.helm/plugins \
-    # && helm plugin install https://github.com/hypnoglow/helm-s3.git --version 0.4.0 \
     
 RUN go get github.com/BurntSushi/toml \ 
     && go get github.com/goreleaser/goreleaser 
-    # && git clone https://github.com/Praqma/helmsman.git \
-    # && go install helmsman/.
