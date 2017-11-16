@@ -128,15 +128,15 @@ func Test_plan_execPlan(t *testing.T) {
 				Commands: []command{
 					{
 						Cmd:         "bash",
-						Args:        []string{"-c", "export TEST='hello world'"},
-						Description: "Setting TEST env var.",
+						Args:        []string{"-c", "TEST='hello world'"},
+						Description: "Setting TEST var.",
 					}, {
 						Cmd:         "bash",
-						Args:        []string{"-c", "export TEST='hello world, again!'"},
-						Description: "Setting TEST env var, again.",
+						Args:        []string{"-c", "TEST='hello world, again!'"},
+						Description: "Setting TEST var, again.",
 					},
 				},
-				Decisions: []string{"Set TEST env var to: hello world.", "Set TEST env var to: hello world, again!."},
+				Decisions: []string{"Set TEST var to: hello world.", "Set TEST var to: hello world, again!."},
 				Created:   time.Now(),
 			},
 		},
