@@ -6,7 +6,7 @@ if [ $? -eq 0 ]; then
     echo "releasing ..."
     goreleaser | grep -o "error"
     if [ $? -eq 0 ]; then
-        goreleaser | grep -0 "already_exists"
+        goreleaser | grep -o "already_exists"
         if [ $? -gt 0 ]; then
             echo "ERROR: failed to release. Terminating."
             exit 9
