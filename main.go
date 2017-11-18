@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"strings"
 )
 
@@ -16,19 +15,23 @@ func main() {
 
 	// set the kubecontext to be used Or create it if it does not exist
 	if !setKubeContext(s.Settings["kubeContext"]) {
-		if !createContext() {
-			os.Exit(1)
+		if r, msg := createContext(); !r {
+			log.Fatal(msg)
 		}
 	}
 
+	if r, msg := initHelm(); !r {
+		log.Fatal(msg)
+	}
+
 	// add repos -- fails if they are not valid
-	if !addHelmRepos(s.HelmRepos) {
-		os.Exit(1)
+	if r, msg := addHelmRepos(s.HelmRepos); !r {
+		log.Fatal(msg)
 	}
 
 	// validate charts-versions exist in supllied repos
-	if !validateReleaseCharts(s.Apps) {
-		os.Exit(1)
+	if r, msg := validateReleaseCharts(s.Apps); !r {
+		log.Fatal(msg)
 	}
 
 	// add/validate namespaces
@@ -63,9 +66,25 @@ func setKubeContext(context string) bool {
 	return true
 }
 
+// initHelm initialize helm on a k8s cluster
+func initHelm() (bool, string) {
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm init"},
+		Description: "initializing helm on the current context.",
+	}
+
+	exitCode, msg := cmd.exec(debug)
+
+	if exitCode != 0 {
+		return false, "ERROR: there has been a problem while initializing helm: " + msg
+	}
+	return true, ""
+}
+
 // addHelmRepos adds repositories to Helm if they don't exist already.
 // Helm does not mind if a repo with the same name exists. It treats it as an update.
-func addHelmRepos(repos map[string]string) bool {
+func addHelmRepos(repos map[string]string) (bool, string) {
 
 	for repoName, url := range repos {
 		cmd := command{
@@ -77,20 +96,18 @@ func addHelmRepos(repos map[string]string) bool {
 		exitCode, _ := cmd.exec(debug)
 
 		if exitCode != 0 {
-			log.Fatal("ERROR: there has been a problem while adding repo [" +
-				repoName + "].")
-			return false
+			return false, "ERROR: there has been a problem while adding repo [" + repoName + "]."
 		}
 
 	}
 
-	return true
+	return true, ""
 }
 
 // validateReleaseCharts validates if the charts defined in a release are valid.
 // Valid charts are the ones that can be found in the defined repos.
 // This function uses Helm search to verify if the chart can be found or not.
-func validateReleaseCharts(apps map[string]release) bool {
+func validateReleaseCharts(apps map[string]release) (bool, string) {
 
 	for app, r := range apps {
 		cmd := command{
@@ -102,12 +119,11 @@ func validateReleaseCharts(apps map[string]release) bool {
 		exitCode, _ := cmd.exec(debug)
 
 		if exitCode != 0 {
-			log.Fatal("ERROR: chart "+r.Chart+"-"+r.Version+" is specified for ",
-				"app ["+app+"] but is not found in the provided repos.")
-			return false
+			return false, "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " +
+				"app [" + app + "] but is not found in the provided repos."
 		}
 	}
-	return true
+	return true, ""
 }
 
 // addNamespaces creates a set of namespaces in your k8s cluster.
@@ -131,17 +147,15 @@ func addNamespaces(namespaces map[string]string) {
 
 // createContext creates a context -connecting to a k8s cluster- in kubectl config.
 // It returns true if successful, false otherwise
-func createContext() bool {
+func createContext() (bool, string) {
 
 	var password string
 	if s.Settings["password"] == "" || s.Settings["username"] == "" || s.Settings["clusterURI"] == "" {
-		log.Fatal("ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
-			"as you did not specify enough information in the Settings section of your desired state file.")
-		return false
+		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
+			"as you did not specify enough information in the Settings section of your desired state file."
 	} else if s.Certificates == nil || s.Certificates["caCrt"] == "" || s.Certificates["caKey"] == "" {
-		log.Fatal("ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
-			"as you did not provide Certifications to use in your desired state file.")
-		return false
+		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
+			"as you did not provide Certifications to use in your desired state file."
 	} else {
 		cmd := command{
 			Cmd:         "bash",
@@ -154,15 +168,13 @@ func createContext() bool {
 
 		password = strings.TrimSpace(password)
 		if exitCode != 0 || password == "" {
-			log.Fatal("ERROR: failed to read password from env variable.")
-			return false
+			return false, "ERROR: failed to read password from env variable."
 		}
 	}
 
 	// download certs using AWS cli
 	if !toolExists("aws help") {
-		log.Fatal("ERROR: aws is not installed/configured correctly. It is needed for downloading certs. Aborting!")
-		return false
+		return false, "ERROR: aws is not installed/configured correctly. It is needed for downloading certs. Aborting!"
 	}
 
 	cmd := command{
@@ -171,11 +183,10 @@ func createContext() bool {
 		Description: "downloading ca.crt from S3.",
 	}
 
-	exitCode, _ := cmd.exec(debug)
+	exitCode, msg := cmd.exec(debug)
 
 	if exitCode != 0 {
-		log.Fatal("ERROR: failed to download caCrt.")
-		return false
+		return false, "ERROR: failed to download caCrt." + msg
 	}
 
 	cmd = command{
@@ -184,11 +195,10 @@ func createContext() bool {
 		Description: "downloading ca.key from S3.",
 	}
 
-	exitCode, _ = cmd.exec(debug)
+	exitCode, msg = cmd.exec(debug)
 
 	if exitCode != 0 {
-		log.Fatal("ERROR: failed to download caKey.")
-		return false
+		return false, "ERROR: failed to download caKey." + msg
 	}
 
 	// connecting to the cluster
@@ -199,11 +209,10 @@ func createContext() bool {
 		Description: "creating kubectl context - setting credentials.",
 	}
 
-	exitCode, _ = cmd.exec(debug)
+	exitCode, msg = cmd.exec(debug)
 
 	if exitCode != 0 {
-		log.Fatal("ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ].")
-		return false
+		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]: " + msg
 	}
 
 	cmd = command{
@@ -213,11 +222,10 @@ func createContext() bool {
 		Description: "creating kubectl context - setting cluster.",
 	}
 
-	exitCode, _ = cmd.exec(debug)
+	exitCode, msg = cmd.exec(debug)
 
 	if exitCode != 0 {
-		log.Fatal("ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ].")
-		return false
+		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]: " + msg
 	}
 
 	cmd = command{
@@ -227,12 +235,15 @@ func createContext() bool {
 		Description: "creating kubectl context - setting context.",
 	}
 
-	exitCode, _ = cmd.exec(debug)
+	exitCode, msg = cmd.exec(debug)
 
 	if exitCode != 0 {
-		log.Fatal("ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ].")
-		return false
+		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]: " + msg
 	}
 
-	return setKubeContext(s.Settings["kubeContext"])
+	if setKubeContext(s.Settings["kubeContext"]) {
+		return true, ""
+	}
+
+	return false, "ERROR: something went wrong while setting the kube context to the newly created one."
 }

@@ -38,7 +38,7 @@ func (s state) validate() (bool, string) {
 
 	// certificates
 	if s.Certificates != nil {
-		if len(s.Settings) > 1 && len(s.Certificates) < 2 {
+		if len(s.Settings) > 1 && len(s.Certificates) != 2 {
 			return false, "ERROR: certifications validation failed -- You want me to connect to your cluster for you " +
 				"but have not given me the keys to do so. Please add [caCrt] and [caKey] under Certifications."
 		}
