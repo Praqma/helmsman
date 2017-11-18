@@ -70,7 +70,7 @@ func getReleaseChart(releaseName string) string {
 
 	if exitCode == 0 {
 		line := strings.Split(result, "\n")[1]
-		return strings.Fields(line)[4] // 4 is the position of chart details in helm ls output
+		return strings.Fields(line)[8] // 8 is the position of chart details in helm ls output
 	}
 	log.Fatal("ERROR: seems release [ " + releaseName + " ] does not exist.")
 	os.Exit(1)
