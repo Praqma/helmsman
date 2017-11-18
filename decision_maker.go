@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"strings"
 )
 
@@ -36,17 +35,14 @@ func decide(r release, s *state) {
 
 			inspectRollbackScenario(s.Namespaces[r.Env], r)
 
+		} else if helmReleaseExists(s.Namespaces[r.Env], r.Name, "failed") {
+
+			deleteRelease(r.Name, true)
+
 		} else {
-			if !helmReleaseExists(s.Namespaces[r.Env], r.Name, "all") {
 
-				installRelease(s.Namespaces[r.Env], r)
+			installRelease(s.Namespaces[r.Env], r)
 
-			} else {
-
-				log.Fatal("ERROR: it seems that release [ " + r.Name + " ] exists in the current k8s context. Please double check!")
-				os.Exit(1)
-
-			}
 		}
 
 	}
@@ -122,24 +118,30 @@ func inspectDeleteScenario(namespace string, r release) {
 	releaseName := r.Name
 	//if it exists in helm list , add command to delete it, else log that it is skipped
 	if helmReleaseExists(namespace, releaseName, "deployed") {
-		purge := ""
-		purgeDesc := ""
-		if r.Purge {
-			purge = "--purge"
-			purgeDesc = "and purged!"
-		}
 		// delete it
-		cmd := command{
-			Cmd:         "bash",
-			Args:        []string{"-c", "helm delete " + purge + " " + releaseName},
-			Description: "deleting release [ " + releaseName + " ]",
-		}
-		outcome.addCommand(cmd)
-		logDecision("DECISION: release [ " + releaseName + " ] is desired to be deleted " + purgeDesc + ". Planing this for you!")
+		deleteRelease(releaseName, r.Purge)
 
 	} else {
 		logDecision("DECISION: release [ " + releaseName + " ] is set to be disabled but is not yet deployed. Skipping.")
 	}
+}
+
+// deleteRelease deletes a release from a k8s cluster
+func deleteRelease(releaseName string, purge bool) {
+	p := ""
+	purgeDesc := ""
+	if purge {
+		p = "--purge"
+		purgeDesc = "and purged!"
+	}
+
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm delete " + p + " " + releaseName},
+		Description: "deleting release [ " + releaseName + " ]",
+	}
+	outcome.addCommand(cmd)
+	logDecision("DECISION: release [ " + releaseName + " ] is desired to be deleted " + purgeDesc + ". Planing this for you!")
 }
 
 // inspectUpgradeScenario evaluates if a release should be upgraded.
