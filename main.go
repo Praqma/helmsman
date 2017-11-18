@@ -70,8 +70,8 @@ func setKubeContext(context string) bool {
 func initHelm() (bool, string) {
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm init"},
-		Description: "initializing helm on the current context.",
+		Args:        []string{"-c", "helm init --upgrade"},
+		Description: "initializing helm on the current context and upgrade Tiller.",
 	}
 
 	exitCode, msg := cmd.exec(debug)
