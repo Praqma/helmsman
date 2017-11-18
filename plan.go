@@ -42,8 +42,8 @@ func (p plan) execPlan() {
 	p.printPlan()
 	for _, cmd := range p.Commands {
 		log.Println("INFO: attempting: --  ", cmd.Description)
-		if exitCode, _ := cmd.exec(debug); exitCode != 0 {
-			log.Fatal("Command returned the following non zero exit code while executing the plan: " + string(exitCode))
+		if exitCode, msg := cmd.exec(debug); exitCode != 0 {
+			log.Fatal("Command returned with exit code: " + string(exitCode) + ". And error message: " + msg)
 		}
 	}
 }
