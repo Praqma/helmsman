@@ -36,5 +36,5 @@ COPY --from=kube /usr/local/bin/kubectl /bin/kubectl
 COPY --from=builder /go/bin/helmsman   /bin/helmsman
 
 WORKDIR /tmp
-ENTRYPOINT ["/bin/helmsman"]
+# ENTRYPOINT ["/bin/helmsman"]
  
