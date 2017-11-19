@@ -68,7 +68,7 @@ func installRelease(namespace string, r release) {
 	releaseName := r.Name
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm install " + r.Chart + " -n " + releaseName + " --namespace " + namespace + " -f " + r.ValuesFile},
+		Args:        []string{"-c", "helm install " + r.Chart + " -n " + releaseName + " --namespace " + namespace + getValuesFile(r) + " --version " + r.Version},
 		Description: "installing release [ " + releaseName + " ] in namespace [[ " + namespace + " ]]",
 	}
 	outcome.addCommand(cmd)
@@ -183,7 +183,7 @@ func inspectUpgradeScenario(namespace string, r release) {
 func upgradeRelease(r release) {
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + " -f " + r.ValuesFile},
+		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFile(r) + " --version " + r.Version + " --force"},
 		Description: "upgrading release [ " + r.Name + " ]",
 	}
 
@@ -208,7 +208,7 @@ func reInstallRelease(namespace string, r release) {
 
 	installCmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm install " + r.Chart + " -n " + releaseName + " --namespace " + namespace + " -f " + r.ValuesFile},
+		Args:        []string{"-c", "helm install " + r.Chart + " --version " + r.Version + " -n " + releaseName + " --namespace " + namespace + getValuesFile(r)},
 		Description: "installing release [ " + releaseName + " ] in namespace [[ " + namespace + " ]]",
 	}
 	outcome.addCommand(installCmd)
@@ -235,4 +235,12 @@ func extractChartName(releaseChart string) string {
 
 	return strings.TrimSpace(strings.Split(releaseChart, "/")[1])
 
+}
+
+// getValuesFile return partial install/upgrade release command to substitute the -f flag in Helm.
+func getValuesFile(r release) string {
+	if r.ValuesFile != "" {
+		return " -f " + r.ValuesFile
+	}
+	return ""
 }
