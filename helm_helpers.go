@@ -73,7 +73,24 @@ func getReleaseChart(releaseName string) string {
 		return strings.Fields(line)[8] // 8 is the position of chart details in helm ls output
 	}
 	log.Fatal("ERROR: seems release [ " + releaseName + " ] does not exist.")
-	os.Exit(1)
+
+	return ""
+}
+
+// getReleaseRevision returns the revision number for a release (if it exists)
+func getReleaseRevision(releaseName string, state string) string {
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm list " + releaseName + " --" + state},
+		Description: "inspecting the release revision for :  " + releaseName,
+	}
+	exitCode, result := cmd.exec(debug)
+
+	if exitCode == 0 {
+		line := strings.Split(result, "\n")[1]
+		return strings.Fields(line)[1] // 1 is the position of revision number in helm ls output
+	}
+	log.Fatal("ERROR: seems release [ " + releaseName + " ] does not exist.")
 
 	return ""
 }
