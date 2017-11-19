@@ -1,11 +1,15 @@
+---
+version: v0.1.2
+---
+
 # Why Helmsman?
 
 This document describes the reasoning and need behind the inception of Helmsman. 
 
 ## Before Helm
 
-Helmsman was created with continous deployment automation in mind. 
-When we started using k8s, we deployed applications on our cluster directly from k8s manifest files. Initially, we had a custom shell script added to our CI to deploy the k8s resources on the cluster. That script could only create the k8s resources from the manifest files. Soon we needed to have a more flexible way to dynamically create/delete those resources. We structured our git repo and used custom file names (adding enabled or disabled into file names) and updated the shell script accordingly. It did not take long before we realized that this does not scale and is difficult to maintain. 
+Helmsman was created with continous deployment in mind. 
+When we started using k8s, we deployed applications on our cluster directly from k8s manifest files. Initially, we had a custom shell script added to our CI system to deploy the k8s resources on the cluster. That script could only create the k8s resources from the manifest files. Soon we needed to have a more flexible way to dynamically create/delete those resources. We structured our git repo and used custom file names (adding enabled or disabled into file names) and updated the shell script accordingly. It did not take long before we realized that this does not scale and is difficult to maintain. 
 
 ![CI-pipeline-before-helm](images/CI-pipeline-before-helm.jpg)
 
@@ -26,11 +30,11 @@ With all this in mind, we needed a flexible and dynamic solution that can let us
 
 ## The Helmsman way
 
-In English, [Helmsman](https://www.merriam-webster.com/dictionary/helmsman) is the person at the helm (in a ship). In k8s and Helm context, Helmsman sets at the Helm and maintains your Helm charts' lifecycle in your k8s cluster(s). Helmsman gets its directions to navigate from a [declarative file](desired_state_specification.md) maintained by the user (k8s admin). 
+In English, [Helmsman](https://www.merriam-webster.com/dictionary/helmsman) is the person at the helm (in a ship). In k8s and Helm context, Helmsman holds the Helm and maintains your Helm charts' lifecycle in your k8s cluster(s). Helmsman gets its directions to navigate from a [declarative file](desired_state_specification.md) maintained by the user (k8s admin). 
 
-> The Helmsman user does not need to know much about Helm and possibly even about k8s. 
+> Although knowledge about Helm and K8S is highly beneficial, such knowledge is NOT required to use Helmsman.
 
-As the diagram below shows, we recommend having a_ desired state file_ for each k8s cluster you are managing. Along with that file, you would need to have any custom [values yaml files](https://docs.helm.sh/chart_template_guide/#values-files) for the Helm chart's you deploy on your k8s. Then you could configure your CI pipeline to use Helmsman docker container to process your desired state file whenever a commit is made to it.
+As the diagram below shows, we recommend having a _desired state file_ for each k8s cluster you are managing. Along with that file, you would need to have any custom [values yaml files](https://docs.helm.sh/chart_template_guide/#values-files) for the Helm chart's you deploy on your k8s. Then you could configure your CI pipeline to use Helmsman docker image to process your desired state file whenever a commit is made to it.
 
 ![CI-pipeline-helmsman](images/CI-pipeline-helmsman.jpg)
 

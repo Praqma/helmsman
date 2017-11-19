@@ -1,7 +1,17 @@
+---
+version: v0.1.2
+---
+
 # Usage
 
 ```
-docker run -it --rm -v /local/path/to/your/desired_state_file:/tmp praqma/helmsman  -f tmp/example.toml  
+docker run -v $(pwd):/tmp --rm -it \
+-e KUBECTL_PASSWORD=<k8s_password> \
+-e AWS_ACCESS_KEY_ID=<aws_key_id> \
+-e AWS_DEFAULT_REGION=<aws_region> \
+-e AWS_SECRET_ACCESS_KEY=<acess_key> \
+praqma/helmsman:v0.1.2 \
+helmsman -debug -apply -f <your_desired_state_file.toml>
 ```
 
-Check the different versions on [Dockerhub](https://hub.docker.com/r/praqma/helmsman/)
+Check the different image tags on [Dockerhub](https://hub.docker.com/r/praqma/helmsman/)
