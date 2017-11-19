@@ -1,3 +1,4 @@
+# version: v0.1.2
 # metadata -- add as many key/value pairs as you want
 [metadata]
 org = "orgX"
@@ -6,13 +7,13 @@ maintainer = "k8s-admin"
 # paths to the certificate for connecting to the cluster
 # You can skip this if you use Helmsman on a machine with kubectl already connected to your k8s cluster. 
 [certificates]
-# caCrt = "ca.crt" # s3 bucket path
-# caKey = "ca.key" # Or, a path to the file location
+# caCrt = "s3://mybucket/ca.crt" # s3 bucket path
+# caKey = "s3://mybucket/ca.key" 
 
 [settings]
 kubeContext = "minikube" # will try connect to this context first, if it does not exist, it will be created using the details below
 # username = "admin"
-# password = "passwd.passwd" # read it from a .passwd file which you should make it ignored by git. 
+# password = "$PASSWORD" # the name of an environment variable containing the k8s password
 # clusterURI = "https://192.168.99.100:8443" # cluster API
 
 
@@ -25,9 +26,11 @@ production = "default"
 
 # define any private/public helm charts repos you would like to get charts from
 # syntax: repo_name = "repo_url"
+# only private repos hosted in s3 buckets are now supported
 [helmRepos]
 stable = "https://kubernetes-charts.storage.googleapis.com"
 incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
+#myrepo = "s3://my-private-repo/charts"
 
 # define the desired state of your applications helm charts
 # each contains the following:
@@ -40,19 +43,19 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     env = "staging" # maps to the namespace as defined in environmetns above
     enabled = true # change to false if you want to delete this app release [empty = flase]
     chart = "stable/jenkins" # changing the chart name means delete and recreate this chart
-    version = "0.9.0"
+    version = "0.9.1" # chart version
     valuesFile = "" # leaving it empty uses the default chart values
     purge = false # will only be considered when there is a delete operation
-    test = true # run the tests whenever this release is installed/upgraded/rolledback
+    test = false # run the tests whenever this release is installed/upgraded/rolledback
 
 
-    # [apps.vault]
-    # name = "vault" # should be unique across all apps
-    # description = "vault"
-    # env = "staging" # maps to the namespace as defined in environmetns above
-    # enabled = true # change to false if you want to delete this app release [empty = flase]
-    # chart = "incubator/vault" # don't change the chart name, create a new release instead
-    # version = "0.1.0"
-    # valuesFile = "" # leaving it empty uses the default chart values
-    # purge = false # will only be considered when there is a delete operation
-    # test = true # run the tests whenever this release is installed/upgraded/rolledback
+    [apps.vault]
+    name = "artifactory" # should be unique across all apps
+    description = "artifactory"
+    env = "staging" # maps to the namespace as defined in environmetns above
+    enabled = true # change to false if you want to delete this app release [empty = flase]
+    chart = "stable/artifactory" # changing the chart name means delete and recreate this chart
+    version = "6.2.0" # chart version
+    valuesFile = "" # leaving it empty uses the default chart values
+    purge = false # will only be considered when there is a delete operation
+    test = false # run the tests whenever this release is installed/upgraded/rolledback
