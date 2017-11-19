@@ -90,7 +90,7 @@ func inspectRollbackScenario(namespace string, r release) {
 
 		cmd := command{
 			Cmd:         "bash",
-			Args:        []string{"-c", "helm rollback " + releaseName},
+			Args:        []string{"-c", "helm rollback " + releaseName + " " + getReleaseRevision(releaseName, "deleted")},
 			Description: "rolling back release [ " + releaseName + " ]",
 		}
 		outcome.addCommand(cmd)
