@@ -55,4 +55,4 @@ Install Helmsman for your OS from the [releases page](https://github.com/Praqma/
 Documentation and How-Tos can be found [here](https://github.com/Praqma/helmsman/blob/master/docs/).
 
 # Contributing
-Contribution and feeback/feature requests are welcome. Please check the [Contribution Guide](https://github.com/Praqma/helmsman/blob/master/CONTRIBUTING.md).
+Contribution and feeback/feature requests are welcome. 
