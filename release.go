@@ -10,13 +10,14 @@ import (
 type release struct {
 	Name        string
 	Description string
-	Env         string
+	Namespace   string
 	Enabled     bool
 	Chart       string
 	Version     string
 	ValuesFile  string
 	Purge       bool
 	Test        bool
+	Set         map[string]string
 }
 
 // validateRelease validates if a release inside a desired state meets the specifications or not.
@@ -25,7 +26,7 @@ func validateRelease(r release, names map[string]bool) (bool, string) {
 	_, err := os.Stat(r.ValuesFile)
 	if r.Name == "" || names[r.Name] {
 		return false, "release name can't be empty and must be unique."
-	} else if r.Env == "" {
+	} else if r.Namespace == "" {
 		return false, "release targeted env (namespace) can't be empty."
 	} else if r.Chart == "" || !strings.ContainsAny(r.Chart, "/") {
 		return false, "chart can't be empty and must be of the format: repo/chart."
@@ -33,10 +34,30 @@ func validateRelease(r release, names map[string]bool) (bool, string) {
 		return false, "version can't be empty."
 	} else if r.ValuesFile != "" && (!isOfType(r.ValuesFile, ".yaml") || err != nil) {
 		return false, "valuesFile must be a valid file path for a yaml file, Or can be left empty."
+	} else if len(r.Set) > 0 {
+		for k, v := range r.Set {
+			if !strings.HasPrefix(v, "$") {
+				return false, "the value for variable [ " + k + " ] must be an environment variable name and start with '$'."
+			} else if !envVarExists(v) {
+				return false, "env variable [ " + v + " ] is not found in the environment."
+			}
+		}
 	}
 
 	names[r.Name] = true
 	return true, ""
+}
+
+// envVarExists checks if an environment variable is set or not.
+// it accepts env var with/without '$' at the beginning
+func envVarExists(v string) bool {
+
+	if strings.HasPrefix(v, "$") {
+		v = strings.SplitAfter(v, "$")[1]
+	}
+
+	_, ok := os.LookupEnv(v)
+	return ok
 }
 
 // print prints the details of the release
@@ -44,12 +65,14 @@ func (r release) print() {
 	fmt.Println("")
 	fmt.Println("\tname : ", r.Name)
 	fmt.Println("\tdescription : ", r.Description)
-	fmt.Println("\tenv : ", r.Env)
+	fmt.Println("\tnamespace : ", r.Namespace)
 	fmt.Println("\tenabled : ", r.Enabled)
 	fmt.Println("\tchart : ", r.Chart)
 	fmt.Println("\tversion : ", r.Version)
 	fmt.Println("\tvaluesFile : ", r.ValuesFile)
 	fmt.Println("\tpurge : ", r.Purge)
 	fmt.Println("\ttest : ", r.Test)
+	fmt.Println("\tvalues to override from env:")
+	printMap(r.Set)
 	fmt.Println("------------------- ")
 }
