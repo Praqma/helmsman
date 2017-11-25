@@ -9,6 +9,7 @@ var debug bool
 var file string
 var apply bool
 var help bool
+var v bool
 var version = "master"
 
 func main() {
