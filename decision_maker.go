@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"strings"
 )
 
@@ -254,7 +253,8 @@ func getValuesFile(r release) string {
 func getSetValues(r release) string {
 	result := ""
 	for k, v := range r.Set {
-		result = result + " --set " + k + "=" + os.Getenv(strings.SplitAfter(v, "$")[1])
+		_, value := envVarExists(v)
+		result = result + " --set " + k + "=" + value
 	}
 	return result
 }

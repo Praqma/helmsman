@@ -86,14 +86,15 @@ func printHelp() {
 
 }
 
-// envVarExists checks if an environment variable is set or not.
+// envVarExists checks if an environment variable is set or not and returns it.
+// empty string is returned for unset env vars
 // it accepts env var with/without '$' at the beginning
-func envVarExists(v string) bool {
+func envVarExists(v string) (bool, string) {
 
 	if strings.HasPrefix(v, "$") {
 		v = strings.SplitAfter(v, "$")[1]
 	}
 
-	_, ok := os.LookupEnv(v)
-	return ok
+	value, ok := os.LookupEnv(v)
+	return ok, value
 }
