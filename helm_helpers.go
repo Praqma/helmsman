@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"strings"
 )
 
@@ -35,9 +34,10 @@ func helmReleaseExists(namespace string, releaseName string, scope string) bool 
 	}
 
 	if exitCode, result := cmd.exec(debug); exitCode == 0 {
-		// match, _ := regexp.MatchString(releaseName, result)
 		return strings.Contains(result, releaseName+"\n")
 	}
+
+	log.Fatal("ERROR: something went wrong while checking helm release.")
 
 	return false
 }
@@ -53,7 +53,6 @@ func getReleaseNamespace(releaseName string) string {
 		}
 	} else {
 		log.Fatal("ERROR: seems release [ " + releaseName + " ] does not exist.")
-		os.Exit(1)
 	}
 	return ""
 }
@@ -119,5 +118,8 @@ func getReleaseStatus(releaseName string) string {
 	if exitCode, result := cmd.exec(debug); exitCode == 0 {
 		return result
 	}
+
+	log.Fatal("ERROR: something went wrong while checking release status.")
+
 	return ""
 }

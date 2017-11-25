@@ -74,10 +74,8 @@ func initHelm() (bool, string) {
 		Description: "initializing helm on the current context and upgrade Tiller.",
 	}
 
-	exitCode, msg := cmd.exec(debug)
-
-	if exitCode != 0 {
-		return false, "ERROR: there has been a problem while initializing helm: " + msg
+	if exitCode, _ := cmd.exec(debug); exitCode != 0 {
+		return false, "ERROR: there was a problem while initializing helm. "
 	}
 	return true, ""
 }
@@ -93,10 +91,8 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 			Description: "adding repo " + repoName,
 		}
 
-		exitCode, _ := cmd.exec(debug)
-
-		if exitCode != 0 {
-			return false, "ERROR: there has been a problem while adding repo [" + repoName + "]."
+		if exitCode, _ := cmd.exec(debug); exitCode != 0 {
+			return false, "ERROR: there was a problem while adding repo [" + repoName + "]."
 		}
 
 	}
@@ -116,9 +112,7 @@ func validateReleaseCharts(apps map[string]release) (bool, string) {
 			Description: "validating chart " + r.Chart + "-" + r.Version + " is available in the used repos.",
 		}
 
-		exitCode, _ := cmd.exec(debug)
-
-		if exitCode != 0 {
+		if exitCode, _ := cmd.exec(debug); exitCode != 0 {
 			return false, "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " +
 				"app [" + app + "] but is not found in the provided repos."
 		}
@@ -136,9 +130,7 @@ func addNamespaces(namespaces map[string]string) {
 			Description: "creating namespace  " + namespace,
 		}
 
-		exitCode, _ := cmd.exec(debug)
-
-		if exitCode != 0 {
+		if exitCode, _ := cmd.exec(debug); exitCode != 0 {
 			log.Println("WARN: I could not create namespace [" +
 				namespace + " ]. It already exists. I am skipping this.")
 		}
@@ -183,10 +175,8 @@ func createContext() (bool, string) {
 		Description: "downloading ca.crt from S3.",
 	}
 
-	exitCode, msg := cmd.exec(debug)
-
-	if exitCode != 0 {
-		return false, "ERROR: failed to download caCrt." + msg
+	if exitCode, _ := cmd.exec(debug); exitCode != 0 {
+		return false, "ERROR: failed to download caCrt."
 	}
 
 	cmd = command{
@@ -195,10 +185,8 @@ func createContext() (bool, string) {
 		Description: "downloading ca.key from S3.",
 	}
 
-	exitCode, msg = cmd.exec(debug)
-
-	if exitCode != 0 {
-		return false, "ERROR: failed to download caKey." + msg
+	if exitCode, _ := cmd.exec(debug); exitCode != 0 {
+		return false, "ERROR: failed to download caKey."
 	}
 
 	// connecting to the cluster
@@ -209,10 +197,8 @@ func createContext() (bool, string) {
 		Description: "creating kubectl context - setting credentials.",
 	}
 
-	exitCode, msg = cmd.exec(debug)
-
-	if exitCode != 0 {
-		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]: " + msg
+	if exitCode, _ := cmd.exec(debug); exitCode != 0 {
+		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]. "
 	}
 
 	cmd = command{
@@ -222,10 +208,8 @@ func createContext() (bool, string) {
 		Description: "creating kubectl context - setting cluster.",
 	}
 
-	exitCode, msg = cmd.exec(debug)
-
-	if exitCode != 0 {
-		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]: " + msg
+	if exitCode, _ := cmd.exec(debug); exitCode != 0 {
+		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]."
 	}
 
 	cmd = command{
@@ -235,10 +219,8 @@ func createContext() (bool, string) {
 		Description: "creating kubectl context - setting context.",
 	}
 
-	exitCode, msg = cmd.exec(debug)
-
-	if exitCode != 0 {
-		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]: " + msg
+	if exitCode, _ := cmd.exec(debug); exitCode != 0 {
+		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]."
 	}
 
 	if setKubeContext(s.Settings["kubeContext"]) {
