@@ -17,6 +17,8 @@ func init() {
 
 	flag.Parse()
 
+	println("Helmsman version: " + version)
+
 	if help {
 		printHelp()
 		os.Exit(0)
@@ -24,12 +26,10 @@ func init() {
 
 	if !toolExists("helm") {
 		log.Fatal("ERROR: helm is not installed/configured correctly. Aborting!")
-		os.Exit(1)
 	}
 
 	if !toolExists("kubectl") {
 		log.Fatal("ERROR: kubectl is not installed/configured correctly. Aborting!")
-		os.Exit(1)
 	}
 
 	// after the init() func is run, read the TOML desired state file
