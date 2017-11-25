@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"strings"
 )
 
 var s state
@@ -148,20 +147,8 @@ func createContext() (bool, string) {
 	} else if s.Certificates == nil || s.Certificates["caCrt"] == "" || s.Certificates["caKey"] == "" {
 		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
 			"as you did not provide Certifications to use in your desired state file."
-	} else {
-		cmd := command{
-			Cmd:         "bash",
-			Args:        []string{"-c", "echo " + s.Settings["password"]},
-			Description: "reading the password from env variable.",
-		}
-
-		var exitCode int
-		exitCode, password = cmd.exec(debug)
-
-		password = strings.TrimSpace(password)
-		if exitCode != 0 || password == "" {
-			return false, "ERROR: failed to read password from env variable."
-		}
+	} else if !envVarExists(s.Settings["password"]) {
+		return false, "ERROR: env variable [ " + s.Settings["password"] + " ] does not exist in the environment."
 	}
 
 	// download certs using AWS cli
