@@ -43,9 +43,10 @@ func (s state) validate() (bool, string) {
 				"but have not given me the keys to do so. Please add [caCrt] and [caKey] under Certifications."
 		}
 		for key, value := range s.Certificates {
-			_, err := url.ParseRequestURI(value)
-			if err != nil || !strings.HasPrefix(value, "s3://") {
-				return false, "ERROR: certifications validation failed -- [ " + key + " ] must be a valid S3 bucket URL."
+			_, err1 := url.ParseRequestURI(value)
+			_, err2 := os.Stat(value)
+			if (err1 != nil || !strings.HasPrefix(value, "s3://")) && err2 != nil {
+				return false, "ERROR: certifications validation failed -- [ " + key + " ] must be a valid S3 bucket URL or a valid relative file path."
 			}
 		}
 

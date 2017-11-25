@@ -6,9 +6,10 @@ maintainer = "k8s-admin"
 
 # paths to the certificate for connecting to the cluster
 # You can skip this if you use Helmsman on a machine with kubectl already connected to your k8s cluster. 
+# you have to use exact key names here : 'caCrt' for certificate and 'caKey' for the key
 [certificates]
-# caCrt = "s3://mybucket/ca.crt" # s3 bucket path
-# caKey = "s3://mybucket/ca.key" 
+# caCrt = "s3://mybucket/ca.crt" # s3 bucket path, or valid local file relative path
+# caKey = "../ca.key" 
 
 [settings]
 kubeContext = "minikube" # will try connect to this context first, if it does not exist, it will be created using the details below
