@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"strings"
 )
 
@@ -24,24 +25,28 @@ func decide(r release, s *state) {
 	// check for deletion
 	if !r.Enabled {
 
-		inspectDeleteScenario(s.Namespaces[r.Env], r)
+		inspectDeleteScenario(s.Namespaces[r.Namespace], r)
 
 	} else { // check for install/upgrade/rollback
-		if helmReleaseExists(s.Namespaces[r.Env], r.Name, "deployed") {
+		if helmReleaseExists(s.Namespaces[r.Namespace], r.Name, "deployed") {
 
-			inspectUpgradeScenario(s.Namespaces[r.Env], r)
+			inspectUpgradeScenario(s.Namespaces[r.Namespace], r)
 
-		} else if helmReleaseExists(s.Namespaces[r.Env], r.Name, "deleted") {
+		} else if helmReleaseExists(s.Namespaces[r.Namespace], r.Name, "deleted") {
 
-			inspectRollbackScenario(s.Namespaces[r.Env], r)
+			inspectRollbackScenario(s.Namespaces[r.Namespace], r)
 
-		} else if helmReleaseExists(s.Namespaces[r.Env], r.Name, "failed") {
+		} else if helmReleaseExists(s.Namespaces[r.Namespace], r.Name, "failed") {
 
 			deleteRelease(r.Name, true)
 
+		} else if helmReleaseExists(s.Namespaces[r.Namespace], r.Name, "all") { // it is deployed but in another namespace
+
+			reInstallRelease(s.Namespaces[r.Namespace], r)
+
 		} else {
 
-			installRelease(s.Namespaces[r.Env], r)
+			installRelease(s.Namespaces[r.Namespace], r)
 
 		}
 
@@ -68,7 +73,7 @@ func installRelease(namespace string, r release) {
 	releaseName := r.Name
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm install " + r.Chart + " -n " + releaseName + " --namespace " + namespace + getValuesFile(r) + " --version " + r.Version},
+		Args:        []string{"-c", "helm install " + r.Chart + " -n " + releaseName + " --namespace " + namespace + getValuesFile(r) + " --version " + r.Version + getSetValues(r)},
 		Description: "installing release [ " + releaseName + " ] in namespace [[ " + namespace + " ]]",
 	}
 	outcome.addCommand(cmd)
@@ -183,7 +188,7 @@ func inspectUpgradeScenario(namespace string, r release) {
 func upgradeRelease(r release) {
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFile(r) + " --version " + r.Version + " --force"},
+		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFile(r) + " --version " + r.Version + " --force " + getSetValues(r)},
 		Description: "upgrading release [ " + r.Name + " ]",
 	}
 
@@ -208,7 +213,7 @@ func reInstallRelease(namespace string, r release) {
 
 	installCmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm install " + r.Chart + " --version " + r.Version + " -n " + releaseName + " --namespace " + namespace + getValuesFile(r)},
+		Args:        []string{"-c", "helm install " + r.Chart + " --version " + r.Version + " -n " + releaseName + " --namespace " + namespace + getValuesFile(r) + getSetValues(r)},
 		Description: "installing release [ " + releaseName + " ] in namespace [[ " + namespace + " ]]",
 	}
 	outcome.addCommand(installCmd)
@@ -243,4 +248,13 @@ func getValuesFile(r release) string {
 		return " -f " + r.ValuesFile
 	}
 	return ""
+}
+
+// getSetValues returns --set params to be used with helm install/upgrade commands
+func getSetValues(r release) string {
+	result := ""
+	for k, v := range r.Set {
+		result = result + " --set " + k + "=" + os.Getenv(strings.SplitAfter(v, "$")[1])
+	}
+	return result
 }
