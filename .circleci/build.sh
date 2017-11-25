@@ -9,6 +9,7 @@ if [ $? -eq 0 ]; then
     if [ $? -eq 0 ]; then
         echo "cleaning after tests ..."
         rm hello.world hello.world1 helmsman
+        git clean -fd
         echo "releasing ..."
         goreleaser | tee /dev/tty | grep -o "error"
         if [ $? -eq 0 ]; then
