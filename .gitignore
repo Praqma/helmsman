@@ -2,3 +2,5 @@
 *.key
 *.crt
 /dist
+*.world
+*.world1

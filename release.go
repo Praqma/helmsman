@@ -27,7 +27,7 @@ func validateRelease(r release, names map[string]bool) (bool, string) {
 	if r.Name == "" || names[r.Name] {
 		return false, "release name can't be empty and must be unique."
 	} else if r.Namespace == "" {
-		return false, "release targeted env (namespace) can't be empty."
+		return false, "release targeted namespace can't be empty."
 	} else if r.Chart == "" || !strings.ContainsAny(r.Chart, "/") {
 		return false, "chart can't be empty and must be of the format: repo/chart."
 	} else if r.Version == "" {
