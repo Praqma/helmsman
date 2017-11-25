@@ -141,14 +141,19 @@ func addNamespaces(namespaces map[string]string) {
 func createContext() (bool, string) {
 
 	var password string
+	var ok bool
+
 	if s.Settings["password"] == "" || s.Settings["username"] == "" || s.Settings["clusterURI"] == "" {
 		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
 			"as you did not specify enough information in the Settings section of your desired state file."
 	} else if s.Certificates == nil || s.Certificates["caCrt"] == "" || s.Certificates["caKey"] == "" {
 		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
 			"as you did not provide Certifications to use in your desired state file."
-	} else if !envVarExists(s.Settings["password"]) {
-		return false, "ERROR: env variable [ " + s.Settings["password"] + " ] does not exist in the environment."
+	} else {
+		ok, password = envVarExists(s.Settings["password"])
+		if !ok {
+			return false, "ERROR: env variable [ " + s.Settings["password"] + " ] does not exist in the environment."
+		}
 	}
 
 	// download certs using AWS cli
