@@ -75,6 +75,7 @@ func readFile(filepath string) string {
 
 // printHelp prints Helmsman commands
 func printHelp() {
+	fmt.Println("Helmsman version: " + version)
 	fmt.Println("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
 	fmt.Println(" Usage: helmsman [options]")
 	fmt.Println()

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 )
@@ -14,15 +15,21 @@ func init() {
 	flag.BoolVar(&apply, "apply", false, "apply the plan directly")
 	flag.BoolVar(&debug, "debug", false, "show the execution logs")
 	flag.BoolVar(&help, "help", false, "show Helmsman help")
+	flag.BoolVar(&v, "v", false, "show the version")
 
 	flag.Parse()
 
-	println("Helmsman version: " + version)
+	if v {
+		fmt.Println("Helmsman version: " + version)
+		os.Exit(0)
+	}
 
 	if help {
 		printHelp()
 		os.Exit(0)
 	}
+
+	fmt.Println("Helmsman version: " + version)
 
 	if !toolExists("helm") {
 		log.Fatal("ERROR: helm is not installed/configured correctly. Aborting!")
