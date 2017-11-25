@@ -38,7 +38,7 @@ func validateRelease(r release, names map[string]bool) (bool, string) {
 		for k, v := range r.Set {
 			if !strings.HasPrefix(v, "$") {
 				return false, "the value for variable [ " + k + " ] must be an environment variable name and start with '$'."
-			} else if ok, _ := envVarExists(v); ok {
+			} else if ok, _ := envVarExists(v); !ok {
 				return false, "env variable [ " + v + " ] is not found in the environment."
 			}
 		}
