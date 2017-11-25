@@ -11,7 +11,7 @@ if [ $? -eq 0 ]; then
         rm hello.world hello.world1 helmsman
         git clean -fd
         echo "releasing ..."
-        goreleaser | tee /dev/tty | grep -o "error"
+        goreleaser --release-notes release_notes.md | tee /dev/tty | grep -o "error"
         if [ $? -eq 0 ]; then
             echo "goreleaser experienced an error and no new releases made. That is Ok!"
         else
