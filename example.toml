@@ -48,7 +48,7 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     version = "0.9.1" # chart version
     valuesFile = "" # leaving it empty uses the default chart values
     purge = false # will only be considered when there is a delete operation
-    test = false # run the tests whenever this release is installed/upgraded/rolledback
+    test = false # run the tests when this release is installed for the first time only
     # [apps.jenkins.set] # values to override values from values.yaml with values from env vars-- useful for passing secrets to charts
     #     db_username="$DB_USERNAME"
     #     db_password="$DB_PASSWORD"
@@ -63,7 +63,7 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     version = "6.2.0" # chart version
     valuesFile = "" # leaving it empty uses the default chart values
     purge = false # will only be considered when there is a delete operation
-    test = false # run the tests whenever this release is installed/upgraded/rolledback
+    test = false # run the tests when this release is installed for the first time only
     # [apps.artifactory.set] # values to override values from values.yaml with values from env vars-- useful for passing secrets to charts
     #     db_username="$DB_USERNAME"
     #     db_password="$DB_PASSWORD"
