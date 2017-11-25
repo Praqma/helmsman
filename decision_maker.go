@@ -101,9 +101,9 @@ func inspectRollbackScenario(namespace string, r release) {
 		logDecision("DECISION: release [ " + releaseName + " ] is currently deleted and is desired to be rolledback to " +
 			"namespace [[ " + namespace + " ]] . No problem!")
 
-		if r.Test {
-			testRelease(releaseName)
-		}
+		// if r.Test {
+		// 	testRelease(releaseName)
+		// }
 
 	} else {
 
@@ -193,9 +193,9 @@ func upgradeRelease(r release) {
 
 	outcome.addCommand(cmd)
 
-	if r.Test {
-		testRelease(r.Name)
-	}
+	// if r.Test {
+	// 	testRelease(r.Name)
+	// }
 }
 
 // reInstallRelease purge deletes a release and reinstall it.
@@ -217,9 +217,9 @@ func reInstallRelease(namespace string, r release) {
 	}
 	outcome.addCommand(installCmd)
 
-	if r.Test {
-		testRelease(releaseName)
-	}
+	// if r.Test {
+	// 	testRelease(releaseName)
+	// }
 }
 
 // logDecision adds the decisions made to the plan.
