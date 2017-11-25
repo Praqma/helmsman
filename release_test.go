@@ -21,7 +21,7 @@ func Test_validateRelease(t *testing.T) {
 				r: release{
 					Name:        "release1",
 					Description: "",
-					Env:         "namespace",
+					Namespace:   "namespace",
 					Enabled:     true,
 					Chart:       "repo/chartX",
 					Version:     "1.0",
@@ -38,7 +38,7 @@ func Test_validateRelease(t *testing.T) {
 				r: release{
 					Name:        "release2",
 					Description: "",
-					Env:         "namespace",
+					Namespace:   "namespace",
 					Enabled:     true,
 					Chart:       "repo/chartX",
 					Version:     "1.0",
@@ -55,7 +55,7 @@ func Test_validateRelease(t *testing.T) {
 				r: release{
 					Name:        "release3",
 					Description: "",
-					Env:         "namespace",
+					Namespace:   "namespace",
 					Enabled:     true,
 					Chart:       "repo/chartX",
 					Version:     "1.0",
@@ -72,7 +72,7 @@ func Test_validateRelease(t *testing.T) {
 				r: release{
 					Name:        "release1",
 					Description: "",
-					Env:         "namespace",
+					Namespace:   "namespace",
 					Enabled:     true,
 					Chart:       "repo/chartX",
 					Version:     "1.0",
@@ -89,7 +89,7 @@ func Test_validateRelease(t *testing.T) {
 				r: release{
 					Name:        "",
 					Description: "",
-					Env:         "namespace",
+					Namespace:   "namespace",
 					Enabled:     true,
 					Chart:       "repo/chartX",
 					Version:     "1.0",
@@ -106,7 +106,7 @@ func Test_validateRelease(t *testing.T) {
 				r: release{
 					Name:        "release6",
 					Description: "",
-					Env:         "",
+					Namespace:   "",
 					Enabled:     true,
 					Chart:       "repo/chartX",
 					Version:     "1.0",
@@ -116,14 +116,14 @@ func Test_validateRelease(t *testing.T) {
 				},
 			},
 			want:  false,
-			want1: "release targeted env (namespace) can't be empty.",
+			want1: "release targeted namespace can't be empty.",
 		}, {
 			name: "test case 7",
 			args: args{
 				r: release{
 					Name:        "release7",
 					Description: "",
-					Env:         "namespace",
+					Namespace:   "namespace",
 					Enabled:     true,
 					Chart:       "chartX",
 					Version:     "1.0",
@@ -140,7 +140,7 @@ func Test_validateRelease(t *testing.T) {
 				r: release{
 					Name:        "release8",
 					Description: "",
-					Env:         "namespace",
+					Namespace:   "namespace",
 					Enabled:     true,
 					Chart:       "",
 					Version:     "1.0",
@@ -157,7 +157,7 @@ func Test_validateRelease(t *testing.T) {
 				r: release{
 					Name:        "release9",
 					Description: "",
-					Env:         "namespace",
+					Namespace:   "namespace",
 					Enabled:     true,
 					Chart:       "repo/chartX",
 					Version:     "",
@@ -174,7 +174,7 @@ func Test_validateRelease(t *testing.T) {
 				r: release{
 					Name:        "release10",
 					Description: "",
-					Env:         "namespace",
+					Namespace:   "namespace",
 					Enabled:     true,
 					Chart:       "repo/chartX",
 					Version:     "1.0",
@@ -205,7 +205,7 @@ func Test_validateRelease(t *testing.T) {
 // 	type fields struct {
 // 		Name        string
 // 		Description string
-// 		Env         string
+// 		Namespace         string
 // 		Enabled     bool
 // 		Chart       string
 // 		Version     string
@@ -224,7 +224,7 @@ func Test_validateRelease(t *testing.T) {
 // 			r := release{
 // 				Name:        tt.fields.Name,
 // 				Description: tt.fields.Description,
-// 				Env:         tt.fields.Env,
+// 				Namespace:         tt.fields.Namespace,
 // 				Enabled:     tt.fields.Enabled,
 // 				Chart:       tt.fields.Chart,
 // 				Version:     tt.fields.Version,
