@@ -24,7 +24,7 @@ Helmsman was created to ease continous deployment of Helm charts. When you want 
 # Helmsman lets you:
 
 - [install/delete/upgrade/rollback your helm charts from code](https://github.com/Praqma/helmsman/blob/master/docs/how_to/manipulate_apps.md).
-- [pass secrets/user input to helm charts from environment variables](https://github.com/Praqma/helmsman/blob/master/docs/how_to/pass_secrets_from env_variables.md).
+- [pass secrets/user input to helm charts from environment variables](https://github.com/Praqma/helmsman/blob/master/docs/how_to/pass_secrets_from_env_variables.md).
 - [test releases when they are first installed](https://github.com/Praqma/helmsman/blob/master/docs/how_to/test_charts.md).
 - [use public and private helm charts](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_private_helm_charts.md).
 - [use locally developed helm charts (the tar archives)](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_local_charts.md).
