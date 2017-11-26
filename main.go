@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strings"
 )
 
 var s state
@@ -163,31 +164,42 @@ func createContext() (bool, string) {
 		return false, "ERROR: aws is not installed/configured correctly. It is needed for downloading certs. Aborting!"
 	}
 
-	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "aws s3 cp " + s.Certificates["caCrt"] + " ca.crt"},
-		Description: "downloading ca.crt from S3.",
+	caCrt := s.Certificates["caCrt"]
+	caKey := s.Certificates["caKey"]
+
+	if strings.HasPrefix(s.Certificates["caCrt"], "s3") {
+		cmd := command{
+			Cmd:         "bash",
+			Args:        []string{"-c", "aws s3 cp " + s.Certificates["caCrt"] + " ca.crt"},
+			Description: "downloading ca.crt from S3.",
+		}
+
+		if exitCode, _ := cmd.exec(debug); exitCode != 0 {
+			return false, "ERROR: failed to download caCrt."
+		}
+
+		caCrt = "ca.crt"
 	}
 
-	if exitCode, _ := cmd.exec(debug); exitCode != 0 {
-		return false, "ERROR: failed to download caCrt."
-	}
+	if strings.HasPrefix(s.Certificates["caKey"], "s3") {
+		cmd := command{
+			Cmd:         "bash",
+			Args:        []string{"-c", "aws s3 cp " + s.Certificates["caKey"] + " ca.key"},
+			Description: "downloading ca.key from S3.",
+		}
 
-	cmd = command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "aws s3 cp " + s.Certificates["caKey"] + " ca.key"},
-		Description: "downloading ca.key from S3.",
-	}
+		if exitCode, _ := cmd.exec(debug); exitCode != 0 {
+			return false, "ERROR: failed to download caKey."
+		}
 
-	if exitCode, _ := cmd.exec(debug); exitCode != 0 {
-		return false, "ERROR: failed to download caKey."
+		caKey = "ca.key"
 	}
 
 	// connecting to the cluster
-	cmd = command{
+	cmd := command{
 		Cmd: "bash",
 		Args: []string{"-c", "kubectl config set-credentials " + s.Settings["username"] + " --username=" + s.Settings["username"] +
-			" --password=" + password + " --client-key=ca.key"},
+			" --password=" + password + " --client-key=" + caKey},
 		Description: "creating kubectl context - setting credentials.",
 	}
 
@@ -198,7 +210,7 @@ func createContext() (bool, string) {
 	cmd = command{
 		Cmd: "bash",
 		Args: []string{"-c", "kubectl config set-cluster " + s.Settings["kubeContext"] + " --server=" + s.Settings["clusterURI"] +
-			" --certificate-authority=ca.crt"},
+			" --certificate-authority=" + caCrt},
 		Description: "creating kubectl context - setting cluster.",
 	}
 
