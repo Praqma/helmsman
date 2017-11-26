@@ -1,10 +1,10 @@
 ---
-version: v0.1.2
+version: v0.1.3
 ---
 
 You can manage Helm charts deployment on a hosted K8S cluster in the cloud or on-prem. You need to include the required information to connect to the cluster in your state file. Below is an example:
 
-**IMPORTANT**: Only Certificates and private helm repos in S3 buckets are currently supported. Helmsman needs valid AWS access keys to be able to retrieve private charts or certificates from your s3 buckets. It expects the keys to be in the following environemnt variables:
+**IMPORTANT**: Certificates can be used from S3 buckets or local file system. If you use s3 buckets, Helmsman needs valid AWS access keys to be able to retrieve private charts or certificates from your s3 buckets. It expects the keys to be in the following environemnt variables:
 
 - AWS_ACCESS_KEY_ID
 - AWS_SECRET_ACCESS_KEY
@@ -19,8 +19,8 @@ maintainer = "k8s-admin"
 
 # Certificates are used to connect to the cluster. Currently, they can only be retrieved from s3 buckets.
 [certificates]
-caCrt = "s3://your-bucket/ca.crt" 
-caKey = "s3://your-bucket/ca.key" 
+caCrt = "s3://your-bucket/ca.crt" # s3 bucket
+caKey = "../../ca.key" # relative file path
 
 [settings]
 kubeContext = "mycontext" 
@@ -41,7 +41,7 @@ myrepo = "s3://my-private-repo/charts"
     [apps.jenkins]
     name = "jenkins" 
     description = "jenkins"
-    env = "staging" 
+    namespace = "staging" 
     enabled = true 
     chart = "stable/jenkins" 
     version = "0.9.1" 
@@ -53,7 +53,7 @@ myrepo = "s3://my-private-repo/charts"
     [apps.artifactory]
     name = "artifactory" 
     description = "artifactory"
-    env = "staging" 
+    namespace = "staging" 
     enabled = true 
     chart = "stable/artifactory" 
     version = "6.2.0" 
