@@ -1,5 +1,5 @@
 ---
-version: v0.1.2
+version: v0.1.3
 ---
 
 You can run Helmsman local as a binary application with Minikube, you just need to skip all the cluster connection settings in your desired state file. Below is the example.toml desired state file adapted to work with Minikube.
@@ -25,7 +25,7 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     [apps.jenkins]
     name = "jenkins" 
     description = "jenkins"
-    env = "staging" 
+    namespace = "staging" 
     enabled = true 
     chart = "stable/jenkins" 
     version = "0.9.1" 
@@ -37,7 +37,7 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     [apps.artifactory]
     name = "artifactory" 
     description = "artifactory"
-    env = "staging" 
+    namespace = "staging" 
     enabled = true 
     chart = "stable/artifactory" 
     version = "6.2.0" 
