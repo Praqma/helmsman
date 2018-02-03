@@ -29,10 +29,13 @@ func (s state) validate() (bool, string) {
 		return false, "ERROR: settings validation failed -- you have not provided a " +
 			"kubeContext to use. Can't work without it. Sorry!"
 	} else if len(s.Settings) > 1 {
+		s.Settings["password"] = subsituteEnv(s.Settings["password"])
+		s.Settings["clusterURI"] = subsituteEnv(s.Settings["clusterURI"])
+
 		if s.Settings["password"] == "" || !strings.HasPrefix(s.Settings["password"], "$") {
-			return false, "ERROR: settings validation failed -- password should be an env variable starting with $ "
+			return false, "ERROR: settings validation failed -- password should be set as an env variable. It is currently missing or empty. "
 		} else if _, err := url.ParseRequestURI(s.Settings["clusterURI"]); err != nil {
-			return false, "ERROR: settings validation failed -- clusterURI must have a valid URL."
+			return false, "ERROR: settings validation failed -- clusterURI must have a valid URL set in an env varibale or passed directly. Either the env var is missing/empty or the URL is invalid."
 		}
 	}
 
@@ -40,20 +43,21 @@ func (s state) validate() (bool, string) {
 	if s.Certificates != nil {
 		if len(s.Settings) > 1 && len(s.Certificates) != 2 {
 			return false, "ERROR: certifications validation failed -- You want me to connect to your cluster for you " +
-				"but have not given me the keys to do so. Please add [caCrt] and [caKey] under Certifications."
+				"but have not given me the keys to do so. Please add [caCrt] and [caKey] under Certifications. You might also need to provide [clientCrt]."
 		}
 		for key, value := range s.Certificates {
+			value = subsituteEnv(value)
 			_, err1 := url.ParseRequestURI(value)
 			_, err2 := os.Stat(value)
-			if (err1 != nil || !strings.HasPrefix(value, "s3://")) && err2 != nil {
-				return false, "ERROR: certifications validation failed -- [ " + key + " ] must be a valid S3 bucket URL or a valid relative file path."
+			if (err1 != nil || (!strings.HasPrefix(value, "s3://") && !strings.HasPrefix(value, "gs://"))) && err2 != nil {
+				return false, "ERROR: certifications validation failed -- [ " + key + " ] must be a valid S3 or GCS bucket URL or a valid relative file path."
 			}
 		}
 
 	} else {
 		if len(s.Settings) > 1 {
 			return false, "ERROR: certifications validation failed -- You want me to connect to your cluster for you " +
-				"but have not given me the keys to do so. Please add [caCrt] and [caKey] under Certifications."
+				"but have not given me the keys to do so. Please add [caCrt] and [caKey] under Certifications. You might also need to provide [clientCrt]."
 		}
 	}
 
@@ -101,6 +105,16 @@ func (s state) validate() (bool, string) {
 	}
 
 	return true, ""
+}
+
+// substitueEnv checks if a string is an env variable (starts with '$'), then it returns its value
+// if the env variable is empty or unset, an empty string is returned
+// if the string does not start with '$', it is returned as is.
+func subsituteEnv(name string) string {
+	if strings.HasPrefix(name, "$") {
+		return os.Getenv(strings.SplitAfterN(name, "$", 2)[1])
+	}
+	return name
 }
 
 // print prints the desired state
