@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"strings"
+
+	"Helmsman/gcs"
 )
 
 var s state
@@ -50,7 +52,7 @@ func main() {
 }
 
 // setKubeContext sets your kubectl context to the one specified in the desired state file.
-// It returns false if it fails to set the context. This means the context deos not exist.
+// It returns false if it fails to set the context. This means the context does not exist.
 func setKubeContext(context string) bool {
 	cmd := command{
 		Cmd:         "bash",
@@ -164,13 +166,15 @@ func createContext() (bool, string) {
 		return false, "ERROR: aws is not installed/configured correctly. It is needed for downloading certs. Aborting!"
 	}
 
+	// set certs locations (relative filepath, GCS bucket, AWS bucket)
 	caCrt := s.Certificates["caCrt"]
 	caKey := s.Certificates["caKey"]
 
-	if strings.HasPrefix(s.Certificates["caCrt"], "s3") {
+	// download certs from AWS (if applicable)
+	if strings.HasPrefix(caCrt, "s3") {
 		cmd := command{
 			Cmd:         "bash",
-			Args:        []string{"-c", "aws s3 cp " + s.Certificates["caCrt"] + " ca.crt"},
+			Args:        []string{"-c", "aws s3 cp " + caCrt + " ca.crt"},
 			Description: "downloading ca.crt from S3.",
 		}
 
@@ -181,10 +185,10 @@ func createContext() (bool, string) {
 		caCrt = "ca.crt"
 	}
 
-	if strings.HasPrefix(s.Certificates["caKey"], "s3") {
+	if strings.HasPrefix(caKey, "s3") {
 		cmd := command{
 			Cmd:         "bash",
-			Args:        []string{"-c", "aws s3 cp " + s.Certificates["caKey"] + " ca.key"},
+			Args:        []string{"-c", "aws s3 cp " + caKey + " ca.key"},
 			Description: "downloading ca.key from S3.",
 		}
 
@@ -193,6 +197,22 @@ func createContext() (bool, string) {
 		}
 
 		caKey = "ca.key"
+	}
+
+	// download certs from GCS (if applicable)
+	// GCS bucket+file format should be: gs://bucket-name/file-name.extension
+	if strings.HasPrefix(caCrt, "gs") {
+		tmp := strings.SplitAfterN(caCrt, "//", 2)[1]
+		gcs.ReadFile(strings.SplitN(tmp, "/", 2)[0], strings.SplitN(tmp, "/", 2)[1], "ca.crt")
+
+		caCrt = "ca.crt"
+	}
+
+	if strings.HasPrefix(caKey, "gs") {
+		tmp := strings.SplitAfterN(caKey, "//", 2)[1]
+		gcs.ReadFile(strings.SplitN(tmp, "/", 2)[0], strings.SplitN(tmp, "/", 2)[1], "ca.key")
+
+		caCrt = "ca.key"
 	}
 
 	// connecting to the cluster

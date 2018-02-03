@@ -20,7 +20,7 @@ func checkCredentialsEnvVar() bool {
 // ReadFile reads a file from storage bucket and saves it in a desired location.
 func ReadFile(bucketName string, filename string, outFile string) {
 	if !checkCredentialsEnvVar() {
-		log.Fatal("Failed to find the Google_APPLICATION_CREDENTIALS env var. Please make sure it is set in the environment.")
+		log.Fatal("Failed to find the GOOGLE_APPLICATION_CREDENTIALS env var. Please make sure it is set in the environment.")
 	}
 
 	ctx := context.Background()
