@@ -31,15 +31,16 @@ func decide(r release, s *state) {
 
 			inspectUpgradeScenario(s.Namespaces[r.Namespace], r)
 
-		} else if helmReleaseExists(s.Namespaces[r.Namespace], r.Name, "deleted") {
+		} else if helmReleaseExists(nil, r.Name, "deleted") {
 
 			inspectRollbackScenario(s.Namespaces[r.Namespace], r)
 
-		} else if helmReleaseExists(s.Namespaces[r.Namespace], r.Name, "failed") {
+		} else if helmReleaseExists(nil, r.Name, "failed") {
 
 			deleteRelease(r.Name, true)
+			installRelease(s.Namespaces[r.Namespace], r)
 
-		} else if helmReleaseExists(s.Namespaces[r.Namespace], r.Name, "all") { // it is deployed but in another namespace
+		} else if helmReleaseExists(nil, r.Name, "all") { // it is deployed but in another namespace
 
 			reInstallRelease(s.Namespaces[r.Namespace], r)
 
@@ -110,6 +111,8 @@ func inspectRollbackScenario(namespace string, r release) {
 		reInstallRelease(namespace, r)
 		logDecision("DECISION: release [ " + releaseName + " ] is deleted BUT from namespace [[ " + getReleaseNamespace(releaseName) +
 			" ]]. Will purge delete it from there and install it in namespace [[ " + namespace + " ]]")
+		logDecision("WARNING: rolling back release [ " + releaseName + " ] from [[ " + getReleaseNamespace(releaseName) + " ]] to [[ " + namespace +
+			" ]] might not correctly connect to existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/move_charts_across_namespaces.md for details if this release uses PV and PVC.")
 
 	}
 }
@@ -180,6 +183,8 @@ func inspectUpgradeScenario(namespace string, r release) {
 		logDecision("DECISION: release [ " + releaseName + " ] is desired to be enabled in a new namespace [[ " + namespace +
 			" ]]. I am planning a purge delete of the current release from namespace [[ " + getReleaseNamespace(releaseName) + " ]] " +
 			"and will install it for you in namespace [[ " + namespace + " ]]")
+		logDecision("WARNING: Moving release [ " + releaseName + " ] from [[ " + getReleaseNamespace(releaseName) + " ]] to [[ " + namespace +
+			" ]] might not correctly connect to existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/move_charts_across_namespaces.md for details if this release uses PV and PVC.")
 	}
 }
 
@@ -198,7 +203,7 @@ func upgradeRelease(r release) {
 	// }
 }
 
-// reInstallRelease purge deletes a release and reinstall it.
+// reInstallRelease purge deletes a release and reinstalls it.
 // This is used when moving a release to another namespace or when changing the chart used for it.
 func reInstallRelease(namespace string, r release) {
 
