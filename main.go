@@ -4,7 +4,7 @@ import (
 	"log"
 	"strings"
 
-	"Helmsman/gcs"
+	"github.com/Praqma/helmsman/gcs"
 )
 
 var s state
