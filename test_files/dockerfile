@@ -18,6 +18,7 @@ RUN apk add --update --no-cache ca-certificates git \
     && rm -rf /tmp/linux-amd64
     
 RUN go get github.com/BurntSushi/toml \ 
-    && go get github.com/goreleaser/goreleaser 
+    && go get github.com/goreleaser/goreleaser \
+    && go get github.com/Praqma/helmsman/gcs
 
 WORKDIR src/helmsman    
