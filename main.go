@@ -145,20 +145,12 @@ func addNamespaces(namespaces map[string]string) {
 // It returns true if successful, false otherwise
 func createContext() (bool, string) {
 
-	var password string
-	var ok bool
-
 	if s.Settings["password"] == "" || s.Settings["username"] == "" || s.Settings["clusterURI"] == "" {
 		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
 			"as you did not specify enough information in the Settings section of your desired state file."
 	} else if s.Certificates == nil || s.Certificates["caCrt"] == "" || s.Certificates["caKey"] == "" {
 		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
 			"as you did not provide Certifications to use in your desired state file."
-	} else {
-		ok, password = envVarExists(s.Settings["password"])
-		if !ok {
-			return false, "ERROR: env variable [ " + s.Settings["password"] + " ] does not exist in the environment."
-		}
 	}
 
 	// set certs locations (relative filepath, GCS bucket, AWS bucket)
@@ -182,6 +174,7 @@ func createContext() (bool, string) {
 			return false, "ERROR: failed to download caCrt."
 		}
 
+		log.Println("INFO: downloaded certificate authority ca.crt from S3.")
 		caCrt = "ca.crt"
 	}
 
@@ -200,6 +193,7 @@ func createContext() (bool, string) {
 			return false, "ERROR: failed to download caKey."
 		}
 
+		log.Println("INFO: downloaded ca.key from S3.")
 		caKey = "ca.key"
 	}
 
@@ -209,6 +203,7 @@ func createContext() (bool, string) {
 		tmp := strings.SplitAfterN(caCrt, "//", 2)[1]
 		gcs.ReadFile(strings.SplitN(tmp, "/", 2)[0], strings.SplitN(tmp, "/", 2)[1], "ca.crt")
 
+		log.Println("INFO: downloaded certificate authority ca.crt from GCS.")
 		caCrt = "ca.crt"
 	}
 
@@ -216,7 +211,8 @@ func createContext() (bool, string) {
 		tmp := strings.SplitAfterN(caKey, "//", 2)[1]
 		gcs.ReadFile(strings.SplitN(tmp, "/", 2)[0], strings.SplitN(tmp, "/", 2)[1], "ca.key")
 
-		caCrt = "ca.key"
+		log.Println("INFO: downloaded ca.key from GCS.")
+		caKey = "ca.key"
 	}
 
 	// client certificate
@@ -236,20 +232,23 @@ func createContext() (bool, string) {
 				return false, "ERROR: failed to download caClient."
 			}
 
+			log.Println("INFO: Client certificate downloaded from S3.")
 			caClient = "client.crt"
-		}
 
-		if strings.HasPrefix(caClient, "gs") {
+		} else if strings.HasPrefix(caClient, "gs") {
 			tmp := strings.SplitAfterN(caClient, "//", 2)[1]
 			gcs.ReadFile(strings.SplitN(tmp, "/", 2)[0], strings.SplitN(tmp, "/", 2)[1], "client.crt")
-
+			log.Println("INFO: Client certificate downloaded from GCS.")
 			caClient = "client.crt"
+
+		} else {
+			log.Println("INFO: Client certificate will be used from local file system.")
 		}
 	}
 
 	// connecting to the cluster
 	setCredentialsCmd := "kubectl config set-credentials " + s.Settings["username"] + " --username=" + s.Settings["username"] +
-		" --password=" + password + " --client-key=" + caKey
+		" --password=" + s.Settings["password"] + " --client-key=" + caKey
 	if caClient != "" {
 		setCredentialsCmd = setCredentialsCmd + " --client-certificate=" + caClient
 	}
