@@ -27,26 +27,26 @@ func decide(r release, s *state) {
 		inspectDeleteScenario(s.Namespaces[r.Namespace], r)
 
 	} else { // check for install/upgrade/rollback
-		if helmReleaseExists(s.Namespaces[r.Namespace], r.Name, "deployed") {
+		if helmReleaseExists(getDesiredNamespaces(r), r.Name, "deployed") {
 
 			inspectUpgradeScenario(s.Namespaces[r.Namespace], r)
 
 		} else if helmReleaseExists("", r.Name, "deleted") {
 
-			inspectRollbackScenario(s.Namespaces[r.Namespace], r)
+			inspectRollbackScenario(getDesiredNamespaces(r), r)
 
 		} else if helmReleaseExists("", r.Name, "failed") {
 
 			deleteRelease(r.Name, true)
-			installRelease(s.Namespaces[r.Namespace], r)
+			installRelease(getDesiredNamespaces(r), r)
 
 		} else if helmReleaseExists("", r.Name, "all") { // it is deployed but in another namespace
 
-			reInstallRelease(s.Namespaces[r.Namespace], r)
+			reInstallRelease(getDesiredNamespaces(r), r)
 
 		} else {
 
-			installRelease(s.Namespaces[r.Namespace], r)
+			installRelease(getDesiredNamespaces(r), r)
 
 		}
 
@@ -262,4 +262,16 @@ func getSetValues(r release) string {
 		result = result + " --set " + k + "=" + value
 	}
 	return result
+}
+
+// getDesiredNamespaces validates that namespace where the release is desired to be installed is defined in the Namespaces definition
+// it returns the namespace if it is already defined
+// otherwise, it throws an error
+func getDesiredNamespaces(r release) string {
+	value, ok := s.Namespaces[r.Namespace]
+	if !ok {
+		log.Fatal("ERROR: " + r.Namespace + " is not defined in the Namespaces section of your desired state file. Release [ " + r.Name +
+			" ] can't be installed in that Namespace until its defined in your desired state file.")
+	}
+	return value
 }
