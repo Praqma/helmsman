@@ -31,16 +31,16 @@ func decide(r release, s *state) {
 
 			inspectUpgradeScenario(s.Namespaces[r.Namespace], r)
 
-		} else if helmReleaseExists(nil, r.Name, "deleted") {
+		} else if helmReleaseExists("", r.Name, "deleted") {
 
 			inspectRollbackScenario(s.Namespaces[r.Namespace], r)
 
-		} else if helmReleaseExists(nil, r.Name, "failed") {
+		} else if helmReleaseExists("", r.Name, "failed") {
 
 			deleteRelease(r.Name, true)
 			installRelease(s.Namespaces[r.Namespace], r)
 
-		} else if helmReleaseExists(nil, r.Name, "all") { // it is deployed but in another namespace
+		} else if helmReleaseExists("", r.Name, "all") { // it is deployed but in another namespace
 
 			reInstallRelease(s.Namespaces[r.Namespace], r)
 
