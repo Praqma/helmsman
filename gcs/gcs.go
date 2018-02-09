@@ -1,7 +1,10 @@
 package gcs
 
 import (
+	"bytes"
+	"encoding/json"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 
@@ -11,7 +14,27 @@ import (
 )
 
 func checkCredentialsEnvVar() bool {
-	if os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") != "" {
+	if os.Getenv("GCLOUD_CREDENTIALS") != "" {
+		// write the credentials content into a json file
+		file, err := os.Create("/tmp/credentials.json")
+		if err != nil {
+			log.Fatal("ERROR: Cannot create credentials file: ", err)
+		} else {
+			// making sure special characters are not escaped
+			var buf bytes.Buffer
+			enc := json.NewEncoder(&buf)
+			enc.SetEscapeHTML(false)
+			enc.Encode(os.Getenv("GCLOUD_CREDENTIALS"))
+
+			// writing the credentials content to a file
+			err := ioutil.WriteFile(file.Name(), buf.Bytes(), 0644)
+			if err != nil {
+				log.Fatal("ERROR: Cannot write the credentials file: ", err)
+			}
+		}
+		defer file.Close()
+
+		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "/tmp/credentials.json")
 		return true
 	}
 	return false
@@ -20,7 +43,7 @@ func checkCredentialsEnvVar() bool {
 // ReadFile reads a file from storage bucket and saves it in a desired location.
 func ReadFile(bucketName string, filename string, outFile string) {
 	if !checkCredentialsEnvVar() {
-		log.Fatal("Failed to find the GOOGLE_APPLICATION_CREDENTIALS env var. Please make sure it is set in the environment.")
+		log.Fatal("Failed to find the GCLOUD_CREDENTIALS env var. Please make sure it is set in the environment.")
 	}
 
 	ctx := context.Background()
