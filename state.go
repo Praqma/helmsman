@@ -32,7 +32,7 @@ func (s state) validate() (bool, string) {
 		s.Settings["password"] = subsituteEnv(s.Settings["password"])
 		s.Settings["clusterURI"] = subsituteEnv(s.Settings["clusterURI"])
 
-		if s.Settings["password"] == "" || !strings.HasPrefix(s.Settings["password"], "$") {
+		if s.Settings["password"] == "" {
 			return false, "ERROR: settings validation failed -- password should be set as an env variable. It is currently missing or empty. "
 		} else if _, err := url.ParseRequestURI(s.Settings["clusterURI"]); err != nil {
 			return false, "ERROR: settings validation failed -- clusterURI must have a valid URL set in an env varibale or passed directly. Either the env var is missing/empty or the URL is invalid."
