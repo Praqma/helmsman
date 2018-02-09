@@ -18,8 +18,10 @@ func helmReleaseExists(namespace string, releaseName string, scope string) bool 
 		options = "--all -q"
 	} else if scope == "deleted" {
 		options = "--deleted -q"
-	} else if scope == "deployed" {
+	} else if scope == "deployed" && namespace != "" {
 		options = "--deployed -q --namespace " + namespace
+	} else if scope == "deployed" && namespace == "" {
+		options = "--deployed -q "
 	} else if scope == "failed" {
 		options = "--failed -q"
 	} else {
