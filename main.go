@@ -161,17 +161,17 @@ func createContext() (bool, string) {
 		}
 	}
 
-	// download certs using AWS cli
-	if !toolExists("aws help") {
-		return false, "ERROR: aws is not installed/configured correctly. It is needed for downloading certs. Aborting!"
-	}
-
 	// set certs locations (relative filepath, GCS bucket, AWS bucket)
 	caCrt := s.Certificates["caCrt"]
 	caKey := s.Certificates["caKey"]
+	caClient := s.Certificates["caClient"]
 
 	// download certs from AWS (if applicable)
 	if strings.HasPrefix(caCrt, "s3") {
+		// check AWS exists
+		if !toolExists("aws help") {
+			return false, "ERROR: aws is not installed/configured correctly. It is needed for downloading certs. Aborting!"
+		}
 		cmd := command{
 			Cmd:         "bash",
 			Args:        []string{"-c", "aws s3 cp " + caCrt + " ca.crt"},
@@ -186,6 +186,10 @@ func createContext() (bool, string) {
 	}
 
 	if strings.HasPrefix(caKey, "s3") {
+		// check AWS exists
+		if !toolExists("aws help") {
+			return false, "ERROR: aws is not installed/configured correctly. It is needed for downloading certs. Aborting!"
+		}
 		cmd := command{
 			Cmd:         "bash",
 			Args:        []string{"-c", "aws s3 cp " + caKey + " ca.key"},
@@ -215,11 +219,43 @@ func createContext() (bool, string) {
 		caCrt = "ca.key"
 	}
 
+	// client certificate
+	if caClient != "" {
+		if strings.HasPrefix(caClient, "s3") {
+			// check AWS exists
+			if !toolExists("aws help") {
+				return false, "ERROR: aws is not installed/configured correctly. It is needed for downloading certs. Aborting!"
+			}
+			cmd := command{
+				Cmd:         "bash",
+				Args:        []string{"-c", "aws s3 cp " + caClient + " client.crt"},
+				Description: "downloading caClient.crt from S3.",
+			}
+
+			if exitCode, _ := cmd.exec(debug); exitCode != 0 {
+				return false, "ERROR: failed to download caClient."
+			}
+
+			caClient = "client.crt"
+		}
+
+		if strings.HasPrefix(caClient, "gs") {
+			tmp := strings.SplitAfterN(caClient, "//", 2)[1]
+			gcs.ReadFile(strings.SplitN(tmp, "/", 2)[0], strings.SplitN(tmp, "/", 2)[1], "client.crt")
+
+			caClient = "client.crt"
+		}
+	}
+
 	// connecting to the cluster
+	setCredentialsCmd := "kubectl config set-credentials " + s.Settings["username"] + " --username=" + s.Settings["username"] +
+		" --password=" + password + " --client-key=" + caKey
+	if caClient != "" {
+		setCredentialsCmd = setCredentialsCmd + " --client-certificate=" + caClient
+	}
 	cmd := command{
-		Cmd: "bash",
-		Args: []string{"-c", "kubectl config set-credentials " + s.Settings["username"] + " --username=" + s.Settings["username"] +
-			" --password=" + password + " --client-key=" + caKey},
+		Cmd:         "bash",
+		Args:        []string{"-c", setCredentialsCmd},
 		Description: "creating kubectl context - setting credentials.",
 	}
 
@@ -241,7 +277,7 @@ func createContext() (bool, string) {
 	cmd = command{
 		Cmd: "bash",
 		Args: []string{"-c", "kubectl config set-context " + s.Settings["kubeContext"] + " --cluster=" + s.Settings["kubeContext"] +
-			" --user=" + s.Settings["username"] + " --password=" + password},
+			" --user=" + s.Settings["username"]},
 		Description: "creating kubectl context - setting context.",
 	}
 
