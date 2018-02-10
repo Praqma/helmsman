@@ -90,6 +90,11 @@ func initHelm() (bool, string) {
 func addHelmRepos(repos map[string]string) (bool, string) {
 
 	for repoName, url := range repos {
+		// check if repo is in GCS, then perform GCS auth -- needed for private GCS helm repos
+		// failed auth would not throw an error here, as it is possible that the repo is public and does not need authentication
+		if strings.HasPrefix(url, "gs://") {
+			gcs.Auth()
+		}
 		cmd := command{
 			Cmd:         "bash",
 			Args:        []string{"-c", "helm repo add " + repoName + " " + url},
