@@ -1,8 +1,6 @@
 package gcs
 
 import (
-	"bytes"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"log"
@@ -16,23 +14,12 @@ import (
 func checkCredentialsEnvVar() bool {
 	if os.Getenv("GCLOUD_CREDENTIALS") != "" {
 		// write the credentials content into a json file
-		file, err := os.Create("/tmp/credentials.json")
+		d := []byte(os.Getenv("GCLOUD_CREDENTIALS"))
+		err := ioutil.WriteFile("/tmp/credentials.json", d, 0644)
+
 		if err != nil {
 			log.Fatal("ERROR: Cannot create credentials file: ", err)
-		} else {
-			// making sure special characters are not escaped
-			var buf bytes.Buffer
-			enc := json.NewEncoder(&buf)
-			enc.SetEscapeHTML(false)
-			enc.Encode(os.Getenv("GCLOUD_CREDENTIALS"))
-
-			// writing the credentials content to a file
-			err := ioutil.WriteFile(file.Name(), buf.Bytes(), 0644)
-			if err != nil {
-				log.Fatal("ERROR: Cannot write the credentials file: ", err)
-			}
 		}
-		defer file.Close()
 
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "/tmp/credentials.json")
 		return true
