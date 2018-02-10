@@ -76,4 +76,5 @@ func ReadFile(bucketName string, filename string, outFile string) {
 	if _, err := io.Copy(dest, r); err != nil {
 		log.Fatalf("Failed to read object content: %v", err)
 	}
+	log.Println("INFO: Successfully downloaded " + filename + " from GCS as " + outFile)
 }
