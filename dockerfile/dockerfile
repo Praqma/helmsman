@@ -2,7 +2,8 @@ FROM golang:1.9 as builder
 WORKDIR /go/src/
 RUN go get github.com/BurntSushi/toml
 RUN git clone https://github.com/Praqma/helmsman.git 
-RUN go get github.com/Praqma/helmsman/gcs  
+RUN go get github.com/Praqma/helmsman/gcs 
+RUN go get github.com/Praqma/helmsman/aws 
 RUN go install helmsman/.
 
 FROM alpine:3.6 as kube
@@ -18,12 +19,8 @@ FROM alpine:3.7
 RUN apk add --update --no-cache ca-certificates git
 
 ENV HELM_VERSION v2.7.0
-# Versions: https://pypi.python.org/pypi/awscli#downloads
-ENV AWS_CLI_VERSION 1.11.131
 
 RUN apk --no-cache update \
-    && apk --no-cache add python py-pip py-setuptools ca-certificates groff less  \
-    && pip --no-cache-dir install awscli==${AWS_CLI_VERSION} \
     && rm -rf /var/cache/apk/* \
     && apk add --update -t deps curl tar gzip make bash \
     && curl -L http://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar zxv -C /tmp \
@@ -31,6 +28,7 @@ RUN apk --no-cache update \
     && chmod +x /usr/local/bin/helm \
     && mkdir -p ~/.helm/plugins \
     && helm plugin install https://github.com/hypnoglow/helm-s3.git --version 0.4.0 \
+    && helm plugin install https://github.com/nouney/helm-gcs \
     && rm -rf /tmp/linux-amd64
 
 COPY --from=kube /usr/local/bin/kubectl /bin/kubectl
