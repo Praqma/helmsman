@@ -19,6 +19,7 @@ RUN apk add --update --no-cache ca-certificates git \
     
 RUN go get github.com/BurntSushi/toml \ 
     && go get github.com/goreleaser/goreleaser \
-    && go get github.com/Praqma/helmsman/gcs
+    && go get github.com/Praqma/helmsman/gcs \
+    && go get github.com/Praqma/helmsman/aws
 
 WORKDIR src/helmsman    
