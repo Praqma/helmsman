@@ -1,8 +1,8 @@
 FROM golang:1.9 as builder
 WORKDIR /go/src/
 RUN go get github.com/BurntSushi/toml
-RUN go get github.com/Praqma/helmsman/gcs  
 RUN git clone https://github.com/Praqma/helmsman.git 
+RUN go get github.com/Praqma/helmsman/gcs  
 RUN go install helmsman/.
 
 FROM alpine:3.6 as kube
@@ -14,7 +14,7 @@ RUN curl -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_LAT
 RUN chmod +x /usr/local/bin/kubectl 
 
 # The image to keep
-FROM alpine:3.6 
+FROM alpine:3.7 
 RUN apk add --update --no-cache ca-certificates git
 
 ENV HELM_VERSION v2.7.0
