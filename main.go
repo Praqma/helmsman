@@ -4,6 +4,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/Praqma/helmsman/aws"
 	"github.com/Praqma/helmsman/gcs"
 )
 
@@ -158,92 +159,67 @@ func createContext() (bool, string) {
 	caKey := s.Certificates["caKey"]
 	caClient := s.Certificates["caClient"]
 
-	// download certs from AWS (if applicable)
-	if strings.HasPrefix(caCrt, "s3") {
-		// check AWS exists
-		if !toolExists("aws help") {
-			return false, "ERROR: aws is not installed/configured correctly. It is needed for downloading certs. Aborting!"
-		}
-		cmd := command{
-			Cmd:         "bash",
-			Args:        []string{"-c", "aws s3 cp " + caCrt + " ca.crt"},
-			Description: "downloading ca.crt from S3.",
+	// download certs and keys
+	// GCS bucket+file format should be: gs://bucket-name/dir.../filename.ext
+	// S3 bucket+file format should be: s3://bucket-name/dir.../filename.ext
+
+	// CA cert
+	if caCrt != "" {
+
+		tmp := getBucketElements(caCrt)
+		if strings.HasPrefix(caCrt, "s3") {
+
+			aws.ReadFile(tmp["bucketName"], tmp["filePath"], "ca.crt")
+			caCrt = "ca.crt"
+
+		} else if strings.HasPrefix(caCrt, "gs") {
+
+			gcs.ReadFile(tmp["bucketName"], tmp["filePath"], "ca.crt")
+			caCrt = "ca.crt"
+
+		} else {
+			log.Println("INFO: CA certificate will be used from local file system.")
 		}
 
-		if exitCode, _ := cmd.exec(debug); exitCode != 0 {
-			return false, "ERROR: failed to download caCrt."
-		}
-
-		log.Println("INFO: downloaded certificate authority ca.crt from S3.")
-		caCrt = "ca.crt"
 	}
 
-	if strings.HasPrefix(caKey, "s3") {
-		// check AWS exists
-		if !toolExists("aws help") {
-			return false, "ERROR: aws is not installed/configured correctly. It is needed for downloading certs. Aborting!"
+	// CA key
+	if caKey != "" {
+
+		tmp := getBucketElements(caKey)
+		if strings.HasPrefix(caKey, "s3") {
+
+			aws.ReadFile(tmp["bucketName"], tmp["filePath"], "ca.key")
+			caKey = "ca.key"
+
+		} else if strings.HasPrefix(caKey, "gs") {
+
+			gcs.ReadFile(tmp["bucketName"], tmp["filePath"], "ca.key")
+			caKey = "ca.key"
+
+		} else {
+			log.Println("INFO: CA key will be used from local file system.")
 		}
-		cmd := command{
-			Cmd:         "bash",
-			Args:        []string{"-c", "aws s3 cp " + caKey + " ca.key"},
-			Description: "downloading ca.key from S3.",
-		}
-
-		if exitCode, _ := cmd.exec(debug); exitCode != 0 {
-			return false, "ERROR: failed to download caKey."
-		}
-
-		log.Println("INFO: downloaded ca.key from S3.")
-		caKey = "ca.key"
-	}
-
-	// download certs from GCS (if applicable)
-	// GCS bucket+file format should be: gs://bucket-name/file-name.extension
-	if strings.HasPrefix(caCrt, "gs") {
-		tmp := strings.SplitAfterN(caCrt, "//", 2)[1]
-		gcs.ReadFile(strings.SplitN(tmp, "/", 2)[0], strings.SplitN(tmp, "/", 2)[1], "ca.crt")
-
-		log.Println("INFO: downloaded certificate authority ca.crt from GCS.")
-		caCrt = "ca.crt"
-	}
-
-	if strings.HasPrefix(caKey, "gs") {
-		tmp := strings.SplitAfterN(caKey, "//", 2)[1]
-		gcs.ReadFile(strings.SplitN(tmp, "/", 2)[0], strings.SplitN(tmp, "/", 2)[1], "ca.key")
-
-		log.Println("INFO: downloaded ca.key from GCS.")
-		caKey = "ca.key"
 	}
 
 	// client certificate
 	if caClient != "" {
+
+		tmp := getBucketElements(caClient)
 		if strings.HasPrefix(caClient, "s3") {
-			// check AWS exists
-			if !toolExists("aws help") {
-				return false, "ERROR: aws is not installed/configured correctly. It is needed for downloading certs. Aborting!"
-			}
-			cmd := command{
-				Cmd:         "bash",
-				Args:        []string{"-c", "aws s3 cp " + caClient + " client.crt"},
-				Description: "downloading caClient.crt from S3.",
-			}
 
-			if exitCode, _ := cmd.exec(debug); exitCode != 0 {
-				return false, "ERROR: failed to download caClient."
-			}
-
-			log.Println("INFO: Client certificate downloaded from S3.")
+			aws.ReadFile(tmp["bucketName"], tmp["filePath"], "client.crt")
 			caClient = "client.crt"
 
 		} else if strings.HasPrefix(caClient, "gs") {
-			tmp := strings.SplitAfterN(caClient, "//", 2)[1]
-			gcs.ReadFile(strings.SplitN(tmp, "/", 2)[0], strings.SplitN(tmp, "/", 2)[1], "client.crt")
-			log.Println("INFO: Client certificate downloaded from GCS.")
+
+			gcs.ReadFile(tmp["bucketName"], tmp["filePath"], "client.crt")
 			caClient = "client.crt"
 
 		} else {
-			log.Println("INFO: Client certificate will be used from local file system.")
+			log.Println("INFO: CA client key will be used from local file system.")
 		}
+
 	}
 
 	// connecting to the cluster
@@ -289,4 +265,16 @@ func createContext() (bool, string) {
 	}
 
 	return false, "ERROR: something went wrong while setting the kube context to the newly created one."
+}
+
+// getBucketElements returns a map containing the bucket name and the file path inside the bucket
+// this func works for S3 and GCS bucket links of the format:
+// s3 or gs://bucketname/dir.../file.ext
+func getBucketElements(link string) map[string]string {
+
+	tmp := strings.SplitAfterN(link, "//", 2)[1]
+	m := make(map[string]string)
+	m["bucketName"] = strings.SplitN(tmp, "/", 2)[0]
+	m["filePath"] = strings.SplitN(tmp, "/", 2)[1]
+	return m
 }
