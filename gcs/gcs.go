@@ -11,7 +11,15 @@ import (
 	"golang.org/x/net/context"
 )
 
-func checkCredentialsEnvVar() bool {
+// Auth checks for GCLOUD_CREDENTIALS in the environment
+// returns true if they exist and creates a json credentials file and sets the GOOGLE_APPLICATION_CREDENTIALS env var
+// returns false if credentials are not found
+func Auth() bool {
+	if os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") != "" {
+		log.Println("INFO: GOOGLE_APPLICATION_CREDENTIALS is already set in the environment.")
+		return true
+	}
+
 	if os.Getenv("GCLOUD_CREDENTIALS") != "" {
 		// write the credentials content into a json file
 		d := []byte(os.Getenv("GCLOUD_CREDENTIALS"))
@@ -29,7 +37,7 @@ func checkCredentialsEnvVar() bool {
 
 // ReadFile reads a file from storage bucket and saves it in a desired location.
 func ReadFile(bucketName string, filename string, outFile string) {
-	if !checkCredentialsEnvVar() {
+	if !Auth() {
 		log.Fatal("Failed to find the GCLOUD_CREDENTIALS env var. Please make sure it is set in the environment.")
 	}
 
