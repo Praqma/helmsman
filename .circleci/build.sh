@@ -1,4 +1,8 @@
 #!/bin/bash -x
+echo "fetching dependencies ..."
+go get github.com/Praqma/helmsman/gcs 
+go get github.com/Praqma/helmsman/aws
+
 echo "running tests ..."
 go test -v
 
