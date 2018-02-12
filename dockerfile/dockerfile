@@ -4,7 +4,8 @@ RUN go get github.com/BurntSushi/toml
 RUN git clone https://github.com/Praqma/helmsman.git 
 RUN go get github.com/Praqma/helmsman/gcs 
 RUN go get github.com/Praqma/helmsman/aws 
-RUN go install helmsman/.
+#  build a statically linked binary so that it works on stripped linux images such as alpine/busybox.
+RUN CGO_ENABLED=0 GOOS=linux go install -a -ldflags '-extldflags "-static"' helmsman/. 
 
 FROM alpine:3.6 as kube
 ENV KUBE_LATEST_VERSION="v1.8.2"
