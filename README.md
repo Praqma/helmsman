@@ -1,6 +1,8 @@
 ---
-version: v0.1.3
+version: v0.2.0
 ---
+
+![helmsman-logo](docs/images/helmsman.png)
 
 # What is Helmsman?
 

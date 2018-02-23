@@ -1,5 +1,5 @@
 ---
-version: v0.1.3
+version: v0.2.0
 ---
 
 # Run Helmsman in CI
