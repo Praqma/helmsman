@@ -4,6 +4,9 @@
 version: 2
 jobs:
   build:
+    filters:
+      tags:
+        only: /.*/
     docker:
       # specify the version
       - image: praqma/helmsman-test
