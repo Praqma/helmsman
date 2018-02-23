@@ -6,17 +6,18 @@ maintainer = "k8s-admin"
 
 # paths to the certificate for connecting to the cluster
 # You can skip this if you use Helmsman on a machine with kubectl already connected to your k8s cluster. 
-# you have to use exact key names here : 'caCrt' for certificate and 'caKey' for the key
+# you have to use exact key names here : 'caCrt' for certificate and 'caKey' for the key and caClient for the client certififcate
 [certificates]
-# caCrt = "s3://mybucket/ca.crt" # s3 bucket path, or valid local file relative path
-# caKey = "../ca.key" 
+#caClient = "gs://mybucket/client.crt" # GCS bucket path
+#caCrt = "s3://mybucket/ca.crt" # S3 bucket path 
+#caKey = "../ca.key" # valid local file relative path
 
 [settings]
 kubeContext = "minikube" # will try connect to this context first, if it does not exist, it will be created using the details below
-# username = "admin"
-# password = "$PASSWORD" # the name of an environment variable containing the k8s password
-# clusterURI = "https://192.168.99.100:8443" # cluster API
-
+#username = "admin"
+#password = "$K8S_PASSWORD" # the name of an environment variable containing the k8s password
+#clusterURI = "$K8S_URI" # the name of an environment variable containing the cluster API
+##clusterURI = "https://192.168.99.100:8443" # equivalent to the above
 
 # define your environments and thier k8s namespaces
 # syntax: environment_name = "k8s_namespace"
@@ -31,7 +32,8 @@ production = "default"
 [helmRepos]
 stable = "https://kubernetes-charts.storage.googleapis.com"
 incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
-#myrepo = "s3://my-private-repo/charts"
+#myS3repo = "s3://my-S3-private-repo/charts"
+#myGCSrepo = "gs://my-GCS-private-repo/charts"
 
 # define the desired state of your applications helm charts
 # each contains the following:
