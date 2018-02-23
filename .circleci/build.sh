@@ -8,7 +8,8 @@ go test -v
 
 if [ $? -eq 0 ]; then
     echo "building ..."
-    go build
+    TAG=$(git describe --abbrev=0 --tags)-$(date +"%s")
+    go build -ldflags "-X main.version="$TAG
 
     if [ $? -eq 0 ]; then
         echo "cleaning after tests ..."
