@@ -1,5 +1,5 @@
 ---
-version: v0.1.2
+version: v0.2.0
 ---
 
 # Helmsman desired state specification
@@ -32,20 +32,27 @@ maintainer = "k8s-admin"
 
 ## Certificates
 
-Optional : Yes, if you don't want Helmsman to connect kubectl to your cluster for you.
+Optional : Yes, only needed if you want Helmsman to connect kubectl to your cluster for you.
 
-Synopsis: defines where to find the certifactions needed for connecting kubectl to a k8s cluster.
+Synopsis: defines where to find the certifactions needed for connecting kubectl to a k8s cluster. If connection settings (username/password/clusterAPI) are provided in the Settings section below, then you need AT LEAST to provide caCrt and caKey. You can optionally provide a client certificate (caClient) depending on your cluster connection setup.
 
 Options: 
-- caCrt : a valid s3 bucket to a CRT file.
-- caKey : a valid s3 bucket to a key file.
+- caCrt : a valid S3/GCS bucket or local relative file path to a certificate file. 
+- caKey : a valid S3/GCS bucket or local relative file path to a client key file.
+- caClient: a valid S3/GCS bucket or local relative file path to a client certificate file.
+
+> You can use environment variables to pass the values of the options above. The environment variable name should start with $
+
+> bucket format is: <s3 or gs>://bucket-name/dir1/dir2/.../file.extension
 
 Example: 
 
 ```
 [certificates]
-caCrt = "s3://mybucket/ca.crt" 
-caKey = "s3://mybucket/ca.key" 
+caCrt = "s3://myS3bucket/mydir/ca.crt" 
+caKey = "gs://myGCSbucket/ca.key" 
+caClient ="../path/to/my/local/client-certificate.crt"
+#caClient = "$CA_CLIENT"
 ```
 
 ## Settings
@@ -60,8 +67,8 @@ Options:
 The following options can be skipped if your kubectl context is already created and you don't want Helmsman to connect kubectl to your cluster for you. When using Helmsman in CI pipeline, these details are required to connect to your cluster everytime the pipeline is executed.
 
 - username   : the username to be used for kubectl credentials.
-- password   : an environment variable name (starting with `$`) where your password is stored. Get the password from your k8s admin or consult k8s docs on how to get it. 
-- clusterURI : the URI for your cluster API.
+- password   : an environment variable name (starting with `$`) where your password is stored. Get the password from your k8s admin or consult k8s docs on how to get/set it. 
+- clusterURI : the URI for your cluster API or an environment variable containing the URI.
 
 Example: 
 
@@ -69,8 +76,9 @@ Example:
 [settings]
 kubeContext = "minikube" 
 # username = "admin"
-# password = "$PASSWORD" 
+# password = "$K8S_PASSWORD" 
 # clusterURI = "https://192.168.99.100:8443" 
+## clusterURI= "$K8S_URI"
 ```
 
 ## Namespaces
@@ -95,9 +103,15 @@ production = "default"
 
 Optional : No.
 
-Purpose: defines the Helm repos where your charts can be found. You can add as many repos as you like. Public repos do not require authentication. Private repos require authentication. 
+Purpose: defines the Helm repos where your charts can be found. You can add as many repos as you like. Public repos can be added without any additional setup. Private repos require authentication. 
 
-> AS of version v0.1.2, only AWS S3 buckets can be used for private repos (using the [Helm S3 plugin](https://github.com/hypnoglow/helm-s3)). For that you need to have valid AWS access keys in your environment variables. See [here](https://github.com/hypnoglow/helm-s3#note-on-aws-authentication) for more details.
+> AS of version v0.2.0, both AWS S3 and Google GCS buckets can be used for private repos (using the [Helm S3](https://github.com/hypnoglow/helm-s3) and [Helm GCS](https://github.com/nouney/helm-gcs) plugins). 
+
+Authenticating to private helm repos:
+- **For S3 repos**: you need to have valid AWS access keys in your environment variables. See [here](https://github.com/hypnoglow/helm-s3#note-on-aws-authentication) for more details.
+- **For GCS repos**: check [here](https://www.terraform.io/docs/providers/google/index.html#authentication-json-file) for getting the required authentication file. Once you have the file, you have two options, either:
+    - set `GOOGLE_APPLICATION_CREDENTIALS` environment variable to contain the absolute path to your Google cloud credentials.json file.
+    - Or, set `GCLOUD_CREDENTIALS` environment variable to contain the content of the credentials.json file. 
 
 Options: 
 - you can define any key/value pairs.
@@ -108,7 +122,8 @@ Example:
 [helmRepos]
 stable = "https://kubernetes-charts.storage.googleapis.com"
 incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
-myrepo = "s3://my-private-repo/charts"
+myS3repo = "s3://my-S3-private-repo/charts"
+myGCSrepo = "gs://my-GCS-private-repo/charts"
 ```
 
 ## Apps

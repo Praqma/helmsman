@@ -1,5 +1,5 @@
 ---
-version: v0.1.3
+version: v0.2.0
 ---
 
 # install releases 
@@ -57,7 +57,7 @@ NAME       	REVISION	UPDATED                 	STATUS  	CHART            	NAMESPA
 artifactory	2       	Sun Nov 19 18:29:11 2017	DEPLOYED	artifactory-6.2.0	staging  
 ```
 
-If you would like the release to be deleted along with its history, you can use the `purge` key in your desired state file as follows:
+If you would like the release to be deleted along with its history, you can use the `purge` flag in your desired state file as follows:
 
 > NOTE: purge deleting a release means you can't roll it back.
 
