@@ -12,8 +12,17 @@ import (
 
 func checkCredentialsEnvVar() bool {
 
-	if os.Getenv("AWS_ACCESS_KEY_ID") == "" || os.Getenv("AWS_SECRET_ACCESS_KEY") == "" || os.Getenv("AWS_REGION") == "" {
+	if os.Getenv("AWS_ACCESS_KEY_ID") == "" || os.Getenv("AWS_SECRET_ACCESS_KEY") == "" {
+
 		return false
+
+	} else if os.Getenv("AWS_REGION") == "" {
+
+		if os.Getenv("AWS_DEFAULT_REGION") == "" {
+			return false
+		}
+		os.Setenv("AWS_REGION", os.Getenv("AWS_DEFAULT_REGION"))
+
 	}
 	return true
 }
