@@ -8,12 +8,17 @@ import (
 	"strings"
 )
 
+// namespace type represents the fields of a namespace
+type namespace struct {
+	Protected bool
+}
+
 // state type represents the desired state of applications on a k8s cluster.
 type state struct {
 	Metadata     map[string]string
 	Certificates map[string]string
 	Settings     map[string]string
-	Namespaces   map[string]string
+	Namespaces   map[string]namespace
 	HelmRepos    map[string]string
 	Apps         map[string]release
 }
@@ -66,12 +71,6 @@ func (s state) validate() (bool, string) {
 	if s.Namespaces == nil || len(s.Namespaces) < 1 {
 		return false, "ERROR: namespaces validation failed -- I need at least one namespace " +
 			"to work with!"
-	}
-	for k, v := range s.Namespaces {
-		if v == "" {
-			return false, "ERROR: namespaces validation failed -- namespace [" + k + " ] " +
-				"must have a value or be removed/commented."
-		}
 	}
 
 	// repos
@@ -132,7 +131,7 @@ func (s state) print() {
 	printMap(s.Settings)
 	fmt.Println("\nNamespaces: ")
 	fmt.Println("------------- ")
-	printMap(s.Namespaces)
+	printNamespacesMap(s.Namespaces)
 	fmt.Println("\nRepositories: ")
 	fmt.Println("------------- ")
 	printMap(s.HelmRepos)
