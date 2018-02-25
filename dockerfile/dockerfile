@@ -6,7 +6,11 @@ RUN go get github.com/Praqma/helmsman/gcs
 RUN go get github.com/Praqma/helmsman/aws 
 #  build a statically linked binary so that it works on stripped linux images such as alpine/busybox.
 RUN cd helmsman \
-    && TAG=$(git describe --abbrev=0 --tags)-$(date +"%s") \
+    && LastTag=$(git describe --abbrev=0 --tags) \
+    && TAG=$LastTag-$(date +"%s") \
+    && LT_SHA=$(git rev-parse ${LastTag}^{}) \
+    && LC_SHA=$(git rev-parse HEAD) \
+    && if [ ${LT_SHA} != ${LC_SHA} ]; then TAG=latest-$(date +"%s"); fi \
     && CGO_ENABLED=0 GOOS=linux go install -a -ldflags '-X main.version='$TAG' -extldflags "-static"' . 
 
 FROM alpine:3.6 as kube
