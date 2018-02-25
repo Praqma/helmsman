@@ -46,7 +46,6 @@ jobs:
               echo "releasing ..."
               goreleaser --release-notes release-notes.md            
 
-
 workflows:
   version: 2
   build-test-push-release:
