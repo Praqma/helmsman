@@ -1,5 +1,5 @@
 ---
-version: v0.2.0
+version: v1.0.0
 ---
 
 # move charts across namespaces
@@ -12,9 +12,9 @@ If you have a workflow for testing a release first in the `staging` namespace th
 ...
 
 [namespaces]
-staging = "staging" 
-production = "default"
-myOtherNamespace = "namespaceX"
+[namespaces.staging]
+[namespaces.production]
+
 
 [apps]
 
@@ -38,9 +38,8 @@ Then if you change the namespace key for jenkins:
 ...
 
 [namespaces]
-staging = "staging" 
-production = "default"
-myOtherNamespace = "namespaceX"
+[namespaces.staging]
+[namespaces.production]
 
 [apps]
 

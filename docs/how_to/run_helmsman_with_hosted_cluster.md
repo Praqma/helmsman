@@ -1,5 +1,5 @@
 ---
-version: v0.2.0
+version: v1.0.0
 ---
 
 You can manage Helm charts deployment on a hosted K8S cluster in the cloud or on-prem. You need to include the required information to connect to the cluster in your state file. 
@@ -46,7 +46,7 @@ password = "$K8S_PASSWORD" # the name of an environment variable containing the 
 clusterURI = "$K8S_URI" # cluster API
 
 [namespaces]
-staging = "staging" 
+[namespaces.staging]
 
 [helmRepos]
 stable = "https://kubernetes-charts.storage.googleapis.com"

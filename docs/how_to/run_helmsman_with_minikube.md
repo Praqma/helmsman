@@ -1,5 +1,5 @@
 ---
-version: v0.2.0
+version: v1.0.0
 ---
 
 You can run Helmsman local as a binary application with Minikube, you just need to skip all the cluster connection settings in your desired state file. Below is the example.toml desired state file adapted to work with Minikube.
@@ -14,7 +14,7 @@ maintainer = "k8s-admin"
 kubeContext = "minikube" 
 
 [namespaces]
-staging = "staging" 
+[namespaces.staging]
 
 [helmRepos]
 stable = "https://kubernetes-charts.storage.googleapis.com"
