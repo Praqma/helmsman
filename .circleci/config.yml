@@ -31,21 +31,19 @@ jobs:
             go get github.com/Praqma/helmsman/aws
             echo "running tests ..."
             go test -v
-
   release: 
-     docker: 
-       - image: praqma/helmsman-test
-      steps:
-        - checkout 
-        - run: 
-            name: Release helmsman
-            command: |
-              echo "fetching dependencies ..."
-              go get github.com/Praqma/helmsman/gcs 
-              go get github.com/Praqma/helmsman/aws
-              echo "releasing ..."
-              goreleaser --release-notes release-notes.md            
-
+    docker: 
+      - image: praqma/helmsman-test
+    steps:
+      - checkout 
+      - run: 
+          name: Release helmsman
+          command: |
+            echo "fetching dependencies ..."
+            go get github.com/Praqma/helmsman/gcs 
+            go get github.com/Praqma/helmsman/aws
+            echo "releasing ..."
+            goreleaser --release-notes release-notes.md            
 workflows:
   version: 2
   build-test-push-release:
@@ -61,4 +59,4 @@ workflows:
             branches:
               only: master 
             tags:
-	            only: /^v.*/       
+              only: /^v.*/       
