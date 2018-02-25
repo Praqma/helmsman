@@ -1,8 +1,9 @@
-# version: v0.1.2
+# version: v1.0.0
 # metadata -- add as many key/value pairs as you want
 [metadata]
-org = "orgX"
-maintainer = "k8s-admin"
+org = "example.com"
+maintainer = "k8s-admin (me@example.com)"
+description = "example Desired State File for demo purposes."
 
 # paths to the certificate for connecting to the cluster
 # You can skip this if you use Helmsman on a machine with kubectl already connected to your k8s cluster. 
@@ -20,10 +21,14 @@ kubeContext = "minikube" # will try connect to this context first, if it does no
 ##clusterURI = "https://192.168.99.100:8443" # equivalent to the above
 
 # define your environments and thier k8s namespaces
-# syntax: environment_name = "k8s_namespace"
+# syntax: 
+# [namespaces.<your namespace>] -- whitespace before this entry does not matter, use whatever indentation style you like 
+ # protected = <true or false> -- default to false 
 [namespaces]
-staging = "staging" 
-production = "default"
+  [namespaces.staging]
+  protected = false
+  [namespaces.production]
+  prtoected = true
 
 
 # define any private/public helm charts repos you would like to get charts from
@@ -51,6 +56,7 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     valuesFile = "" # leaving it empty uses the default chart values
     purge = false # will only be considered when there is a delete operation
     test = false # run the tests when this release is installed for the first time only
+    prtoected = true
     # [apps.jenkins.set] # values to override values from values.yaml with values from env vars-- useful for passing secrets to charts
     #     db_username="$DB_USERNAME"
     #     db_password="$DB_PASSWORD"

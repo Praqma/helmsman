@@ -1,5 +1,5 @@
 ---
-version: v0.2.0
+version: v1.0.0
 ---
 
 # Helmsman desired state specification
@@ -85,18 +85,23 @@ kubeContext = "minikube"
 
 Optional : No.
 
-Synopsis: defines the namespaces to be used/created in your k8s cluster. You can add as many namespaces as you like.
-If a namespaces does not already exist, Helmsman will be created.
+Synopsis: defines the namespaces to be used/created in your k8s cluster and wether they are protected or not. You can add as many namespaces as you like.
+If a namespaces does not already exist, Helmsman will create it.
 
 Options: 
-- you can define any key/value pairs.
+- protected : defines if a namespace is protected (true or false). Default false.
+
+> For the defintion of what a protected namespace means, check the [protection guide](how_to/protect_namespaces_and_releases.md)
 
 Example: 
 
 ```
 [namespaces]
-staging = "staging" 
-production = "default"
+[namespaces.staging]
+[namespaces.dev]
+protected = false
+[namespaces.production]
+protected = true
 ```
 
 ## Helm Repos
@@ -144,6 +149,7 @@ Options:
 - valuesFile  : a valid path to custom Helm values.yaml file. File extension must be `yaml`. Leaving it empty uses the default chart values.
 - purge       : defines whether to use the Helm purge flag wgen deleting the release. (true/false)
 - test        : defines whether to run the chart tests whenever the release is installed/upgraded/rolledback.
+- protected   : defines if the release should be protected against changes. Namespace-level protection has higher priority than this flag. Check the [protection guide](how_to/protect_namespaces_and_releases.md) for more details.
 
 Example: 
 
@@ -162,5 +168,6 @@ Example:
     valuesFile = "" 
     purge = false 
     test = true 
+    protected = false
 ```
 

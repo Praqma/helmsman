@@ -1,5 +1,5 @@
 ---
-version: v0.2.0
+version: v1.0.0
 ---
 
 ![helmsman-logo](docs/images/helmsman.png)
@@ -20,6 +20,7 @@ Helmsman was created to ease continous deployment of Helm charts. When you want 
 - **Easy to use**: deep knowledge of Helm CLI and Kubectl is NOT manadatory to use Helmsman. 
 - **Plan, View, apply**: you can run Helmsman to generate and view a plan with/without executing it. 
 - **Portable**: Helmsman can be used to manage charts deployments on any k8s cluster.
+- **Protect Namespaces/Releases**: you can define certain namespaces/releases to be protected against accidental human mistakes.
 - **Idempotency**: As long your desired state file does not change, you can execute Helmsman several times and get the same result. 
 - **Continue from failures**: In the case of partial deployment due to a specific chart deployment failure, fix your helm chart and execute Helmsman again without needing to rollback the partial successes first.
 
@@ -40,14 +41,14 @@ Helmsman can be used in three different settings:
 
 - [As a binary with Minikube](https://github.com/Praqma/helmsman/blob/master/docs/how_to/run_helmsman_with_minikube.md).
 - [As a binary with a hosted cluster](https://github.com/Praqma/helmsman/blob/master/docs/how_to/run_helmsman_with_hosted_cluster.md).
-- [As a docker image in a CI system or local machine](https://github.com/Praqma/helmsman/blob/master/docs/how_to/run_helmsman_in_ci.md).
+- [As a docker image in a CI system or local machine](https://github.com/Praqma/helmsman/blob/master/docs/how_to/run_helmsman_in_ci.md) Always use a tagged docker image from [dockerhub](https://hub.docker.com/r/praqma/helmsman/) as the `latest` image can (at times) be unstable.
 
 
 # How does it work?
 
 Helmsman uses a simple declarative [TOML](https://github.com/toml-lang/toml) file to allow you to describe a desired state for your k8s applications as in the [example file](https://github.com/Praqma/helmsman/blob/master/example.toml).
 
-The desired state file follows the [desired state specification](https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md).
+The desired state file (DSF) follows the [desired state specification](https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md).
 
 Helmsman sees what you desire, validates that your desire makes sense (e.g. that the charts you desire are available in the repos you defined), compares it with the current state of Helm and figures out what to do to make your desire come true. 
 
@@ -73,4 +74,4 @@ Documentation and How-Tos can be found [here](https://github.com/Praqma/helmsman
 
 # Contributing
 
-Contribution and feeback/feature requests are welcome. 
+Pull requests, feeback/feature requests are welcome. 
