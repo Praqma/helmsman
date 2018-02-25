@@ -23,30 +23,59 @@ func decide(r release, s *state) {
 
 	// check for deletion
 	if !r.Enabled {
-
-		inspectDeleteScenario(s.Namespaces[r.Namespace], r)
+		if !isProtected(r) {
+			inspectDeleteScenario(getDesiredNamespace(r), r)
+		} else {
+			logDecision("DECISION: release " + r.Name + " is PROTECTED. Operations are not allowed on this release until " +
+				"you remove its protection.")
+		}
 
 	} else { // check for install/upgrade/rollback
-		if helmReleaseExists(getDesiredNamespaces(r), r.Name, "deployed") {
-
-			inspectUpgradeScenario(s.Namespaces[r.Namespace], r)
+		if helmReleaseExists(getDesiredNamespace(r), r.Name, "deployed") {
+			if !isProtected(r) {
+				inspectUpgradeScenario(getDesiredNamespace(r), r) // upgrade
+			} else {
+				logDecision("DECISION: release " + r.Name + " is PROTECTED. Operations are not allowed on this release until " +
+					"you remove its protection.")
+			}
 
 		} else if helmReleaseExists("", r.Name, "deleted") {
+			if !isProtected(r) {
 
-			inspectRollbackScenario(getDesiredNamespaces(r), r)
+				inspectRollbackScenario(getDesiredNamespace(r), r) // rollback
+
+			} else {
+				logDecision("DECISION: release " + r.Name + " is PROTECTED. Operations are not allowed on this release until " +
+					"you remove its protection.")
+			}
 
 		} else if helmReleaseExists("", r.Name, "failed") {
 
-			deleteRelease(r.Name, true)
-			installRelease(getDesiredNamespaces(r), r)
+			if !isProtected(r) {
 
-		} else if helmReleaseExists("", r.Name, "all") { // it is deployed but in another namespace
+				reInstallRelease(getDesiredNamespace(r), r) // re-install failed release
 
-			reInstallRelease(getDesiredNamespaces(r), r)
+			} else {
+				logDecision("DECISION: release " + r.Name + " is PROTECTED. Operations are not allowed on this release until " +
+					"you remove its protection.")
+			}
+
+		} else if helmReleaseExists("", r.Name, "all") { // not deployed in the desired namespace but deployed elsewhere
+
+			if !isProtected(r) {
+
+				reInstallRelease(getDesiredNamespace(r), r) // move the release to a new (the desired) namespace
+				logDecision("WARNING: moving release [ " + r.Name + " ] from [[ " + getReleaseNamespace(r.Name) + " ]] to [[ " + getDesiredNamespace(r) +
+					" ]] might not correctly connect to existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/move_charts_across_namespaces.md for details if this release uses PV and PVC.")
+
+			} else {
+				logDecision("DECISION: release " + r.Name + " is PROTECTED. Operations are not allowed on this release until " +
+					"you remove its protection.")
+			}
 
 		} else {
 
-			installRelease(getDesiredNamespaces(r), r)
+			installRelease(getDesiredNamespace(r), r) // install a new release
 
 		}
 
@@ -183,7 +212,7 @@ func inspectUpgradeScenario(namespace string, r release) {
 		logDecision("DECISION: release [ " + releaseName + " ] is desired to be enabled in a new namespace [[ " + namespace +
 			" ]]. I am planning a purge delete of the current release from namespace [[ " + getReleaseNamespace(releaseName) + " ]] " +
 			"and will install it for you in namespace [[ " + namespace + " ]]")
-		logDecision("WARNING: Moving release [ " + releaseName + " ] from [[ " + getReleaseNamespace(releaseName) + " ]] to [[ " + namespace +
+		logDecision("WARNING: moving release [ " + releaseName + " ] from [[ " + getReleaseNamespace(releaseName) + " ]] to [[ " + namespace +
 			" ]] might not correctly connect to existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/move_charts_across_namespaces.md for details if this release uses PV and PVC.")
 	}
 }
@@ -221,6 +250,7 @@ func reInstallRelease(namespace string, r release) {
 		Description: "installing release [ " + releaseName + " ] in namespace [[ " + namespace + " ]]",
 	}
 	outcome.addCommand(installCmd)
+	logDecision("DECISION: release [ " + releaseName + " ] will be deleted from namespace [[ " + getReleaseNamespace(releaseName) + " ]] and reinstalled in [[ " + namespace + "]].")
 
 	// if r.Test {
 	// 	testRelease(releaseName)
@@ -264,14 +294,48 @@ func getSetValues(r release) string {
 	return result
 }
 
-// getDesiredNamespaces validates that namespace where the release is desired to be installed is defined in the Namespaces definition
+// getDesiredNamespace validates that namespace where the release is desired to be installed is defined in the Namespaces definition
 // it returns the namespace if it is already defined
 // otherwise, it throws an error
-func getDesiredNamespaces(r release) string {
-	value, ok := s.Namespaces[r.Namespace]
-	if !ok {
+func getDesiredNamespace(r release) string {
+	if !checkNamespaceDefined(r.Namespace) {
 		log.Fatal("ERROR: " + r.Namespace + " is not defined in the Namespaces section of your desired state file. Release [ " + r.Name +
 			" ] can't be installed in that Namespace until its defined in your desired state file.")
 	}
-	return value
+
+	return r.Namespace
+}
+
+// getCurrentNamespaceProtection returns the protection state for the namespace where a release is currently installed.
+// It returns true if a namespace is defined as protected in the desired state file, false otherwise.
+func getCurrentNamespaceProtection(r release) bool {
+
+	return s.Namespaces[getReleaseNamespace(r.Name)].Protected
+}
+
+// checkNamespaceDefined checks if a given namespace is defined in the namespaces section of the desired state file
+func checkNamespaceDefined(ns string) bool {
+	_, ok := s.Namespaces[ns]
+	if !ok {
+		return false
+	}
+	return true
+}
+
+// isProtected checks if a release is protected or not.
+// A protected is release is either: a) deployed in a protected namespace b) flagged as protected in the desired state file
+// Any release in a protected namespace is protected by default regardless of its flag
+// returns true if a release is protected, false otherwise
+func isProtected(r release) bool {
+
+	if getCurrentNamespaceProtection(r) {
+		return true
+	}
+
+	if r.Protected {
+		return true
+	}
+
+	return false
+
 }

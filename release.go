@@ -17,6 +17,7 @@ type release struct {
 	ValuesFile  string
 	Purge       bool
 	Test        bool
+	Protected   bool
 	Set         map[string]string
 }
 
@@ -60,6 +61,7 @@ func (r release) print() {
 	fmt.Println("\tvaluesFile : ", r.ValuesFile)
 	fmt.Println("\tpurge : ", r.Purge)
 	fmt.Println("\ttest : ", r.Test)
+	fmt.Println("\tprotected : ", r.Protected)
 	fmt.Println("\tvalues to override from env:")
 	printMap(r.Set)
 	fmt.Println("------------------- ")

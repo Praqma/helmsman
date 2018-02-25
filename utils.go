@@ -20,6 +20,13 @@ func printMap(m map[string]string) {
 	}
 }
 
+// printObjectMap prints to the console any map of string keys and object values.
+func printNamespacesMap(m map[string]namespace) {
+	for key, value := range m {
+		fmt.Println(key, " : protected = ", value)
+	}
+}
+
 // fromTOML reads a toml file and decodes it to a state type.
 // It uses the BurntSuchi TOML parser which throws an error if the TOML file is not valid.
 func fromTOML(file string, s *state) (bool, string) {

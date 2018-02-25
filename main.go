@@ -132,17 +132,17 @@ func validateReleaseCharts(apps map[string]release) (bool, string) {
 
 // addNamespaces creates a set of namespaces in your k8s cluster.
 // If a namespace with the same name exsts, it will skip it.
-func addNamespaces(namespaces map[string]string) {
-	for _, namespace := range namespaces {
+func addNamespaces(namespaces map[string]namespace) {
+	for ns := range namespaces {
 		cmd := command{
 			Cmd:         "bash",
-			Args:        []string{"-c", "kubectl create namespace " + namespace},
-			Description: "creating namespace  " + namespace,
+			Args:        []string{"-c", "kubectl create namespace " + ns},
+			Description: "creating namespace  " + ns,
 		}
 
 		if exitCode, _ := cmd.exec(debug); exitCode != 0 {
 			log.Println("WARN: I could not create namespace [" +
-				namespace + " ]. It already exists. I am skipping this.")
+				ns + " ]. It already exists. I am skipping this.")
 		}
 	}
 }
