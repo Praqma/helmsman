@@ -33,6 +33,7 @@ Helmsman was created to ease continous deployment of Helm charts. When you want 
 - [use locally developed helm charts (the tar archives)](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_local_charts.md).
 - [define namespaces to be used in your cluster](https://github.com/Praqma/helmsman/blob/master/docs/how_to/define_namespaces.md).
 - [move charts across namespaces](https://github.com/Praqma/helmsman/blob/master/docs/how_to/move_charts_across_namespaces.md).
+- [protect namespaces/releases against accidental changes](https://github.com/Praqma/helmsman/blob/master/docs/how_to/protect_namespaces_and_releases.md)
 
 
 # Usage 

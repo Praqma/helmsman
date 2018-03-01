@@ -24,7 +24,7 @@ kubeContext = "minikube"
   [namespaces.staging]
   protected = false
   [namespaces.production]
-  prtoected = true
+  protected = true
 
 [helmRepos]
 stable = "https://kubernetes-charts.storage.googleapis.com"
