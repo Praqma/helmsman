@@ -107,7 +107,9 @@ func getReleaseChartName(releaseName string) string {
 // getReleaseChartVersion extracts and returns the Helm chart version from the chart info retrieved by getReleaseChart().
 // example: getReleaseChart() returns "jenkins-0.9.0" and this functions will extract "0.9.0" from it.
 func getReleaseChartVersion(releaseName string) string {
-	return strings.TrimSpace(strings.Split(getReleaseChart(releaseName), "-")[1])
+	chart := getReleaseChart(releaseName)
+	runes := []rune(chart)
+	return string(runes[strings.LastIndexByte(chart, '-')+1 : len(chart)])
 }
 
 // getReleaseStatus returns the output of Helm status command for a release.
