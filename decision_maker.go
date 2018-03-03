@@ -328,6 +328,11 @@ func checkNamespaceDefined(ns string) bool {
 // returns true if a release is protected, false otherwise
 func isProtected(r release) bool {
 
+	// if the release does not exist in the cluster, it is not protected
+	if !helmReleaseExists("", r.Name, "all") {
+		return false
+	}
+
 	if getCurrentNamespaceProtection(r) {
 		return true
 	}
