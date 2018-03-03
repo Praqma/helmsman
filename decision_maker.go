@@ -268,7 +268,7 @@ func logDecision(decision string) {
 
 }
 
-// extractChartName extracts the Helm chart name from full chart name.
+// extractChartName extracts the Helm chart name from full chart name in the desired state.
 // example: it extracts "chartY" from "repoX/chartY"
 func extractChartName(releaseChart string) string {
 
