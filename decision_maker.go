@@ -268,7 +268,7 @@ func logDecision(decision string) {
 
 }
 
-// extractChartName extracts the Helm chart name from full chart name.
+// extractChartName extracts the Helm chart name from full chart name in the desired state.
 // example: it extracts "chartY" from "repoX/chartY"
 func extractChartName(releaseChart string) string {
 
@@ -327,6 +327,11 @@ func checkNamespaceDefined(ns string) bool {
 // Any release in a protected namespace is protected by default regardless of its flag
 // returns true if a release is protected, false otherwise
 func isProtected(r release) bool {
+
+	// if the release does not exist in the cluster, it is not protected
+	if !helmReleaseExists("", r.Name, "all") {
+		return false
+	}
 
 	if getCurrentNamespaceProtection(r) {
 		return true
