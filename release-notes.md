@@ -1,5 +1,3 @@
-# v1.0.0
+# v1.0.1
 
-- Introducing protected namespaces and releases.
-- Minor enhancments.
-- Updated documentations.
+- Bug fixes for #19 and #20.
