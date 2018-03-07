@@ -289,7 +289,7 @@ func getSetValues(r release) string {
 	result := ""
 	for k, v := range r.Set {
 		_, value := envVarExists(v)
-		result = result + " --set " + k + "=" + value
+		result = result + " --set " + k + "=\"" + strings.Replace(value, ",", "\\,", -1) + "\""
 	}
 	return result
 }
