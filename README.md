@@ -65,7 +65,7 @@ To show debugging details:
 
 # Installation 
 
-Install Helmsman for your OS from the [releases page](https://github.com/Praqma/Helmsman/releases). Available for Linux and MacOS.
+Install Helmsman for your OS from the [releases page](https://github.com/Praqma/Helmsman/releases). Available for Linux, MacOS & Windows.
 
 Also available as a [docker image](https://hub.docker.com/r/praqma/helmsman/).
 
