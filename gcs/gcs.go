@@ -21,15 +21,16 @@ func Auth() bool {
 	}
 
 	if os.Getenv("GCLOUD_CREDENTIALS") != "" {
+		credFile := "/tmp/gcloud_credentials.json"
 		// write the credentials content into a json file
 		d := []byte(os.Getenv("GCLOUD_CREDENTIALS"))
-		err := ioutil.WriteFile("/tmp/credentials.json", d, 0644)
+		err := ioutil.WriteFile(credFile, d, 0644)
 
 		if err != nil {
 			log.Fatal("ERROR: Cannot create credentials file: ", err)
 		}
 
-		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "/tmp/credentials.json")
+		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", credFile)
 		return true
 	}
 	return false
