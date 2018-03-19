@@ -32,7 +32,7 @@ func (c command) printFullCommand() {
 func (c command) exec(debug bool) (int, string) {
 
 	if debug {
-		log.Println("INFO: executing command: " + c.Args[1])
+		log.Println("INFO: " + c.Description)
 	}
 	cmd := exec.Command(c.Cmd, c.Args...)
 	var out bytes.Buffer
