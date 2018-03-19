@@ -14,7 +14,7 @@ var file string
 var apply bool
 var help bool
 var v bool
-var version = "master"
+var version = "v1.0.2"
 
 func main() {
 
