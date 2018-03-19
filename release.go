@@ -18,6 +18,7 @@ type release struct {
 	Purge       bool
 	Test        bool
 	Protected   bool
+	Wait        bool
 	Set         map[string]string
 }
 
@@ -62,6 +63,7 @@ func (r release) print() {
 	fmt.Println("\tpurge : ", r.Purge)
 	fmt.Println("\ttest : ", r.Test)
 	fmt.Println("\tprotected : ", r.Protected)
+	fmt.Println("\twait : ", r.Wait)
 	fmt.Println("\tvalues to override from env:")
 	printMap(r.Set)
 	fmt.Println("------------------- ")
