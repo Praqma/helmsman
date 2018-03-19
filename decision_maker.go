@@ -102,7 +102,7 @@ func installRelease(namespace string, r release) {
 	releaseName := r.Name
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm install " + r.Chart + " -n " + releaseName + " --namespace " + namespace + getValuesFile(r) + " --version " + r.Version + getSetValues(r)},
+		Args:        []string{"-c", "helm install " + r.Chart + " -n " + releaseName + " --namespace " + namespace + getValuesFile(r) + " --version " + r.Version + getSetValues(r) + getWait(r)},
 		Description: "installing release [ " + releaseName + " ] in namespace [[ " + namespace + " ]]",
 	}
 	outcome.addCommand(cmd)
@@ -124,7 +124,7 @@ func inspectRollbackScenario(namespace string, r release) {
 
 		cmd := command{
 			Cmd:         "bash",
-			Args:        []string{"-c", "helm rollback " + releaseName + " " + getReleaseRevision(releaseName, "deleted")},
+			Args:        []string{"-c", "helm rollback " + releaseName + " " + getReleaseRevision(releaseName, "deleted") + getWait(r)},
 			Description: "rolling back release [ " + releaseName + " ]",
 		}
 		outcome.addCommand(cmd)
@@ -221,7 +221,7 @@ func inspectUpgradeScenario(namespace string, r release) {
 func upgradeRelease(r release) {
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFile(r) + " --version " + r.Version + " --force " + getSetValues(r)},
+		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFile(r) + " --version " + r.Version + " --force " + getSetValues(r) + getWait(r)},
 		Description: "upgrading release [ " + r.Name + " ]",
 	}
 
@@ -246,7 +246,7 @@ func reInstallRelease(namespace string, r release) {
 
 	installCmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm install " + r.Chart + " --version " + r.Version + " -n " + releaseName + " --namespace " + namespace + getValuesFile(r) + getSetValues(r)},
+		Args:        []string{"-c", "helm install " + r.Chart + " --version " + r.Version + " -n " + releaseName + " --namespace " + namespace + getValuesFile(r) + getSetValues(r) + getWait(r)},
 		Description: "installing release [ " + releaseName + " ] in namespace [[ " + namespace + " ]]",
 	}
 	outcome.addCommand(installCmd)
@@ -290,6 +290,16 @@ func getSetValues(r release) string {
 	for k, v := range r.Set {
 		_, value := envVarExists(v)
 		result = result + " --set " + k + "=\"" + strings.Replace(value, ",", "\\,", -1) + "\""
+	}
+	return result
+}
+
+// getWait returns a partial helm command containing the helm wait flag (--wait) if the wait flag for the release was set to true
+// Otherwise, retruns an empty string
+func getWait(r release) string {
+	result := ""
+	if r.Wait {
+		result = " --wait"
 	}
 	return result
 }
