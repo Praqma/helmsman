@@ -34,7 +34,7 @@ func fromTOML(file string, s *state) (bool, string) {
 	if _, err := toml.DecodeFile(file, s); err != nil {
 		return false, err.Error()
 	}
-	return true, "Parsed [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
+	return true, "INFO: Parsed [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
 
 }
 
