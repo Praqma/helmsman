@@ -7,6 +7,16 @@ import (
 	"os"
 )
 
+const (
+	banner = " _          _ \n" +
+		"| |        | | \n" +
+		"| |__   ___| |_ __ ___  ___ _ __ ___   __ _ _ __\n" +
+		"| '_ \\ / _ \\ | '_ ` _ \\/ __| '_ ` _ \\ / _` | '_ \\ \n" +
+		"| | | |  __/ | | | | | \\__ \\ | | | | | (_| | | | | \n" +
+		"|_| |_|\\___|_|_| |_| |_|___/_| |_| |_|\\__,_|_| |_|"
+	slogan = "A Helm-Chart-as-Code tool.\n\n"
+)
+
 // init is executed after all package vars are initialized [before the main() func in this case].
 // It checks if Helm and Kubectl exist and configures: the connection to the k8s cluster, helm repos, namespaces, etc.
 func init() {
@@ -19,6 +29,8 @@ func init() {
 
 	flag.Parse()
 
+	fmt.Println(banner + "version: " + version + "\n" + slogan)
+
 	if v {
 		fmt.Println("Helmsman version: " + version)
 		os.Exit(0)
@@ -29,7 +41,7 @@ func init() {
 		os.Exit(0)
 	}
 
-	fmt.Println("Helmsman version: " + version)
+	//fmt.Println("Helmsman version: " + version)
 
 	if !toolExists("helm") {
 		log.Fatal("ERROR: helm is not installed/configured correctly. Aborting!")
