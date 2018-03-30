@@ -58,8 +58,8 @@ func (p plan) printPlanCmds() {
 
 // printPlan prints the decisions made in a plan.
 func (p plan) printPlan() {
-	fmt.Println("---------------")
-	fmt.Printf("Ok, I have generated a plan for you at: %s \n", p.Created.Format("Mon Jan _2 2006 15:04:05"))
+	fmt.Println("----------------------")
+	fmt.Printf("Plan generated at: %s \n", p.Created.Format("Mon Jan _2 2006 15:04:05"))
 	for _, decision := range p.Decisions {
 		fmt.Println(decision)
 	}
