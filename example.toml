@@ -52,7 +52,7 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     namespace = "staging" # maps to the namespace as defined in environmetns above
     enabled = true # change to false if you want to delete this app release [empty = flase]
     chart = "stable/jenkins" # changing the chart name means delete and recreate this chart
-    version = "0.9.1" # chart version
+    version = "0.14.3" # chart version
     valuesFile = "" # leaving it empty uses the default chart values
     purge = false # will only be considered when there is a delete operation
     test = false # run the tests when this release is installed for the first time only
@@ -68,7 +68,7 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     namespace = "staging" # maps to the namespace as defined in environmetns above
     enabled = true # change to false if you want to delete this app release [empty = flase]
     chart = "stable/artifactory" # changing the chart name means delete and recreate this chart
-    version = "6.2.0" # chart version
+    version = "7.0.6" # chart version
     valuesFile = "" # leaving it empty uses the default chart values
     purge = false # will only be considered when there is a delete operation
     test = false # run the tests when this release is installed for the first time only
