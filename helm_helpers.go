@@ -35,11 +35,13 @@ func helmReleaseExists(namespace string, releaseName string, scope string) bool 
 		Description: "listing the existing releases in namespace [ " + namespace + " ] with status [ " + scope + " ]",
 	}
 
-	if exitCode, result := cmd.exec(debug); exitCode == 0 {
-		return strings.Contains(result, releaseName+"\n")
+	exitCode, result := cmd.exec(debug)
+	if exitCode == 0 {
+
+		return sliceContains(strings.Split(result, "\n"), releaseName)
 	}
 
-	log.Fatal("ERROR: something went wrong while checking helm release.")
+	log.Fatal("ERROR: while checking helm release: " + result)
 
 	return false
 }
@@ -73,7 +75,7 @@ func getReleaseChart(releaseName string) string {
 		line := strings.Split(result, "\n")[1]
 		return strings.Fields(line)[8] // 8 is the position of chart details in helm ls output
 	}
-	log.Fatal("ERROR: seems release [ " + releaseName + " ] does not exist.")
+	log.Fatal("ERROR: release [ " + releaseName + " ] does not exist.")
 
 	return ""
 }
@@ -91,7 +93,7 @@ func getReleaseRevision(releaseName string, state string) string {
 		line := strings.Split(result, "\n")[1]
 		return strings.Fields(line)[1] // 1 is the position of revision number in helm ls output
 	}
-	log.Fatal("ERROR: seems release [ " + releaseName + " ] does not exist.")
+	log.Fatal("ERROR: release [ " + releaseName + " ] does not exist.")
 
 	return ""
 }
@@ -121,11 +123,12 @@ func getReleaseStatus(releaseName string) string {
 		Description: "inspecting the status of release:  " + releaseName,
 	}
 
-	if exitCode, result := cmd.exec(debug); exitCode == 0 {
+	exitCode, result := cmd.exec(debug)
+	if exitCode == 0 {
 		return result
 	}
 
-	log.Fatal("ERROR: something went wrong while checking release status.")
+	log.Fatal("ERROR: while checking release [ " + releaseName + " ] status: " + result)
 
 	return ""
 }
