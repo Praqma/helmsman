@@ -35,8 +35,9 @@ func (c command) exec(debug bool) (int, string) {
 		log.Println("INFO: " + c.Description)
 	}
 	cmd := exec.Command(c.Cmd, c.Args...)
-	var out bytes.Buffer
-	cmd.Stdout = &out
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 
 	if err := cmd.Start(); err != nil {
 		log.Fatalf("ERROR: cmd.Start: %v", err)
@@ -45,13 +46,12 @@ func (c command) exec(debug bool) (int, string) {
 	if err := cmd.Wait(); err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				//log.Printf("Exit Status: %d", status.ExitStatus())
-				return status.ExitStatus(), out.String()
+				return status.ExitStatus(), stderr.String()
 			}
 		} else {
 			log.Fatalf("ERROR: cmd.Wait: %v", err)
 		}
 	}
 
-	return 0, out.String()
+	return 0, stdout.String()
 }
