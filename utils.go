@@ -106,3 +106,13 @@ func envVarExists(v string) (bool, string) {
 	value, ok := os.LookupEnv(v)
 	return ok, value
 }
+
+// sliceContains checks if a string slice contains a given string
+func sliceContains(slice []string, s string) bool {
+	for _, a := range slice {
+		if strings.TrimSpace(a) == s {
+			return true
+		}
+	}
+	return false
+}
