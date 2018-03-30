@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"strings"
+	"time"
 
 	"github.com/Praqma/helmsman/aws"
 	"github.com/Praqma/helmsman/gcs"
@@ -34,13 +35,16 @@ func main() {
 		log.Fatal(msg)
 	}
 
-	// validate charts-versions exist in supllied repos
+	// validate charts-versions exist in defined repos
 	if r, msg := validateReleaseCharts(s.Apps); !r {
 		log.Fatal(msg)
 	}
 
 	// add/validate namespaces
 	addNamespaces(s.Namespaces)
+
+	// check if helm Tiller is ready
+	waitForTiller()
 
 	p := makePlan(&s)
 
@@ -76,11 +80,11 @@ func initHelm() (bool, string) {
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", "helm init --upgrade"},
-		Description: "initializing helm on the current context and upgrade Tiller.",
+		Description: "initializing helm on the current context and upgrading Tiller.",
 	}
 
-	if exitCode, _ := cmd.exec(debug); exitCode != 0 {
-		return false, "ERROR: there was a problem while initializing helm. "
+	if exitCode, err := cmd.exec(debug); exitCode != 0 {
+		return false, "ERROR: while initializing helm: " + err
 	}
 	return true, ""
 }
@@ -101,10 +105,20 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 			Description: "adding repo " + repoName,
 		}
 
-		if exitCode, _ := cmd.exec(debug); exitCode != 0 {
-			return false, "ERROR: there was a problem while adding repo [" + repoName + "]."
+		if exitCode, err := cmd.exec(debug); exitCode != 0 {
+			return false, "ERROR: while adding repo [" + repoName + "]: " + err
 		}
 
+	}
+
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm repo update "},
+		Description: "updating helm repos",
+	}
+
+	if exitCode, err := cmd.exec(debug); exitCode != 0 {
+		return false, "ERROR: while updating helm repos : " + err
 	}
 
 	return true, ""
@@ -119,12 +133,12 @@ func validateReleaseCharts(apps map[string]release) (bool, string) {
 		cmd := command{
 			Cmd:         "bash",
 			Args:        []string{"-c", "helm search " + r.Chart + " --version " + r.Version},
-			Description: "validating chart " + r.Chart + "-" + r.Version + " is available in the used repos.",
+			Description: "validating if chart " + r.Chart + "-" + r.Version + " is available in the defined repos.",
 		}
 
-		if exitCode, _ := cmd.exec(debug); exitCode != 0 {
+		if exitCode, result := cmd.exec(debug); exitCode != 0 || strings.Contains(result, "No results found") {
 			return false, "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " +
-				"app [" + app + "] but is not found in the provided repos."
+				"app [" + app + "] but is not found in the defined repos."
 		}
 	}
 	return true, ""
@@ -239,8 +253,8 @@ func createContext() (bool, string) {
 		Description: "creating kubectl context - setting credentials.",
 	}
 
-	if exitCode, _ := cmd.exec(debug); exitCode != 0 {
-		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]. "
+	if exitCode, err := cmd.exec(debug); exitCode != 0 {
+		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]:  " + err
 	}
 
 	cmd = command{
@@ -250,8 +264,8 @@ func createContext() (bool, string) {
 		Description: "creating kubectl context - setting cluster.",
 	}
 
-	if exitCode, _ := cmd.exec(debug); exitCode != 0 {
-		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]."
+	if exitCode, err := cmd.exec(debug); exitCode != 0 {
+		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]: " + err
 	}
 
 	cmd = command{
@@ -261,8 +275,8 @@ func createContext() (bool, string) {
 		Description: "creating kubectl context - setting context.",
 	}
 
-	if exitCode, _ := cmd.exec(debug); exitCode != 0 {
-		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]."
+	if exitCode, err := cmd.exec(debug); exitCode != 0 {
+		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]: " + err
 	}
 
 	if setKubeContext(s.Settings["kubeContext"]) {
@@ -282,4 +296,33 @@ func getBucketElements(link string) map[string]string {
 	m["bucketName"] = strings.SplitN(tmp, "/", 2)[0]
 	m["filePath"] = strings.SplitN(tmp, "/", 2)[1]
 	return m
+}
+
+// waitForTiller keeps checking if the helm Tiller is ready or not by executing helm list and checking its error (if any)
+// waits for 5 seconds before each new attempt and eventually terminates after 10 failed attempts.
+func waitForTiller() {
+
+	attempt := 0
+
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm list"},
+		Description: "checking Tiller is ready.",
+	}
+
+	exitCode, err := cmd.exec(debug)
+
+	for attempt < 10 {
+		if exitCode == 0 {
+			return
+		} else if strings.Contains(err, "could not find a ready tiller pod") {
+			log.Println("INFO: waiting for helm Tiller to be ready ...")
+			time.Sleep(5 * time.Second)
+			exitCode, err = cmd.exec(debug)
+		} else {
+			log.Fatal("ERROR: while waiting for helm Tiller to be ready : " + err)
+		}
+		attempt = attempt + 1
+	}
+	log.Fatal("ERROR: timeout reached while waiting for helm Tiller to be ready. Aborting!")
 }
