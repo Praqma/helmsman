@@ -16,7 +16,8 @@ var apply bool
 var help bool
 var v bool
 var verbose bool
-var version = "v1.0.2"
+var nsOverride string
+var version = "master"
 
 func main() {
 
@@ -54,6 +55,7 @@ func main() {
 	p := makePlan(&s)
 
 	if !apply {
+		p.sortPlan()
 		p.printPlan()
 	} else {
 		p.execPlan()
@@ -141,7 +143,7 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 // validateReleaseCharts validates if the charts defined in a release are valid.
 // Valid charts are the ones that can be found in the defined repos.
 // This function uses Helm search to verify if the chart can be found or not.
-func validateReleaseCharts(apps map[string]release) (bool, string) {
+func validateReleaseCharts(apps map[string]*release) (bool, string) {
 
 	for app, r := range apps {
 		cmd := command{
@@ -160,18 +162,36 @@ func validateReleaseCharts(apps map[string]release) (bool, string) {
 
 // addNamespaces creates a set of namespaces in your k8s cluster.
 // If a namespace with the same name exsts, it will skip it.
+// If --ns-override flag is used, it only creates the provided namespace in that flag
 func addNamespaces(namespaces map[string]namespace) {
-	for ns := range namespaces {
-		cmd := command{
-			Cmd:         "bash",
-			Args:        []string{"-c", "kubectl create namespace " + ns},
-			Description: "creating namespace  " + ns,
+	if nsOverride == "" {
+		for ns := range namespaces {
+			createNamespace(ns)
 		}
+	} else {
+		createNamespace(nsOverride)
+		overrideAppsNamespace(nsOverride)
+	}
+}
 
-		if exitCode, _ := cmd.exec(debug, verbose); exitCode != 0 {
-			log.Println("WARN: I could not create namespace [" +
-				ns + " ]. It already exists. I am skipping this.")
-		}
+func overrideAppsNamespace(newNs string) {
+	log.Println("INFO: overriding apps namespaces with [ " + newNs + " ] ...")
+	for _, r := range s.Apps {
+		overrideNamespace(r, newNs)
+	}
+}
+
+// createNamespace creates a namespace in the k8s cluster
+func createNamespace(ns string) {
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "kubectl create namespace " + ns},
+		Description: "creating namespace  " + ns,
+	}
+
+	if exitCode, _ := cmd.exec(debug, verbose); exitCode != 0 {
+		log.Println("WARN: I could not create namespace [" +
+			ns + " ]. It already exists. I am skipping this.")
 	}
 }
 

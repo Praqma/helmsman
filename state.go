@@ -20,7 +20,7 @@ type state struct {
 	Settings     map[string]string
 	Namespaces   map[string]namespace
 	HelmRepos    map[string]string
-	Apps         map[string]release
+	Apps         map[string]*release
 }
 
 // validate validates that the values specified in the desired state are valid according to the desired state spec.
@@ -84,9 +84,13 @@ func (s state) validate() (bool, string) {
 	}
 
 	// namespaces
-	if s.Namespaces == nil || len(s.Namespaces) == 0 {
-		return false, "ERROR: namespaces validation failed -- I need at least one namespace " +
-			"to work with!"
+	if nsOverride == "" {
+		if s.Namespaces == nil || len(s.Namespaces) == 0 {
+			return false, "ERROR: namespaces validation failed -- I need at least one namespace " +
+				"to work with!"
+		}
+	} else {
+		log.Println("INFO: ns-override is used. Overriding all namespaces with [ " + nsOverride + " ] Skipping defined namespaces validation.")
 	}
 
 	// repos

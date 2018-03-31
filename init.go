@@ -27,6 +27,7 @@ func init() {
 	flag.BoolVar(&help, "help", false, "show Helmsman help")
 	flag.BoolVar(&v, "v", false, "show the version")
 	flag.BoolVar(&verbose, "verbose", false, "show verbose execution logs")
+	flag.StringVar(&nsOverride, "ns-override", "", "override defined namespaces with this one")
 
 	flag.Parse()
 

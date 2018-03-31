@@ -19,7 +19,7 @@ func makePlan(s *state) *plan {
 
 // decide makes a decision about what commands (actions) need to be executed
 // to make a release section of the desired state come true.
-func decide(r release, s *state) {
+func decide(r *release, s *state) {
 
 	// check for deletion
 	if !r.Enabled {
@@ -85,7 +85,7 @@ func decide(r release, s *state) {
 }
 
 // testRelease creates a Helm command to test a particular release.
-func testRelease(r release) {
+func testRelease(r *release) {
 
 	cmd := command{
 		Cmd:         "bash",
@@ -98,7 +98,7 @@ func testRelease(r release) {
 }
 
 // installRelease creates a Helm command to install a particular release in a particular namespace.
-func installRelease(namespace string, r release) {
+func installRelease(namespace string, r *release) {
 
 	releaseName := r.Name
 	cmd := command{
@@ -118,7 +118,7 @@ func installRelease(namespace string, r release) {
 // inspectRollbackScenario evaluates if a rollback action needs to be taken for a given release.
 // if the release is already deleted but from a different namespace than the one specified in input,
 // it purge deletes it and create it in the spcified namespace.
-func inspectRollbackScenario(namespace string, r release) {
+func inspectRollbackScenario(namespace string, r *release) {
 
 	releaseName := r.Name
 	if getReleaseNamespace(r.Name) == namespace {
@@ -151,7 +151,7 @@ func inspectRollbackScenario(namespace string, r release) {
 // inspectDeleteScenario evaluates if a delete action needs to be taken for a given release.
 // If the purge flage is set to true for the release in question, then it will be permenantly removed.
 // If the release is not deployed, it will be skipped.
-func inspectDeleteScenario(namespace string, r release) {
+func inspectDeleteScenario(namespace string, r *release) {
 
 	releaseName := r.Name
 	//if it exists in helm list , add command to delete it, else log that it is skipped
@@ -165,7 +165,7 @@ func inspectDeleteScenario(namespace string, r release) {
 }
 
 // deleteRelease deletes a release from a k8s cluster
-func deleteRelease(r release) {
+func deleteRelease(r *release) {
 	p := ""
 	purgeDesc := ""
 	if r.Purge {
@@ -189,7 +189,7 @@ func deleteRelease(r release) {
 // it will be purge deleted and installed in the same namespace using the new chart.
 // - If the release is NOT in the same namespace specified in the input,
 // it will be purge deleted and installed in the new namespace.
-func inspectUpgradeScenario(namespace string, r release) {
+func inspectUpgradeScenario(namespace string, r *release) {
 
 	releaseName := r.Name
 	if getReleaseNamespace(releaseName) == namespace {
@@ -221,7 +221,7 @@ func inspectUpgradeScenario(namespace string, r release) {
 }
 
 // upgradeRelease upgrades an existing release with the specified values.yaml
-func upgradeRelease(r release) {
+func upgradeRelease(r *release) {
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFile(r) + " --version " + r.Version + " --force " + getSetValues(r) + getWait(r)},
@@ -237,7 +237,7 @@ func upgradeRelease(r release) {
 
 // reInstallRelease purge deletes a release and reinstalls it.
 // This is used when moving a release to another namespace or when changing the chart used for it.
-func reInstallRelease(namespace string, r release) {
+func reInstallRelease(namespace string, r *release) {
 
 	releaseName := r.Name
 	delCmd := command{
@@ -280,7 +280,7 @@ func extractChartName(releaseChart string) string {
 }
 
 // getValuesFile return partial install/upgrade release command to substitute the -f flag in Helm.
-func getValuesFile(r release) string {
+func getValuesFile(r *release) string {
 	if r.ValuesFile != "" {
 		return " -f " + r.ValuesFile
 	}
@@ -288,7 +288,7 @@ func getValuesFile(r release) string {
 }
 
 // getSetValues returns --set params to be used with helm install/upgrade commands
-func getSetValues(r release) string {
+func getSetValues(r *release) string {
 	result := ""
 	for k, v := range r.Set {
 		_, value := envVarExists(v)
@@ -299,7 +299,7 @@ func getSetValues(r release) string {
 
 // getWait returns a partial helm command containing the helm wait flag (--wait) if the wait flag for the release was set to true
 // Otherwise, retruns an empty string
-func getWait(r release) string {
+func getWait(r *release) string {
 	result := ""
 	if r.Wait {
 		result = " --wait"
@@ -307,39 +307,24 @@ func getWait(r release) string {
 	return result
 }
 
-// getDesiredNamespace validates that namespace where the release is desired to be installed is defined in the Namespaces definition
-// it returns the namespace if it is already defined
-// otherwise, it throws an error
-func getDesiredNamespace(r release) string {
-	if !checkNamespaceDefined(r.Namespace) {
-		log.Fatal("ERROR: " + r.Namespace + " is not defined in the Namespaces section of your desired state file. Release [ " + r.Name +
-			" ] can't be installed in that Namespace until its defined in your desired state file.")
-	}
+// getDesiredNamespace returns the namespace of a release
+func getDesiredNamespace(r *release) string {
 
 	return r.Namespace
 }
 
 // getCurrentNamespaceProtection returns the protection state for the namespace where a release is currently installed.
 // It returns true if a namespace is defined as protected in the desired state file, false otherwise.
-func getCurrentNamespaceProtection(r release) bool {
+func getCurrentNamespaceProtection(r *release) bool {
 
 	return s.Namespaces[getReleaseNamespace(r.Name)].Protected
-}
-
-// checkNamespaceDefined checks if a given namespace is defined in the namespaces section of the desired state file
-func checkNamespaceDefined(ns string) bool {
-	_, ok := s.Namespaces[ns]
-	if !ok {
-		return false
-	}
-	return true
 }
 
 // isProtected checks if a release is protected or not.
 // A protected is release is either: a) deployed in a protected namespace b) flagged as protected in the desired state file
 // Any release in a protected namespace is protected by default regardless of its flag
 // returns true if a release is protected, false otherwise
-func isProtected(r release) bool {
+func isProtected(r *release) bool {
 
 	// if the release does not exist in the cluster, it is not protected
 	if !helmReleaseExists("", r.Name, "all") {

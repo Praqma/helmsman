@@ -87,12 +87,13 @@ func printHelp() {
 	fmt.Println("Usage: helmsman [options]")
 	fmt.Println()
 	fmt.Println("Options:")
-	fmt.Println("-f         specifies the desired state TOML file.")
-	fmt.Println("-debug     prints basic logs during execution.")
-	fmt.Println("-verbose   prints more verbose logs during execution.")
-	fmt.Println("-apply     generates and applies an action plan.")
-	fmt.Println("-help      prints Helmsman help.")
-	fmt.Println("-v         prints Helmsman version.")
+	fmt.Println("--f             specifies the desired state TOML file.")
+	fmt.Println("--debug         prints basic logs during execution.")
+	fmt.Println("-verbose        prints more verbose logs during execution.")
+	fmt.Println("--ns-override   override defined namespaces with a provided one.")
+	fmt.Println("--apply         generates and applies an action plan.")
+	fmt.Println("--help          prints Helmsman help.")
+	fmt.Println("--v             prints Helmsman version.")
 }
 
 func logVersions() {
