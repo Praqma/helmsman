@@ -84,14 +84,42 @@ func readFile(filepath string) string {
 func printHelp() {
 	fmt.Println("Helmsman version: " + version)
 	fmt.Println("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
-	fmt.Println(" Usage: helmsman [options]")
+	fmt.Println("Usage: helmsman [options]")
 	fmt.Println()
 	fmt.Println("Options:")
-	fmt.Println("-f     specifies the desired state TOML file.")
-	fmt.Println("-debug prints all the logs during execution.")
-	fmt.Println("-apply generates and applies an action plan.")
-	fmt.Println("-help  prints Helmsman help.")
+	fmt.Println("-f         specifies the desired state TOML file.")
+	fmt.Println("-debug     prints basic logs during execution.")
+	fmt.Println("-verbose   prints more verbose logs during execution.")
+	fmt.Println("-apply     generates and applies an action plan.")
+	fmt.Println("-help      prints Helmsman help.")
+	fmt.Println("-v         prints Helmsman version.")
+}
 
+func logVersions() {
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "kubectl version"},
+		Description: "Kubectl version: ",
+	}
+
+	exitCode, result := cmd.exec(debug, false)
+	if exitCode != 0 {
+		log.Fatal("ERROR: while checking kubectl version: " + result)
+	}
+
+	log.Println("VERBOSE: kubectl version: \n " + result + "\n")
+
+	cmd = command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm version"},
+		Description: "Helm version: ",
+	}
+
+	exitCode, result = cmd.exec(debug, false)
+	if exitCode != 0 {
+		log.Fatal("ERROR: while checking helm version: " + result)
+	}
+	log.Println("VERBOSE: helm version: \n" + result + "\n")
 }
 
 // envVarExists checks if an environment variable is set or not and returns it.

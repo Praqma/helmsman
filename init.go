@@ -14,7 +14,7 @@ const (
 		"| '_ \\ / _ \\ | '_ ` _ \\/ __| '_ ` _ \\ / _` | '_ \\ \n" +
 		"| | | |  __/ | | | | | \\__ \\ | | | | | (_| | | | | \n" +
 		"|_| |_|\\___|_|_| |_| |_|___/_| |_| |_|\\__,_|_| |_|"
-	slogan = "A Helm-Chart-as-Code tool.\n\n"
+	slogan = "A Helm-Charts-as-Code tool.\n\n"
 )
 
 // init is executed after all package vars are initialized [before the main() func in this case].
@@ -26,6 +26,7 @@ func init() {
 	flag.BoolVar(&debug, "debug", false, "show the execution logs")
 	flag.BoolVar(&help, "help", false, "show Helmsman help")
 	flag.BoolVar(&v, "v", false, "show the version")
+	flag.BoolVar(&verbose, "verbose", false, "show verbose execution logs")
 
 	flag.Parse()
 
@@ -75,7 +76,7 @@ func toolExists(tool string) bool {
 		Description: "validating that " + tool + " is installed.",
 	}
 
-	exitCode, _ := cmd.exec(debug)
+	exitCode, _ := cmd.exec(debug, false)
 
 	if exitCode != 0 {
 		return false

@@ -29,11 +29,15 @@ func (c command) printFullCommand() {
 }
 
 // exec executes the executable command and returns the exit code and execution result
-func (c command) exec(debug bool) (int, string) {
+func (c command) exec(debug bool, verbose bool) (int, string) {
 
-	if debug {
+	if debug || verbose {
 		log.Println("INFO: " + c.Description)
 	}
+	if verbose {
+		log.Println("VERBOSE: " + c.Args[1])
+	}
+
 	cmd := exec.Command(c.Cmd, c.Args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout

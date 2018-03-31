@@ -15,6 +15,7 @@ var file string
 var apply bool
 var help bool
 var v bool
+var verbose bool
 var version = "v1.0.2"
 
 func main() {
@@ -28,6 +29,10 @@ func main() {
 
 	if r, msg := initHelm(); !r {
 		log.Fatal(msg)
+	}
+
+	if verbose {
+		logVersions()
 	}
 
 	// add repos -- fails if they are not valid
@@ -65,7 +70,7 @@ func setKubeContext(context string) bool {
 		Description: "setting kubectl context to [ " + context + " ]",
 	}
 
-	exitCode, _ := cmd.exec(debug)
+	exitCode, _ := cmd.exec(debug, verbose)
 
 	if exitCode != 0 {
 		log.Println("INFO: KubeContext: " + context + " does not exist. I will try to create it.")
@@ -83,7 +88,7 @@ func initHelm() (bool, string) {
 		Description: "initializing helm on the current context and upgrading Tiller.",
 	}
 
-	if exitCode, err := cmd.exec(debug); exitCode != 0 {
+	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "ERROR: while initializing helm: " + err
 	}
 	return true, ""
@@ -105,7 +110,7 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 			Description: "adding repo " + repoName,
 		}
 
-		if exitCode, err := cmd.exec(debug); exitCode != 0 {
+		if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
 			return false, "ERROR: while adding repo [" + repoName + "]: " + err
 		}
 
@@ -117,7 +122,7 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 		Description: "updating helm repos",
 	}
 
-	if exitCode, err := cmd.exec(debug); exitCode != 0 {
+	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "ERROR: while updating helm repos : " + err
 	}
 
@@ -136,7 +141,7 @@ func validateReleaseCharts(apps map[string]release) (bool, string) {
 			Description: "validating if chart " + r.Chart + "-" + r.Version + " is available in the defined repos.",
 		}
 
-		if exitCode, result := cmd.exec(debug); exitCode != 0 || strings.Contains(result, "No results found") {
+		if exitCode, result := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
 			return false, "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " +
 				"app [" + app + "] but is not found in the defined repos."
 		}
@@ -154,7 +159,7 @@ func addNamespaces(namespaces map[string]namespace) {
 			Description: "creating namespace  " + ns,
 		}
 
-		if exitCode, _ := cmd.exec(debug); exitCode != 0 {
+		if exitCode, _ := cmd.exec(debug, verbose); exitCode != 0 {
 			log.Println("WARN: I could not create namespace [" +
 				ns + " ]. It already exists. I am skipping this.")
 		}
@@ -253,7 +258,7 @@ func createContext() (bool, string) {
 		Description: "creating kubectl context - setting credentials.",
 	}
 
-	if exitCode, err := cmd.exec(debug); exitCode != 0 {
+	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]:  " + err
 	}
 
@@ -264,7 +269,7 @@ func createContext() (bool, string) {
 		Description: "creating kubectl context - setting cluster.",
 	}
 
-	if exitCode, err := cmd.exec(debug); exitCode != 0 {
+	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]: " + err
 	}
 
@@ -275,7 +280,7 @@ func createContext() (bool, string) {
 		Description: "creating kubectl context - setting context.",
 	}
 
-	if exitCode, err := cmd.exec(debug); exitCode != 0 {
+	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]: " + err
 	}
 
@@ -307,10 +312,10 @@ func waitForTiller() {
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", "helm list"},
-		Description: "checking Tiller is ready.",
+		Description: "checking if helm Tiller is ready.",
 	}
 
-	exitCode, err := cmd.exec(debug)
+	exitCode, err := cmd.exec(debug, verbose)
 
 	for attempt < 10 {
 		if exitCode == 0 {
@@ -318,7 +323,7 @@ func waitForTiller() {
 		} else if strings.Contains(err, "could not find a ready tiller pod") {
 			log.Println("INFO: waiting for helm Tiller to be ready ...")
 			time.Sleep(5 * time.Second)
-			exitCode, err = cmd.exec(debug)
+			exitCode, err = cmd.exec(debug, verbose)
 		} else {
 			log.Fatal("ERROR: while waiting for helm Tiller to be ready : " + err)
 		}
