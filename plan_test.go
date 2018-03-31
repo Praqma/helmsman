@@ -154,7 +154,7 @@ func Test_plan_execPlan(t *testing.T) {
 				Args:        []string{"-c", "ls | grep hello.world | wc -l"},
 				Description: "",
 			}
-			if _, got := c.exec(false); strings.TrimSpace(got) != "2" {
+			if _, got := c.exec(false, false); strings.TrimSpace(got) != "2" {
 				t.Errorf("execPlan(): got  %v, want hello world, again!", got)
 			}
 		})
