@@ -82,9 +82,18 @@ func setKubeContext(context string) bool {
 
 // initHelm initialize helm on a k8s cluster
 func initHelm() (bool, string) {
+	serviceAccount := ""
+	if value, ok := s.Settings["serviceAccount"]; ok {
+		if ok, err := validateSerrviceAccount(value); ok {
+			serviceAccount = "--service-account " + value
+		} else {
+			return false, "ERROR: while initializing helm: " + err
+		}
+
+	}
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm init --upgrade"},
+		Args:        []string{"-c", "helm init --upgrade " + serviceAccount},
 		Description: "initializing helm on the current context and upgrading Tiller.",
 	}
 
