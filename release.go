@@ -19,6 +19,7 @@ type release struct {
 	Test        bool
 	Protected   bool
 	Wait        bool
+	Priority    int
 	Set         map[string]string
 }
 
@@ -44,6 +45,8 @@ func validateRelease(r release, names map[string]bool) (bool, string) {
 				return false, "env variable [ " + v + " ] is not found in the environment."
 			}
 		}
+	} else if r.Priority != 0 && r.Priority > 0 {
+		return false, "priority can only be 0 or negative value, positive values are not allowed."
 	}
 
 	names[r.Name] = true
@@ -64,6 +67,7 @@ func (r release) print() {
 	fmt.Println("\ttest : ", r.Test)
 	fmt.Println("\tprotected : ", r.Protected)
 	fmt.Println("\twait : ", r.Wait)
+	fmt.Println("\tpriority : ", r.Priority)
 	fmt.Println("\tvalues to override from env:")
 	printMap(r.Set)
 	fmt.Println("------------------- ")
