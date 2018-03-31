@@ -14,7 +14,7 @@ RUN cd helmsman \
     && CGO_ENABLED=0 GOOS=linux go install -a -ldflags '-X main.version='$TAG' -extldflags "-static"' . 
 
 FROM alpine:3.6 as kube
-ENV KUBE_LATEST_VERSION="v1.8.2"
+ENV KUBE_LATEST_VERSION="v1.10.0"
 
 RUN apk add --update ca-certificates 
 RUN apk add --update -t deps curl 
@@ -25,7 +25,7 @@ RUN chmod +x /usr/local/bin/kubectl
 FROM alpine:3.7 
 RUN apk add --update --no-cache ca-certificates git
 
-ENV HELM_VERSION v2.7.0
+ARG HELM_VERSION=v2.8.1
 
 RUN apk --no-cache update \
     && rm -rf /var/cache/apk/* \
@@ -34,7 +34,7 @@ RUN apk --no-cache update \
     && mv /tmp/linux-amd64/helm /usr/local/bin/helm \
     && chmod +x /usr/local/bin/helm \
     && mkdir -p ~/.helm/plugins \
-    && helm plugin install https://github.com/hypnoglow/helm-s3.git --version 0.4.0 \
+    && helm plugin install https://github.com/hypnoglow/helm-s3.git \
     && helm plugin install https://github.com/nouney/helm-gcs \
     && rm -rf /tmp/linux-amd64
 
