@@ -60,7 +60,8 @@ func Test_command_exec(t *testing.T) {
 		Description string
 	}
 	type args struct {
-		debug bool
+		debug   bool
+		verbose bool
 	}
 	tests := []struct {
 		name   string
@@ -76,7 +77,7 @@ func Test_command_exec(t *testing.T) {
 				Args:        []string{"-c", "echo this is fun"},
 				Description: "A bash command execution test with echo.",
 			},
-			args:  args{debug: false},
+			args:  args{debug: false, verbose: false},
 			want:  0,
 			want1: "this is fun",
 		}, {
@@ -98,7 +99,7 @@ func Test_command_exec(t *testing.T) {
 				Args:        tt.fields.Args,
 				Description: tt.fields.Description,
 			}
-			got, got1 := c.exec(tt.args.debug)
+			got, got1 := c.exec(tt.args.debug, tt.args.verbose)
 			if got != tt.want {
 				t.Errorf("command.exec() got = %v, want %v", got, tt.want)
 			}
