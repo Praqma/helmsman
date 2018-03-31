@@ -15,7 +15,7 @@ jobs:
             go get github.com/Praqma/helmsman/gcs 
             go get github.com/Praqma/helmsman/aws
             echo "building ..."
-            TAG=$(git describe --abbrev=0 --tags)-$(date +"%s")
+            TAG=$(git describe --abbrev=0 --tags)-$(date +"%d%m%y")
             go build -ldflags '-X main.version='$TAG' -extldflags "-static"'
   
   test:
