@@ -30,40 +30,56 @@ func (s state) validate() (bool, string) {
 	// settings
 	if s.Settings == nil {
 		return false, "ERROR: settings validation failed -- no settings table provided in TOML."
-	} else if s.Settings["kubeContext"] == "" {
+	} else if value, ok := s.Settings["kubeContext"]; !ok || value == "" {
 		return false, "ERROR: settings validation failed -- you have not provided a " +
 			"kubeContext to use. Can't work without it. Sorry!"
-	} else if len(s.Settings) > 1 {
-		s.Settings["password"] = subsituteEnv(s.Settings["password"])
-		s.Settings["clusterURI"] = subsituteEnv(s.Settings["clusterURI"])
+	} else if value, ok = s.Settings["clusterURI"]; ok {
+
+		s.Settings["clusterURI"] = subsituteEnv(value)
+		if _, err := url.ParseRequestURI(s.Settings["clusterURI"]); err != nil {
+			return false, "ERROR: settings validation failed -- clusterURI must have a valid URL set in an env varibale or passed directly. Either the env var is missing/empty or the URL is invalid."
+		}
+
+		if _, ok = s.Settings["username"]; !ok {
+			return false, "ERROR: settings validation failed -- username must be provided if clusterURI is defined."
+		}
+		if value, ok = s.Settings["password"]; ok {
+			s.Settings["password"] = subsituteEnv(value)
+		} else {
+			return false, "ERROR: settings validation failed -- password must be provided if clusterURI is defined."
+		}
 
 		if s.Settings["password"] == "" {
 			return false, "ERROR: settings validation failed -- password should be set as an env variable. It is currently missing or empty. "
-		} else if _, err := url.ParseRequestURI(s.Settings["clusterURI"]); err != nil {
-			return false, "ERROR: settings validation failed -- clusterURI must have a valid URL set in an env varibale or passed directly. Either the env var is missing/empty or the URL is invalid."
 		}
 	}
 
 	// certificates
 	if s.Certificates != nil {
-		if len(s.Settings) > 1 && len(s.Certificates) < 2 {
+		_, ok1 := s.Settings["clusterURI"]
+		_, ok2 := s.Certificates["caCrt"]
+		_, ok3 := s.Certificates["caKey"]
+		if ok1 && (!ok2 || !ok3) {
 			return false, "ERROR: certifications validation failed -- You want me to connect to your cluster for you " +
-				"but have not given me the keys to do so. Please add [caCrt] and [caKey] under Certifications. You might also need to provide [clientCrt]."
-		}
-		for key, value := range s.Certificates {
-			tmp := subsituteEnv(value)
-			_, err1 := url.ParseRequestURI(tmp)
-			_, err2 := os.Stat(tmp)
-			if (err1 != nil || (!strings.HasPrefix(tmp, "s3://") && !strings.HasPrefix(tmp, "gs://"))) && err2 != nil {
-				return false, "ERROR: certifications validation failed -- [ " + key + " ] must be a valid S3 or GCS bucket URL or a valid relative file path."
+				"but have not given me the cert/key to do so. Please add [caCrt] and [caKey] under Certifications. You might also need to provide [clientCrt]."
+		} else if ok1 {
+			for key, value := range s.Certificates {
+				tmp := subsituteEnv(value)
+				_, err1 := url.ParseRequestURI(tmp)
+				_, err2 := os.Stat(tmp)
+				if (err1 != nil || (!strings.HasPrefix(tmp, "s3://") && !strings.HasPrefix(tmp, "gs://"))) && err2 != nil {
+					return false, "ERROR: certifications validation failed -- [ " + key + " ] must be a valid S3 or GCS bucket URL or a valid relative file path."
+				}
+				s.Certificates[key] = tmp
 			}
-			s.Certificates[key] = tmp
+		} else {
+			log.Println("INFO: certificates provided but not needed. Skipping certificates validation.")
 		}
 
 	} else {
-		if len(s.Settings) > 1 {
+		if _, ok := s.Settings["clusterURI"]; ok {
 			return false, "ERROR: certifications validation failed -- You want me to connect to your cluster for you " +
-				"but have not given me the keys to do so. Please add [caCrt] and [caKey] under Certifications. You might also need to provide [clientCrt]."
+				"but have not given me the cert/key to do so. Please add [caCrt] and [caKey] under Certifications. You might also need to provide [clientCrt]."
 		}
 	}
 

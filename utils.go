@@ -144,3 +144,17 @@ func sliceContains(slice []string, s string) bool {
 	}
 	return false
 }
+
+// validateSerrviceAccount checks if k8s service account exists
+func validateSerrviceAccount(sa string) (bool, string) {
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "kubectl get serviceaccount " + sa},
+		Description: "validating that serviceaccount [ " + sa + " ] exists.",
+	}
+
+	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
+		return false, err
+	}
+	return true, ""
+}
