@@ -16,7 +16,7 @@ jobs:
             go get github.com/Praqma/helmsman/aws
             echo "building ..."
             TAG=$(git describe --abbrev=0 --tags)-$(date +"%s")
-            go build -ldflags "-X main.version="$TAG
+            go build -ldflags '-X main.version='$TAG' -extldflags "-static"'
   
   test:
     docker: 
@@ -43,7 +43,22 @@ jobs:
             go get github.com/Praqma/helmsman/gcs 
             go get github.com/Praqma/helmsman/aws
             echo "releasing ..."
-            goreleaser --release-notes release-notes.md            
+            goreleaser --release-notes release-notes.md 
+     
+      - setup_remote_docker
+      - run:
+          name: build docker images and push them to dockerhub
+          command: |
+            TAG=$(git describe --abbrev=0 --tags)
+            docker login -u samincl -p $DOCKERHUB
+            docker build -t praqma/helmsman:$TAG-helm-v2.8.1 --build-arg HELM_VERSION=v2.8.1 dockerfile/.
+            docker push praqma/helmsman:$TAG-helm-v2.8.1
+            docker build -t praqma/helmsman:$TAG-helm-v2.8.0 --build-arg HELM_VERSION=v2.8.0 dockerfile/.
+            docker push praqma/helmsman:$TAG-helm-v2.8.0
+            docker build -t praqma/helmsman:$TAG-helm-v2.7.2 --build-arg HELM_VERSION=v2.7.2 dockerfile/.
+            docker push praqma/helmsman:$TAG-helm-v2.7.2
+
+                
 workflows:
   version: 2
   build-test-push-release:
