@@ -28,7 +28,7 @@ type state struct {
 func (s state) validate() (bool, string) {
 
 	// settings
-	if s.Settings == nil {
+	if s.Settings == nil || len(s.Settings) == 0 {
 		return false, "ERROR: settings validation failed -- no settings table provided in TOML."
 	} else if value, ok := s.Settings["kubeContext"]; !ok || value == "" {
 		return false, "ERROR: settings validation failed -- you have not provided a " +
@@ -55,7 +55,7 @@ func (s state) validate() (bool, string) {
 	}
 
 	// certificates
-	if s.Certificates != nil {
+	if s.Certificates != nil && len(s.Certificates) != 0 {
 		_, ok1 := s.Settings["clusterURI"]
 		_, ok2 := s.Certificates["caCrt"]
 		_, ok3 := s.Certificates["caKey"]
@@ -84,13 +84,13 @@ func (s state) validate() (bool, string) {
 	}
 
 	// namespaces
-	if s.Namespaces == nil || len(s.Namespaces) < 1 {
+	if s.Namespaces == nil || len(s.Namespaces) == 0 {
 		return false, "ERROR: namespaces validation failed -- I need at least one namespace " +
 			"to work with!"
 	}
 
 	// repos
-	if s.HelmRepos == nil || len(s.HelmRepos) < 1 {
+	if s.HelmRepos == nil || len(s.HelmRepos) == 0 {
 		return false, "ERROR: repos validation failed -- I need at least one helm repo " +
 			"to work with!"
 	}
