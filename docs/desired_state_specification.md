@@ -1,5 +1,5 @@
 ---
-version: v1.0.0
+version: v1.1.0
 ---
 
 # Helmsman desired state specification
@@ -69,6 +69,7 @@ The following options can be skipped if your kubectl context is already created 
 - username   : the username to be used for kubectl credentials.
 - password   : an environment variable name (starting with `$`) where your password is stored. Get the password from your k8s admin or consult k8s docs on how to get/set it. 
 - clusterURI : the URI for your cluster API or an environment variable containing the URI.
+- serviceAccount: the name of the service account to use to initiate helm. This should have enough permissions to allow Helm to work and should exist already in the cluster. More details can be found in [helm's RBAC guide](https://github.com/kubernetes/helm/blob/master/docs/rbac.md) 
 
 Example: 
 
@@ -79,6 +80,7 @@ kubeContext = "minikube"
 # password = "$K8S_PASSWORD" 
 # clusterURI = "https://192.168.99.100:8443" 
 ## clusterURI= "$K8S_URI"
+# serviceAccount = "my-service-account"
 ```
 
 ## Namespaces
@@ -150,6 +152,8 @@ Options:
 - purge       : defines whether to use the Helm purge flag wgen deleting the release. (true/false)
 - test        : defines whether to run the chart tests whenever the release is installed/upgraded/rolledback.
 - protected   : defines if the release should be protected against changes. Namespace-level protection has higher priority than this flag. Check the [protection guide](how_to/protect_namespaces_and_releases.md) for more details.
+- wait        : defines whether helmsman should block execution until all k8s resources are in a ready state. Default is false.
+- priority    : defines the priority of applying operations on this release. Only negative values allowed and the lower the value, the higher the priority. Default priority is 0. Apps with equal priorities will be applied in the order they were added in your state file (DSF).
 
 Example: 
 
@@ -169,5 +173,7 @@ Example:
     purge = false 
     test = true 
     protected = false
+    wait = true
+    priority = -3
 ```
 

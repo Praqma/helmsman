@@ -61,6 +61,8 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     # [apps.jenkins.set] # values to override values from values.yaml with values from env vars-- useful for passing secrets to charts
     #     db_username="$DB_USERNAME"
     #     db_password="$DB_PASSWORD"
+    priority= -3
+    wait = true
 
 
     [apps.artifactory]
@@ -73,6 +75,4 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     valuesFile = "" # leaving it empty uses the default chart values
     purge = false # will only be considered when there is a delete operation
     test = false # run the tests when this release is installed for the first time only
-    # [apps.artifactory.set] # values to override values from values.yaml with values from env vars-- useful for passing secrets to charts
-    #     db_username="$DB_USERNAME"
-    #     db_password="$DB_PASSWORD"
+    priority= -2
