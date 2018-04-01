@@ -1,49 +1,12 @@
 ---
-version: v1.0.0
+version: v1.1.0
 ---
 
 ![helmsman-logo](docs/images/helmsman.png)
 
 # What is Helmsman?
 
-Helmsman is a Helm Charts (k8s applications) as Code tool which adds a layer of abstraction on top of [Helm](https://helm.sh) (the [Kubernetes](https://kubernetes.io/) package manager). It allows you to automate the deployment/management of your Helm charts.
-
-# Why Helmsman?
-
-Helmsman was created to ease continous deployment of Helm charts. When you want to configure a continous deployment pipeline to manage multiple charts deployed on your k8s cluster(s), a CI script will quickly become complex and difficult to maintain. That's where Helmsman comes to rescue. Read more about [how Helmsman can save you time and effort](https://github.com/Praqma/helmsman/blob/master/docs/why_helmsman.md).  
-
-
-# Features
-
-- **Built for CD**: Helmsman can be used as a docker image or a binary. 
-- **Applications as code**: describe your desired applications and manage them from a single version-controlled declarative file.
-- **Easy to use**: deep knowledge of Helm CLI and Kubectl is NOT manadatory to use Helmsman. 
-- **Plan, View, apply**: you can run Helmsman to generate and view a plan with/without executing it. 
-- **Portable**: Helmsman can be used to manage charts deployments on any k8s cluster.
-- **Protect Namespaces/Releases**: you can define certain namespaces/releases to be protected against accidental human mistakes.
-- **Idempotency**: As long your desired state file does not change, you can execute Helmsman several times and get the same result. 
-- **Continue from failures**: In the case of partial deployment due to a specific chart deployment failure, fix your helm chart and execute Helmsman again without needing to rollback the partial successes first.
-
-# Helmsman lets you:
-
-- [install/delete/upgrade/rollback your helm charts from code](https://github.com/Praqma/helmsman/blob/master/docs/how_to/manipulate_apps.md).
-- [pass secrets/user input to helm charts from environment variables](https://github.com/Praqma/helmsman/blob/master/docs/how_to/pass_secrets_from_env_variables.md).
-- [test releases when they are first installed](https://github.com/Praqma/helmsman/blob/master/docs/how_to/test_charts.md).
-- [use public and private helm charts](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_private_helm_charts.md).
-- [use locally developed helm charts (the tar archives)](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_local_charts.md).
-- [define namespaces to be used in your cluster](https://github.com/Praqma/helmsman/blob/master/docs/how_to/define_namespaces.md).
-- [move charts across namespaces](https://github.com/Praqma/helmsman/blob/master/docs/how_to/move_charts_across_namespaces.md).
-- [protect namespaces/releases against accidental changes](https://github.com/Praqma/helmsman/blob/master/docs/how_to/protect_namespaces_and_releases.md)
-
-
-# Usage 
-
-Helmsman can be used in three different settings:
-
-- [As a binary with Minikube](https://github.com/Praqma/helmsman/blob/master/docs/how_to/run_helmsman_with_minikube.md).
-- [As a binary with a hosted cluster](https://github.com/Praqma/helmsman/blob/master/docs/how_to/run_helmsman_with_hosted_cluster.md).
-- [As a docker image in a CI system or local machine](https://github.com/Praqma/helmsman/blob/master/docs/how_to/run_helmsman_in_ci.md) Always use a tagged docker image from [dockerhub](https://hub.docker.com/r/praqma/helmsman/) as the `latest` image can (at times) be unstable.
-
+Helmsman is a Helm Charts (k8s applications) as Code tool which allows you to automate the deployment/management of your Helm charts from version controlled code.
 
 # How does it work?
 
@@ -62,17 +25,61 @@ To plan and execute the plan:
 To show debugging details:
 ``` $ helmsman -debug -apply -f example.toml ```
 
+# Features
 
-# Installation 
+- **Built for CD**: Helmsman can be used as a docker image or a binary. 
+- **Applications as code**: describe your desired applications and manage them from a single version-controlled declarative file.
+- **Easy to use**: deep knowledge of Helm CLI and Kubectl is NOT manadatory to use Helmsman. 
+- **Plan, View, apply**: you can run Helmsman to generate and view a plan with/without executing it. 
+- **Portable**: Helmsman can be used to manage charts deployments on any k8s cluster.
+- **Protect Namespaces/Releases**: you can define certain namespaces/releases to be protected against accidental human mistakes.
+- **Define the order of managing releases**: you can define the priorities at which releases are managed by helmsman (useful for dependencies).
+- **Idempotency**: As long your desired state file does not change, you can execute Helmsman several times and get the same result. 
+- **Continue from failures**: In the case of partial deployment due to a specific chart deployment failure, fix your helm chart and execute Helmsman again without needing to rollback the partial successes first.
 
-Install Helmsman for your OS from the [releases page](https://github.com/Praqma/Helmsman/releases). Available for Linux, MacOS & Windows.
+# Install
 
-Also available as a [docker image](https://hub.docker.com/r/praqma/helmsman/).
+## From binary
+
+Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the different versions.
+```
+# on Linux
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.1.0/helmsman_1.1.0_linux_amd64.tar.gz | tar zx
+# on MacOS
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.1.0/helmsman_1.1.0_darwin_amd64.tar.gz | tar zx
+
+mv helmsman /bin/helmsman
+```
+
+## As a docker image
+Check the images on [dockerhub](https://hub.docker.com/r/praqma/helmsman/tags/)
 
 # Documentaion
 
 Documentation and How-Tos can be found [here](https://github.com/Praqma/helmsman/blob/master/docs/).
+Helmsman lets you:
+
+- [install/delete/upgrade/rollback your helm charts from code](https://github.com/Praqma/helmsman/blob/master/docs/how_to/manipulate_apps.md).
+- [pass secrets/user input to helm charts from environment variables](https://github.com/Praqma/helmsman/blob/master/docs/how_to/pass_secrets_from_env_variables.md).
+- [test releases when they are first installed](https://github.com/Praqma/helmsman/blob/master/docs/how_to/test_charts.md).
+- [use public and private helm charts](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_private_helm_charts.md).
+- [use locally developed helm charts (the tar archives)](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_local_charts.md).
+- [define namespaces to be used in your cluster](https://github.com/Praqma/helmsman/blob/master/docs/how_to/define_namespaces.md).
+- [move charts across namespaces](https://github.com/Praqma/helmsman/blob/master/docs/how_to/move_charts_across_namespaces.md).
+- [protect namespaces/releases against accidental changes](https://github.com/Praqma/helmsman/blob/master/docs/how_to/protect_namespaces_and_releases.md)
+- [Define priorities at which releases are deployed/managed](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_the_priority_key.md)
+- [Override the defined namespaces to deploy all releases in a specific namespace](https://github.com/Praqma/helmsman/blob/master/docs/how_to/override_defined_namespaces.md)
+
+
+## Usage 
+
+Helmsman can be used in three different settings:
+
+- [As a binary with Minikube](https://github.com/Praqma/helmsman/blob/master/docs/how_to/run_helmsman_with_minikube.md).
+- [As a binary with a hosted cluster](https://github.com/Praqma/helmsman/blob/master/docs/how_to/run_helmsman_with_hosted_cluster.md).
+- [As a docker image in a CI system or local machine](https://github.com/Praqma/helmsman/blob/master/docs/how_to/run_helmsman_in_ci.md) Always use a tagged docker image from [dockerhub](https://hub.docker.com/r/praqma/helmsman/) as the `latest` image can (at times) be unstable.
+
 
 # Contributing
 
-Pull requests, feeback/feature requests are welcome. 
+Pull requests, feeback/feature requests are welcome. Please check our [contribution guide](CONTRIBUTION.md).

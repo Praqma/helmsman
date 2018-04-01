@@ -1,5 +1,5 @@
 ---
-version: v0.2.0
+version: v1.1.0
 ---
 
 # define namespaces
@@ -10,10 +10,9 @@ You can define namespaces to be used in your cluster. If they don't exist, Helms
 ...
 
 [namespaces]
-staging = "staging" 
-production = "default"
-myOtherNamespace = "namespaceX"
-
+[namespaces.staging]
+[namespaces.production]
+  protected = true # default is false
 ...
 ``` 
 

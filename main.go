@@ -68,7 +68,7 @@ func main() {
 		cleanup()
 	}
 
-	log.Println("INFO: execution completed successfully!")
+	log.Println("INFO: completed successfully!")
 }
 
 // setKubeContext sets your kubectl context to the one specified in the desired state file.

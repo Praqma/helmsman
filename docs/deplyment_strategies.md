@@ -1,5 +1,5 @@
 ---
-version: v1.0.0
+version: v1.1.0
 ---
 
 # Deployment Strategies 
@@ -76,6 +76,8 @@ If you use multiple clusters for multiple purposes, you need at least one Helmsm
 If you are developing your own applications/services and packaging them in helm charts. It makes sense to automtically deploy these charts to a staging namespace or a dev cluster on every source code commit.
 
 Often, you would have multiple apps developed in separate source code repositories but you would like to test their deployment in the same cluster/namespace. In that case, Helmsman can be used [as part of your CI pipeline](how_to/run_helmsman_in_ci.md) as described in the diagram below:
+
+> as of v1.1.0 , you can use the `ns-override`flag to force helmsman to deploy/move all apps into a given namespace. For example, you could use this flag in a CI job that gets triggered on commits to the dev branch to deploy all apps into the `staging` namespace.  
 
 ![multi-DSF](images/multi-DSF.png)
 
