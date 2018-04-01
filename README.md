@@ -48,7 +48,7 @@ curl -L https://github.com/Praqma/helmsman/releases/download/v1.1.0/helmsman_1.1
 # on MacOS
 curl -L https://github.com/Praqma/helmsman/releases/download/v1.1.0/helmsman_1.1.0_darwin_amd64.tar.gz | tar zx
 
-mv helmsman /bin/helmsman
+mv helmsman /usr/local/bin/helmsman
 ```
 
 ## As a docker image
