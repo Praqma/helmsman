@@ -159,3 +159,11 @@ func validateSerrviceAccount(sa string) (bool, string) {
 	}
 	return true, ""
 }
+
+// deleteFile deletes a file
+func deleteFile(path string) {
+	log.Println("INFO: cleaning up ... deleting " + path)
+	if err := os.Remove(path); err != nil {
+		log.Fatal("ERROR: could not delete file: " + path)
+	}
+}
