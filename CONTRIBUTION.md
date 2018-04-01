@@ -4,7 +4,7 @@ Pull requests, feeback/feature requests are all welcome. This guide will be upda
 
 ## Build helmsman from source
 
-To build helmsman from source, you need go:1.8+.  Follow the steps below:
+To build helmsman from source, you need go:1.9+.  Follow the steps below:
 
 ```
 git clone https://github.com/Praqma/helmsman.git
