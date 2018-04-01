@@ -26,17 +26,15 @@ type release struct {
 
 // validateRelease validates if a release inside a desired state meets the specifications or not.
 // check the full specification @ https://github.com/Praqma/helmsman/docs/desired_state_spec.md
-func validateRelease(r *release, names map[string]bool) (bool, string) {
+func validateRelease(r *release, names map[string]bool, s state) (bool, string) {
 	_, err := os.Stat(r.ValuesFile)
 	if r.Name == "" || names[r.Name] {
 		return false, "release name can't be empty and must be unique."
 	} else if nsOverride == "" && r.Namespace == "" {
 		return false, "release targeted namespace can't be empty."
-	} else if nsOverride == "" && r.Namespace != "" {
-		if !checkNamespaceDefined(r.Namespace) {
-			return false, "release " + r.Name + " is using namespace [ " + r.Namespace + " ] which is not defined in the Namespaces section of your desired state file." +
-				" Release [ " + r.Name + " ] can't be installed in that Namespace until its defined."
-		}
+	} else if nsOverride == "" && r.Namespace != "" && !checkNamespaceDefined(r.Namespace, s) {
+		return false, "release " + r.Name + " is using namespace [ " + r.Namespace + " ] which is not defined in the Namespaces section of your desired state file." +
+			" Release [ " + r.Name + " ] can't be installed in that Namespace until its defined."
 	} else if r.Chart == "" || !strings.ContainsAny(r.Chart, "/") {
 		return false, "chart can't be empty and must be of the format: repo/chart."
 	} else if r.Version == "" {
@@ -60,7 +58,7 @@ func validateRelease(r *release, names map[string]bool) (bool, string) {
 }
 
 // checkNamespaceDefined checks if a given namespace is defined in the namespaces section of the desired state file
-func checkNamespaceDefined(ns string) bool {
+func checkNamespaceDefined(ns string, s state) bool {
 	_, ok := s.Namespaces[ns]
 	if !ok {
 		return false
