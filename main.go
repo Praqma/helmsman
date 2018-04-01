@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ var help bool
 var v bool
 var verbose bool
 var nsOverride string
+var checkCleanup bool
 var version = "master"
 
 func main() {
@@ -26,6 +28,7 @@ func main() {
 		if r, msg := createContext(); !r {
 			log.Fatal(msg)
 		}
+		checkCleanup = true
 	}
 
 	if r, msg := initHelm(); !r {
@@ -61,6 +64,11 @@ func main() {
 		p.execPlan()
 	}
 
+	if checkCleanup {
+		cleanup()
+	}
+
+	log.Println("INFO: execution completed successfully!")
 }
 
 // setKubeContext sets your kubectl context to the one specified in the desired state file.
@@ -359,4 +367,18 @@ func waitForTiller() {
 		attempt = attempt + 1
 	}
 	log.Fatal("ERROR: timeout reached while waiting for helm Tiller to be ready. Aborting!")
+}
+
+func cleanup() {
+	if _, err := os.Stat("ca.crt"); err == nil {
+		deleteFile("ca.crt")
+	}
+
+	if _, err := os.Stat("ca.key"); err == nil {
+		deleteFile("ca.key")
+	}
+
+	if _, err := os.Stat("client.crt"); err == nil {
+		deleteFile("client.crt")
+	}
 }
