@@ -1,6 +1,6 @@
 #  This is a docker image for the helmsman test container
 #  It can be pulled from praqma/helmsman-test
-FROM golang:1.8-alpine3.6 as builder
+FROM golang:1.10-alpine3.7 as builder
 
 ENV KUBE_LATEST_VERSION v1.8.2
 ENV HELM_VERSION v2.7.0
