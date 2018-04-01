@@ -6,8 +6,18 @@ import (
 )
 
 func Test_validateRelease(t *testing.T) {
+	st := state{
+		Metadata:     make(map[string]string),
+		Certificates: make(map[string]string),
+		Settings:     make(map[string]string),
+		Namespaces:   map[string]namespace{"namespace": namespace{false}},
+		HelmRepos:    make(map[string]string),
+		Apps:         make(map[string]*release),
+	}
+
 	type args struct {
-		r release
+		s state
+		r *release
 	}
 	tests := []struct {
 		name  string
@@ -18,7 +28,7 @@ func Test_validateRelease(t *testing.T) {
 		{
 			name: "test case 1",
 			args: args{
-				r: release{
+				r: &release{
 					Name:        "release1",
 					Description: "",
 					Namespace:   "namespace",
@@ -29,30 +39,32 @@ func Test_validateRelease(t *testing.T) {
 					Purge:       true,
 					Test:        true,
 				},
+				s: st,
 			},
 			want:  true,
 			want1: "",
 		}, {
 			name: "test case 2",
 			args: args{
-				r: release{
+				r: &release{
 					Name:        "release2",
 					Description: "",
 					Namespace:   "namespace",
 					Enabled:     true,
 					Chart:       "repo/chartX",
 					Version:     "1.0",
-					ValuesFile:  "values.yaml",
+					ValuesFile:  "xyz.yaml",
 					Purge:       true,
 					Test:        true,
 				},
+				s: st,
 			},
 			want:  false,
 			want1: "valuesFile must be a valid file path for a yaml file, Or can be left empty.",
 		}, {
 			name: "test case 3",
 			args: args{
-				r: release{
+				r: &release{
 					Name:        "release3",
 					Description: "",
 					Namespace:   "namespace",
@@ -63,13 +75,14 @@ func Test_validateRelease(t *testing.T) {
 					Purge:       true,
 					Test:        true,
 				},
+				s: st,
 			},
 			want:  false,
 			want1: "valuesFile must be a valid file path for a yaml file, Or can be left empty.",
 		}, {
 			name: "test case 4",
 			args: args{
-				r: release{
+				r: &release{
 					Name:        "release1",
 					Description: "",
 					Namespace:   "namespace",
@@ -80,13 +93,14 @@ func Test_validateRelease(t *testing.T) {
 					Purge:       true,
 					Test:        true,
 				},
+				s: st,
 			},
 			want:  false,
 			want1: "release name can't be empty and must be unique.",
 		}, {
 			name: "test case 5",
 			args: args{
-				r: release{
+				r: &release{
 					Name:        "",
 					Description: "",
 					Namespace:   "namespace",
@@ -97,13 +111,14 @@ func Test_validateRelease(t *testing.T) {
 					Purge:       true,
 					Test:        true,
 				},
+				s: st,
 			},
 			want:  false,
 			want1: "release name can't be empty and must be unique.",
 		}, {
 			name: "test case 6",
 			args: args{
-				r: release{
+				r: &release{
 					Name:        "release6",
 					Description: "",
 					Namespace:   "",
@@ -114,13 +129,14 @@ func Test_validateRelease(t *testing.T) {
 					Purge:       true,
 					Test:        true,
 				},
+				s: st,
 			},
 			want:  false,
 			want1: "release targeted namespace can't be empty.",
 		}, {
 			name: "test case 7",
 			args: args{
-				r: release{
+				r: &release{
 					Name:        "release7",
 					Description: "",
 					Namespace:   "namespace",
@@ -131,13 +147,14 @@ func Test_validateRelease(t *testing.T) {
 					Purge:       true,
 					Test:        true,
 				},
+				s: st,
 			},
 			want:  false,
 			want1: "chart can't be empty and must be of the format: repo/chart.",
 		}, {
 			name: "test case 8",
 			args: args{
-				r: release{
+				r: &release{
 					Name:        "release8",
 					Description: "",
 					Namespace:   "namespace",
@@ -148,13 +165,14 @@ func Test_validateRelease(t *testing.T) {
 					Purge:       true,
 					Test:        true,
 				},
+				s: st,
 			},
 			want:  false,
 			want1: "chart can't be empty and must be of the format: repo/chart.",
 		}, {
 			name: "test case 9",
 			args: args{
-				r: release{
+				r: &release{
 					Name:        "release9",
 					Description: "",
 					Namespace:   "namespace",
@@ -165,13 +183,14 @@ func Test_validateRelease(t *testing.T) {
 					Purge:       true,
 					Test:        true,
 				},
+				s: st,
 			},
 			want:  false,
 			want1: "version can't be empty.",
 		}, {
 			name: "test case 10",
 			args: args{
-				r: release{
+				r: &release{
 					Name:        "release10",
 					Description: "",
 					Namespace:   "namespace",
@@ -182,6 +201,7 @@ func Test_validateRelease(t *testing.T) {
 					Purge:       true,
 					Test:        true,
 				},
+				s: st,
 			},
 			want:  true,
 			want1: "",
@@ -190,7 +210,7 @@ func Test_validateRelease(t *testing.T) {
 	names := make(map[string]bool)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := validateRelease(tt.args.r, names)
+			got, got1 := validateRelease(tt.args.r, names, tt.args.s)
 			if got != tt.want {
 				t.Errorf("validateRelease() got = %v, want %v", got, tt.want)
 			}

@@ -12,7 +12,7 @@ func Test_state_validate(t *testing.T) {
 		Settings     map[string]string
 		Namespaces   map[string]namespace
 		HelmRepos    map[string]string
-		Apps         map[string]release
+		Apps         map[string]*release
 	}
 	tests := []struct {
 		name   string
@@ -40,7 +40,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "s3://my-repo/charts",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: true,
 		}, {
@@ -59,7 +59,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "s3://my-repo/charts",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: false,
 		}, {
@@ -83,7 +83,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "s3://my-repo/charts",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: false,
 		}, {
@@ -104,7 +104,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "s3://my-repo/charts",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: true,
 		}, {
@@ -128,7 +128,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "s3://my-repo/charts",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: true,
 		}, {
@@ -152,7 +152,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "s3://my-repo/charts",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: false,
 		}, {
@@ -176,7 +176,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "s3://my-repo/charts",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: true,
 		}, {
@@ -200,7 +200,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "s3://my-repo/charts",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: false,
 		}, {
@@ -223,7 +223,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "s3://my-repo/charts",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: false,
 		}, {
@@ -244,7 +244,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "s3://my-repo/charts",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: false,
 		}, {
@@ -268,7 +268,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "s3://my-repo/charts",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: false,
 		}, {
@@ -286,7 +286,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "s3://my-repo/charts",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: true,
 		}, {
@@ -302,7 +302,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "s3://my-repo/charts",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: false,
 		}, {
@@ -318,7 +318,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "s3://my-repo/charts",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: false,
 		}, {
@@ -333,7 +333,7 @@ func Test_state_validate(t *testing.T) {
 					"staging": namespace{false},
 				},
 				HelmRepos: nil,
-				Apps:      make(map[string]release),
+				Apps:      make(map[string]*release),
 			},
 			want: false,
 		}, {
@@ -348,7 +348,7 @@ func Test_state_validate(t *testing.T) {
 					"staging": namespace{false},
 				},
 				HelmRepos: map[string]string{},
-				Apps:      make(map[string]release),
+				Apps:      make(map[string]*release),
 			},
 			want: false,
 		}, {
@@ -366,7 +366,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: false,
 		}, {
@@ -384,7 +384,7 @@ func Test_state_validate(t *testing.T) {
 					"stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo": "s3//my-repo/charts",
 				},
-				Apps: make(map[string]release),
+				Apps: make(map[string]*release),
 			},
 			want: false,
 		},
