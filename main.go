@@ -19,7 +19,7 @@ var v bool
 var verbose bool
 var nsOverride string
 var checkCleanup bool
-var version = "master"
+var version = "v1.1.0"
 
 func main() {
 
