@@ -156,7 +156,7 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 	for app, r := range apps {
 		cmd := command{
 			Cmd:         "bash",
-			Args:        []string{"-c", "helm search " + r.Chart + " --version " + " -l"},
+			Args:        []string{"-c", "helm search " + r.Chart + " --version " + r.Version + " -l"},
 			Description: "validating if chart " + r.Chart + "-" + r.Version + " is available in the defined repos.",
 		}
 
