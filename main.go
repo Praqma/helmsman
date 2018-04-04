@@ -19,7 +19,7 @@ var v bool
 var verbose bool
 var nsOverride string
 var checkCleanup bool
-var version = "v1.1.0"
+var version = "v1.1.1"
 
 func main() {
 
@@ -156,7 +156,7 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 	for app, r := range apps {
 		cmd := command{
 			Cmd:         "bash",
-			Args:        []string{"-c", "helm search " + r.Chart + " --version " + r.Version},
+			Args:        []string{"-c", "helm search " + r.Chart + " --version " + " -l"},
 			Description: "validating if chart " + r.Chart + "-" + r.Version + " is available in the defined repos.",
 		}
 
