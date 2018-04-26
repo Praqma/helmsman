@@ -1,5 +1,5 @@
 ---
-version: v1.1.0
+version: v1.1.1
 ---
 
 # Helmsman desired state specification
@@ -68,7 +68,7 @@ The following options can be skipped if your kubectl context is already created 
 
 - username   : the username to be used for kubectl credentials.
 - password   : an environment variable name (starting with `$`) where your password is stored. Get the password from your k8s admin or consult k8s docs on how to get/set it. 
-- clusterURI : the URI for your cluster API or an environment variable containing the URI.
+- clusterURI : the URI for your cluster API or the name of an environment variable (starting with `$`) containing the URI.
 - serviceAccount: the name of the service account to use to initiate helm. This should have enough permissions to allow Helm to work and should exist already in the cluster. More details can be found in [helm's RBAC guide](https://github.com/kubernetes/helm/blob/master/docs/rbac.md) 
 
 Example: 
@@ -110,7 +110,7 @@ protected = true
 
 Optional : No.
 
-Purpose: defines the Helm repos where your charts can be found. You can add as many repos as you like. Public repos can be added without any additional setup. Private repos require authentication. 
+Synopsis: defines the Helm repos where your charts can be found. You can add as many repos as you like. Public repos can be added without any additional setup. Private repos require authentication. 
 
 > AS of version v0.2.0, both AWS S3 and Google GCS buckets can be used for private repos (using the [Helm S3](https://github.com/hypnoglow/helm-s3) and [Helm GCS](https://github.com/nouney/helm-gcs) plugins). 
 
@@ -121,7 +121,7 @@ Authenticating to private helm repos:
     - Or, set `GCLOUD_CREDENTIALS` environment variable to contain the content of the credentials.json file. 
 
 Options: 
-- you can define any key/value pairs.
+- you can define any key/value pairs where key is the repo name and value is a valid URI for the repo.
 
 Example: 
 
@@ -144,7 +144,7 @@ Releases must have unique names which are defined under `apps`. Example: in `[ap
 Options: 
 - name        : the Helm release name. Releases must have unique names within a cluster.
 - description : a release metadata for human readers.
-- env         : the namespace where the release should be deployed. The namespace should map to one of the ones defined in [namespaces](#namespaces).  
+- namespace         : the namespace where the release should be deployed. The namespace should map to one of the ones defined in [namespaces](#namespaces).  
 - enabled     : describes the required state of the release (true for enabled, false for disabled). Once a release is deployed, you can change it to false if you want to delete this app release [empty = flase].
 - chart       : the chart name. It should contain the repo name as well. Example: repoName/chartName. Changing the chart name means delete and reinstall this release using the new Chart.
 - version     : the chart version.
@@ -154,6 +154,7 @@ Options:
 - protected   : defines if the release should be protected against changes. Namespace-level protection has higher priority than this flag. Check the [protection guide](how_to/protect_namespaces_and_releases.md) for more details.
 - wait        : defines whether helmsman should block execution until all k8s resources are in a ready state. Default is false.
 - priority    : defines the priority of applying operations on this release. Only negative values allowed and the lower the value, the higher the priority. Default priority is 0. Apps with equal priorities will be applied in the order they were added in your state file (DSF).
+- [apps.<app_name>.set]  : is used to override certain values from values.yaml with values from environment variables. This is particularily useful for passing secrets to charts. 
 
 Example: 
 
@@ -165,7 +166,7 @@ Example:
     [apps.jenkins]
     name = "jenkins" 
     description = "jenkins"
-    env = "staging" 
+    namespace = "staging" 
     enabled = true 
     chart = "stable/jenkins" 
     version = "0.9.0"
@@ -175,5 +176,9 @@ Example:
     protected = false
     wait = true
     priority = -3
+    [apps.jenkins.set]
+     secret1="$SECRET_ENV_VAR1"
+     secret2="$SECRET_ENV_VAR2"
+
 ```
 
