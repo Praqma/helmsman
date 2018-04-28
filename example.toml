@@ -1,4 +1,4 @@
-# version: v1.0.0
+# version: v1.2.0-rc
 # metadata -- add as many key/value pairs as you want
 [metadata]
 org = "example.com"
@@ -20,16 +20,24 @@ kubeContext = "minikube" # will try connect to this context first, if it does no
 #clusterURI = "$K8S_URI" # the name of an environment variable containing the cluster API
 ##clusterURI = "https://192.168.99.100:8443" # equivalent to the above
 #serviceAccount = "foo" # k8s serviceaccount must be already defined, validation error will be thrown otherwise
+storageBackend = "secret" # default is configMap
 
 # define your environments and their k8s namespaces
 # syntax: 
 # [namespaces.<your namespace>] -- whitespace before this entry does not matter, use whatever indentation style you like 
  # protected = <true or false> -- default to false 
 [namespaces]
-  [namespaces.staging]
-  protected = false
   [namespaces.production]
   protected = true
+  [namespaces.staging]
+   protected = false
+   installTiller = true
+  #  tillerServiceAccount = "tiller-staging" # should already exist in the staging namespace
+  #  caCert = "secrets/ca.cert.pem" # or an env var, e.g. "$CA_CERT_PATH" 
+  #  tillerCert = "secrets/tiller.cert.pem" # or S3 bucket s3://mybucket/tiller.crt
+  #  tillerKey = "secrets/tiller.key.pem"  # or GCS bucket gs://mybucket/tiller.key
+  #  clientCert = "secrets/helm.cert.pem"
+  #  clientKey = "secrets/helm.key.pem"
 
 
 # define any private/public helm charts repos you would like to get charts from
@@ -47,10 +55,11 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
 
 [apps]
 
+    # jenkins will be deployed using the Tiller in the staging namespace
     [apps.jenkins]
     name = "jenkins" # should be unique across all apps
     description = "jenkins"
-    namespace = "staging" # maps to the namespace as defined in environments above
+    namespace = "staging" # maps to the namespace as defined in namespaces above
     enabled = true # change to false if you want to delete this app release [empty = flase]
     chart = "stable/jenkins" # changing the chart name means delete and recreate this chart
     version = "0.14.3" # chart version
@@ -58,17 +67,17 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     purge = false # will only be considered when there is a delete operation
     test = false # run the tests when this release is installed for the first time only
     protected = true
-    # [apps.jenkins.set] # values to override values from values.yaml with values from env vars-- useful for passing secrets to charts
-    #     db_username="$DB_USERNAME"
-    #     db_password="$DB_PASSWORD"
     priority= -3
     wait = true
+    # [apps.jenkins.set] # values to override values from values.yaml with values from env vars-- useful for passing secrets to charts
+    #      AdminPassword="$JENKINS_PASSWORD" # $JENKINS_PASSWORD must exist in the environment
 
 
+     # artifactory will be deployed using the Tiller in the kube-system namespace
     [apps.artifactory]
     name = "artifactory" # should be unique across all apps
     description = "artifactory"
-    namespace = "staging" # maps to the namespace as defined in environments above
+    namespace = "production" # maps to the namespace as defined in namespaces above
     enabled = true # change to false if you want to delete this app release [empty = flase]
     chart = "stable/artifactory" # changing the chart name means delete and recreate this chart
     version = "7.0.6" # chart version
