@@ -28,6 +28,7 @@ func init() {
 	flag.BoolVar(&v, "v", false, "show the version")
 	flag.BoolVar(&verbose, "verbose", false, "show verbose execution logs")
 	flag.StringVar(&nsOverride, "ns-override", "", "override defined namespaces with this one")
+	flag.BoolVar(&skipValidation, "skip-validation", false, "skip desired state validation")
 
 	flag.Parse()
 
@@ -61,9 +62,13 @@ func init() {
 		log.Fatal(msg)
 	}
 
-	// validate the desired state content
-	if result, msg := s.validate(); !result { // syntax validation
-		log.Fatal(msg)
+	if !skipValidation {
+		// validate the desired state content
+		if result, msg := s.validate(); !result { // syntax validation
+			log.Fatal(msg)
+		}
+	} else {
+		log.Println("INFO: desried state validation is skipped.")
 	}
 
 }
