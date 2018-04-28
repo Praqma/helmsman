@@ -1,15 +1,17 @@
 package main
 
 import (
-	"log"
 	"strings"
 )
 
 var outcome plan
+var releases string
 
 // makePlan creates a plan of the actions needed to make the desired state come true.
 func makePlan(s *state) *plan {
 	outcome = createPlan()
+	buildState()
+
 	for _, r := range s.Apps {
 		decide(r, s)
 	}
@@ -42,7 +44,7 @@ func decide(r *release, s *state) {
 		} else if helmReleaseExists("", r.Name, "deleted") {
 			if !isProtected(r) {
 
-				inspectRollbackScenario(getDesiredNamespace(r), r) // rollback
+				rollbackRelease(getDesiredNamespace(r), r) // rollback
 
 			} else {
 				logDecision("DECISION: release "+r.Name+" is PROTECTED. Operations are not allowed on this release until "+
@@ -60,7 +62,7 @@ func decide(r *release, s *state) {
 					"you remove its protection.", r.Priority)
 			}
 
-		} else if helmReleaseExists("", r.Name, "all") { // not deployed in the desired namespace but deployed elsewhere
+		} else if helmReleaseExists("", r.Name, "") { // not deployed in the desired namespace but deployed elsewhere
 
 			if !isProtected(r) {
 
@@ -89,11 +91,11 @@ func testRelease(r *release) {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm test " + r.Name},
+		Args:        []string{"-c", "helm test " + r.Name + getDesiredTillerNamespace(r) + getTLSFlags(r)},
 		Description: "running tests for release [ " + r.Name + " ]",
 	}
 	outcome.addCommand(cmd, r.Priority)
-	logDecision("DECISION: release [ "+r.Name+" ] is required to be tested when installed/upgraded/rolledback. Got it!", r.Priority)
+	logDecision("DECISION: release [ "+r.Name+" ] is required to be tested when installed. Got it!", r.Priority)
 
 }
 
@@ -103,7 +105,7 @@ func installRelease(namespace string, r *release) {
 	releaseName := r.Name
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm install " + r.Chart + " -n " + releaseName + " --namespace " + namespace + getValuesFile(r) + " --version " + r.Version + getSetValues(r) + getWait(r)},
+		Args:        []string{"-c", "helm install " + r.Chart + " -n " + releaseName + " --namespace " + namespace + getValuesFile(r) + " --version " + r.Version + getSetValues(r) + getWait(r) + getDesiredTillerNamespace(r) + getTLSFlags(r)},
 		Description: "installing release [ " + releaseName + " ] in namespace [[ " + namespace + " ]]",
 	}
 	outcome.addCommand(cmd, r.Priority)
@@ -115,26 +117,23 @@ func installRelease(namespace string, r *release) {
 	}
 }
 
-// inspectRollbackScenario evaluates if a rollback action needs to be taken for a given release.
+// rollbackRelease evaluates if a rollback action needs to be taken for a given release.
 // if the release is already deleted but from a different namespace than the one specified in input,
 // it purge deletes it and create it in the spcified namespace.
-func inspectRollbackScenario(namespace string, r *release) {
+func rollbackRelease(namespace string, r *release) {
 
 	releaseName := r.Name
 	if getReleaseNamespace(r.Name) == namespace {
 
 		cmd := command{
 			Cmd:         "bash",
-			Args:        []string{"-c", "helm rollback " + releaseName + " " + getReleaseRevision(releaseName, "deleted") + getWait(r)},
+			Args:        []string{"-c", "helm rollback " + releaseName + " " + getReleaseRevision(releaseName, "deleted") + getWait(r) + getDesiredTillerNamespace(r) + getTLSFlags(r)},
 			Description: "rolling back release [ " + releaseName + " ]",
 		}
 		outcome.addCommand(cmd, r.Priority)
+		upgradeRelease(r)
 		logDecision("DECISION: release [ "+releaseName+" ] is currently deleted and is desired to be rolledback to "+
-			"namespace [[ "+namespace+" ]] . No problem!", r.Priority)
-
-		// if r.Test {
-		// 	testRelease(r)
-		// }
+			"namespace [[ "+namespace+" ]] . It will also be upgraded in case values have changed.", r.Priority)
 
 	} else {
 
@@ -175,7 +174,7 @@ func deleteRelease(r *release) {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm delete " + p + " " + r.Name},
+		Args:        []string{"-c", "helm delete " + p + " " + r.Name + getCurrentTillerNamespace(r) + getTLSFlags(r)},
 		Description: "deleting release [ " + r.Name + " ]",
 	}
 	outcome.addCommand(cmd, r.Priority)
@@ -224,15 +223,11 @@ func inspectUpgradeScenario(namespace string, r *release) {
 func upgradeRelease(r *release) {
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFile(r) + " --version " + r.Version + " --force " + getSetValues(r) + getWait(r)},
+		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFile(r) + " --version " + r.Version + " --force " + getSetValues(r) + getWait(r) + getDesiredTillerNamespace(r) + getTLSFlags(r)},
 		Description: "upgrading release [ " + r.Name + " ]",
 	}
 
 	outcome.addCommand(cmd, r.Priority)
-
-	// if r.Test {
-	// 	testRelease(r)
-	// }
 }
 
 // reInstallRelease purge deletes a release and reinstalls it.
@@ -242,31 +237,25 @@ func reInstallRelease(namespace string, r *release) {
 	releaseName := r.Name
 	delCmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm delete --purge " + releaseName},
+		Args:        []string{"-c", "helm delete --purge " + releaseName + getCurrentTillerNamespace(r) + getTLSFlags(r)},
 		Description: "deleting release [ " + releaseName + " ]",
 	}
 	outcome.addCommand(delCmd, r.Priority)
 
 	installCmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm install " + r.Chart + " --version " + r.Version + " -n " + releaseName + " --namespace " + namespace + getValuesFile(r) + getSetValues(r) + getWait(r)},
+		Args:        []string{"-c", "helm install " + r.Chart + " --version " + r.Version + " -n " + releaseName + " --namespace " + namespace + getValuesFile(r) + getSetValues(r) + getWait(r) + getDesiredTillerNamespace(r) + getTLSFlags(r)},
 		Description: "installing release [ " + releaseName + " ] in namespace [[ " + namespace + " ]]",
 	}
 	outcome.addCommand(installCmd, r.Priority)
 	logDecision("DECISION: release [ "+releaseName+" ] will be deleted from namespace [[ "+getReleaseNamespace(releaseName)+" ]] and reinstalled in [[ "+namespace+"]].", r.Priority)
 
-	// if r.Test {
-	// 	testRelease(releaseName)
-	// }
 }
 
 // logDecision adds the decisions made to the plan.
 // Depending on the debug flag being set or not, it will either log the the decision to output or not.
 func logDecision(decision string, priority int) {
 
-	if debug {
-		log.Println(decision)
-	}
 	outcome.addDecision(decision, priority)
 
 }
@@ -327,7 +316,7 @@ func getCurrentNamespaceProtection(r *release) bool {
 func isProtected(r *release) bool {
 
 	// if the release does not exist in the cluster, it is not protected
-	if !helmReleaseExists("", r.Name, "all") {
+	if !helmReleaseExists("", r.Name, "") {
 		return false
 	}
 
@@ -341,4 +330,42 @@ func isProtected(r *release) bool {
 
 	return false
 
+}
+
+// getDesiredTillerNamespace returns a tiller-namespace flag with which a release is desired to be maintained
+func getDesiredTillerNamespace(r *release) string {
+
+	if s.Namespaces[r.Namespace].InstallTiller {
+		return " --tiller-namespace " + r.Namespace
+	}
+
+	return "" // same as return " --tiller-namespace kube-system"
+}
+
+// getCurrentTillerNamespace returns the tiller-namespace with which a release is currently maintained
+func getCurrentTillerNamespace(r *release) string {
+	if v, ok := currentState[r.Name]; ok {
+		return " --tiller-namespace " + v.TillerNamespace
+	}
+	return ""
+}
+
+// getTLSFlags returns TLS flags with which a release is maintained
+// If the release where the namespace is to be deployed has Tiller deployed, the TLS flages will use certs/keys for that namespace (if any)
+// otherwise, it will be the certs/keys for the kube-system namespace.
+func getTLSFlags(r *release) string {
+	tls := ""
+	if s.Namespaces[r.Namespace].InstallTiller {
+		if tillerTLSEnabled(r.Namespace) {
+
+			tls = " --tls --tls-ca-cert " + r.Namespace + "-ca.cert --tls-cert " + r.Namespace + "-client.cert --tls-key " + r.Namespace + "-client.key "
+		}
+	} else {
+		if tillerTLSEnabled("kube-system") {
+
+			tls = " --tls --tls-ca-cert kube-system-ca.cert --tls-cert kube-system-client.cert --tls-key kube-system-client.key "
+		}
+	}
+
+	return tls
 }
