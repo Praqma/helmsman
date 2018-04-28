@@ -63,7 +63,6 @@ func (p plan) execPlan() {
 	log.Println("INFO: Executing the following plan ... ")
 	p.printPlan()
 	for _, cmd := range p.Commands {
-		log.Println("INFO: attempting: --  ", cmd.Command.Description)
 		if exitCode, msg := cmd.Command.exec(debug, verbose); exitCode != 0 {
 			log.Fatal("Command returned with exit code: " + string(exitCode) + ". And error message: " + msg)
 		}
@@ -74,7 +73,7 @@ func (p plan) execPlan() {
 func (p plan) printPlanCmds() {
 	fmt.Println("Printing the commands of the current plan ...")
 	for _, cmd := range p.Commands {
-		fmt.Println(cmd.Command.Description)
+		fmt.Println(cmd.Command.Args[1])
 	}
 }
 
