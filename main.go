@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Praqma/helmsman/aws"
 	"github.com/Praqma/helmsman/gcs"
 )
 
@@ -19,7 +18,8 @@ var v bool
 var verbose bool
 var nsOverride string
 var checkCleanup bool
-var version = "v1.1.1"
+var skipValidation bool
+var version = "v1.2.0-rc"
 
 func main() {
 
@@ -31,9 +31,21 @@ func main() {
 		checkCleanup = true
 	}
 
+	// add/validate namespaces
+	addNamespaces(s.Namespaces)
+
 	if r, msg := initHelm(); !r {
 		log.Fatal(msg)
 	}
+
+	// check if helm Tiller is ready
+	for k, v := range s.Namespaces {
+		if v.InstallTiller {
+			waitForTiller(k)
+		}
+	}
+
+	waitForTiller("kube-system")
 
 	if verbose {
 		logVersions()
@@ -44,23 +56,22 @@ func main() {
 		log.Fatal(msg)
 	}
 
-	// validate charts-versions exist in defined repos
-	if r, msg := validateReleaseCharts(s.Apps); !r {
-		log.Fatal(msg)
+	if !skipValidation {
+		// validate charts-versions exist in defined repos
+		if r, msg := validateReleaseCharts(s.Apps); !r {
+			log.Fatal(msg)
+		}
+	} else {
+		log.Println("INFO: charts validation is skipped.")
 	}
 
-	// add/validate namespaces
-	addNamespaces(s.Namespaces)
-
-	// check if helm Tiller is ready
-	waitForTiller()
-
+	log.Println("INFO: checking what I need to do for your charts ... ")
 	p := makePlan(&s)
 
-	if !apply {
-		p.sortPlan()
-		p.printPlan()
-	} else {
+	p.sortPlan()
+	p.printPlan()
+
+	if apply {
 		p.execPlan()
 	}
 
@@ -90,26 +101,86 @@ func setKubeContext(context string) bool {
 	return true
 }
 
-// initHelm initialize helm on a k8s cluster
-func initHelm() (bool, string) {
-	serviceAccount := ""
-	if value, ok := s.Settings["serviceAccount"]; ok {
-		if ok, err := validateSerrviceAccount(value); ok {
-			serviceAccount = "--service-account " + value
+// deployTiller deploys Helm's Tiller in a specific namespace with a serviceAccount
+// If serviceAccount is not provided (empty string), the defaultServiceAccount is used.
+// If no defaultServiceAccount is provided, Tiller is deployed with the namespace default service account
+// If no namespace is provided, Tiller is deployed to kube-system
+func deployTiller(namespace string, serviceAccount string, defaultServiceAccount string) (bool, string) {
+	sa := ""
+	if serviceAccount != "" {
+		if ok, err := validateServiceAccount(serviceAccount, namespace); ok {
+			sa = "--service-account " + serviceAccount
 		} else {
-			return false, "ERROR: while initializing helm: " + err
+			return false, "ERROR: while deploying Helm Tiller in namespace [" + namespace + "]: " + err
 		}
+	} else if defaultServiceAccount != "" {
+		sa = "--service-account " + defaultServiceAccount
+	}
 
+	if namespace == "" {
+		namespace = "kube-system"
+	}
+	tillerNameSpace := " --tiller-namespace " + namespace
+
+	tls := ""
+	if tillerTLSEnabled(namespace) {
+		tillerCert := downloadFile(s.Namespaces[namespace].TillerCert, namespace+"-tiller.cert")
+		tillerKey := downloadFile(s.Namespaces[namespace].TillerKey, namespace+"-tiller.key")
+		caCert := downloadFile(s.Namespaces[namespace].CaCert, namespace+"-ca.cert")
+		// client cert and key
+		downloadFile(s.Namespaces[namespace].ClientCert, namespace+"-client.cert")
+		downloadFile(s.Namespaces[namespace].ClientKey, namespace+"-client.key")
+		tls = " --tiller-tls --tiller-tls-cert " + tillerCert + " --tiller-tls-key " + tillerKey + " --tiller-tls-verify --tls-ca-cert " + caCert
+	}
+
+	storageBackend := ""
+	if v, ok := s.Settings["storageBackend"]; ok && v == "secret" {
+		storageBackend = " --override 'spec.template.spec.containers[0].command'='{/tiller,--storage=secret}'"
 	}
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm init --upgrade " + serviceAccount},
-		Description: "initializing helm on the current context and upgrading Tiller.",
+		Args:        []string{"-c", "helm init --upgrade " + sa + tillerNameSpace + tls + storageBackend},
+		Description: "initializing helm on the current context and upgrading Tiller on namespace [ " + namespace + " ].",
 	}
 
 	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
-		return false, "ERROR: while initializing helm: " + err
+		return false, "ERROR: while deploying Helm Tiller in namespace [" + namespace + "]: " + err
 	}
+	return true, ""
+}
+
+// initHelm initializes helm on a k8s cluster and deploys Tiller in one or more namespaces
+func initHelm() (bool, string) {
+
+	defaultSA := ""
+	if value, ok := s.Settings["serviceAccount"]; ok {
+		if ok, err := validateServiceAccount(value, "kube-system"); ok {
+			defaultSA = value
+		} else {
+			return false, "ERROR: while validating service account: " + err
+		}
+	}
+
+	log.Println("INFO: deploying shared Tiller on namespace [ kube-system ].")
+	if v, ok := s.Namespaces["kube-system"]; ok {
+		if ok, err := deployTiller("kube-system", v.TillerServiceAccount, defaultSA); !ok {
+			return false, err
+		}
+	} else {
+		if ok, err := deployTiller("kube-system", "", defaultSA); !ok {
+			return false, err
+		}
+	}
+
+	for k, ns := range s.Namespaces {
+		if ns.InstallTiller && k != "kube-system" {
+			log.Println("INFO: deploying Tiller on namespace [ " + k + " ].")
+			if ok, err := deployTiller(k, ns.TillerServiceAccount, defaultSA); !ok {
+				return false, err
+			}
+		}
+	}
+
 	return true, ""
 }
 
@@ -182,6 +253,7 @@ func addNamespaces(namespaces map[string]namespace) {
 	}
 }
 
+// overrideAppsNamespace replaces all apps namespaces with one specific namespace
 func overrideAppsNamespace(newNs string) {
 	log.Println("INFO: overriding apps namespaces with [ " + newNs + " ] ...")
 	for _, r := range s.Apps {
@@ -227,59 +299,20 @@ func createContext() (bool, string) {
 	// CA cert
 	if caCrt != "" {
 
-		tmp := getBucketElements(caCrt)
-		if strings.HasPrefix(caCrt, "s3") {
-
-			aws.ReadFile(tmp["bucketName"], tmp["filePath"], "ca.crt")
-			caCrt = "ca.crt"
-
-		} else if strings.HasPrefix(caCrt, "gs") {
-
-			gcs.ReadFile(tmp["bucketName"], tmp["filePath"], "ca.crt")
-			caCrt = "ca.crt"
-
-		} else {
-			log.Println("INFO: CA certificate will be used from local file system.")
-		}
+		caCrt = downloadFile(caCrt, "ca.crt")
 
 	}
 
 	// CA key
 	if caKey != "" {
+		caKey = downloadFile(caKey, "ca.key")
 
-		tmp := getBucketElements(caKey)
-		if strings.HasPrefix(caKey, "s3") {
-
-			aws.ReadFile(tmp["bucketName"], tmp["filePath"], "ca.key")
-			caKey = "ca.key"
-
-		} else if strings.HasPrefix(caKey, "gs") {
-
-			gcs.ReadFile(tmp["bucketName"], tmp["filePath"], "ca.key")
-			caKey = "ca.key"
-
-		} else {
-			log.Println("INFO: CA key will be used from local file system.")
-		}
 	}
 
 	// client certificate
 	if caClient != "" {
 
-		tmp := getBucketElements(caClient)
-		if strings.HasPrefix(caClient, "s3") {
-
-			aws.ReadFile(tmp["bucketName"], tmp["filePath"], "client.crt")
-			caClient = "client.crt"
-
-		} else if strings.HasPrefix(caClient, "gs") {
-
-			gcs.ReadFile(tmp["bucketName"], tmp["filePath"], "client.crt")
-			caClient = "client.crt"
-
-		} else {
-			log.Println("INFO: CA client key will be used from local file system.")
-		}
+		caClient = downloadFile(caClient, "client.crt")
 
 	}
 
@@ -342,14 +375,14 @@ func getBucketElements(link string) map[string]string {
 
 // waitForTiller keeps checking if the helm Tiller is ready or not by executing helm list and checking its error (if any)
 // waits for 5 seconds before each new attempt and eventually terminates after 10 failed attempts.
-func waitForTiller() {
+func waitForTiller(namespace string) {
 
 	attempt := 0
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm list"},
-		Description: "checking if helm Tiller is ready.",
+		Args:        []string{"-c", "helm list --tiller-namespace " + namespace + getNSTLSFlags(namespace)},
+		Description: "checking if helm Tiller is ready in namespace [ " + namespace + " ].",
 	}
 
 	exitCode, err := cmd.exec(debug, verbose)
@@ -362,13 +395,15 @@ func waitForTiller() {
 			time.Sleep(5 * time.Second)
 			exitCode, err = cmd.exec(debug, verbose)
 		} else {
-			log.Fatal("ERROR: while waiting for helm Tiller to be ready : " + err)
+			log.Fatal("ERROR: while waiting for helm Tiller to be ready in namespace [ " + namespace + " ] : " + err)
 		}
 		attempt = attempt + 1
 	}
-	log.Fatal("ERROR: timeout reached while waiting for helm Tiller to be ready. Aborting!")
+	log.Fatal("ERROR: timeout reached while waiting for helm Tiller to be ready in namespace [ " + namespace + " ]. Aborting!")
 }
 
+// cleanup deletes the k8s certificates and keys files
+// It also deletes any Tiller TLS certs and keys
 func cleanup() {
 	if _, err := os.Stat("ca.crt"); err == nil {
 		deleteFile("ca.crt")
@@ -380,5 +415,23 @@ func cleanup() {
 
 	if _, err := os.Stat("client.crt"); err == nil {
 		deleteFile("client.crt")
+	}
+
+	for k := range s.Namespaces {
+		if _, err := os.Stat(k + "-tiller.cert"); err == nil {
+			deleteFile(k + "-tiller.cert")
+		}
+		if _, err := os.Stat(k + "-tiller.key"); err == nil {
+			deleteFile(k + "-tiller.key")
+		}
+		if _, err := os.Stat(k + "-ca.cert"); err == nil {
+			deleteFile(k + "-ca.cert")
+		}
+		if _, err := os.Stat(k + "-client.cert"); err == nil {
+			deleteFile(k + "-client.cert")
+		}
+		if _, err := os.Stat(k + "-client.key"); err == nil {
+			deleteFile(k + "-client.key")
+		}
 	}
 }
