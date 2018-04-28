@@ -10,7 +10,14 @@ import (
 
 // namespace type represents the fields of a namespace
 type namespace struct {
-	Protected bool
+	Protected            bool
+	InstallTiller        bool
+	TillerServiceAccount string
+	CaCert               string
+	TillerCert           string
+	TillerKey            string
+	ClientCert           string
+	ClientKey            string
 }
 
 // state type represents the desired state of applications on a k8s cluster.
@@ -64,13 +71,11 @@ func (s state) validate() (bool, string) {
 				"but have not given me the cert/key to do so. Please add [caCrt] and [caKey] under Certifications. You might also need to provide [clientCrt]."
 		} else if ok1 {
 			for key, value := range s.Certificates {
-				tmp := subsituteEnv(value)
-				_, err1 := url.ParseRequestURI(tmp)
-				_, err2 := os.Stat(tmp)
-				if (err1 != nil || (!strings.HasPrefix(tmp, "s3://") && !strings.HasPrefix(tmp, "gs://"))) && err2 != nil {
+				r, path := isValidCert(value)
+				if !r {
 					return false, "ERROR: certifications validation failed -- [ " + key + " ] must be a valid S3 or GCS bucket URL or a valid relative file path."
 				}
-				s.Certificates[key] = tmp
+				s.Certificates[key] = path
 			}
 		} else {
 			log.Println("INFO: certificates provided but not needed. Skipping certificates validation.")
@@ -89,8 +94,31 @@ func (s state) validate() (bool, string) {
 			return false, "ERROR: namespaces validation failed -- I need at least one namespace " +
 				"to work with!"
 		}
+
+		for k, v := range s.Namespaces {
+			if !v.InstallTiller && k != "kube-system" {
+				log.Println("INFO: naemspace validation -- Tiller is not desired to be deployed in namespace [ " + k + " ].")
+			} else {
+				if tillerTLSEnabled(k) {
+					// validating the TLS certs and keys for Tiller
+					// if they are valid, their values (if they are env vars) are substituted
+					var ok1, ok2, ok3, ok4, ok5 bool
+					ok1, v.CaCert = isValidCert(v.CaCert)
+					ok2, v.ClientCert = isValidCert(v.ClientCert)
+					ok3, v.ClientKey = isValidCert(v.ClientKey)
+					ok4, v.TillerCert = isValidCert(v.TillerCert)
+					ok5, v.TillerKey = isValidCert(v.TillerKey)
+					if !ok1 || !ok2 || !ok3 || !ok4 || !ok5 {
+						return false, "ERROR: namespaces validation failed  -- some certs/keys are not valid for Tiller TLS in namespace [ " + k + " ]."
+					}
+					log.Println("INFO: namespace validation -- Tiller is desired to be deployed with TLS in namespace [ " + k + " ]. ")
+				} else {
+					log.Println("INFO: namespace validation -- Tiller is desired to be deployed WITHOUT TLS in namespace [ " + k + " ]. ")
+				}
+			}
+		}
 	} else {
-		log.Println("INFO: ns-override is used. Overriding all namespaces with [ " + nsOverride + " ] Skipping defined namespaces validation.")
+		log.Println("INFO: ns-override is used to override all namespaces with [ " + nsOverride + " ] Skipping defined namespaces validation.")
 	}
 
 	// repos
@@ -135,6 +163,28 @@ func subsituteEnv(name string) string {
 		return os.Getenv(strings.SplitAfterN(name, "$", 2)[1])
 	}
 	return name
+}
+
+// isValidCert checks if a certificate/key path/URI is valid
+func isValidCert(value string) (bool, string) {
+	tmp := subsituteEnv(value)
+	_, err1 := url.ParseRequestURI(tmp)
+	_, err2 := os.Stat(tmp)
+	if err2 != nil && (err1 != nil || (!strings.HasPrefix(tmp, "s3://") && !strings.HasPrefix(tmp, "gs://"))) {
+		return false, ""
+	}
+	return true, tmp
+}
+
+// tillerTLSEnabled checks if Tiller is desired to be deployed with TLS enabled for a given namespace
+// TLS is considered desired ONLY if all certs and keys for both Tiller and the Helm client are defined.
+func tillerTLSEnabled(namespace string) bool {
+
+	ns := s.Namespaces[namespace]
+	if ns.CaCert != "" && ns.TillerCert != "" && ns.TillerKey != "" && ns.ClientCert != "" && ns.ClientKey != "" {
+		return true
+	}
+	return false
 }
 
 // print prints the desired state
