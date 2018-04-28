@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,6 +12,8 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/Praqma/helmsman/aws"
+	"github.com/Praqma/helmsman/gcs"
 )
 
 // printMap prints to the console any map of string keys and values.
@@ -87,15 +90,17 @@ func printHelp() {
 	fmt.Println("Usage: helmsman [options]")
 	fmt.Println()
 	fmt.Println("Options:")
-	fmt.Println("--f             specifies the desired state TOML file.")
-	fmt.Println("--debug         prints basic logs during execution.")
-	fmt.Println("-verbose        prints more verbose logs during execution.")
-	fmt.Println("--ns-override   override defined namespaces with a provided one.")
-	fmt.Println("--apply         generates and applies an action plan.")
-	fmt.Println("--help          prints Helmsman help.")
-	fmt.Println("--v             prints Helmsman version.")
+	fmt.Println("--f                specifies the desired state TOML file.")
+	fmt.Println("--debug            prints basic logs during execution.")
+	fmt.Println("--apply            generates and applies an action plan.")
+	fmt.Println("--verbose          prints more verbose logs during execution.")
+	fmt.Println("--ns-override      override defined namespaces with a provided one.")
+	fmt.Println("--skip-validation  generates and applies an action plan.")
+	fmt.Println("--help             prints Helmsman help.")
+	fmt.Println("--v                prints Helmsman version.")
 }
 
+// logVersions prints the versions of kubectl and helm to the logs
 func logVersions() {
 	cmd := command{
 		Cmd:         "bash",
@@ -146,18 +151,64 @@ func sliceContains(slice []string, s string) bool {
 	return false
 }
 
-// validateSerrviceAccount checks if k8s service account exists
-func validateSerrviceAccount(sa string) (bool, string) {
+// validateServiceAccount checks if k8s service account exists in a given namespace
+func validateServiceAccount(sa string, namespace string) (bool, string) {
+	if namespace == "" {
+		namespace = "default"
+	}
+	ns := " -n " + namespace
+
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "kubectl get serviceaccount " + sa},
-		Description: "validating that serviceaccount [ " + sa + " ] exists.",
+		Args:        []string{"-c", "kubectl get serviceaccount " + sa + ns},
+		Description: "validating that serviceaccount [ " + sa + " ] exists in namespace [ " + namespace + " ].",
 	}
 
 	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, err
 	}
 	return true, ""
+}
+
+// downloadFile downloads a file from GCS or AWS buckets and name it with a given outfile
+// if downloaded, returns the outfile name. If the file path is local file system path, it is returned as is.
+func downloadFile(path string, outfile string) string {
+	if strings.HasPrefix(path, "s3") {
+
+		tmp := getBucketElements(path)
+		aws.ReadFile(tmp["bucketName"], tmp["filePath"], outfile)
+
+	} else if strings.HasPrefix(path, "gs") {
+
+		tmp := getBucketElements(path)
+		gcs.ReadFile(tmp["bucketName"], tmp["filePath"], outfile)
+
+	} else {
+
+		log.Println("INFO: " + outfile + " will be used from local file system.")
+		copyFile(path, outfile)
+	}
+	return outfile
+}
+
+// copyFile copies a file from source to destination
+func copyFile(source string, destination string) {
+	from, err := os.Open(source)
+	if err != nil {
+		log.Fatal("ERROR: while copying " + source + " to " + destination + " : " + err.Error())
+	}
+	defer from.Close()
+
+	to, err := os.OpenFile(destination, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		log.Fatal("ERROR: while copying " + source + " to " + destination + " : " + err.Error())
+	}
+	defer to.Close()
+
+	_, err = io.Copy(to, from)
+	if err != nil {
+		log.Fatal("ERROR: while copying " + source + " to " + destination + " : " + err.Error())
+	}
 }
 
 // deleteFile deletes a file
