@@ -1,5 +1,5 @@
 ---
-version: v1.1.0
+version: v1.2.0-rc
 ---
 
 You can manage Helm charts deployment on a hosted K8S cluster in the cloud or on-prem. You need to include the required information to connect to the cluster in your state file. 
@@ -28,7 +28,7 @@ The K8S user password is expected in an environment variable which you can give 
 
 Below is an example state file:
 
-```
+```toml
 [metadata]
 org = "orgX"
 maintainer = "k8s-admin"
@@ -89,3 +89,6 @@ The above example requires the following environment variables to be set:
 - K8S_CLIENT_KEY (used in the file)
 - K8S_PASSWORD (used in the file)
 - K8S_URI (used in the file)
+
+
+For secure Helm configurations to fit for multi-tenant clusters, check the [multitenancy guide](multitenant_clusters_guide.md).

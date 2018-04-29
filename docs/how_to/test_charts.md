@@ -1,12 +1,12 @@
 ---
-version: v1.1.0
+version: v1.2.0-rc
 ---
 
 # test charts
 
 You can specifiy that you would like a chart to be tested whenever it is installed for the first time using the `test` key as follows:
 
-```
+```toml
 ...
 [apps]
 
@@ -22,4 +22,5 @@ You can specifiy that you would like a chart to be tested whenever it is install
     test = true  # setting this to true, means you want the charts tests to be run on this release when it is intalled. 
 
 ...
+
 ``` 

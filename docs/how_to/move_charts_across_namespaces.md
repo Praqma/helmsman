@@ -1,5 +1,5 @@
 ---
-version: v1.1.0
+version: v1.2.0-rc
 ---
 
 # move charts across namespaces
@@ -8,7 +8,7 @@ If you have a workflow for testing a release first in the `staging` namespace th
 
 > NOTE: If your chart uses a persistent volume, then you have to read the note on PVs below first.
 
-```
+```toml
 ...
 
 [namespaces]
@@ -30,11 +30,12 @@ If you have a workflow for testing a release first in the `staging` namespace th
     test = true  
 
 ...
+
 ``` 
 
 Then if you change the namespace key for jenkins:
 
-```
+```toml
 ...
 
 [namespaces]
@@ -55,6 +56,7 @@ Then if you change the namespace key for jenkins:
     test = true  
 
 ...
+
 ``` 
 
 Helmsman will delete the jenkins release from the `staging` namespace and install it in the `production` namespace (default in the above setup).

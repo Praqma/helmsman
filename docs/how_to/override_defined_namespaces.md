@@ -11,7 +11,7 @@ This flag overrides all namespaces defined in your DSF with the single one you p
 # Example
 
 dsf.toml
-``` 
+```toml 
 [metadata]
 org = "example.com"
 description = "example Desired State File for demo purposes."

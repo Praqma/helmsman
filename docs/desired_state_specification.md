@@ -1,5 +1,5 @@
 ---
-version: v1.1.1
+version: v1.2.0-rc
 ---
 
 # Helmsman desired state specification
@@ -59,7 +59,7 @@ caClient ="../path/to/my/local/client-certificate.crt"
 
 Optional : No.
 
-Synopsis: provides data about your k8s cluster.
+Synopsis: provides settings for connecting to your k8s cluster and configuring Helm's Tiller in the cluster.
 
 Options: 
 - kubeContext : this is always required and defines what context to use in kubectl. Helmsman will try connect to this context first, if it does not exist, it will try to create it (i.e. connect to a k8s cluster) using the options below.
@@ -70,6 +70,9 @@ The following options can be skipped if your kubectl context is already created 
 - password   : an environment variable name (starting with `$`) where your password is stored. Get the password from your k8s admin or consult k8s docs on how to get/set it. 
 - clusterURI : the URI for your cluster API or the name of an environment variable (starting with `$`) containing the URI.
 - serviceAccount: the name of the service account to use to initiate helm. This should have enough permissions to allow Helm to work and should exist already in the cluster. More details can be found in [helm's RBAC guide](https://github.com/kubernetes/helm/blob/master/docs/rbac.md) 
+- storageBackend : by default Helm stores release information in configMaps, using secrets is for storage is recommended for security. Setting this flag to `secret` will deploy/upgrade Tiller with the `--storage=secret`. Other values will be skipped and configMaps will be used.
+
+> If you use `storageBackend` with a Tiller that has been previously deployed with configMaps as storage backend, you need to migrate your release information from the configMap to the new secret on your own. 
 
 Example: 
 
@@ -81,17 +84,28 @@ kubeContext = "minikube"
 # clusterURI = "https://192.168.99.100:8443" 
 ## clusterURI= "$K8S_URI"
 # serviceAccount = "my-service-account"
+# storageBackend = "secret"
 ```
 
 ## Namespaces
 
 Optional : No.
 
-Synopsis: defines the namespaces to be used/created in your k8s cluster and wether they are protected or not. You can add as many namespaces as you like.
+Synopsis: defines the namespaces to be used/created in your k8s cluster and wether they are protected or not. It also defines if Tiller should be deployed in these namespaces and with what configurations (TLS and service account). You can add as many namespaces as you like.
 If a namespaces does not already exist, Helmsman will create it.
 
 Options: 
 - protected : defines if a namespace is protected (true or false). Default false.
+- installTiller: defines if Tiller should be deployed in this namespace or not. Default is false. Any chart desired to be deployed into a namespace with a Tiller deployed, will be deployed using that Tiller and not the one in kube-system. 
+> Tiller will always be deployed into `kube-system`, even if you set installTiller for kube-system to false.
+
+- tillerServiceAccount: defines what service account to use when deploying Tiller. If not set, the `serviceAccount` defined in the `settings` section will be used. If that is also not defined, the namespace `default` service account will be used. If `installTiller` is not defined or set to false, this flag is ignored.
+- The following options are `ALL` needed for deploying Tiller with TLS enabled. If they are not all defined, they will be ignored and Tiller will be deployed without TLS. All of these options can be provided as either: a valid local file path, a valid GCS or S3 bucket URI or an environment variable containing a file path or bucket URI.
+    - caCert: the CA certificate.
+    - tillerCert: the SSL certificate for Tiller.
+    - tillerKey: the SSL certificate private key for Tiller.
+    - clientCert: the SSL certificate for the Helm client.
+    - clientKey: the SSL certificate private key for the Helm client.
 
 > For the defintion of what a protected namespace means, check the [protection guide](how_to/protect_namespaces_and_releases.md)
 
@@ -104,6 +118,13 @@ Example:
 protected = false
 [namespaces.production]
 protected = true
+installTiller = true
+tillerServiceAccount = "tiller-production"
+caCert = "secrets/ca.cert.pem"
+tillerCert = "secrets/tiller.cert.pem"
+tillerKey = "$TILLER_KEY" # where TILLER_KEY=secrets/tiller.key.pem
+clientCert = "gs://mybucket/mydir/helm.cert.pem"
+clientKey = "s3://mybucket/mydir/helm.key.pem"
 ```
 
 ## Helm Repos

@@ -1,5 +1,5 @@
 ---
-version: v1.1.0
+version: v1.2.0-rc
 ---
 
 ![helmsman-logo](docs/images/helmsman.png)
@@ -29,6 +29,7 @@ To show debugging details:
 
 - **Built for CD**: Helmsman can be used as a docker image or a binary. 
 - **Applications as code**: describe your desired applications and manage them from a single version-controlled declarative file.
+- **Suitable for Multitenant Clusters**: deploy Tiller in different namespaces with service accounts and TLS.
 - **Easy to use**: deep knowledge of Helm CLI and Kubectl is NOT manadatory to use Helmsman. 
 - **Plan, View, apply**: you can run Helmsman to generate and view a plan with/without executing it. 
 - **Portable**: Helmsman can be used to manage charts deployments on any k8s cluster.
@@ -44,9 +45,9 @@ To show debugging details:
 Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the different versions.
 ```
 # on Linux
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.1.0/helmsman_1.1.0_linux_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.2.0-rc/helmsman_1.2.0-rc_linux_amd64.tar.gz | tar zx
 # on MacOS
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.1.0/helmsman_1.1.0_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.2.0-rc/helmsman_1.2.0-rc_darwin_amd64.tar.gz | tar zx
 
 mv helmsman /usr/local/bin/helmsman
 ```
@@ -60,6 +61,7 @@ Documentation and How-Tos can be found [here](https://github.com/Praqma/helmsman
 Helmsman lets you:
 
 - [install/delete/upgrade/rollback your helm charts from code](https://github.com/Praqma/helmsman/blob/master/docs/how_to/manipulate_apps.md).
+- [work safely in a multitenant cluster](https://github.com/Praqma/helmsman/blob/master/docs/how_to/multitenant_clusters_guide.md).
 - [pass secrets/user input to helm charts from environment variables](https://github.com/Praqma/helmsman/blob/master/docs/how_to/pass_secrets_from_env_variables.md).
 - [test releases when they are first installed](https://github.com/Praqma/helmsman/blob/master/docs/how_to/test_charts.md).
 - [use public and private helm charts](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_private_helm_charts.md).

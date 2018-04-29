@@ -1,5 +1,5 @@
 ---
-version: v1.1.0
+version: v1.2.0-rc
 ---
 
 # Run Helmsman in CI
@@ -13,7 +13,7 @@ jobs:
     
     deploy-apps:
       docker:
-        - image: praqma/helmsman:v1.1.0
+        - image: praqma/helmsman:v1.2.0-rc
       steps:
         - checkout
         - run:

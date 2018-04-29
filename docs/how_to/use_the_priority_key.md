@@ -1,5 +1,5 @@
 ---
-version: v1.1.0
+version: v1.2.0-rc
 ---
 
 # Using the priority key for Apps
@@ -10,7 +10,7 @@ Priority is an optinal flag and has a default value of 0 (zero). If set, it can 
 
 ## Example
 
-```
+```toml
 [metadata]
 org = "example.com"
 description = "example Desired State File for demo purposes."
