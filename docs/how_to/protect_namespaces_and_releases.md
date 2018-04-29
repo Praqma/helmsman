@@ -1,5 +1,5 @@
 ---
-version: v1.1.0
+version: v1.2.0-rc
 ---
 
 # Namespace and Release Protection 
@@ -27,7 +27,7 @@ Protection is supported in two forms:
 
 - **Namespace-level Protection**: is defined at the namespace level. A namespace can be declaratively defined to be protected in the desired state file as in the example below:
 
-``` 
+```toml 
 [namespaces]
   [namespaces.staging]
   protected = false
@@ -38,7 +38,7 @@ Protection is supported in two forms:
 
 - **Release-level Protection** is defined at the release level as in the example below:
 
-```
+```toml
 [apps]
 
     [apps.jenkins]

@@ -1,5 +1,5 @@
 ---
-version: v1.1.0
+version: v1.2.0-rc
 ---
 
 # use private helm charts
@@ -10,7 +10,7 @@ Other hosting options might be supported in the future. Please open an issue if 
 
 define your private repo: 
 
-```
+```toml
 ...
 
 [helmRepos]
@@ -19,6 +19,7 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
 myPrivateRepo = s3://this-is-a-private-repo/charts
 
 ...
+
 ``` 
 
 ## S3
