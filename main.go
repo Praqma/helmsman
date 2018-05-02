@@ -390,7 +390,7 @@ func waitForTiller(namespace string) {
 	for attempt < 10 {
 		if exitCode == 0 {
 			return
-		} else if strings.Contains(err, "could not find a ready tiller pod") {
+		} else if strings.Contains(err, "could not find a ready tiller pod") || strings.Contains(err, "could not find tiller") {
 			log.Println("INFO: waiting for helm Tiller to be ready ...")
 			time.Sleep(5 * time.Second)
 			exitCode, err = cmd.exec(debug, verbose)
