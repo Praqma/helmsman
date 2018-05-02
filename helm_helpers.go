@@ -31,6 +31,7 @@ func getAllReleases() string {
 	return result
 }
 
+// getTillerReleases gets releases deployed with a given Tiller (in agiven namespace)
 func getTillerReleases(tillerNS string) string {
 	cmd := command{
 		Cmd:         "bash",
@@ -59,10 +60,8 @@ func buildState() {
 	currentState = make(map[string]releaseState)
 	lines := strings.Split(getAllReleases(), "\n")
 
-	// length -2 because of the first header line and the last line has a '\n'
-	// resulting in an empty line added at the end of the slice
-	for i := 1; i <= len(lines)-2; i++ {
-		if strings.HasPrefix(lines[i], "NAME") && strings.HasSuffix(lines[i], "NAMESPACE") {
+	for i := 0; i < len(lines); i++ {
+		if lines[i] == "" || (strings.HasPrefix(lines[i], "NAME") && strings.HasSuffix(lines[i], "NAMESPACE")) {
 			continue
 		}
 		r, _ := strconv.Atoi(strings.Fields(lines[i])[1])
