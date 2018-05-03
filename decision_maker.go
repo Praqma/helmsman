@@ -192,12 +192,12 @@ func inspectUpgradeScenario(namespace string, r *release) {
 
 	releaseName := r.Name
 	if getReleaseNamespace(releaseName) == namespace {
-		if extractChartName(r.Chart) == getReleaseChartName(releaseName, r.Version) && r.Version != getReleaseChartVersion(releaseName) {
+		if extractChartName(r.Chart) == getReleaseChartName(releaseName) && r.Version != getReleaseChartVersion(releaseName) {
 			// upgrade
 			upgradeRelease(r)
 			logDecision("DECISION: release [ "+releaseName+" ] is desired to be upgraded. Planing this for you!", r.Priority)
 
-		} else if extractChartName(r.Chart) != getReleaseChartName(releaseName, r.Version) {
+		} else if extractChartName(r.Chart) != getReleaseChartName(releaseName) {
 			reInstallRelease(namespace, r)
 			logDecision("DECISION: release [ "+releaseName+" ] is desired to use a new Chart [ "+r.Chart+
 				" ]. I am planning a purge delete of the current release and will install it with the new chart in namespace [[ "+
