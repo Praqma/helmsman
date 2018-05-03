@@ -192,7 +192,7 @@ func getReleaseRevision(releaseName string, state string) string {
 func getReleaseChartName(releaseName string) string {
 	chart := getReleaseChart(releaseName)
 	runes := []rune(chart)
-	return string(runes[0:strings.LastIndexByte(chart, '-')])
+	return string(runes[0:strings.LastIndexByte(chart[0:strings.IndexByte(chart, '.')], '-')])
 }
 
 // getReleaseChartVersion extracts and returns the Helm chart version from the chart info retrieved by getReleaseChart().
