@@ -61,7 +61,7 @@ func buildState() {
 	lines := strings.Split(getAllReleases(), "\n")
 
 	for i := 0; i < len(lines); i++ {
-		if lines[i] == "" || (strings.HasPrefix(lines[i], "NAME") && strings.HasSuffix(lines[i], "NAMESPACE")) {
+		if lines[i] == "" || (strings.HasPrefix(strings.TrimSpace(lines[i]), "NAME") && strings.HasSuffix(strings.TrimSpace(lines[i]), "NAMESPACE")) {
 			continue
 		}
 		r, _ := strconv.Atoi(strings.Fields(lines[i])[1])
