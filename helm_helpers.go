@@ -47,7 +47,7 @@ func getTillerReleases(tillerNS string) string {
 	// appending tiller-namespace to each release found
 	lines := strings.Split(result, "\n")
 	for i, l := range lines {
-		if l != "" && !strings.HasPrefix(l, "NAME") && !strings.HasSuffix(l, "NAMESPACE") {
+		if l != "" && !strings.HasPrefix(strings.TrimSpace(l), "NAME") && !strings.HasSuffix(strings.TrimSpace(l), "NAMESPACE") {
 			lines[i] = strings.TrimSuffix(l, "\n") + " " + tillerNS
 		}
 	}
