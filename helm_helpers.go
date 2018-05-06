@@ -47,7 +47,7 @@ func getTillerReleases(tillerNS string) string {
 	// appending tiller-namespace to each release found
 	lines := strings.Split(result, "\n")
 	for i, l := range lines {
-		if l != "" && !strings.HasPrefix(l, "NAME") && !strings.HasSuffix(l, "NAMESPACE") {
+		if l != "" && !strings.HasPrefix(strings.TrimSpace(l), "NAME") && !strings.HasSuffix(strings.TrimSpace(l), "NAMESPACE") {
 			lines[i] = strings.TrimSuffix(l, "\n") + " " + tillerNS
 		}
 	}
@@ -61,7 +61,7 @@ func buildState() {
 	lines := strings.Split(getAllReleases(), "\n")
 
 	for i := 0; i < len(lines); i++ {
-		if lines[i] == "" || (strings.HasPrefix(lines[i], "NAME") && strings.HasSuffix(lines[i], "NAMESPACE")) {
+		if lines[i] == "" || (strings.HasPrefix(strings.TrimSpace(lines[i]), "NAME") && strings.HasSuffix(strings.TrimSpace(lines[i]), "NAMESPACE")) {
 			continue
 		}
 		r, _ := strconv.Atoi(strings.Fields(lines[i])[1])
@@ -192,7 +192,7 @@ func getReleaseRevision(releaseName string, state string) string {
 func getReleaseChartName(releaseName string) string {
 	chart := getReleaseChart(releaseName)
 	runes := []rune(chart)
-	return string(runes[0:strings.LastIndexByte(chart, '-')])
+	return string(runes[0:strings.LastIndexByte(chart[0:strings.IndexByte(chart, '.')], '-')])
 }
 
 // getReleaseChartVersion extracts and returns the Helm chart version from the chart info retrieved by getReleaseChart().
