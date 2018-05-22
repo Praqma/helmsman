@@ -33,6 +33,29 @@ If you have a workflow for testing a release first in the `staging` namespace th
 
 ``` 
 
+```yaml
+...
+
+namespaces:
+  staging:
+  production:
+
+apps:
+  jenkins:
+    name: "jenkins"
+    description: "jenkins"
+    namespace: "staging" # this is where it is deployed
+    enabled: true
+    chart: "stable/jenkins"
+    version: "0.9.1"
+    valuesFile: ""
+    purge: false
+    test: true
+
+...
+
+```
+
 Then if you change the namespace key for jenkins:
 
 ```toml
@@ -58,6 +81,29 @@ Then if you change the namespace key for jenkins:
 ...
 
 ``` 
+
+```yaml
+...
+
+namespaces:
+  staging:
+  production:
+
+apps:
+  jenkins:
+    name: "jenkins"
+    description: "jenkins"
+    namespace: "production" # we want to move it to production
+    enabled: true
+    chart: "stable/jenkins"
+    version: "0.9.1"
+    valuesFile: ""
+    purge: false
+    test: true
+
+...
+
+```
 
 Helmsman will delete the jenkins release from the `staging` namespace and install it in the `production` namespace (default in the above setup).
 

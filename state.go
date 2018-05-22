@@ -10,24 +10,24 @@ import (
 
 // namespace type represents the fields of a namespace
 type namespace struct {
-	Protected            bool
-	InstallTiller        bool
-	TillerServiceAccount string
-	CaCert               string
-	TillerCert           string
-	TillerKey            string
-	ClientCert           string
-	ClientKey            string
+	Protected            bool   `yaml:"protected"`
+	InstallTiller        bool   `yaml:"installTiller"`
+	TillerServiceAccount string `yaml:"tillerServiceAccount"`
+	CaCert               string `yaml:"caCert"`
+	TillerCert           string `yaml:"tillerCert"`
+	TillerKey            string `yaml:"tillerKey"`
+	ClientCert           string `yaml:"clientCert"`
+	ClientKey            string `yaml:"clientKey"`
 }
 
 // state type represents the desired state of applications on a k8s cluster.
 type state struct {
-	Metadata     map[string]string
-	Certificates map[string]string
-	Settings     map[string]string
-	Namespaces   map[string]namespace
-	HelmRepos    map[string]string
-	Apps         map[string]*release
+	Metadata     map[string]string    `yaml:"metadata"`
+	Certificates map[string]string    `yaml:"certificates"`
+	Settings     map[string]string    `yaml:"settings"`
+	Namespaces   map[string]namespace `yaml:"namespaces"`
+	HelmRepos    map[string]string    `yaml:"helmRepos"`
+	Apps         map[string]*release  `yaml:"apps"`
 }
 
 // validate validates that the values specified in the desired state are valid according to the desired state spec.
@@ -36,7 +36,7 @@ func (s state) validate() (bool, string) {
 
 	// settings
 	if s.Settings == nil || len(s.Settings) == 0 {
-		return false, "ERROR: settings validation failed -- no settings table provided in TOML."
+		return false, "ERROR: settings validation failed -- no settings table provided in state file."
 	} else if value, ok := s.Settings["kubeContext"]; !ok || value == "" {
 		return false, "ERROR: settings validation failed -- you have not provided a " +
 			"kubeContext to use. Can't work without it. Sorry!"

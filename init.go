@@ -54,8 +54,8 @@ func init() {
 		log.Fatal("ERROR: kubectl is not installed/configured correctly. Aborting!")
 	}
 
-	// read the TOML desired state file
-	result, msg := fromTOML(file, &s)
+	// read the TOML/YAML desired state file
+	result, msg := fromFile(file, &s)
 	if result {
 		log.Printf(msg)
 	} else {

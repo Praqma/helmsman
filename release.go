@@ -15,7 +15,7 @@ type release struct {
 	Enabled     bool
 	Chart       string
 	Version     string
-	ValuesFile  string
+	ValuesFile  string `yaml:"valuesFile"`
 	Purge       bool
 	Test        bool
 	Protected   bool
