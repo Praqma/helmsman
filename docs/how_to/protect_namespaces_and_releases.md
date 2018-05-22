@@ -54,6 +54,22 @@ Protection is supported in two forms:
     protected = true # defining this release to be protected.
 ```
 
+```yaml
+apps:
+
+  jenkins:
+    name: "jenkins"
+    description: "jenkins"
+    namespace: "staging"
+    enabled: true
+    chart: "stable/jenkins"
+    version: "0.9.1"
+    valuesFile: ""
+    purge: false
+    test: false
+    protected: true # defining this release to be protected.
+```
+
 > All releases in a protected namespace are automatically protected. Namespace protection has higher priority than the relase-level protection.
 
 ## Important Notes

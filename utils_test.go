@@ -72,6 +72,59 @@ func Test_fromTOML(t *testing.T) {
 // 	}
 // }
 
+func Test_fromYAML(t *testing.T) {
+	type args struct {
+		file string
+		s    *state
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "test case 1 -- invalid YAML",
+			args: args{
+				file: "test_files/invalid_example.yaml",
+				s:    new(state),
+			},
+			want: false,
+		}, {
+			name: "test case 2 -- valid TOML",
+			args: args{
+				file: "example.yaml",
+				s:    new(state),
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got, _ := fromYAML(tt.args.file, tt.args.s); got != tt.want {
+				t.Errorf("fromYaml() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// func Test_toYAML(t *testing.T) {
+// 	type args struct {
+// 		file string
+// 		s    *state
+// 	}
+// 	tests := []struct {
+// 		name string
+// 		args args
+// 	}{
+// 	// TODO: Add test cases.
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			toYAML(tt.args.file, tt.args.s)
+// 		})
+// 	}
+// }
+
 func Test_isOfType(t *testing.T) {
 	type args struct {
 		filename string
