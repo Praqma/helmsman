@@ -169,7 +169,8 @@ Options:
 - enabled     : describes the required state of the release (true for enabled, false for disabled). Once a release is deployed, you can change it to false if you want to delete this app release [empty = flase].
 - chart       : the chart name. It should contain the repo name as well. Example: repoName/chartName. Changing the chart name means delete and reinstall this release using the new Chart.
 - version     : the chart version.
-- valuesFile  : a valid path to custom Helm values.yaml file. File extension must be `yaml`. Leaving it empty uses the default chart values.
+- valuesFile  : a valid path to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFiles together. Leaving it empty uses the default chart values.
+- valuesFiles : array of valid paths to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFile together. Leaving it empty uses the default chart values.
 - purge       : defines whether to use the Helm purge flag wgen deleting the release. (true/false)
 - test        : defines whether to run the chart tests whenever the release is installed/upgraded/rolledback.
 - protected   : defines if the release should be protected against changes. Namespace-level protection has higher priority than this flag. Check the [protection guide](how_to/protect_namespaces_and_releases.md) for more details.
