@@ -159,8 +159,8 @@ func (s state) validate() (bool, string) {
 // if the env variable is empty or unset, an empty string is returned
 // if the string does not start with '$', it is returned as is.
 func subsituteEnv(name string) string {
-	if strings.HasPrefix(name, "$") {
-		return os.Getenv(strings.SplitAfterN(name, "$", 2)[1])
+	if strings.Contains(name, "$") {
+		return os.ExpandEnv(name)
 	}
 	return name
 }
