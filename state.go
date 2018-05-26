@@ -155,14 +155,9 @@ func (s state) validate() (bool, string) {
 	return true, ""
 }
 
-// substitueEnv checks if a string is an env variable (starts with '$'), then it returns its value
-// if the env variable is empty or unset, an empty string is returned
-// if the string does not start with '$', it is returned as is.
+// expand the environment variables if present. Useful for pipelines and gitlab runners.
 func subsituteEnv(name string) string {
-	if strings.Contains(name, "$") {
-		return os.ExpandEnv(name)
-	}
-	return name
+	return os.ExpandEnv(name)
 }
 
 // isValidCert checks if a certificate/key path/URI is valid
