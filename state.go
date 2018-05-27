@@ -97,7 +97,7 @@ func (s state) validate() (bool, string) {
 
 		for k, v := range s.Namespaces {
 			if !v.InstallTiller && k != "kube-system" {
-				log.Println("INFO: naemspace validation -- Tiller is not desired to be deployed in namespace [ " + k + " ].")
+				log.Println("INFO: namespace validation -- Tiller is not desired to be deployed in namespace [ " + k + " ].")
 			} else {
 				if tillerTLSEnabled(k) {
 					// validating the TLS certs and keys for Tiller
