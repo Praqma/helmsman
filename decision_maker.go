@@ -55,7 +55,8 @@ func decide(r *release, s *state) {
 
 			if !isProtected(r) {
 
-				reInstallRelease(getDesiredNamespace(r), r) // re-install failed release
+				logDecision("DECISION: release [ "+r.Name+" ] is in FAILED state. I will upgrade it for you. Hope it gets fixed!", r.Priority)
+				upgradeRelease(r)
 
 			} else {
 				logDecision("DECISION: release "+r.Name+" is PROTECTED. Operations are not allowed on this release until "+
