@@ -39,7 +39,7 @@ jobs:
       - run: 
           name: Release helmsman
           command: |
-            TAG_SHA=git rev-parse $(git describe --abbrev=0 --tags)
+            TAG_SHA=$(git rev-parse $(git describe --abbrev=0 --tags))
             LAST_COMMIT=$(git rev-parse HEAD)
             if [ "${TAG_SHA}" == "${LAST_COMMIT}" ]; then 
               echo "fetching dependencies ..."
