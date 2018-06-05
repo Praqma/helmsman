@@ -205,6 +205,61 @@ func Test_validateRelease(t *testing.T) {
 			},
 			want:  true,
 			want1: "",
+		}, {
+			name: "test case 11",
+			args: args{
+				r: &release{
+					Name:        "release11",
+					Description: "",
+					Namespace:   "namespace",
+					Enabled:     true,
+					Chart:       "repo/chartX",
+					Version:     "1.0",
+					ValuesFile:  "test_files/values.yaml",
+					ValuesFiles: []string{"xyz.yaml"},
+					Purge:       true,
+					Test:        true,
+				},
+				s: st,
+			},
+			want:  false,
+			want1: "valuesFile and valuesFiles should not be used together.",
+		}, {
+			name: "test case 12",
+			args: args{
+				r: &release{
+					Name:        "release12",
+					Description: "",
+					Namespace:   "namespace",
+					Enabled:     true,
+					Chart:       "repo/chartX",
+					Version:     "1.0",
+					ValuesFiles: []string{"xyz.yaml"},
+					Purge:       true,
+					Test:        true,
+				},
+				s: st,
+			},
+			want:  false,
+			want1: "the value for valueFile 'xyz.yaml' must be a valid file path for a yaml file.",
+		}, {
+			name: "test case 13",
+			args: args{
+				r: &release{
+					Name:        "release13",
+					Description: "",
+					Namespace:   "namespace",
+					Enabled:     true,
+					Chart:       "repo/chartX",
+					Version:     "1.0",
+					ValuesFiles: []string{"test_files/values.yaml", "test_files/values2.yaml"},
+					Purge:       true,
+					Test:        true,
+				},
+				s: st,
+			},
+			want:  true,
+			want1: "",
 		},
 	}
 	names := make(map[string]bool)
