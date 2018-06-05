@@ -15,7 +15,8 @@ type release struct {
 	Enabled     bool
 	Chart       string
 	Version     string
-	ValuesFile  string
+	ValuesFile  string   `yaml:"valuesFile"`
+	ValuesFiles []string `yaml:"valuesFiles"`
 	Purge       bool
 	Test        bool
 	Protected   bool
@@ -41,6 +42,14 @@ func validateRelease(r *release, names map[string]bool, s state) (bool, string) 
 		return false, "version can't be empty."
 	} else if r.ValuesFile != "" && (!isOfType(r.ValuesFile, ".yaml") || err != nil) {
 		return false, "valuesFile must be a valid file path for a yaml file, Or can be left empty."
+	} else if r.ValuesFile != "" && len(r.ValuesFiles) > 0 {
+		return false, "valuesFile and valuesFiles should not be used together."
+	} else if len(r.ValuesFiles) > 0 {
+		for _, filePath := range r.ValuesFiles {
+			if _, pathErr := os.Stat(filePath); !isOfType(filePath, ".yaml") || pathErr != nil {
+				return false, "the value for valueFile '" + filePath + "' must be a valid file path for a yaml file."
+			}
+		}
 	} else if len(r.Set) > 0 {
 		for k, v := range r.Set {
 			if !strings.HasPrefix(v, "$") {
@@ -82,6 +91,7 @@ func (r release) print() {
 	fmt.Println("\tchart : ", r.Chart)
 	fmt.Println("\tversion : ", r.Version)
 	fmt.Println("\tvaluesFile : ", r.ValuesFile)
+	fmt.Println("\tvaluesFiles : ", strings.Join(r.ValuesFiles, ","))
 	fmt.Println("\tpurge : ", r.Purge)
 	fmt.Println("\ttest : ", r.Test)
 	fmt.Println("\tprotected : ", r.Protected)
