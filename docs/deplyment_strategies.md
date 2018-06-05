@@ -39,7 +39,7 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     enabled = true 
     chart = "stable/jenkins" 
     version = "0.9.1" # chart version
-    valuesFile = "../my-jenkins-production-values.yaml" 
+    valuesFiles = [ "../my-jenkins-common-values.yaml", "../my-jenkins-production-values.yaml" ]
 
 
     [apps.artifactory]
@@ -60,7 +60,7 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     enabled = true 
     chart = "stable/jenkins" 
     version = "0.9.1" # chart version
-    valuesFile = "../my-jenkins-testing-values.yaml" 
+    valuesFiles = [ "../my-jenkins-common-values.yaml", "../my-jenkins-testing-values.yaml" ]
 
 ```
 
