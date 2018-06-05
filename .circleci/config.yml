@@ -39,11 +39,18 @@ jobs:
       - run: 
           name: Release helmsman
           command: |
-            echo "fetching dependencies ..."
-            go get github.com/Praqma/helmsman/gcs 
-            go get github.com/Praqma/helmsman/aws
-            echo "releasing ..."
-            goreleaser --release-notes release-notes.md 
+            TAG_SHA=git rev-parse $(git describe --abbrev=0 --tags)
+            LAST_COMMIT=$(git rev-parse HEAD)
+            if [ "${TAG_SHA}" == "${LAST_COMMIT}" ]; then 
+              echo "fetching dependencies ..."
+              go get github.com/Praqma/helmsman/gcs 
+              go get github.com/Praqma/helmsman/aws
+              echo "releasing ..."
+              goreleaser --release-notes release-notes.md 
+            else 
+              echo "No release is needed yet."
+              exit 0
+            fi    
      
       # - setup_remote_docker
       # - run:
