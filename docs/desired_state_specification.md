@@ -4,7 +4,7 @@ version: v1.2.0
 
 # Helmsman desired state specification
 
-This document describes the specification for how to write your Helm charts desired state file. The desired state file consists of:
+This document describes the specification for how to write your Helm charts desired state file. This can be either toml or yaml file. The desired state file consists of:
 
 - [Metadata](#metadata) [Optional] -- metadata for any human reader of the desired state file.
 - [Certificates](#certificates) [Optional] -- only needed when you want Helmsman to connect kubectl to your cluster for you.
@@ -24,10 +24,16 @@ Options:
 
 Example: 
 
-```
+```toml
 [metadata]
 scope = "cluster foo"
 maintainer = "k8s-admin"
+```
+
+```yaml
+metadata:
+  scope: "cluster foo"
+  maintainer: "k8s-admin"
 ```
 
 ## Certificates
@@ -47,12 +53,20 @@ Options:
 
 Example: 
 
-```
+```toml
 [certificates]
 caCrt = "s3://myS3bucket/mydir/ca.crt" 
 caKey = "gs://myGCSbucket/ca.key" 
 caClient ="../path/to/my/local/client-certificate.crt"
 #caClient = "$CA_CLIENT"
+```
+
+```yaml
+certificates:
+  caCrt: "s3://myS3bucket/mydir/ca.crt"
+  caKey: "gs://myGCSbucket/ca.key"
+  caClient: "../path/to/my/local/client-certificate.crt"
+  #caClient: "$CA_CLIENT"
 ```
 
 ## Settings
@@ -76,7 +90,7 @@ The following options can be skipped if your kubectl context is already created 
 
 Example: 
 
-```
+```toml
 [settings]
 kubeContext = "minikube" 
 # username = "admin"
@@ -85,6 +99,17 @@ kubeContext = "minikube"
 ## clusterURI= "$K8S_URI"
 # serviceAccount = "my-service-account"
 # storageBackend = "secret"
+```
+
+```yaml
+settings:
+  kubeContext = "minikube"
+  #username: "admin"
+  #password: "$K8S_PASSWORD"
+  #clusterURI: "https://192.168.99.100:8443"
+  ##clusterURI: "$K8S_URI"
+  #serviceAccount: "my-service-account"
+  #storageBackend: "secret"
 ```
 
 ## Namespaces
@@ -111,7 +136,7 @@ Options:
 
 Example: 
 
-```
+```toml
 [namespaces]
 [namespaces.staging]
 [namespaces.dev]
@@ -125,6 +150,22 @@ tillerCert = "secrets/tiller.cert.pem"
 tillerKey = "$TILLER_KEY" # where TILLER_KEY=secrets/tiller.key.pem
 clientCert = "gs://mybucket/mydir/helm.cert.pem"
 clientKey = "s3://mybucket/mydir/helm.key.pem"
+```
+
+```yaml
+namespaces:
+  staging:
+  dev:
+    protected: false
+  production:
+    protected: true
+    installTiller: true
+    tillerServiceAccount: "tiller-production"
+    caCert: "secrets/ca.cert.pem"
+    tillerCert: "secrets/tiller.cert.pem"
+    tillerKey: "$TILLER_KEY" # where TILLER_KEY=secrets/tiller.key.pem
+    clientCert: "gs://mybucket/mydir/helm.cert.pem"
+    clientKey: "s3://mybucket/mydir/helm.key.pem"
 ```
 
 ## Helm Repos
@@ -146,12 +187,20 @@ Options:
 
 Example: 
 
-```
+```toml
 [helmRepos]
 stable = "https://kubernetes-charts.storage.googleapis.com"
 incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
 myS3repo = "s3://my-S3-private-repo/charts"
 myGCSrepo = "gs://my-GCS-private-repo/charts"
+```
+
+```yaml
+helmRepos:
+  stable: "https://kubernetes-charts.storage.googleapis.com"
+  incubator: "http://storage.googleapis.com/kubernetes-charts-incubator"
+  myS3repo: "s3://my-S3-private-repo/charts"
+  myGCSrepo: "gs://my-GCS-private-repo/charts"
 ```
 
 ## Apps
@@ -182,7 +231,7 @@ Example:
 
 > Whitespace does not matter in TOML files. You could use whatever indentation style you prefer for readability.
 
-```
+```toml
 [apps]
 
     [apps.jenkins]
@@ -204,3 +253,23 @@ Example:
 
 ```
 
+```yaml
+apps:
+  jenkins:
+    name: "jenkins"
+    description: "jenkins"
+    namespace: "staging"
+    enabled: true
+    chart: "stable/jenkins"
+    version: "0.9.0"
+    valuesFile: ""
+    purge: false
+    test: true
+    protected: false
+    wait: true
+    priority: -3
+    set:
+      secret1: "$SECRET_ENV_VAR1"
+      secret2: "$SECRET_ENV_VAR2"
+
+```
