@@ -1,0 +1,19 @@
+# THIS IS AN INVALID YAML FILE USED FOR TESTING PURPOSES ONLY.
+metadata:
+  org: orgX
+  maintainer: "k8s-admin"
+
+certificates:
+
+settings:
+  kubeContext:  
+
+namespaces:
+  staging: "staging" 
+  production: "default"
+
+helmRepos:
+  stable: "https://kubernetes-charts.storage.googleapis.com"
+  incubator: "http://storage.googleapis.com/kubernetes-charts-incubator"
+
+apps:

@@ -80,6 +80,58 @@ myGCSrepo = "gs://my-GCS-repo/charts"
     test = false 
 ```
 
+```yaml
+metadata:
+  org: "orgX"
+  maintainer: "k8s-admin"
+
+# Certificates are used to connect to the cluster. Currently, they can only be retrieved from s3 buckets.
+certificates:
+  caCrt: "s3://your-bucket/ca.crt" # s3 bucket
+  caKey: "$K8S_CLIENT_KEY" # relative file path
+  caClient: "gs://your-GCS-bucket/caClient.crt" # GCS bucket
+
+settings:
+  kubeContext: "mycontext"
+  username: "<<your-username>>"
+  password: "$K8S_PASSWORD" # the name of an environment variable containing the k8s password
+  clusterURI: "$K8S_URI" # cluster API
+
+namespaces:
+  staging:
+
+helmRepos:
+  stable: "https://kubernetes-charts.storage.googleapis.com"
+  incubator: "http://storage.googleapis.com/kubernetes-charts-incubator"
+  myrepo: "s3://my-private-repo/charts"
+  myGCSrepo: "gs://my-GCS-repo/charts"
+
+apps:
+
+  jenkins:
+    name: "jenkins"
+    description: "jenkins"
+    namespace: "staging"
+    enabled: true
+    chart: "stable/jenkins"
+    version: "0.9.1"
+    valuesFile: ""
+    purge: false
+    test: false
+
+
+  artifactory:
+    name: "artifactory"
+    description: "artifactory"
+    namespace: "staging"
+    enabled: true
+    chart: "stable/artifactory"
+    version: "6.2.0"
+    valuesFile: ""
+    purge: false
+    test: false
+```
+
 The above example requires the following environment variables to be set:
 
 - AWS_ACCESS_KEY_ID (since S3 is used for helm repo and certificates)
