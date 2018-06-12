@@ -1,6 +1,4 @@
-# v1.2.0
+# v1.3.0-rc
 
-- Stable TLS and multitenancy support.
-- Support for multiple values files when deploying charts.
-- Fix environment variables names issue #35
-- Fix #37
+- Support for using YAML for desired state files.
+- Support for passing values directly through the `set` flag in the desired state file.
