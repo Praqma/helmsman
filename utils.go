@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/BurntSushi/toml"
 	"github.com/Praqma/helmsman/aws"
 	"github.com/Praqma/helmsman/gcs"
@@ -37,7 +39,7 @@ func fromTOML(file string, s *state) (bool, string) {
 	if _, err := toml.DecodeFile(file, s); err != nil {
 		return false, err.Error()
 	}
-	return true, "INFO: Parsed [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
+	return true, "INFO: Parsed TOML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
 
 }
 
@@ -65,6 +67,64 @@ func toTOML(file string, s *state) {
 	}
 	log.Printf("Wrote %d bytes.\n", bytesWritten)
 	newFile.Close()
+}
+
+// fromYAML reads a yaml file and decodes it to a state type.
+// parser which throws an error if the YAML file is not valid.
+func fromYAML(file string, s *state) (bool, string) {
+	yamlFile, err := ioutil.ReadFile(file)
+	if err != nil {
+		return false, err.Error()
+	}
+	if err = yaml.Unmarshal(yamlFile, s); err != nil {
+		return false, err.Error()
+	}
+	return true, "INFO: Parsed YAML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
+}
+
+func toYAML(file string, s *state) {
+	log.Println("printing generated yaml ... ")
+	var buff bytes.Buffer
+	var (
+		newFile *os.File
+		err     error
+	)
+
+	if err := yaml.NewEncoder(&buff).Encode(s); err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+	newFile, err = os.Create(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	bytesWritten, err := newFile.Write(buff.Bytes())
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Wrote %d bytes.\n", bytesWritten)
+	newFile.Close()
+}
+
+// invokes either yaml or toml parser considering file extension
+func fromFile(file string, s *state) (bool, string) {
+	if isOfType(file, ".toml") {
+		return fromTOML(file, s)
+	} else if isOfType(file, ".yaml") {
+		return fromYAML(file, s)
+	} else {
+		return false, "State file does not have toml/yaml extension."
+	}
+}
+
+func toFile(file string, s *state) {
+	if isOfType(file, ".toml") {
+		toTOML(file, s)
+	} else if isOfType(file, ".yaml") {
+		fromYAML(file, s)
+	} else {
+		log.Fatal("State file does not have toml/yaml extension.")
+	}
 }
 
 // isOfType checks if the file extension of a filename/path is the same as "filetype".

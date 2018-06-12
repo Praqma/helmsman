@@ -52,6 +52,48 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     valuesFile = "" # leaving it empty uses the default chart values
 ```
 
+dsf.yaml
+```yaml
+metadata:
+  org: "example.com"
+  description: "example Desired State File for demo purposes."
+
+
+settings:
+  kubeContext: "minikube"
+
+namespaces:
+  staging:
+    protected: false
+  production:
+    protected: true
+
+helmRepos:
+  stable: "https://kubernetes-charts.storage.googleapis.com"
+  incubator: "http://storage.googleapis.com/kubernetes-charts-incubator"
+
+
+apps:
+
+  jenkins:
+    name: "jenkins" # should be unique across all apps
+    description: "jenkins"
+    namespace: "production" # maps to the namespace as defined in environments above
+    enabled: true # change to false if you want to delete this app release [empty: false]
+    chart: "stable/jenkins" # changing the chart name means delete and recreate this chart
+    version: "0.14.3" # chart version
+    valuesFile: "" # leaving it empty uses the default chart values
+
+  artifactory:
+    name: "artifactory" # should be unique across all apps
+    description: "artifactory"
+    namespace: "staging" # maps to the namespace as defined in environments above
+    enabled: true # change to false if you want to delete this app release [empty: false]
+    chart: "stable/artifactory" # changing the chart name means delete and recreate this chart
+    version: "7.0.6" # chart version
+    valuesFile: "" # leaving it empty uses the default chart values
+```
+
 In command line, we run :
 
 ```
