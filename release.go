@@ -50,14 +50,6 @@ func validateRelease(r *release, names map[string]bool, s state) (bool, string) 
 				return false, "the value for valueFile '" + filePath + "' must be a valid file path for a yaml file."
 			}
 		}
-	} else if len(r.Set) > 0 {
-		for k, v := range r.Set {
-			if !strings.HasPrefix(v, "$") {
-				return false, "the value for variable [ " + k + " ] must be an environment variable name and start with '$'."
-			} else if ok, _ := envVarExists(v); !ok {
-				return false, "env variable [ " + v + " ] is not found in the environment."
-			}
-		}
 	} else if r.Priority != 0 && r.Priority > 0 {
 		return false, "priority can only be 0 or negative value, positive values are not allowed."
 	}

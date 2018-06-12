@@ -131,6 +131,7 @@ func logVersions() {
 // envVarExists checks if an environment variable is set or not and returns it.
 // empty string is returned for unset env vars
 // it accepts env var with/without '$' at the beginning
+// if an env var 'v' does not exist, 'v' is returned as the value
 func envVarExists(v string) (bool, string) {
 
 	if strings.HasPrefix(v, "$") {
@@ -138,6 +139,12 @@ func envVarExists(v string) (bool, string) {
 	}
 
 	value, ok := os.LookupEnv(v)
+
+	//  return the value as is if no env var with that key is set.
+	if !ok {
+		return ok, v
+	}
+
 	return ok, value
 }
 
