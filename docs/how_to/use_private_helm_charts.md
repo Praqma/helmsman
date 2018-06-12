@@ -22,6 +22,18 @@ myPrivateRepo = s3://this-is-a-private-repo/charts
 
 ``` 
 
+```yaml
+...
+
+helmRepos:
+  stable: "https://kubernetes-charts.storage.googleapis.com"
+  incubator: "http://storage.googleapis.com/kubernetes-charts-incubator"
+  myPrivateRepo: s3://this-is-a-private-repo/charts
+
+...
+
+```
+
 ## S3
 
 If you are using S3 private repos, you need to provide the following AWS env variables:

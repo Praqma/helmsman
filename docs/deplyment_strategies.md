@@ -12,7 +12,7 @@ Suppose you are deploying 3rd party charts (e.g. Jenkins, Jira ... etc.) in your
 
 You can test 3rd party charts in designated namespaces (e.g, staging) within the same production cluster. This also can be defined in the same desired state file. Below is an example of a desired state file for deploying 3rd party apps in production and staging namespaces:  
 
-```
+```toml
 [metadata]
 org = "example"
 
@@ -61,6 +61,55 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     chart = "stable/jenkins" 
     version = "0.9.1" # chart version
     valuesFiles = [ "../my-jenkins-common-values.yaml", "../my-jenkins-testing-values.yaml" ]
+
+```
+
+```yaml
+metadata:
+  org: "example"
+
+# using a minikube cluster
+settings:
+  kubeContext: "minikube"
+
+namespaces:
+  staging:
+    protected: false
+  production:
+    protected: true
+
+helmRepos:
+  stable: "https://kubernetes-charts.storage.googleapis.com"
+  incubator: "http://storage.googleapis.com/kubernetes-charts-incubator"
+
+apps:
+  jenkins:
+    name: "jenkins-prod" # should be unique across all apps
+    description: "production jenkins"
+    namespace: "production"
+    enabled: true
+    chart: "stable/jenkins"
+    version: "0.9.1" # chart version
+    valuesFile: "../my-jenkins-production-values.yaml"
+
+  artifactory:
+    name: "artifactory-prod" # should be unique across all apps
+    description: "production artifactory"
+    namespace: "production"
+    enabled: true
+    chart: "stable/artifactory"
+    version: "6.2.0" # chart version
+    valuesFile: "../my-artificatory-production-values.yaml"
+
+  # the jenkins release below is being tested in the staging namespace
+  jenkins-test:
+    name: "jenkins-test" # should be unique across all apps
+    description: "test release of jenkins, testing xyz feature"
+    namespace: "staging"
+    enabled: true
+    chart: "stable/jenkins"
+    version: "0.9.1" # chart version
+    valuesFile: "../my-jenkins-testing-values.yaml"
 
 ```
 

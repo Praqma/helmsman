@@ -28,6 +28,20 @@ In a multitenant cluster, it is a good idea to separate the Helm work of differe
 
 ```
 
+```yaml
+
+namespaces:
+  staging:
+    installTiller: true
+  production:
+    installTiller: true
+  developer1:
+    installTiller: true
+  developer2:
+    installTiller: true
+
+```
+
 ## Deploying Tiller with a service account 
 
 You can also deploy each of the Tillers with a different k8s service account Or with a default service account of your choice. 
@@ -53,6 +67,30 @@ serviceAccount = "default-tiller-sa"
     [namespaces.developer2]
     installTiller = true
     tillerServiceAccount = "dev2-sa"
+
+```
+
+```yaml
+
+settings:
+  # other options
+  serviceAccount: "default-tiller-sa"
+
+namespaces:
+  staging:
+    installTiller: true
+    tillerServiceAccount: "custom-sa"
+
+  production:
+    installTiller: true
+
+  developer1:
+    installTiller: true
+    tillerServiceAccount: "dev1-sa"
+
+  developer2:
+    installTiller: true
+    tillerServiceAccount: "dev2-sa"
 
 ```
 
@@ -88,5 +126,29 @@ In a multitenant setting, it is also recommended to deploy Tiller with TLS enabl
 
 ```
 
+```yaml
+
+namespaces:
+  kube-system:
+    installTiller: false # has no effect. Tiller is always deployed in kube-system
+    caCert: "secrets/kube-system/ca.cert.pem"
+    tillerCert: "secrets/kube-system/tiller.cert.pem"
+    tillerKey: "$TILLER_KEY" # where TILLER_KEY=secrets/kube-system/tiller.key.pem
+    clientCert: "gs://mybucket/mydir/helm.cert.pem"
+    clientKey: "s3://mybucket/mydir/helm.key.pem"
+
+  staging:
+    installTiller: true
+
+  production:
+    installTiller: true
+    tillerServiceAccount: "tiller-production"
+    caCert: "secrets/ca.cert.pem"
+    tillerCert: "secrets/tiller.cert.pem"
+    tillerKey: "$TILLER_KEY" # where TILLER_KEY=secrets/tiller.key.pem
+    clientCert: "gs://mybucket/mydir/helm.cert.pem"
+    clientKey: "s3://mybucket/mydir/helm.key.pem"
+
+```
 
 
