@@ -1,5 +1,5 @@
 ---
-version: v1.2.0-rc
+version: v1.3.0-rc
 ---
 
 You can run Helmsman locally as a binary application with Minikube, you just need to skip all the cluster connection settings in your desired state file. Below is the example.toml desired state file adapted to work with Minikube.

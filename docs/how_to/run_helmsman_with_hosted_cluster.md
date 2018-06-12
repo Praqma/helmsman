@@ -1,5 +1,5 @@
 ---
-version: v1.2.0-rc
+version: v1.3.0-rc
 ---
 
 You can manage Helm charts deployment on a hosted K8S cluster in the cloud or on-prem. You need to include the required information to connect to the cluster in your state file. 
