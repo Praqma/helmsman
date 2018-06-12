@@ -176,7 +176,7 @@ Options:
 - protected   : defines if the release should be protected against changes. Namespace-level protection has higher priority than this flag. Check the [protection guide](how_to/protect_namespaces_and_releases.md) for more details.
 - wait        : defines whether helmsman should block execution until all k8s resources are in a ready state. Default is false.
 - priority    : defines the priority of applying operations on this release. Only negative values allowed and the lower the value, the higher the priority. Default priority is 0. Apps with equal priorities will be applied in the order they were added in your state file (DSF).
-- [apps.<app_name>.set]  : is used to override certain values from values.yaml with values from environment variables. This is particularily useful for passing secrets to charts. 
+- [apps.<app_name>.set]  : is used to override certain values from values.yaml with values from environment variables (or ,starting from v1.3.0-rc, directly provided in the Desired State File). This is particularily useful for passing secrets to charts. If the an environment variable with the same name as the provided value exists, the environment variable value will be used, otherwise, the provided value will be used as is.
 
 Example: 
 
@@ -200,7 +200,7 @@ Example:
     priority = -3
     [apps.jenkins.set]
      secret1="$SECRET_ENV_VAR1"
-     secret2="$SECRET_ENV_VAR2"
+     secret2="SECRET_ENV_VAR2" # works with/without $ at the beginning
 
 ```
 

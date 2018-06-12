@@ -69,8 +69,9 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     protected = true
     priority= -3
     wait = true
-    # [apps.jenkins.set] # values to override values from values.yaml with values from env vars-- useful for passing secrets to charts
+    # [apps.jenkins.set] # values to override values from values.yaml with values from env vars or directly entered-- useful for passing secrets to charts
     #      AdminPassword="$JENKINS_PASSWORD" # $JENKINS_PASSWORD must exist in the environment
+    #      AdminUser="admin"
 
 
      # artifactory will be deployed using the Tiller in the kube-system namespace
