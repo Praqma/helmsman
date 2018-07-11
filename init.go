@@ -68,7 +68,7 @@ func init() {
 			log.Fatal(msg)
 		}
 	} else {
-		log.Println("INFO: desried state validation is skipped.")
+		log.Println("INFO: desired state validation is skipped.")
 	}
 
 }

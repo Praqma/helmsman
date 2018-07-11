@@ -120,7 +120,7 @@ func installRelease(namespace string, r *release) {
 
 // rollbackRelease evaluates if a rollback action needs to be taken for a given release.
 // if the release is already deleted but from a different namespace than the one specified in input,
-// it purge deletes it and create it in the spcified namespace.
+// it purge deletes it and create it in the specified namespace.
 func rollbackRelease(namespace string, r *release) {
 
 	releaseName := r.Name
@@ -149,7 +149,7 @@ func rollbackRelease(namespace string, r *release) {
 }
 
 // inspectDeleteScenario evaluates if a delete action needs to be taken for a given release.
-// If the purge flage is set to true for the release in question, then it will be permenantly removed.
+// If the purge flag is set to true for the release in question, then it will be permanently removed.
 // If the release is not deployed, it will be skipped.
 func inspectDeleteScenario(namespace string, r *release) {
 
@@ -183,9 +183,9 @@ func deleteRelease(r *release) {
 }
 
 // inspectUpgradeScenario evaluates if a release should be upgraded.
-// - If the relase is already in the same namespace specified in the input,
+// - If the release is already in the same namespace specified in the input,
 // it will be upgraded using the values file specified in the release info.
-// - If the relase is already in the same namespace specified in the input but is using a different chart,
+// - If the release is already in the same namespace specified in the input but is using a different chart,
 // it will be purge deleted and installed in the same namespace using the new chart.
 // - If the release is NOT in the same namespace specified in the input,
 // it will be purge deleted and installed in the new namespace.
@@ -354,7 +354,7 @@ func getCurrentTillerNamespace(r *release) string {
 }
 
 // getTLSFlags returns TLS flags with which a release is maintained
-// If the release where the namespace is to be deployed has Tiller deployed, the TLS flages will use certs/keys for that namespace (if any)
+// If the release where the namespace is to be deployed has Tiller deployed, the TLS flags will use certs/keys for that namespace (if any)
 // otherwise, it will be the certs/keys for the kube-system namespace.
 func getTLSFlags(r *release) string {
 	tls := ""
