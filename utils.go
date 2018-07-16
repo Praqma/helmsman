@@ -223,6 +223,7 @@ func sliceContains(slice []string, s string) bool {
 
 // validateServiceAccount checks if k8s service account exists in a given namespace
 func validateServiceAccount(sa string, namespace string) (bool, string) {
+	log.Println("INFO: validating if service account [" + sa + "] exists in namespace [" + namespace + "]")
 	if namespace == "" {
 		namespace = "default"
 	}

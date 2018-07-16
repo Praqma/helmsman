@@ -19,7 +19,7 @@ kubeContext = "minikube" # will try connect to this context first, if it does no
 #password = "$K8S_PASSWORD" # the name of an environment variable containing the k8s password
 #clusterURI = "$K8S_URI" # the name of an environment variable containing the cluster API
 ##clusterURI = "https://192.168.99.100:8443" # equivalent to the above
-#serviceAccount = "foo" # k8s serviceaccount must be already defined, validation error will be thrown otherwise
+#serviceAccount = "tiller" # k8s serviceaccount must be already defined, validation error will be thrown otherwise
 storageBackend = "secret" # default is configMap
 #slackWebhook = "$slack" # or "your slack webhook url"
 
