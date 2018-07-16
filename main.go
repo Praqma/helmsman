@@ -19,14 +19,14 @@ var verbose bool
 var nsOverride string
 var checkCleanup bool
 var skipValidation bool
-var version = "v1.3.0-rc"
+var version = "v1.3.1"
 
 func main() {
 
 	// set the kubecontext to be used Or create it if it does not exist
 	if !setKubeContext(s.Settings["kubeContext"]) {
 		if r, msg := createContext(); !r {
-			log.Fatal(msg)
+			logError(msg)
 		}
 		checkCleanup = true
 	}
@@ -35,7 +35,7 @@ func main() {
 	addNamespaces(s.Namespaces)
 
 	if r, msg := initHelm(); !r {
-		log.Fatal(msg)
+		logError(msg)
 	}
 
 	// check if helm Tiller is ready
@@ -53,13 +53,13 @@ func main() {
 
 	// add repos -- fails if they are not valid
 	if r, msg := addHelmRepos(s.HelmRepos); !r {
-		log.Fatal(msg)
+		logError(msg)
 	}
 
 	if !skipValidation {
 		// validate charts-versions exist in defined repos
 		if r, msg := validateReleaseCharts(s.Apps); !r {
-			log.Fatal(msg)
+			logError(msg)
 		}
 	} else {
 		log.Println("INFO: charts validation is skipped.")
@@ -70,6 +70,7 @@ func main() {
 
 	p.sortPlan()
 	p.printPlan()
+	p.sendPlanToSlack()
 
 	if apply {
 		p.execPlan()
@@ -399,7 +400,7 @@ func waitForTiller(namespace string) {
 		}
 		attempt = attempt + 1
 	}
-	log.Fatal("ERROR: timeout reached while waiting for helm Tiller to be ready in namespace [ " + namespace + " ]. Aborting!")
+	logError("ERROR: timeout reached while waiting for helm Tiller to be ready in namespace [ " + namespace + " ]. Aborting!")
 }
 
 // cleanup deletes the k8s certificates and keys files

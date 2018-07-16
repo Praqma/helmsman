@@ -6,10 +6,13 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v2"
 
@@ -134,7 +137,7 @@ func isOfType(filename string, filetype string) bool {
 }
 
 // readFile returns the content of a file as a string.
-// takes a file path as input. It throws an error and breaks the program execution if it failes to read the file.
+// takes a file path as input. It throws an error and breaks the program execution if it fails to read the file.
 func readFile(filepath string) string {
 	data, err := ioutil.ReadFile(filepath)
 	if err != nil {
@@ -284,4 +287,65 @@ func deleteFile(path string) {
 	if err := os.Remove(path); err != nil {
 		log.Fatal("ERROR: could not delete file: " + path)
 	}
+}
+
+// notifySlack sends a JSON formatted message to Slack over a webhook url
+// It takes the content of the message (what changes helmsman is going to do or have done separated by \n)
+// and the webhook URL as well as a flag specifying if this is a failure message or not
+// It returns true if the sending of the message is successful, otherwise returns false
+func notifySlack(content string, url string, failure bool, executing bool) bool {
+	log.Println("INFO: posting notifications to slack ... ")
+
+	color := "#36a64f" // green
+	if failure {
+		color = "#FF0000" // red
+	}
+
+	var pretext string
+	if content == "" {
+		pretext = "No actions to perform!"
+	} else if failure {
+		pretext = "Failed to generate/execute a plan: "
+	} else if executing && !failure {
+		pretext = "Here is what I have done: "
+	} else {
+		pretext = "Here is what I am going to do:"
+	}
+
+	t := time.Now().UTC()
+
+	var jsonStr = []byte(`{
+		"attachments": [
+			{
+				"fallback": "Helmsman results.",
+				"color": "` + color + `" ,
+				"pretext": "` + pretext + `",
+				"title": "` + content + `",
+				
+				"footer": "Helmsman",
+				"ts": ` + strconv.FormatInt(t.Unix(), 10) + `
+			}
+		]
+	}`)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal("ERROR: while sending notifications to slack" + err.Error())
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 200 {
+		return true
+	}
+	return false
+}
+
+func logError(msg string) {
+	if _, err := url.ParseRequestURI(s.Settings["slackWebhook"]); err == nil {
+		notifySlack(msg, s.Settings["slackWebhook"], true, apply)
+	}
+	log.Fatal(msg)
 }

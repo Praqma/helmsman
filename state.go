@@ -44,7 +44,7 @@ func (s state) validate() (bool, string) {
 
 		s.Settings["clusterURI"] = subsituteEnv(value)
 		if _, err := url.ParseRequestURI(s.Settings["clusterURI"]); err != nil {
-			return false, "ERROR: settings validation failed -- clusterURI must have a valid URL set in an env varibale or passed directly. Either the env var is missing/empty or the URL is invalid."
+			return false, "ERROR: settings validation failed -- clusterURI must have a valid URL set in an env variable or passed directly. Either the env var is missing/empty or the URL is invalid."
 		}
 
 		if _, ok = s.Settings["username"]; !ok {
@@ -58,6 +58,14 @@ func (s state) validate() (bool, string) {
 
 		if s.Settings["password"] == "" {
 			return false, "ERROR: settings validation failed -- password should be set as an env variable. It is currently missing or empty. "
+		}
+	}
+
+	// slack webhook validation (if provided)
+	if value, ok := s.Settings["slackWebhook"]; ok {
+		s.Settings["slackWebhook"] = subsituteEnv(value)
+		if _, err := url.ParseRequestURI(s.Settings["slackWebhook"]); err != nil {
+			return false, "ERROR: settings validation failed -- slackWebhook must be a valid URL."
 		}
 	}
 
@@ -97,7 +105,7 @@ func (s state) validate() (bool, string) {
 
 		for k, v := range s.Namespaces {
 			if !v.InstallTiller && k != "kube-system" {
-				log.Println("INFO: naemspace validation -- Tiller is not desired to be deployed in namespace [ " + k + " ].")
+				log.Println("INFO: namespace validation -- Tiller is not desired to be deployed in namespace [ " + k + " ].")
 			} else {
 				if tillerTLSEnabled(k) {
 					// validating the TLS certs and keys for Tiller
@@ -155,9 +163,9 @@ func (s state) validate() (bool, string) {
 	return true, ""
 }
 
-// substitueEnv checks if a string is an env variable (starts with '$'), then it returns its value
+// subsituteEnv checks if a string is an env variable (contains '$'), then it returns its value
 // if the env variable is empty or unset, an empty string is returned
-// if the string does not start with '$', it is returned as is.
+// if the string does not contain '$', it is returned as is.
 func subsituteEnv(name string) string {
 	if strings.Contains(name, "$") {
 		return os.ExpandEnv(name)

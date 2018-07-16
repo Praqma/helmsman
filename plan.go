@@ -3,12 +3,14 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
-// orderedDecision type representing a Descsion and it's priority weight
+// orderedDecision type representing a Decision and it's priority weight
 type orderedDecision struct {
 	Description string
 	Priority    int
@@ -33,7 +35,7 @@ func createPlan() plan {
 	p := plan{
 		Commands:  []orderedCommand{},
 		Decisions: []orderedDecision{},
-		Created:   time.Now(),
+		Created:   time.Now().UTC(),
 	}
 	return p
 }
@@ -60,11 +62,14 @@ func (p *plan) addDecision(decision string, priority int) {
 // execPlan executes the commands (actions) which were added to the plan.
 func (p plan) execPlan() {
 	p.sortPlan()
-	log.Println("INFO: Executing the following plan ... ")
-	p.printPlan()
+	log.Println("INFO: Executing the plan ... ")
 	for _, cmd := range p.Commands {
 		if exitCode, msg := cmd.Command.exec(debug, verbose); exitCode != 0 {
-			log.Fatal("Command returned with exit code: " + string(exitCode) + ". And error message: " + msg)
+			logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + msg)
+		} else {
+			if _, err := url.ParseRequestURI(s.Settings["slackWebhook"]); err == nil {
+				notifySlack(cmd.Command.Description+" ... SUCCESS!", s.Settings["slackWebhook"], false, true)
+			}
 		}
 	}
 }
@@ -84,6 +89,19 @@ func (p plan) printPlan() {
 	for _, decision := range p.Decisions {
 		fmt.Println(decision.Description + " -- priority: " + strconv.Itoa(decision.Priority))
 	}
+}
+
+// sendPlanToSlack sends the description of plan commands to slack if a webhook is provided.
+func (p plan) sendPlanToSlack() {
+	if _, err := url.ParseRequestURI(s.Settings["slackWebhook"]); err == nil {
+		str := ""
+		for _, c := range p.Commands {
+			str = str + c.Command.Description + "\n"
+		}
+
+		notifySlack(strings.TrimRight(str, "\n"), s.Settings["slackWebhook"], false, false)
+	}
+
 }
 
 // sortPlan sorts the slices of commands and decisions based on priorities
