@@ -107,6 +107,7 @@ func setKubeContext(context string) bool {
 // If no defaultServiceAccount is provided, Tiller is deployed with the namespace default service account
 // If no namespace is provided, Tiller is deployed to kube-system
 func deployTiller(namespace string, serviceAccount string, defaultServiceAccount string) (bool, string) {
+	log.Println("INFO: deploying Tiller in namespace [ " + namespace + " ].")
 	sa := ""
 	if serviceAccount != "" {
 		if ok, err := validateServiceAccount(serviceAccount, namespace); ok {
@@ -115,7 +116,11 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 			return false, "ERROR: while deploying Helm Tiller in namespace [" + namespace + "]: " + err
 		}
 	} else if defaultServiceAccount != "" {
-		sa = "--service-account " + defaultServiceAccount
+		if ok, err := validateServiceAccount(defaultServiceAccount, namespace); ok {
+			sa = "--service-account " + defaultServiceAccount
+		} else {
+			return false, "ERROR: while deploying Helm Tiller in namespace [" + namespace + "]: " + err
+		}
 	}
 
 	if namespace == "" {
@@ -162,7 +167,6 @@ func initHelm() (bool, string) {
 		}
 	}
 
-	log.Println("INFO: deploying shared Tiller on namespace [ kube-system ].")
 	if v, ok := s.Namespaces["kube-system"]; ok {
 		if ok, err := deployTiller("kube-system", v.TillerServiceAccount, defaultSA); !ok {
 			return false, err
@@ -175,7 +179,6 @@ func initHelm() (bool, string) {
 
 	for k, ns := range s.Namespaces {
 		if ns.InstallTiller && k != "kube-system" {
-			log.Println("INFO: deploying Tiller on namespace [ " + k + " ].")
 			if ok, err := deployTiller(k, ns.TillerServiceAccount, defaultSA); !ok {
 				return false, err
 			}
@@ -392,7 +395,7 @@ func waitForTiller(namespace string) {
 		if exitCode == 0 {
 			return
 		} else if strings.Contains(err, "could not find a ready tiller pod") || strings.Contains(err, "could not find tiller") {
-			log.Println("INFO: waiting for helm Tiller to be ready ...")
+			log.Println("INFO: waiting for helm Tiller to be ready in namespace [" + namespace + "] ...")
 			time.Sleep(5 * time.Second)
 			exitCode, err = cmd.exec(debug, verbose)
 		} else {
