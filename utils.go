@@ -85,6 +85,7 @@ func fromYAML(file string, s *state) (bool, string) {
 	return true, "INFO: Parsed YAML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
 }
 
+// toYaml encodes a state type into a YAML file
 func toYAML(file string, s *state) {
 	log.Println("printing generated yaml ... ")
 	var buff bytes.Buffer
@@ -221,26 +222,6 @@ func sliceContains(slice []string, s string) bool {
 	return false
 }
 
-// validateServiceAccount checks if k8s service account exists in a given namespace
-func validateServiceAccount(sa string, namespace string) (bool, string) {
-	log.Println("INFO: validating if service account [" + sa + "] exists in namespace [" + namespace + "]")
-	if namespace == "" {
-		namespace = "default"
-	}
-	ns := " -n " + namespace
-
-	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "kubectl get serviceaccount " + sa + ns},
-		Description: "validating that serviceaccount [ " + sa + " ] exists in namespace [ " + namespace + " ].",
-	}
-
-	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
-		return false, err
-	}
-	return true, ""
-}
-
 // downloadFile downloads a file from GCS or AWS buckets and name it with a given outfile
 // if downloaded, returns the outfile name. If the file path is local file system path, it is returned as is.
 func downloadFile(path string, outfile string) string {
@@ -344,9 +325,22 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 	return false
 }
 
+// logError sends a notification on slack if a webhook URL is provided and logs the error before terminating.
 func logError(msg string) {
 	if _, err := url.ParseRequestURI(s.Settings["slackWebhook"]); err == nil {
 		notifySlack(msg, s.Settings["slackWebhook"], true, apply)
 	}
 	log.Fatal(msg)
+}
+
+// getBucketElements returns a map containing the bucket name and the file path inside the bucket
+// this func works for S3 and GCS bucket links of the format:
+// s3 or gs://bucketname/dir.../file.ext
+func getBucketElements(link string) map[string]string {
+
+	tmp := strings.SplitAfterN(link, "//", 2)[1]
+	m := make(map[string]string)
+	m["bucketName"] = strings.SplitN(tmp, "/", 2)[0]
+	m["filePath"] = strings.SplitN(tmp, "/", 2)[1]
+	return m
 }
