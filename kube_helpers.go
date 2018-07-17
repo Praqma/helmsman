@@ -5,6 +5,8 @@ import (
 )
 
 // validateServiceAccount checks if k8s service account exists in a given namespace
+// if the provided namespace is empty, it checks in the "default" namespace
+// if the serviceaccount does not exist, it will be created
 func validateServiceAccount(sa string, namespace string) (bool, string) {
 	log.Println("INFO: validating if service account [" + sa + "] exists in namespace [" + namespace + "]")
 	if namespace == "" {
@@ -20,12 +22,44 @@ func validateServiceAccount(sa string, namespace string) (bool, string) {
 
 	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, err
+		// if strings.Contains(err, "NotFound") || strings.Contains(err, "not found") {
+		// 	log.Println("INFO: service account [ " + sa + " ] does not exist in namespace [ " + namespace + " ] .. attempting to create it ... ")
+
+		// 	if _, rbacErr := createRBAC(sa, namespace); rbacErr != "" {
+		// 		return false, rbacErr
+		// 	}
+		// 	return true, ""
+
+		// }
+		// return false, err
 	}
 	return true, ""
 }
 
+func createRBAC(sa string, namespace string, sharedTiller bool) (bool, string) {
+	var ok bool
+	var err string
+	if ok, err = createServiceAccount(sa, namespace); ok {
+		if sharedTiller {
+			if ok, err = createRoleBinding("cluster-admin", sa, namespace); ok {
+				return true, ""
+			}
+			return false, err
+		}
+		if ok, err = createRole(namespace); ok {
+			if ok, err = createRoleBinding("helmsman-tiller", sa, namespace); ok {
+				return true, ""
+			}
+			return false, err
+		}
+
+		return false, err
+	}
+	return false, err
+}
+
 // addNamespaces creates a set of namespaces in your k8s cluster.
-// If a namespace with the same name exsts, it will skip it.
+// If a namespace with the same name exists, it will skip it.
 // If --ns-override flag is used, it only creates the provided namespace in that flag
 func addNamespaces(namespaces map[string]namespace) {
 	if nsOverride == "" {
@@ -163,4 +197,83 @@ func setKubeContext(context string) bool {
 	}
 
 	return true
+}
+
+// createServiceAccount creates a service account in a given namespace and associates it with a cluster-admin role
+func createServiceAccount(saName string, namespace string) (bool, string) {
+	log.Println("INFO: creating service account [ " + saName + " ] in namespace [ " + namespace + " ]")
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "kubectl create serviceaccount -n " + namespace + " " + saName},
+		Description: "creating service account [ " + saName + " ] in namespace [ " + namespace + " ]",
+	}
+
+	exitCode, err := cmd.exec(debug, verbose)
+
+	if exitCode != 0 {
+		//logError("ERROR: failed to create service account " + saName + " in namespace [ " + namespace + " ]: " + err)
+		return false, err
+	}
+
+	return true, ""
+}
+
+func createRoleBinding(role string, saName string, namespace string) (bool, string) {
+	clusterRole := false
+	resource := "rolebinding"
+	if role == "cluster-admin" {
+		clusterRole = true
+		resource = "clusterrolebinding"
+	}
+
+	bindingOption := "--role=" + role
+	if clusterRole {
+		bindingOption = "--clusterrole=" + role
+	}
+
+	log.Println("INFO: creating " + resource + " for service account [ " + saName + " ] in namespace [ " + namespace + " ] with role: " + role)
+
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "kubectl create " + resource + " " + saName + "-binding " + bindingOption + " --serviceaccount " + namespace + ":" + saName + " -n " + namespace},
+		Description: "creating " + resource + " for [ " + saName + " ] in namespace [ " + namespace + " ]",
+	}
+
+	exitCode, err := cmd.exec(debug, verbose)
+
+	if exitCode != 0 {
+		//logError("ERROR: failed to bind service account " + saName + " in namespace [ " + namespace + " ] to role " + role + " : " + err)
+		return false, err
+	}
+
+	return true, ""
+}
+
+func createRole(namespace string) (bool, string) {
+
+	// load static resource
+	resource, e := Asset("data/role.yaml")
+	if e != nil {
+		logError(e.Error())
+	}
+	replaceStringInFile(resource, "temp-modified-role.yaml", map[string]string{"<<namespace>>": namespace})
+
+	log.Println("INFO: creating role [helmsman-tiller] in namespace [ " + namespace + " ] ")
+
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "kubectl apply -f temp-modified-role.yaml "},
+		Description: "creating role [helmsman-tiller] in namespace [ " + namespace + " ]",
+	}
+
+	exitCode, err := cmd.exec(debug, verbose)
+
+	if exitCode != 0 {
+		//logError("ERROR: failed to create Tiller role in namespace [ " + namespace + " ]: " + err)
+		return false, err
+	}
+
+	deleteFile("temp-modified-role.yaml")
+
+	return true, ""
 }
