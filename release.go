@@ -27,10 +27,12 @@ type release struct {
 
 // validateRelease validates if a release inside a desired state meets the specifications or not.
 // check the full specification @ https://github.com/Praqma/helmsman/docs/desired_state_spec.md
-func validateRelease(r *release, names map[string]bool, s state) (bool, string) {
+func validateRelease(r *release, names map[string]map[string]bool, s state) (bool, string) {
 	_, err := os.Stat(r.ValuesFile)
-	if r.Name == "" || names[r.Name] {
-		return false, "release name can't be empty and must be unique."
+	if r.Name == "" {
+		return false, "release name can't be empty."
+	} else if (s.Namespaces[r.Namespace].InstallTiller && names[r.Name][r.Namespace]) || (!s.Namespaces[r.Namespace].InstallTiller && names[r.Name]["kube-system"]) {
+		return false, "release name must be unique within a given namespace."
 	} else if nsOverride == "" && r.Namespace == "" {
 		return false, "release targeted namespace can't be empty."
 	} else if nsOverride == "" && r.Namespace != "" && !checkNamespaceDefined(r.Namespace, s) {
@@ -54,7 +56,15 @@ func validateRelease(r *release, names map[string]bool, s state) (bool, string) 
 		return false, "priority can only be 0 or negative value, positive values are not allowed."
 	}
 
-	names[r.Name] = true
+	if names[r.Name] == nil {
+		names[r.Name] = make(map[string]bool)
+	}
+	if s.Namespaces[r.Namespace].InstallTiller {
+		names[r.Name][r.Namespace] = true
+	} else {
+		names[r.Name]["kube-system"] = true
+	}
+
 	return true, ""
 }
 

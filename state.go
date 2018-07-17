@@ -152,7 +152,7 @@ func (s state) validate() (bool, string) {
 		os.Exit(0)
 	}
 
-	names := make(map[string]bool)
+	names := make(map[string]map[string]bool)
 	for appLabel, r := range s.Apps {
 		result, errMsg := validateRelease(r, names, s)
 		if !result {
