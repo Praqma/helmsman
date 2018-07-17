@@ -344,3 +344,16 @@ func getBucketElements(link string) map[string]string {
 	m["filePath"] = strings.SplitN(tmp, "/", 2)[1]
 	return m
 }
+
+// replaceStringInFile takes a map of keys and values and replaces the keys with values within a given file.
+// It saves the modified content in a new file
+func replaceStringInFile(input []byte, outfile string, replacements map[string]string) {
+	output := input
+	for k, v := range replacements {
+		output = bytes.Replace(output, []byte(k), []byte(v), -1)
+	}
+
+	if err := ioutil.WriteFile(outfile, output, 0666); err != nil {
+		logError(err.Error())
+	}
+}

@@ -325,18 +325,36 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 func deployTiller(namespace string, serviceAccount string, defaultServiceAccount string) (bool, string) {
 	log.Println("INFO: deploying Tiller in namespace [ " + namespace + " ].")
 	sa := ""
+	sharedTiller := false
+	if namespace == "kube-system" && serviceAccount == "" {
+		sharedTiller = true
+	}
 	if serviceAccount != "" {
-		if ok, err := validateServiceAccount(serviceAccount, namespace); ok {
-			sa = "--service-account " + serviceAccount
-		} else {
-			return false, "ERROR: while deploying Helm Tiller in namespace [" + namespace + "]: " + err
+		if ok, err := validateServiceAccount(serviceAccount, namespace); !ok {
+			if strings.Contains(err, "NotFound") || strings.Contains(err, "not found") {
+
+				log.Println("INFO: service account [ " + serviceAccount + " ] does not exist in namespace [ " + namespace + " ] .. attempting to create it ... ")
+				if _, rbacErr := createRBAC(serviceAccount, namespace, sharedTiller); rbacErr != "" {
+					return false, rbacErr
+				}
+			} else {
+				return false, "ERROR: while validating/creating service account [ " + serviceAccount + " ] in namespace [" + namespace + "]: " + err
+			}
 		}
+		sa = "--service-account " + serviceAccount
 	} else if defaultServiceAccount != "" {
-		if ok, err := validateServiceAccount(defaultServiceAccount, namespace); ok {
-			sa = "--service-account " + defaultServiceAccount
-		} else {
-			return false, "ERROR: while deploying Helm Tiller in namespace [" + namespace + "]: " + err
+		if ok, err := validateServiceAccount(defaultServiceAccount, namespace); !ok {
+			if strings.Contains(err, "NotFound") || strings.Contains(err, "not found") {
+
+				log.Println("INFO: service account [ " + defaultServiceAccount + " ] does not exist in namespace [ " + namespace + " ] .. attempting to create it ... ")
+				if _, rbacErr := createRBAC(defaultServiceAccount, namespace, sharedTiller); rbacErr != "" {
+					return false, rbacErr
+				}
+			} else {
+				return false, "ERROR: while validating/creating service account [ " + defaultServiceAccount + " ] in namespace [ " + namespace + "]: " + err
+			}
 		}
+		sa = "--service-account " + defaultServiceAccount
 	}
 
 	if namespace == "" {
@@ -376,11 +394,7 @@ func initHelm() (bool, string) {
 
 	defaultSA := ""
 	if value, ok := s.Settings["serviceAccount"]; ok {
-		if ok, err := validateServiceAccount(value, "kube-system"); ok {
-			defaultSA = value
-		} else {
-			return false, "ERROR: while validating service account: " + err
-		}
+		defaultSA = value
 	}
 
 	if v, ok := s.Namespaces["kube-system"]; ok {
