@@ -33,7 +33,7 @@ func getAllReleases() string {
 	return result
 }
 
-// getTillerReleases gets releases deployed with a given Tiller (in agiven namespace)
+// getTillerReleases gets releases deployed with a given Tiller (in a given namespace)
 func getTillerReleases(tillerNS string) string {
 	cmd := command{
 		Cmd:         "bash",
