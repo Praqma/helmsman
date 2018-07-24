@@ -28,10 +28,10 @@ type release struct {
 
 // validateRelease validates if a release inside a desired state meets the specifications or not.
 // check the full specification @ https://github.com/Praqma/helmsman/docs/desired_state_spec.md
-func validateRelease(r *release, names map[string]map[string]bool, s state) (bool, string) {
+func validateRelease(appLabel string, r *release, names map[string]map[string]bool, s state) (bool, string) {
 	_, err := os.Stat(r.ValuesFile)
 	if r.Name == "" {
-		return false, "release name can't be empty."
+		r.Name = appLabel
 	} else if r.TillerNamespace != "" && r.TillerNamespace != "kube-system" {
 		if v, ok := s.Namespaces[r.TillerNamespace]; !ok {
 			return false, "tillerNamespace specified, but the namespace specified does not exist!"
