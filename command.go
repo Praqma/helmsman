@@ -9,7 +9,7 @@ import (
 )
 
 // command type representing all executable commands Helmsman needs
-// to execute in order to inspect the environement/ releases/ charts etc.
+// to execute in order to inspect the environment/ releases/ charts etc.
 type command struct {
 	Cmd         string
 	Args        []string
@@ -31,7 +31,7 @@ func (c command) printFullCommand() {
 // exec executes the executable command and returns the exit code and execution result
 func (c command) exec(debug bool, verbose bool) (int, string) {
 
-	if debug || verbose {
+	if debug {
 		log.Println("INFO: " + c.Description)
 	}
 	if verbose {
