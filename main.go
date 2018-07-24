@@ -15,7 +15,8 @@ var verbose bool
 var nsOverride string
 var checkCleanup bool
 var skipValidation bool
-var version = "v1.3.1"
+var applyLabels bool
+var version = "v1.4.0-rc"
 
 func main() {
 
@@ -62,7 +63,9 @@ func main() {
 	}
 
 	log.Println("INFO: checking what I need to do for your charts ... ")
+
 	p := makePlan(&s)
+	cleanUntrackedReleases()
 
 	p.sortPlan()
 	p.printPlan()

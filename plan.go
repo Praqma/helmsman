@@ -16,10 +16,11 @@ type orderedDecision struct {
 	Priority    int
 }
 
-// orderedCommand type representing a Command and it's priority weight
+// orderedCommand type representing a Command and it's priority weight and the targeted release from the desired state
 type orderedCommand struct {
-	Command  command
-	Priority int
+	Command       command
+	Priority      int
+	targetRelease *release
 }
 
 // plan type representing the plan of actions to make the desired state come true.
@@ -41,10 +42,11 @@ func createPlan() plan {
 }
 
 // addCommand adds a command type to the plan
-func (p *plan) addCommand(cmd command, priority int) {
+func (p *plan) addCommand(cmd command, priority int, r *release) {
 	oc := orderedCommand{
-		Command:  cmd,
-		Priority: priority,
+		Command:       cmd,
+		Priority:      priority,
+		targetRelease: r,
 	}
 
 	p.Commands = append(p.Commands, oc)
@@ -67,6 +69,9 @@ func (p plan) execPlan() {
 		if exitCode, msg := cmd.Command.exec(debug, verbose); exitCode != 0 {
 			logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + msg)
 		} else {
+			if cmd.targetRelease != nil {
+				labelResource(cmd.targetRelease)
+			}
 			if _, err := url.ParseRequestURI(s.Settings["slackWebhook"]); err == nil {
 				notifySlack(cmd.Command.Description+" ... SUCCESS!", s.Settings["slackWebhook"], false, true)
 			}
