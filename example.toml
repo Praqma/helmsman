@@ -1,4 +1,4 @@
-# version: v1.2.0-rc
+# version: v1.4.0-rc
 # metadata -- add as many key/value pairs as you want
 [metadata]
 org = "example.com"
@@ -19,7 +19,7 @@ kubeContext = "minikube" # will try connect to this context first, if it does no
 #password = "$K8S_PASSWORD" # the name of an environment variable containing the k8s password
 #clusterURI = "$K8S_URI" # the name of an environment variable containing the cluster API
 ##clusterURI = "https://192.168.99.100:8443" # equivalent to the above
-#serviceAccount = "tiller" # k8s serviceaccount must be already defined, validation error will be thrown otherwise
+serviceAccount = "tiller" # k8s serviceaccount. If it does not exist, it will be created.
 storageBackend = "secret" # default is configMap
 #slackWebhook = "$slack" # or "your slack webhook url"
 
@@ -58,31 +58,32 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
 
     # jenkins will be deployed using the Tiller in the staging namespace
     [apps.jenkins]
-    name = "jenkins" # should be unique across all apps
-    description = "jenkins"
     namespace = "staging" # maps to the namespace as defined in namespaces above
-    enabled = true # change to false if you want to delete this app release [empty = false]
-    chart = "stable/jenkins" # changing the chart name means delete and recreate this chart
+    enabled = true # change to false if you want to delete this app release [default = false]
+    chart = "stable/jenkins" # changing the chart name means delete and recreate this release
     version = "0.14.3" # chart version
+    ### Optional values below
+    name = "jenkins" # should be unique across all apps which are managed by the same Tiller
     valuesFile = "" # leaving it empty uses the default chart values
+    #tillerNamespace = "kube-system" # which Tiller to use to deploy this release
     purge = false # will only be considered when there is a delete operation
     test = false # run the tests when this release is installed for the first time only
     protected = true
     priority= -3
     wait = true
-    # [apps.jenkins.set] # values to override values from values.yaml with values from env vars or directly entered-- useful for passing secrets to charts
-    #      AdminPassword="$JENKINS_PASSWORD" # $JENKINS_PASSWORD must exist in the environment
-    #      AdminUser="admin"
+    [apps.jenkins.set] # values to override values from values.yaml with values from env vars or directly entered-- useful for passing secrets to charts
+         AdminPassword="$JENKINS_PASSWORD" # $JENKINS_PASSWORD must exist in the environment
+         AdminUser="admin"
 
 
      # artifactory will be deployed using the Tiller in the kube-system namespace
     [apps.artifactory]
-    name = "artifactory" # should be unique across all apps
-    description = "artifactory"
     namespace = "production" # maps to the namespace as defined in namespaces above
-    enabled = true # change to false if you want to delete this app release [empty = flase]
-    chart = "stable/artifactory" # changing the chart name means delete and recreate this chart
+    enabled = true # change to false if you want to delete this app release [default = flase]
+    chart = "stable/artifactory" # changing the chart name means delete and recreate this release
     version = "7.0.6" # chart version
+    ### Optional values below
+    name = "artifactory" # should be unique across all apps which are managed by the same Tiller
     valuesFile = "" # leaving it empty uses the default chart values
     purge = false # will only be considered when there is a delete operation
     test = false # run the tests when this release is installed for the first time only
