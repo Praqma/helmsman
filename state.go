@@ -154,7 +154,7 @@ func (s state) validate() (bool, string) {
 
 	names := make(map[string]map[string]bool)
 	for appLabel, r := range s.Apps {
-		result, errMsg := validateRelease(r, names, s)
+		result, errMsg := validateRelease(appLabel, r, names, s)
 		if !result {
 			return false, "ERROR: apps validation failed -- for app [" + appLabel + " ]. " + errMsg
 		}
