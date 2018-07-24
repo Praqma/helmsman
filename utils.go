@@ -154,14 +154,15 @@ func printHelp() {
 	fmt.Println("Usage: helmsman [options]")
 	fmt.Println()
 	fmt.Println("Options:")
-	fmt.Println("--f                specifies the desired state TOML file.")
+	fmt.Println("-f                 specifies the desired state TOML file.")
 	fmt.Println("--debug            prints basic logs during execution.")
 	fmt.Println("--apply            generates and applies an action plan.")
 	fmt.Println("--verbose          prints more verbose logs during execution.")
-	fmt.Println("--ns-override      override defined namespaces with a provided one.")
+	fmt.Println("--ns-override      overrides defined namespaces with a provided one.")
 	fmt.Println("--skip-validation  generates and applies an action plan.")
+	fmt.Println("--apply-labels     applies Helmsman labels to Helm state for all defined apps.")
 	fmt.Println("--help             prints Helmsman help.")
-	fmt.Println("--v                prints Helmsman version.")
+	fmt.Println("-v                 prints Helmsman version.")
 }
 
 // logVersions prints the versions of kubectl and helm to the logs
