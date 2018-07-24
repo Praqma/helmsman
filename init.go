@@ -29,6 +29,7 @@ func init() {
 	flag.BoolVar(&verbose, "verbose", false, "show verbose execution logs")
 	flag.StringVar(&nsOverride, "ns-override", "", "override defined namespaces with this one")
 	flag.BoolVar(&skipValidation, "skip-validation", false, "skip desired state validation")
+	flag.BoolVar(&applyLabels, "apply-labels", false, "apply Helmsman labels to Helm state for all defined apps.")
 
 	flag.Parse()
 
@@ -69,6 +70,13 @@ func init() {
 		}
 	} else {
 		log.Println("INFO: desired state validation is skipped.")
+	}
+
+	if applyLabels {
+		for _, r := range s.Apps {
+
+			labelResource(r)
+		}
 	}
 
 }
