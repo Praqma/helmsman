@@ -63,6 +63,7 @@ func buildState() {
 	lines := strings.Split(getAllReleases(), "\n")
 
 	for i := 0; i < len(lines); i++ {
+		// skipping the header from helm output
 		if lines[i] == "" || (strings.HasPrefix(strings.TrimSpace(lines[i]), "NAME") && strings.HasSuffix(strings.TrimSpace(lines[i]), "NAMESPACE")) {
 			continue
 		}
@@ -74,7 +75,7 @@ func buildState() {
 			log.Fatal("ERROR: while converting release time: " + err.Error())
 		}
 
-		currentState[strings.Fields(lines[i])[0]] = releaseState{
+		currentState[strings.Fields(lines[i])[0]+"-"+strings.Fields(lines[i])[10]] = releaseState{
 			Revision:        r,
 			Updated:         time,
 			Status:          strings.Fields(lines[i])[7],
@@ -127,84 +128,50 @@ func listReleases(namespace string, scope string) string {
 }
 
 // helmRealseExists checks if a Helm release is/was deployed in a k8s cluster.
-// The search criteria is:
-//
-// -releaseName: the name of the release to look for. Helm releases have unique names within a k8s cluster.
-// -scope: defines where to search for the release. Options are: [deleted, deployed, all, failed]
-// -namespace: search in that namespace (only applicable if searching for currently deployed releases)
-func helmReleaseExists(namespace string, releaseName string, status string) bool {
-	v, ok := currentState[releaseName]
+// It searches the Current State for releases.
+// The key format for releases uniqueness is:  <release name - the Tiller namespace where it should be deployed >
+// If status is provided as an input [deployed, deleted, failed], then the search will verify the release status matches the search status.
+func helmReleaseExists(r *release, status string) (bool, releaseState) {
+	compositeReleaseName := r.Name + "-" + getDesiredTillerNamespace(r)
+
+	v, ok := currentState[compositeReleaseName]
 	if !ok {
-		return false
+		return false, v
 	}
 
-	if namespace != "" && status != "" {
-		if v.Namespace == namespace && v.Status == strings.ToUpper(status) {
-			return true
-		}
-		return false
-	} else if namespace != "" {
-		if v.Namespace == namespace {
-			return true
-		}
-		return false
-	} else if status != "" {
+	if status != "" {
 		if v.Status == strings.ToUpper(status) {
-			return true
+			return true, v
 		}
-		return false
+		return false, v
 	}
-	return true
+	return true, v
 }
 
-// getReleaseNamespace returns the namespace in which a release is deployed.
-// throws an error and exits the program if the release does not exist.
-func getReleaseNamespace(releaseName string) string {
+// getReleaseRevision returns the revision number for a release
+func getReleaseRevision(rs releaseState) string {
 
-	v, ok := currentState[releaseName]
-	if !ok {
-		log.Fatal("ERROR: seems release [ " + releaseName + " ] does not exist.")
-	}
-	return v.Namespace
+	return strconv.Itoa(rs.Revision)
 }
 
-// getReleaseChart returns the Helm chart which is used by a deployed release.
-// throws an error and exits the program if the release does not exist.
-func getReleaseChart(releaseName string) string {
+// getReleaseChartName extracts and returns the Helm chart name from the chart info in a release state.
+// example: chart in release state is "jenkins-0.9.0" and this function will extract "jenkins" from it.
+func getReleaseChartName(rs releaseState) string {
 
-	v, ok := currentState[releaseName]
-	if !ok {
-		log.Fatal("ERROR: seems release [ " + releaseName + " ] does not exist.")
-	}
-	return v.Chart
-}
-
-// getReleaseRevision returns the revision number for a release (if it exists)
-func getReleaseRevision(releaseName string, state string) string {
-
-	v, ok := currentState[releaseName]
-	if !ok {
-		log.Fatal("ERROR: seems release [ " + releaseName + " ] does not exist.")
-	}
-	return strconv.Itoa(v.Revision)
-}
-
-// getReleaseChartName extracts and returns the Helm chart name from the chart info retrieved by getReleaseChart().
-// example: getReleaseChart() returns "jenkins-0.9.0" and this functions will extract "jenkins" from it.
-func getReleaseChartName(releaseName string) string {
-	chart := getReleaseChart(releaseName)
+	chart := rs.Chart
 	runes := []rune(chart)
 	return string(runes[0:strings.LastIndexByte(chart[0:strings.IndexByte(chart, '.')], '-')])
 }
 
-// getReleaseChartVersion extracts and returns the Helm chart version from the chart info retrieved by getReleaseChart().
-// example: getReleaseChart() returns "jenkins-0.9.0" and this functions will extract "0.9.0" from it.
-func getReleaseChartVersion(releaseName string) string {
-	chart := getReleaseChart(releaseName)
+// getReleaseChartVersion extracts and returns the Helm chart version from the chart info in a release state.
+// example: chart in release state is returns "jenkins-0.9.0" and this functions will extract "0.9.0" from it.
+func getReleaseChartVersion(rs releaseState) string {
+	chart := rs.Chart
 	runes := []rune(chart)
 	return string(runes[strings.LastIndexByte(chart, '-')+1 : len(chart)])
 }
 
+// DEPRECATED
 // getReleaseStatus returns the output of Helm status command for a release.
 // if the release does not exist, it returns an empty string without breaking the program execution.
 func getReleaseStatus(releaseName string) string {
@@ -416,4 +383,58 @@ func initHelm() (bool, string) {
 	}
 
 	return true, ""
+}
+
+// cleanUntrackedReleases checks for any releases that are managed by Helmsman and is no longer tracked by the desired state
+// It compares the currently deployed releases with "MANAGED-BY=HELMSMAN" labels with Apps defined in the desired state
+// For all untracked releases found, a decision is made to delete them and is added to the Helmsman plan
+// NOTE: Untracked releases don't benefit from either namespace or application protection.
+// NOTE: Removing/Commenting out an app from the desired state makes it untracked.
+func cleanUntrackedReleases() {
+	toDelete := make(map[string]map[string]bool)
+	log.Println("INFO: checking if any Helmsman managed releases are no longer tracked by your desired state ...")
+	for ns, releases := range getHelmsmanReleases() {
+		for r := range releases {
+			tracked := false
+			for _, app := range s.Apps {
+				if app.Name == r && getDesiredTillerNamespace(app) == ns {
+					tracked = true
+				}
+			}
+			if !tracked {
+				if _, ok := toDelete[ns]; !ok {
+					toDelete[ns] = make(map[string]bool)
+				}
+				toDelete[ns][r] = true
+			}
+		}
+	}
+
+	if len(toDelete) == 0 {
+		log.Println("INFO: no untracked releases found.")
+	} else {
+		for ns, releases := range toDelete {
+			for r := range releases {
+				logDecision("DECISION: untracked release found: release [ "+r+" ] from Tiller in namespace [ "+ns+" ]. It will be deleted.", -800)
+				deleteUntrackedRelease(r, ns)
+			}
+		}
+	}
+}
+
+// deleteUntrackedRelease creates the helm command to purge delete an untracked release
+func deleteUntrackedRelease(release string, tillerNamespace string) {
+
+	tls := ""
+	if tillerTLSEnabled(tillerNamespace) {
+
+		tls = " --tls --tls-ca-cert " + tillerNamespace + "-ca.cert --tls-cert " + tillerNamespace + "-client.cert --tls-key " + tillerNamespace + "-client.key "
+	}
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm delete --purge " + release + " --tiller-namespace " + tillerNamespace + tls},
+		Description: "deleting untracked release [ " + release + " ] from Tiller in namespace [[ " + tillerNamespace + " ]]",
+	}
+
+	outcome.addCommand(cmd, -800, nil)
 }

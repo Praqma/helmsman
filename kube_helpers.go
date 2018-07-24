@@ -2,11 +2,11 @@ package main
 
 import (
 	"log"
+	"strings"
 )
 
 // validateServiceAccount checks if k8s service account exists in a given namespace
 // if the provided namespace is empty, it checks in the "default" namespace
-// if the serviceaccount does not exist, it will be created
 func validateServiceAccount(sa string, namespace string) (bool, string) {
 	log.Println("INFO: validating if service account [" + sa + "] exists in namespace [" + namespace + "]")
 	if namespace == "" {
@@ -22,20 +22,13 @@ func validateServiceAccount(sa string, namespace string) (bool, string) {
 
 	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, err
-		// if strings.Contains(err, "NotFound") || strings.Contains(err, "not found") {
-		// 	log.Println("INFO: service account [ " + sa + " ] does not exist in namespace [ " + namespace + " ] .. attempting to create it ... ")
-
-		// 	if _, rbacErr := createRBAC(sa, namespace); rbacErr != "" {
-		// 		return false, rbacErr
-		// 	}
-		// 	return true, ""
-
-		// }
-		// return false, err
 	}
 	return true, ""
 }
 
+// createRBAC creates a k8s service account and bind it to a (Cluster)Role
+// If sharedTiller is true , it binds the service account to cluster-admin role. Otherwise,
+// It binds it to a new role called "helmsman-tiller"
 func createRBAC(sa string, namespace string, sharedTiller bool) (bool, string) {
 	var ok bool
 	var err string
@@ -218,6 +211,7 @@ func createServiceAccount(saName string, namespace string) (bool, string) {
 	return true, ""
 }
 
+// createRoleBinding creates a role binding in a given namespace for a service account with a cluster-role/role in the cluster.
 func createRoleBinding(role string, saName string, namespace string) (bool, string) {
 	clusterRole := false
 	resource := "rolebinding"
@@ -242,13 +236,13 @@ func createRoleBinding(role string, saName string, namespace string) (bool, stri
 	exitCode, err := cmd.exec(debug, verbose)
 
 	if exitCode != 0 {
-		//logError("ERROR: failed to bind service account " + saName + " in namespace [ " + namespace + " ] to role " + role + " : " + err)
 		return false, err
 	}
 
 	return true, ""
 }
 
+// createRole creates a k8s Role in a given namespace
 func createRole(namespace string) (bool, string) {
 
 	// load static resource
@@ -276,4 +270,70 @@ func createRole(namespace string) (bool, string) {
 	deleteFile("temp-modified-role.yaml")
 
 	return true, ""
+}
+
+// labelResource applies Helmsman specific labels to Helm's state resources (secrets/configmaps)
+func labelResource(r *release) {
+	if r.Enabled {
+		log.Println("INFO: applying Helmsman lables to [ " + r.Name + " ] in namespace [ " + r.Namespace + " ] ")
+		storageBackend := "configmap"
+
+		if v, ok := s.Settings["storageBackend"]; ok && v == "secret" {
+			storageBackend = "secret"
+		}
+
+		cmd := command{
+			Cmd:         "bash",
+			Args:        []string{"-c", "kubectl label " + storageBackend + " -n " + getDesiredTillerNamespace(r) + " -l NAME=" + r.Name + " MANAGED-BY=HELMSMAN NAMESPACE=" + r.Namespace + " TILLER_NAMESPACE=" + getDesiredTillerNamespace(r) + "  --overwrite"},
+			Description: "applying labels to Helm state in [ " + getDesiredTillerNamespace(r) + " ] for " + r.Name,
+		}
+
+		exitCode, err := cmd.exec(debug, verbose)
+
+		if exitCode != 0 {
+			logError(err)
+		}
+	}
+}
+
+// getHelmsmanReleases returns a map of all releases that are labeled with "MANAGED-BY=HELMSMAN"
+// The releases are categorized by the namespaces in which their Tiller is running
+// The returned map format is: map[<Tiller namespace>:map[<releases managed by Helmsman and deployed using this Tiller>:true]]
+func getHelmsmanReleases() map[string]map[string]bool {
+	releases := make(map[string]map[string]bool)
+	storageBackend := "configmap"
+
+	if v, ok := s.Settings["storageBackend"]; ok && v == "secret" {
+		storageBackend = "secret"
+	}
+
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "kubectl get " + storageBackend + " --all-namespaces -l MANAGED-BY=HELMSMAN"},
+		Description: "getting helm releases which are managed by Helmsman.",
+	}
+
+	exitCode, output := cmd.exec(debug, verbose)
+
+	if exitCode != 0 {
+		logError(output)
+	}
+
+	lines := strings.Split(output, "\n")
+	if strings.ToUpper("No resources found") == strings.ToUpper(strings.TrimSpace(output)) {
+		return releases
+	}
+	for i := 0; i < len(lines); i++ {
+		if lines[i] == "" || (strings.HasPrefix(strings.TrimSpace(lines[i]), "NAMESPACE") && strings.HasSuffix(strings.TrimSpace(lines[i]), "AGE")) {
+			continue
+		} else {
+			fields := strings.Fields(lines[i])
+			if _, ok := releases[fields[0]]; !ok {
+				releases[fields[0]] = make(map[string]bool)
+			}
+			releases[fields[0]][fields[1][0:strings.LastIndex(fields[1], ".v")]] = true
+		}
+	}
+
+	return releases
 }

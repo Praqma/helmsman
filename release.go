@@ -9,20 +9,21 @@ import (
 
 // release type representing Helm releases which are described in the desired state
 type release struct {
-	Name        string
-	Description string
-	Namespace   string
-	Enabled     bool
-	Chart       string
-	Version     string
-	ValuesFile  string   `yaml:"valuesFile"`
-	ValuesFiles []string `yaml:"valuesFiles"`
-	Purge       bool
-	Test        bool
-	Protected   bool
-	Wait        bool
-	Priority    int
-	Set         map[string]string
+	Name            string
+	Description     string
+	Namespace       string
+	Enabled         bool
+	Chart           string
+	Version         string
+	ValuesFile      string   `yaml:"valuesFile"`
+	ValuesFiles     []string `yaml:"valuesFiles"`
+	Purge           bool
+	Test            bool
+	Protected       bool
+	Wait            bool
+	Priority        int
+	TillerNamespace string
+	Set             map[string]string
 }
 
 // validateRelease validates if a release inside a desired state meets the specifications or not.
@@ -31,8 +32,14 @@ func validateRelease(r *release, names map[string]map[string]bool, s state) (boo
 	_, err := os.Stat(r.ValuesFile)
 	if r.Name == "" {
 		return false, "release name can't be empty."
-	} else if (s.Namespaces[r.Namespace].InstallTiller && names[r.Name][r.Namespace]) || (!s.Namespaces[r.Namespace].InstallTiller && names[r.Name]["kube-system"]) {
-		return false, "release name must be unique within a given namespace."
+	} else if r.TillerNamespace != "" && r.TillerNamespace != "kube-system" {
+		if v, ok := s.Namespaces[r.TillerNamespace]; !ok {
+			return false, "tillerNamespace specified, but the namespace specified does not exist!"
+		} else if !v.InstallTiller {
+			return false, "tillerNamespace specified, but that namespace does not have installTiller set to true."
+		}
+	} else if names[r.Name][getDesiredTillerNamespace(r)] {
+		return false, "release name must be unique within a given Tiller."
 	} else if nsOverride == "" && r.Namespace == "" {
 		return false, "release targeted namespace can't be empty."
 	} else if nsOverride == "" && r.Namespace != "" && !checkNamespaceDefined(r.Namespace, s) {
@@ -59,7 +66,9 @@ func validateRelease(r *release, names map[string]map[string]bool, s state) (boo
 	if names[r.Name] == nil {
 		names[r.Name] = make(map[string]bool)
 	}
-	if s.Namespaces[r.Namespace].InstallTiller {
+	if r.TillerNamespace != "" {
+		names[r.Name][r.TillerNamespace] = true
+	} else if s.Namespaces[r.Namespace].InstallTiller {
 		names[r.Name][r.Namespace] = true
 	} else {
 		names[r.Name]["kube-system"] = true
@@ -99,6 +108,7 @@ func (r release) print() {
 	fmt.Println("\tprotected : ", r.Protected)
 	fmt.Println("\twait : ", r.Wait)
 	fmt.Println("\tpriority : ", r.Priority)
+	fmt.Println("\ttillerNamespace : ", r.TillerNamespace)
 	fmt.Println("\tvalues to override from env:")
 	printMap(r.Set)
 	fmt.Println("------------------- ")
