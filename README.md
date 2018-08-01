@@ -1,5 +1,5 @@
 ---
-version: v1.3.0-rc
+version: v1.4.0-rc
 ---
 
 ![helmsman-logo](docs/images/helmsman.png)
@@ -31,7 +31,7 @@ To show debugging details:
 - **Built for CD**: Helmsman can be used as a docker image or a binary. 
 - **Applications as code**: describe your desired applications and manage them from a single version-controlled declarative file.
 - **Suitable for Multitenant Clusters**: deploy Tiller in different namespaces with service accounts and TLS.
-- **Easy to use**: deep knowledge of Helm CLI and Kubectl is NOT manadatory to use Helmsman. 
+- **Easy to use**: deep knowledge of Helm CLI and Kubectl is NOT mandatory to use Helmsman. 
 - **Plan, View, apply**: you can run Helmsman to generate and view a plan with/without executing it. 
 - **Portable**: Helmsman can be used to manage charts deployments on any k8s cluster.
 - **Protect Namespaces/Releases**: you can define certain namespaces/releases to be protected against accidental human mistakes.
@@ -46,9 +46,9 @@ To show debugging details:
 Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the different versions.
 ```
 # on Linux
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.3.0-rc/helmsman_1.3.0-rc_linux_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.4.0-rc/helmsman_1.4.0-rc_linux_amd64.tar.gz | tar zx
 # on MacOS
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.3.0-rc/helmsman_1.3.0-rc_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.4.0-rc/helmsman_1.4.0-rc_darwin_amd64.tar.gz | tar zx
 
 mv helmsman /usr/local/bin/helmsman
 ```
@@ -56,7 +56,7 @@ mv helmsman /usr/local/bin/helmsman
 ## As a docker image
 Check the images on [dockerhub](https://hub.docker.com/r/praqma/helmsman/tags/)
 
-# Documentaion
+# Documentation
 
 Documentation and How-Tos can be found [here](https://github.com/Praqma/helmsman/blob/master/docs/).
 Helmsman lets you:
@@ -85,4 +85,4 @@ Helmsman can be used in three different settings:
 
 # Contributing
 
-Pull requests, feeback/feature requests are welcome. Please check our [contribution guide](CONTRIBUTION.md).
+Pull requests, feedback/feature requests are welcome. Please check our [contribution guide](CONTRIBUTION.md).
