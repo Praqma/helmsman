@@ -88,3 +88,5 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     purge = false # will only be considered when there is a delete operation
     test = false # run the tests when this release is installed for the first time only
     priority= -2
+
+# See https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md#apps for more apps options

@@ -1,4 +1,4 @@
-# version: v1.2.0-rc
+# version: v1.4.0-rc
 # metadata -- add as many key/value pairs as you want
 metadata:
   org: "example.com"
@@ -55,31 +55,36 @@ apps:
 
     # jenkins will be deployed using the Tiller in the staging namespace
     jenkins:
-      name: "jenkins" # should be unique across all apps
-      description: "jenkins"
       namespace: "staging" # maps to the namespace as defined in namespaces above
       enabled: true # change to false if you want to delete this app release empty: flase:
       chart: "stable/jenkins" # changing the chart name means delete and recreate this chart
       version: "0.14.3" # chart version
+      ### Optional values below
+      name: "jenkins" # should be unique across all apps
+      description: "jenkins"
       valuesFile: "" # leaving it empty uses the default chart values
       purge: false # will only be considered when there is a delete operation
       test: false # run the tests when this release is installed for the first time only
       protected: true
       priority: -3
       wait: true
-      #set: # values to override values from values.yaml with values from env vars-- useful for passing secrets to charts
-        #AdminPassword: "$JENKINS_PASSWORD" # $JENKINS_PASSWORD must exist in the environment
-
+      #tillerNamespace: "kube-system" # which Tiller to use to deploy this release
+      set: # values to override values from values.yaml with values from env vars-- useful for passing secrets to charts
+        AdminPassword: "$JENKINS_PASSWORD" # $JENKINS_PASSWORD must exist in the environment
+        AdminUser: "admin"
 
     # artifactory will be deployed using the Tiller in the kube-system namespace
     artifactory:
-      name: "artifactory" # should be unique across all apps
-      description: "artifactory"
       namespace: "production" # maps to the namespace as defined in namespaces above
       enabled: true # change to false if you want to delete this app release empty: flase:
       chart: "stable/artifactory" # changing the chart name means delete and recreate this chart
       version: "7.0.6" # chart version
+      ### Optional values below
+      name: "artifactory" # should be unique across all apps
+      description: "artifactory"
       valuesFile: "" # leaving it empty uses the default chart values
       purge: false # will only be considered when there is a delete operation
       test: false # run the tests when this release is installed for the first time only
       priority: -2
+
+# See https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md#apps for more apps options
