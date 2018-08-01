@@ -8,7 +8,7 @@ Since helmsman is used with version controlled code and is often configured to b
 
 Helmsman provides the `plan` flag which helps you see the actions that it will take based on your desired state file before actually doing them. We recommend to use a `plan-hold-approve` pipeline when using helmsman with production clusters. 
 
-As of version v1.0.0, helmsman provides a fine-grained mechansim to protect releases/namespaces from accidental desired state file changes. 
+As of version v1.0.0, helmsman provides a fine-grained mechanism to protect releases/namespaces from accidental desired state file changes. 
 
 ## Protection definition 
 
@@ -70,11 +70,11 @@ apps:
     protected: true # defining this release to be protected.
 ```
 
-> All releases in a protected namespace are automatically protected. Namespace protection has higher priority than the relase-level protection.
+> All releases in a protected namespace are automatically protected. Namespace protection has higher priority than the release-level protection.
 
 ## Important Notes
 
 - You can combine both types of protection in your desired state file. The namespace-level protection always has a higher priority.
 - Removing the protection from a namespace means all releases deployed in that namespace are no longer protected.
 - We recommend using namespace-level protection for production namespace(s) and release-level protection for releases deployed in other namespaces.
-- Release/namespace protection is only applied on single desired state files. It is your responsibility to make sure that multiple desired state files (if used) do not conflict with each other (e.g, one defines a particular namespace as defined and another defines it unprotected.) If you use multiple desired state files with the same cluster, please refer to [deploymemt strategies](../deplyment_strategies.md) and [best practice](../best_practice.md) documentation.
+- Release/namespace protection is only applied on single desired state files. It is your responsibility to make sure that multiple desired state files (if used) do not conflict with each other (e.g, one defines a particular namespace as defined and another defines it unprotected.) If you use multiple desired state files with the same cluster, please refer to [deployment strategies](../deployment_strategies.md) and [best practice](../best_practice.md) documentation.

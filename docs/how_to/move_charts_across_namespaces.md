@@ -109,7 +109,7 @@ Helmsman will delete the jenkins release from the `staging` namespace and instal
 
 ## Note on Persistent Volumes
 
-Helmsman does not automatically move PVCs across namespaces. You have to follow the steps below to retain your data when moving an app to a different namesapce.
+Helmsman does not automatically move PVCs across namespaces. You have to follow the steps below to retain your data when moving an app to a different namespace.
 
 Persistent Volumes (PV) are accessed through Persistent Volume Claims (PVC). But **PVCs are namespaced object** which means moving an application from one namespace to another will result in a new PVC created in the new namespace. The old PV -which possibly contains your application data- will still be mounted to the old PVC (the one in the old namespace) even if you have deleted your application helm release.
 

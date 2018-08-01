@@ -7,7 +7,7 @@ You can manage Helm charts deployment on a hosted K8S cluster in the cloud or on
 **IMPORTANT**: Helmsman expects certain environment variables to be available depending on where your cluster and connection certificates are hosted. Certificates can be used from S3/GCS buckets or local file system. 
 
 ## AWS
-If you use s3 buckets for storing certificates or for hosting private helm repos, Helmsman needs valid AWS access keys to be able to retrieve private charts or certificates from your s3 buckets. It expects the keys to be in the following environemnt variables:
+If you use s3 buckets for storing certificates or for hosting private helm repos, Helmsman needs valid AWS access keys to be able to retrieve private charts or certificates from your s3 buckets. It expects the keys to be in the following environment variables:
 
 - AWS_ACCESS_KEY_ID
 - AWS_SECRET_ACCESS_KEY
@@ -21,7 +21,7 @@ If you use GCS buckets for storing certificates or for hosting private helm repo
 
 check [here](https://www.terraform.io/docs/providers/google/index.html#authentication-json-file) for getting the required authentication file.
 
-## Additional environemnt variables
+## Additional environment variables
 
 The K8S user password is expected in an environment variable which you can give any name you want and define it in your desired state file. Additionally, you can optionally use environment variables to provide certificate paths and clusterURI.
 
