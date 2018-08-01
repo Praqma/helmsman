@@ -1,10 +1,10 @@
 ---
-version: v1.3.0-rc
+version: v1.4.0-rc
 ---
 
 # Helmsman desired state specification
 
-This document describes the specification for how to write your Helm charts desired state file. This can be either toml or yaml file. The desired state file consists of:
+This document describes the specification for how to write your Helm charts desired state file. This can be either [Toml](https://github.com/toml-lang/toml) or [Yaml](http://yaml.org/) file. The desired state file consists of:
 
 - [Metadata](#metadata) [Optional] -- metadata for any human reader of the desired state file.
 - [Certificates](#certificates) [Optional] -- only needed when you want Helmsman to connect kubectl to your cluster for you.
@@ -40,7 +40,7 @@ metadata:
 
 Optional : Yes, only needed if you want Helmsman to connect kubectl to your cluster for you.
 
-Synopsis: defines where to find the certifactions needed for connecting kubectl to a k8s cluster. If connection settings (username/password/clusterAPI) are provided in the Settings section below, then you need AT LEAST to provide caCrt and caKey. You can optionally provide a client certificate (caClient) depending on your cluster connection setup.
+Synopsis: defines where to find the certificates needed for connecting kubectl to a k8s cluster. If connection settings (username/password/clusterAPI) are provided in the Settings section below, then you need AT LEAST to provide caCrt and caKey. You can optionally provide a client certificate (caClient) depending on your cluster connection setup.
 
 Options: 
 - caCrt : a valid S3/GCS bucket or local relative file path to a certificate file. 
@@ -78,15 +78,16 @@ Synopsis: provides settings for connecting to your k8s cluster and configuring H
 Options: 
 - kubeContext : this is always required and defines what context to use in kubectl. Helmsman will try connect to this context first, if it does not exist, it will try to create it (i.e. connect to a k8s cluster) using the options below.
 
-The following options can be skipped if your kubectl context is already created and you don't want Helmsman to connect kubectl to your cluster for you. When using Helmsman in CI pipeline, these details are required to connect to your cluster everytime the pipeline is executed.
+The following options can be skipped if your kubectl context is already created and you don't want Helmsman to connect kubectl to your cluster for you. When using Helmsman in CI pipeline, these details are required to connect to your cluster every time the pipeline is executed.
 
 - username   : the username to be used for kubectl credentials.
 - password   : an environment variable name (starting with `$`) where your password is stored. Get the password from your k8s admin or consult k8s docs on how to get/set it. 
 - clusterURI : the URI for your cluster API or the name of an environment variable (starting with `$`) containing the URI.
 - serviceAccount: the name of the service account to use to initiate helm. This should have enough permissions to allow Helm to work and should exist already in the cluster. More details can be found in [helm's RBAC guide](https://github.com/kubernetes/helm/blob/master/docs/rbac.md) 
 - storageBackend : by default Helm stores release information in configMaps, using secrets is for storage is recommended for security. Setting this flag to `secret` will deploy/upgrade Tiller with the `--storage=secret`. Other values will be skipped and configMaps will be used.
+- slackWebhook : a [Slack](slack.com) Webhook URL to receive Helmsman notifications. This can be passed directly or in an environment variable. 
 
-> If you use `storageBackend` with a Tiller that has been previously deployed with configMaps as storage backend, you need to migrate your release information from the configMap to the new secret on your own. 
+> If you use `storageBackend` with a Tiller that has been previously deployed with configMaps as storage backend, you need to migrate your release information from the configMap to the new secret on your own. Helm does not support this yet.
 
 Example: 
 
@@ -99,6 +100,7 @@ kubeContext = "minikube"
 ## clusterURI= "$K8S_URI"
 # serviceAccount = "my-service-account"
 # storageBackend = "secret"
+# slackWebhook = $MY_SLACK_WEBHOOK
 ```
 
 ```yaml
@@ -110,6 +112,7 @@ settings:
   ##clusterURI: "$K8S_URI"
   #serviceAccount: "my-service-account"
   #storageBackend: "secret"
+  #slackWebhook : "$MY_SLACK_WEBHOOK"
 ```
 
 ## Namespaces
@@ -122,9 +125,15 @@ If a namespaces does not already exist, Helmsman will create it.
 Options: 
 - protected : defines if a namespace is protected (true or false). Default false.
 - installTiller: defines if Tiller should be deployed in this namespace or not. Default is false. Any chart desired to be deployed into a namespace with a Tiller deployed, will be deployed using that Tiller and not the one in kube-system. 
-> Tiller will always be deployed into `kube-system`, even if you set installTiller for kube-system to false.
+> Tiller will ALWAYS be deployed into `kube-system`, even if you set installTiller for kube-system to false.
 
-- tillerServiceAccount: defines what service account to use when deploying Tiller. If not set, the `serviceAccount` defined in the `settings` section will be used. If that is also not defined, the namespace `default` service account will be used. If `installTiller` is not defined or set to false, this flag is ignored.
+- tillerServiceAccount: defines what service account to use when deploying Tiller. If this is not set, the following options are considered:
+
+  1. If the `serviceAccount` defined in the `settings` section exists in the namespace you want to deploy Tiller in, it will be used, else
+  2. Helmsman creates the service account in that namespace and binds it to a role. If the namespace is kube-system, the service account is bound to `cluster-admin` clusterrole. Otherwise, a new role called `helmsman-tiller` is created in that namespace and only gives access to that namespace.
+  
+  > If `installTiller` is not defined or set to false, this flag is ignored.
+
 - The following options are `ALL` needed for deploying Tiller with TLS enabled. If they are not all defined, they will be ignored and Tiller will be deployed without TLS. All of these options can be provided as either: a valid local file path, a valid GCS or S3 bucket URI or an environment variable containing a file path or bucket URI.
     - caCert: the CA certificate.
     - tillerCert: the SSL certificate for Tiller.
@@ -132,7 +141,7 @@ Options:
     - clientCert: the SSL certificate for the Helm client.
     - clientKey: the SSL certificate private key for the Helm client.
 
-> For the defintion of what a protected namespace means, check the [protection guide](how_to/protect_namespaces_and_releases.md)
+> For the definition of what a protected namespace means, check the [protection guide](how_to/protect_namespaces_and_releases.md)
 
 Example: 
 
@@ -212,20 +221,29 @@ Synopsis: defines the releases (instances of Helm charts) you would like to mana
 Releases must have unique names which are defined under `apps`. Example: in `[apps.jenkins]`, the release name will be `jenkins` and it should be unique in your cluster. 
 
 Options: 
-- name        : the Helm release name. Releases must have unique names within a cluster.
-- description : a release metadata for human readers.
+
+**Required**
 - namespace         : the namespace where the release should be deployed. The namespace should map to one of the ones defined in [namespaces](#namespaces).  
-- enabled     : describes the required state of the release (true for enabled, false for disabled). Once a release is deployed, you can change it to false if you want to delete this app release [empty = flase].
+- enabled     : describes the required state of the release (true for enabled, false for disabled). Once a release is deployed, you can change it to false if you want to delete this release [default is false].
 - chart       : the chart name. It should contain the repo name as well. Example: repoName/chartName. Changing the chart name means delete and reinstall this release using the new Chart.
 - version     : the chart version.
+
+**Optional**
+- tillerNamespace : which Tiller to use for deploying this release. This is available starting from v1.4.0-rc The decision on which Tiller to use for deploying a release follows the following criteria: 
+   1. If `tillerNamespace`is explicitly defined, it is used.
+   2. If `tillerNamespace`is not defined and the namespace in which the release will be deployed has a Tiller installed by Helmsman (i.e. has `installTiller set to true` in the [Namespaces](#namespaces) section), Tiller in that namespace is used.
+   3. If none of the above, the shared Tiller in `kube-system` is used.
+
+- name        : the Helm release name. Releases must have unique names within a Helm Tiller. If not set, the release name will be taken from the app identifier in your desired state file. e.g, for ` apps.jenkins ` the name release name will be `jenkins`.
+- description : a release metadata for human readers.
 - valuesFile  : a valid path to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFiles together. Leaving it empty uses the default chart values.
 - valuesFiles : array of valid paths to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFile together. Leaving it empty uses the default chart values.
-- purge       : defines whether to use the Helm purge flag wgen deleting the release. (true/false)
-- test        : defines whether to run the chart tests whenever the release is installed/upgraded/rolledback.
+- purge       : defines whether to use the Helm purge flag when deleting the release. (true/false)
+- test        : defines whether to run the chart tests whenever the release is installed.
 - protected   : defines if the release should be protected against changes. Namespace-level protection has higher priority than this flag. Check the [protection guide](how_to/protect_namespaces_and_releases.md) for more details.
-- wait        : defines whether helmsman should block execution until all k8s resources are in a ready state. Default is false.
+- wait        : defines whether Helmsman should block execution until all k8s resources are in a ready state. Default is false.
 - priority    : defines the priority of applying operations on this release. Only negative values allowed and the lower the value, the higher the priority. Default priority is 0. Apps with equal priorities will be applied in the order they were added in your state file (DSF).
-- [apps.<app_name>.set]  : is used to override certain values from values.yaml with values from environment variables (or ,starting from v1.3.0-rc, directly provided in the Desired State File). This is particularily useful for passing secrets to charts. If the an environment variable with the same name as the provided value exists, the environment variable value will be used, otherwise, the provided value will be used as is.
+- [apps.<app_name>.set]  : is used to override certain values from values.yaml with values from environment variables (or ,starting from v1.3.0-rc, directly provided in the Desired State File). This is particularly useful for passing secrets to charts. If the an environment variable with the same name as the provided value exists, the environment variable value will be used, otherwise, the provided value will be used as is.
 
 Example: 
 
