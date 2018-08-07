@@ -8,7 +8,6 @@ import (
 // validateServiceAccount checks if k8s service account exists in a given namespace
 // if the provided namespace is empty, it checks in the "default" namespace
 func validateServiceAccount(sa string, namespace string) (bool, string) {
-	log.Println("INFO: validating if service account [" + sa + "] exists in namespace [" + namespace + "]")
 	if namespace == "" {
 		namespace = "default"
 	}
@@ -17,7 +16,7 @@ func validateServiceAccount(sa string, namespace string) (bool, string) {
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", "kubectl get serviceaccount " + sa + ns},
-		Description: "validating that serviceaccount [ " + sa + " ] exists in namespace [ " + namespace + " ].",
+		Description: "validating if serviceaccount [ " + sa + " ] exists in namespace [ " + namespace + " ].",
 	}
 
 	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
@@ -194,7 +193,6 @@ func setKubeContext(context string) bool {
 
 // createServiceAccount creates a service account in a given namespace and associates it with a cluster-admin role
 func createServiceAccount(saName string, namespace string) (bool, string) {
-	log.Println("INFO: creating service account [ " + saName + " ] in namespace [ " + namespace + " ]")
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", "kubectl create serviceaccount -n " + namespace + " " + saName},
@@ -225,12 +223,10 @@ func createRoleBinding(role string, saName string, namespace string) (bool, stri
 		bindingOption = "--clusterrole=" + role
 	}
 
-	log.Println("INFO: creating " + resource + " for service account [ " + saName + " ] in namespace [ " + namespace + " ] with role: " + role)
-
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", "kubectl create " + resource + " " + saName + "-binding " + bindingOption + " --serviceaccount " + namespace + ":" + saName + " -n " + namespace},
-		Description: "creating " + resource + " for [ " + saName + " ] in namespace [ " + namespace + " ]",
+		Description: "creating " + resource + " for service account [ " + saName + " ] in namespace [ " + namespace + " ] with role: " + role,
 	}
 
 	exitCode, err := cmd.exec(debug, verbose)
@@ -251,8 +247,6 @@ func createRole(namespace string) (bool, string) {
 		logError(e.Error())
 	}
 	replaceStringInFile(resource, "temp-modified-role.yaml", map[string]string{"<<namespace>>": namespace})
-
-	log.Println("INFO: creating role [helmsman-tiller] in namespace [ " + namespace + " ] ")
 
 	cmd := command{
 		Cmd:         "bash",
