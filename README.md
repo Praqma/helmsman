@@ -56,6 +56,9 @@ mv helmsman /usr/local/bin/helmsman
 ## As a docker image
 Check the images on [dockerhub](https://hub.docker.com/r/praqma/helmsman/tags/)
 
+## As a package
+Helmsman has been packaged in Archlinux under `helmsman-bin` for the latest binary release, and `helmsman-git` for master.
+
 # Documentation
 
 Documentation and How-Tos can be found [here](https://github.com/Praqma/helmsman/blob/master/docs/).
