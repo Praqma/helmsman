@@ -42,7 +42,9 @@ func main() {
 		}
 	}
 
-	waitForTiller("kube-system")
+	if _, ok := s.Namespaces["kube-system"]; !ok {
+		waitForTiller("kube-system")
+	}
 
 	if verbose {
 		logVersions()
