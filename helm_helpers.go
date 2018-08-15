@@ -23,9 +23,12 @@ type releaseState struct {
 
 // getAllReleases fetches a list of all releases in a k8s cluster
 func getAllReleases() string {
-	result := getTillerReleases("kube-system")
+	result := ""
+	if _, ok := s.Namespaces["kube-system"]; !ok {
+		result = result + getTillerReleases("kube-system")
+	}
 	for ns, v := range s.Namespaces {
-		if v.InstallTiller && ns != "kube-system" {
+		if v.InstallTiller {
 			result = result + getTillerReleases(ns)
 		}
 	}
@@ -169,26 +172,6 @@ func getReleaseChartVersion(rs releaseState) string {
 	chart := rs.Chart
 	runes := []rune(chart)
 	return string(runes[strings.LastIndexByte(chart, '-')+1 : len(chart)])
-}
-
-// DEPRECATED
-// getReleaseStatus returns the output of Helm status command for a release.
-// if the release does not exist, it returns an empty string without breaking the program execution.
-func getReleaseStatus(releaseName string) string {
-	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm status " + releaseName + getNSTLSFlags("kube-system")},
-		Description: "inspecting the status of release:  " + releaseName,
-	}
-
-	exitCode, result := cmd.exec(debug, verbose)
-	if exitCode == 0 {
-		return result
-	}
-
-	log.Fatal("ERROR: while checking release [ " + releaseName + " ] status: " + result)
-
-	return ""
 }
 
 // getNSTLSFlags returns TLS flags for a given namespace if it's deployed with TLS
@@ -365,8 +348,10 @@ func initHelm() (bool, string) {
 	}
 
 	if v, ok := s.Namespaces["kube-system"]; ok {
-		if ok, err := deployTiller("kube-system", v.TillerServiceAccount, defaultSA); !ok {
-			return false, err
+		if v.InstallTiller {
+			if ok, err := deployTiller("kube-system", v.TillerServiceAccount, defaultSA); !ok {
+				return false, err
+			}
 		}
 	} else {
 		if ok, err := deployTiller("kube-system", "", defaultSA); !ok {

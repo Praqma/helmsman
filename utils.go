@@ -182,15 +182,15 @@ func logVersions() {
 
 	cmd = command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm version"},
-		Description: "Helm version: ",
+		Args:        []string{"-c", "helm version -c"},
+		Description: "Helm client version: ",
 	}
 
 	exitCode, result = cmd.exec(debug, false)
 	if exitCode != 0 {
 		log.Fatal("ERROR: while checking helm version: " + result)
 	}
-	log.Println("VERBOSE: helm version: \n" + result + "\n")
+	log.Println("VERBOSE: Helm client version: \n" + result + "\n")
 }
 
 // envVarExists checks if an environment variable is set or not and returns it.
