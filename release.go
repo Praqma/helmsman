@@ -32,24 +32,36 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 	_, err := os.Stat(r.ValuesFile)
 	if r.Name == "" {
 		r.Name = appLabel
-	} else if r.TillerNamespace != "" && r.TillerNamespace != "kube-system" {
+	}
+	if r.TillerNamespace != "" {
 		if v, ok := s.Namespaces[r.TillerNamespace]; !ok {
 			return false, "tillerNamespace specified, but the namespace specified does not exist!"
 		} else if !v.InstallTiller {
 			return false, "tillerNamespace specified, but that namespace does not have installTiller set to true."
 		}
-	} else if names[r.Name][getDesiredTillerNamespace(r)] {
+	} else if getDesiredTillerNamespace(r) == "kube-system" {
+		if v, ok := s.Namespaces["kube-system"]; ok && !v.InstallTiller {
+			return false, "app is desired to be deployed using Tiller from [[ kube-system ]] but kube-system is not desired to have a Tiller. You can use another Tiller with the 'tillerNamespace' option or deploy Tiller in kube-system. "
+		}
+	}
+	if names[r.Name][getDesiredTillerNamespace(r)] {
 		return false, "release name must be unique within a given Tiller."
-	} else if nsOverride == "" && r.Namespace == "" {
+	}
+
+	if nsOverride == "" && r.Namespace == "" {
 		return false, "release targeted namespace can't be empty."
 	} else if nsOverride == "" && r.Namespace != "" && !checkNamespaceDefined(r.Namespace, s) {
 		return false, "release " + r.Name + " is using namespace [ " + r.Namespace + " ] which is not defined in the Namespaces section of your desired state file." +
 			" Release [ " + r.Name + " ] can't be installed in that Namespace until its defined."
-	} else if r.Chart == "" || !strings.ContainsAny(r.Chart, "/") {
+	}
+	if r.Chart == "" || !strings.ContainsAny(r.Chart, "/") {
 		return false, "chart can't be empty and must be of the format: repo/chart."
-	} else if r.Version == "" {
+	}
+	if r.Version == "" {
 		return false, "version can't be empty."
-	} else if r.ValuesFile != "" && (!isOfType(r.ValuesFile, ".yaml") || err != nil) {
+	}
+
+	if r.ValuesFile != "" && (!isOfType(r.ValuesFile, ".yaml") || err != nil) {
 		return false, "valuesFile must be a valid file path for a yaml file, Or can be left empty."
 	} else if r.ValuesFile != "" && len(r.ValuesFiles) > 0 {
 		return false, "valuesFile and valuesFiles should not be used together."
@@ -59,7 +71,9 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 				return false, "the value for valueFile '" + filePath + "' must be a valid file path for a yaml file."
 			}
 		}
-	} else if r.Priority != 0 && r.Priority > 0 {
+	}
+
+	if r.Priority != 0 && r.Priority > 0 {
 		return false, "priority can only be 0 or negative value, positive values are not allowed."
 	}
 
