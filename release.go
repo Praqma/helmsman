@@ -50,7 +50,7 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 
 	if nsOverride == "" && r.Namespace == "" {
 		return false, "release targeted namespace can't be empty."
-	} else if nsOverride == "" && r.Namespace != "" && !checkNamespaceDefined(r.Namespace, s) {
+	} else if nsOverride == "" && r.Namespace != "" && r.Namespace != "kube-system" && !checkNamespaceDefined(r.Namespace, s) {
 		return false, "release " + r.Name + " is using namespace [ " + r.Namespace + " ] which is not defined in the Namespaces section of your desired state file." +
 			" Release [ " + r.Name + " ] can't be installed in that Namespace until its defined."
 	}
