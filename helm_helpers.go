@@ -379,18 +379,20 @@ func cleanUntrackedReleases() {
 	toDelete := make(map[string]map[string]bool)
 	log.Println("INFO: checking if any Helmsman managed releases are no longer tracked by your desired state ...")
 	for ns, releases := range getHelmsmanReleases() {
-		for r := range releases {
-			tracked := false
-			for _, app := range s.Apps {
-				if app.Name == r && getDesiredTillerNamespace(app) == ns {
-					tracked = true
+		if v, ok := s.Namespaces[ns]; ok && v.InstallTiller {
+			for r := range releases {
+				tracked := false
+				for _, app := range s.Apps {
+					if app.Name == r && getDesiredTillerNamespace(app) == ns {
+						tracked = true
+					}
 				}
-			}
-			if !tracked {
-				if _, ok := toDelete[ns]; !ok {
-					toDelete[ns] = make(map[string]bool)
+				if !tracked {
+					if _, ok := toDelete[ns]; !ok {
+						toDelete[ns] = make(map[string]bool)
+					}
+					toDelete[ns][r] = true
 				}
-				toDelete[ns][r] = true
 			}
 		}
 	}
