@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"github.com/imdario/mergo"
 )
 
 const (
@@ -21,7 +22,7 @@ const (
 // It checks if Helm and Kubectl exist and configures: the connection to the k8s cluster, helm repos, namespaces, etc.
 func init() {
 	//parsing command line flags
-	flag.StringVar(&file, "f", "example.toml", "desired state file name")
+	flag.Var(&files, "f", "desired state file name(s), may be supplied more than once to merge state files")
 	flag.BoolVar(&apply, "apply", false, "apply the plan directly")
 	flag.BoolVar(&debug, "debug", false, "show the execution logs")
 	flag.BoolVar(&help, "help", false, "show Helmsman help")
@@ -57,11 +58,18 @@ func init() {
 	}
 
 	// read the TOML/YAML desired state file
-	result, msg := fromFile(file, &s)
-	if result {
-		log.Printf(msg)
-	} else {
-		log.Fatal(msg)
+	var fileState state
+	for _, f := range files {
+		result, msg := fromFile(f, &fileState)
+		if result {
+			log.Printf(msg)
+		} else {
+			log.Fatal(msg)
+		}
+
+		if err := mergo.Merge(&s, &fileState); err != nil {
+			log.Fatalf("Failed to merge desired state file %s", f)
+		}
 	}
 
 	if !skipValidation {
@@ -75,7 +83,6 @@ func init() {
 
 	if applyLabels {
 		for _, r := range s.Apps {
-
 			labelResource(r)
 		}
 	}
