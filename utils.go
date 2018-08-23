@@ -38,12 +38,11 @@ func printNamespacesMap(m map[string]namespace) {
 // fromTOML reads a toml file and decodes it to a state type.
 // It uses the BurntSuchi TOML parser which throws an error if the TOML file is not valid.
 func fromTOML(file string, s *state) (bool, string) {
-
 	if _, err := toml.DecodeFile(file, s); err != nil {
 		return false, err.Error()
 	}
-	return true, "INFO: Parsed TOML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
 
+	return true, "INFO: Parsed TOML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
 }
 
 // toTOML encodes a state type into a TOML file.
@@ -154,7 +153,7 @@ func printHelp() {
 	fmt.Println("Usage: helmsman [options]")
 	fmt.Println()
 	fmt.Println("Options:")
-	fmt.Println("-f                        specifies the desired state TOML file.")
+	fmt.Println("-f                        desired state file name(s), may be supplied more than once to merge state files.")
 	fmt.Println("--debug                   prints basic logs during execution.")
 	fmt.Println("--apply                   generates and applies an action plan.")
 	fmt.Println("--verbose                 prints more verbose logs during execution.")

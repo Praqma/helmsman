@@ -5,9 +5,20 @@ import (
 	"os"
 )
 
+// Allow parsing of multiple string command line options into an array of strings
+type stringArray []string
+func (i *stringArray) String() string {
+	return "my string representation"
+}
+
+func (i *stringArray) Set(value string) error {
+	*i = append(*i, value)
+	return nil
+}
+
 var s state
 var debug bool
-var file string
+var files stringArray
 var apply bool
 var help bool
 var v bool
