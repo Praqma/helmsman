@@ -24,6 +24,8 @@ type release struct {
 	Priority        int
 	TillerNamespace string
 	Set             map[string]string
+	NoHooks         bool
+	Timeout         int
 }
 
 // validateRelease validates if a release inside a desired state meets the specifications or not.
@@ -122,7 +124,9 @@ func (r release) print() {
 	fmt.Println("\tprotected : ", r.Protected)
 	fmt.Println("\twait : ", r.Wait)
 	fmt.Println("\tpriority : ", r.Priority)
-	fmt.Println("\ttillerNamespace : ", r.TillerNamespace)
+	fmt.Println("\ttiller namespace : ", r.TillerNamespace)
+	fmt.Println("\tno-hooks : ", r.NoHooks)
+	fmt.Println("\ttimeout : ", r.Timeout)
 	fmt.Println("\tvalues to override from env:")
 	printMap(r.Set)
 	fmt.Println("------------------- ")
