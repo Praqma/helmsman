@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"strconv"
 	"strings"
@@ -21,15 +22,30 @@ type releaseState struct {
 	TillerNamespace string
 }
 
+type tillerReleases struct {
+	Next     string `json:"Next"`
+	Releases []struct {
+		Name            string `json:"Name"`
+		Revision        int    `json:"Revision"`
+		Updated         string `json:"Updated"`
+		Status          string `json:"Status"`
+		Chart           string `json:"Chart"`
+		AppVersion      string `json:"AppVersion,omitempty"`
+		Namespace       string `json:"Namespace"`
+		TillerNamespace string `json:",omitempty"`
+	} `json:"Releases"`
+}
+
 // getAllReleases fetches a list of all releases in a k8s cluster
-func getAllReleases() string {
-	result := ""
+func getAllReleases() tillerReleases {
+	// result := make(map[string]interface{})
+	var result tillerReleases
 	if _, ok := s.Namespaces["kube-system"]; !ok {
-		result = result + getTillerReleases("kube-system")
+		result.Releases = append(result.Releases, getTillerReleases("kube-system").Releases...)
 	}
 	for ns, v := range s.Namespaces {
 		if v.InstallTiller {
-			result = result + getTillerReleases(ns)
+			result.Releases = append(result.Releases, getTillerReleases(ns).Releases...)
 		}
 	}
 
@@ -37,10 +53,10 @@ func getAllReleases() string {
 }
 
 // getTillerReleases gets releases deployed with a given Tiller (in a given namespace)
-func getTillerReleases(tillerNS string) string {
+func getTillerReleases(tillerNS string) tillerReleases {
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm list --all --tiller-namespace " + tillerNS + getNSTLSFlags(tillerNS)},
+		Args:        []string{"-c", "helm list --all --output json --tiller-namespace " + tillerNS + getNSTLSFlags(tillerNS)},
 		Description: "listing all existing releases in namespace [ " + tillerNS + " ]...",
 	}
 
@@ -48,43 +64,37 @@ func getTillerReleases(tillerNS string) string {
 	if exitCode != 0 {
 		log.Fatal("ERROR: failed to list all releases in namespace [ " + tillerNS + " ]: " + result)
 	}
+	var out tillerReleases
+	json.Unmarshal([]byte(result), &out)
 
 	// appending tiller-namespace to each release found
-	lines := strings.Split(result, "\n")
-	for i, l := range lines {
-		if l != "" && !strings.HasPrefix(strings.TrimSpace(l), "NAME") && !strings.HasSuffix(strings.TrimSpace(l), "NAMESPACE") {
-			lines[i] = strings.TrimSuffix(l, "\n") + " " + tillerNS
-		}
+	for i := 0; i < len(out.Releases); i++ {
+		out.Releases[i].TillerNamespace = tillerNS
 	}
-	return strings.Join(lines, "\n")
+
+	return out
 }
 
 // buildState builds the currentState map contianing information about all releases existing in a k8s cluster
 func buildState() {
 	log.Println("INFO: mapping the current helm state ...")
 	currentState = make(map[string]releaseState)
-	lines := strings.Split(getAllReleases(), "\n")
+	rel := getAllReleases()
 
-	for i := 0; i < len(lines); i++ {
+	for i := 0; i < len(rel.Releases); i++ {
 		// skipping the header from helm output
-		if lines[i] == "" || (strings.HasPrefix(strings.TrimSpace(lines[i]), "NAME") && strings.HasSuffix(strings.TrimSpace(lines[i]), "NAMESPACE")) {
-			continue
-		}
-		r, _ := strconv.Atoi(strings.Fields(lines[i])[1])
-		t := strings.Fields(lines[i])[2] + " " + strings.Fields(lines[i])[3] + " " + strings.Fields(lines[i])[4] + " " +
-			strings.Fields(lines[i])[5] + " " + strings.Fields(lines[i])[6]
-		time, err := time.Parse("Mon Jan _2 15:04:05 2006", t)
+		time, err := time.Parse("Mon Jan _2 15:04:05 2006", rel.Releases[i].Updated)
 		if err != nil {
 			log.Fatal("ERROR: while converting release time: " + err.Error())
 		}
 
-		currentState[strings.Fields(lines[i])[0]+"-"+strings.Fields(lines[i])[10]] = releaseState{
-			Revision:        r,
+		currentState[rel.Releases[i].Name+"-"+rel.Releases[i].TillerNamespace] = releaseState{
+			Revision:        rel.Releases[i].Revision,
 			Updated:         time,
-			Status:          strings.Fields(lines[i])[7],
-			Chart:           strings.Fields(lines[i])[8],
-			Namespace:       strings.Fields(lines[i])[9],
-			TillerNamespace: strings.Fields(lines[i])[10],
+			Status:          rel.Releases[i].Status,
+			Chart:           rel.Releases[i].Chart,
+			Namespace:       rel.Releases[i].Namespace,
+			TillerNamespace: rel.Releases[i].TillerNamespace,
 		}
 	}
 }
