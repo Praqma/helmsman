@@ -11,6 +11,7 @@ git clone https://github.com/Praqma/helmsman.git
 go get github.com/BurntSushi/toml
 go get github.com/Praqma/helmsman/gcs 
 go get github.com/Praqma/helmsman/aws
+go get github.com/imdario/mergo
 TAG=$(git describe --abbrev=0 --tags)-$(date +"%s")
 go build -ldflags '-X main.version='$TAG' -extldflags "-static"'
 ```
@@ -21,7 +22,7 @@ Please make sure you state the purpose of the pull request and that the code you
 
 ## Contribution to documentation
 
-Contribution to the documentation can be done via pull requests or by openeing an issue.
+Contribution to the documentation can be done via pull requests or by opening an issue.
 
 ## Reporting issues/featuer requests
 
