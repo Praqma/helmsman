@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"strings"
 )
 
@@ -98,7 +99,7 @@ func installRelease(r *release) {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm install " + r.Chart + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + " --version " + r.Version + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r)},
+		Args:        []string{"-c", "helm install " + r.Chart + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + " --version " + r.Version + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r)},
 		Description: "installing release [ " + r.Name + " ] in namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(cmd, r.Priority, r)
@@ -119,7 +120,7 @@ func rollbackRelease(r *release, rs releaseState) {
 
 		cmd := command{
 			Cmd:         "bash",
-			Args:        []string{"-c", "helm rollback " + r.Name + " " + getReleaseRevision(rs) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r)},
+			Args:        []string{"-c", "helm rollback " + r.Name + " " + getReleaseRevision(rs) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r)},
 			Description: "rolling back release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 		}
 		outcome.addCommand(cmd, r.Priority, r)
@@ -198,7 +199,7 @@ func inspectUpgradeScenario(r *release, rs releaseState) {
 func upgradeRelease(r *release) {
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + r.Version + " --force " + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r)},
+		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + r.Version + " --force " + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r)},
 		Description: "upgrading release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 
@@ -218,7 +219,7 @@ func reInstallRelease(r *release, rs releaseState) {
 
 	installCmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm install " + r.Chart + " --version " + r.Version + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r)},
+		Args:        []string{"-c", "helm install " + r.Chart + " --version " + r.Version + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r)},
 		Description: "installing release [ " + r.Name + " ] in namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(installCmd, r.Priority, r)
@@ -238,6 +239,22 @@ func extractChartName(releaseChart string) string {
 
 	return strings.TrimSpace(strings.Split(releaseChart, "/")[1])
 
+}
+
+// getNoHooks returns the no-hooks flag for install/upgrade commands
+func getNoHooks(r *release) string {
+	if r.NoHooks {
+		return " --no-hooks "
+	}
+	return ""
+}
+
+// getTimeout returns the timeout flag for install/upgrade commands
+func getTimeout(r *release) string {
+	if r.Timeout != 0 {
+		return " --timeout " + strconv.Itoa(r.Timeout)
+	}
+	return ""
 }
 
 // getValuesFiles return partial install/upgrade release command to substitute the -f flag in Helm.
