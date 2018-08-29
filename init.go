@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+
 	"github.com/imdario/mergo"
 )
 
@@ -74,8 +75,10 @@ func init() {
 
 	if !skipValidation {
 		// validate the desired state content
-		if result, msg := s.validate(); !result { // syntax validation
-			log.Fatal(msg)
+		if len(files) > 0 {
+			if result, msg := s.validate(); !result { // syntax validation
+				log.Fatal(msg)
+			}
 		}
 	} else {
 		log.Println("INFO: desired state validation is skipped.")
