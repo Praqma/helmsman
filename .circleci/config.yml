@@ -15,6 +15,7 @@ jobs:
             go get github.com/Praqma/helmsman/gcs 
             go get github.com/Praqma/helmsman/aws
             go get github.com/imdario/mergo
+            go get github.com/hashicorp/go-version
             echo "building ..."
             TAG=$(git describe --abbrev=0 --tags)-$(date +"%d%m%y")
             go build -ldflags '-X main.version='$TAG' -extldflags "-static"'
@@ -31,6 +32,7 @@ jobs:
             go get github.com/Praqma/helmsman/gcs 
             go get github.com/Praqma/helmsman/aws
             go get github.com/imdario/mergo
+            go get github.com/hashicorp/go-version
             echo "running tests ..."
             go test -v
   release: 
@@ -48,6 +50,7 @@ jobs:
               go get github.com/Praqma/helmsman/gcs 
               go get github.com/Praqma/helmsman/aws
               go get github.com/imdario/mergo
+              go get github.com/hashicorp/go-version
               echo "releasing ..."
               goreleaser --release-notes release-notes.md 
             else 
