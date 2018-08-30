@@ -14,6 +14,7 @@ jobs:
             echo "fetching dependencies ..."
             go get github.com/Praqma/helmsman/gcs 
             go get github.com/Praqma/helmsman/aws
+            go get github.com/imdario/mergo
             echo "building ..."
             TAG=$(git describe --abbrev=0 --tags)-$(date +"%d%m%y")
             go build -ldflags '-X main.version='$TAG' -extldflags "-static"'
