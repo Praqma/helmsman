@@ -48,6 +48,10 @@ func init() {
 		os.Exit(0)
 	}
 
+	if verbose {
+		logVersions()
+	}
+
 	//fmt.Println("Helmsman version: " + version)
 
 	if !toolExists("helm") {

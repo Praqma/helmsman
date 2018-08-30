@@ -331,3 +331,18 @@ func getHelmsmanReleases() map[string]map[string]bool {
 
 	return releases
 }
+
+// getKubectlClientVersion returns kubectl client version
+func getKubectlClientVersion() string {
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "kubectl version --client --short"},
+		Description: "checking kubectl version ",
+	}
+
+	exitCode, result := cmd.exec(debug, false)
+	if exitCode != 0 {
+		logError("ERROR: while checking kubectl version: " + result)
+	}
+	return result
+}
