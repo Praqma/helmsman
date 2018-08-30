@@ -7,6 +7,7 @@ import (
 
 // Allow parsing of multiple string command line options into an array of strings
 type stringArray []string
+
 func (i *stringArray) String() string {
 	return "my string representation"
 }
@@ -56,10 +57,6 @@ func main() {
 
 	if _, ok := s.Namespaces["kube-system"]; !ok {
 		waitForTiller("kube-system")
-	}
-
-	if verbose {
-		logVersions()
 	}
 
 	// add repos -- fails if they are not valid

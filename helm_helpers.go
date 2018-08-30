@@ -36,6 +36,21 @@ type tillerReleases struct {
 	} `json:"Releases"`
 }
 
+// getHelmClientVersion returns Helm client Version
+func getHelmClientVersion() string {
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm version --client --short"},
+		Description: "checking Helm version ",
+	}
+
+	exitCode, result := cmd.exec(debug, false)
+	if exitCode != 0 {
+		logError("ERROR: while checking helm version: " + result)
+	}
+	return result
+}
+
 // getAllReleases fetches a list of all releases in a k8s cluster
 func getAllReleases() tillerReleases {
 	// result := make(map[string]interface{})
