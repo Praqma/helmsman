@@ -148,7 +148,7 @@ func readFile(filepath string) string {
 
 // printHelp prints Helmsman commands
 func printHelp() {
-	fmt.Println("Helmsman version: " + version)
+	fmt.Println("Helmsman version: " + appVersion)
 	fmt.Println("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
 	fmt.Println("Usage: helmsman [options]")
 	fmt.Println()
@@ -167,9 +167,8 @@ func printHelp() {
 
 // logVersions prints the versions of kubectl and helm to the logs
 func logVersions() {
-
-	log.Println("VERBOSE: kubectl version: " + getKubectlClientVersion())
-	log.Println("VERBOSE: Helm version: " + getHelmClientVersion())
+	log.Println("VERBOSE: kubectl client version: " + kubectlVersion)
+	log.Println("VERBOSE: Helm client version: " + helmVersion)
 }
 
 // envVarExists checks if an environment variable is set or not and returns it.
@@ -284,7 +283,7 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 				"pretext": "` + pretext + `",
 				"title": "` + content + `",
 				
-				"footer": "Helmsman ` + version + `",
+				"footer": "Helmsman ` + appVersion + `",
 				"ts": ` + strconv.FormatInt(t.Unix(), 10) + `
 			}
 		]

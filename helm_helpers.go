@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Praqma/helmsman/gcs"
+	version "github.com/hashicorp/go-version"
 )
 
 var currentState map[string]releaseState
@@ -69,18 +70,50 @@ func getAllReleases() tillerReleases {
 
 // getTillerReleases gets releases deployed with a given Tiller (in a given namespace)
 func getTillerReleases(tillerNS string) tillerReleases {
+	v1, _ := version.NewVersion(helmVersion)
+	jsonConstraint, _ := version.NewConstraint(">=2.10.0-rc.1")
+	var outputFormat string
+	if jsonConstraint.Check(v1) {
+		outputFormat = "--output json"
+	}
+
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm list --all --output json --tiller-namespace " + tillerNS + getNSTLSFlags(tillerNS)},
+		Args:        []string{"-c", "helm list --all " + outputFormat + " --tiller-namespace " + tillerNS + getNSTLSFlags(tillerNS)},
 		Description: "listing all existing releases in namespace [ " + tillerNS + " ]...",
 	}
 
 	exitCode, result := cmd.exec(debug, verbose)
 	if exitCode != 0 {
-		log.Fatal("ERROR: failed to list all releases in namespace [ " + tillerNS + " ]: " + result)
+		logError("ERROR: failed to list all releases in namespace [ " + tillerNS + " ]: " + result)
 	}
 	var out tillerReleases
-	json.Unmarshal([]byte(result), &out)
+	if jsonConstraint.Check(v1) {
+		json.Unmarshal([]byte(result), &out)
+	} else {
+		lines := strings.Split(result, "\n")
+		index := 0
+		for i, l := range lines {
+			if l == "" || (strings.HasPrefix(strings.TrimSpace(l), "NAME") && strings.HasSuffix(strings.TrimSpace(l), "NAMESPACE")) {
+				continue
+			} else {
+				r, _ := strconv.Atoi(strings.Fields(lines[i])[1])
+				t := strings.Fields(lines[i])[2] + " " + strings.Fields(lines[i])[3] + " " + strings.Fields(lines[i])[4] + " " +
+					strings.Fields(lines[i])[5] + " " + strings.Fields(lines[i])[6]
+
+				out.Releases[index].Revision = r
+				out.Releases[index].Updated = t
+				out.Releases[index].Status = strings.Fields(lines[i])[7]
+				out.Releases[index].Chart = strings.Fields(lines[i])[8]
+				out.Releases[index].Namespace = strings.Fields(lines[i])[9]
+				out.Releases[index].Name = strings.Fields(lines[i])[0]
+				//out.Releases[index].AppVersion = ""
+				//out.Releases[index].TillerNamespace = tillerNS
+				index++
+			}
+		}
+
+	}
 
 	// appending tiller-namespace to each release found
 	for i := 0; i < len(out.Releases); i++ {
