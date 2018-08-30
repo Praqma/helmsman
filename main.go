@@ -29,10 +29,11 @@ var checkCleanup bool
 var skipValidation bool
 var applyLabels bool
 var keepUntrackedReleases bool
-var version = "v1.4.0-rc"
+var appVersion = "v1.4.0-rc"
+var helmVersion string
+var kubectlVersion string
 
 func main() {
-
 	// set the kubecontext to be used Or create it if it does not exist
 	if !setKubeContext(s.Settings["kubeContext"]) {
 		if r, msg := createContext(); !r {

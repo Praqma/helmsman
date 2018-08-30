@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/imdario/mergo"
 )
@@ -36,10 +37,13 @@ func init() {
 
 	flag.Parse()
 
-	fmt.Println(banner + "version: " + version + "\n" + slogan)
+	fmt.Println(banner + "version: " + appVersion + "\n" + slogan)
+
+	helmVersion = strings.TrimSpace(strings.SplitN(getHelmClientVersion(), ": ", 2)[1])
+	kubectlVersion = strings.TrimSpace(strings.SplitN(getKubectlClientVersion(), ": ", 2)[1])
 
 	if v {
-		fmt.Println("Helmsman version: " + version)
+		fmt.Println("Helmsman version: " + appVersion)
 		os.Exit(0)
 	}
 
@@ -52,14 +56,12 @@ func init() {
 		logVersions()
 	}
 
-	//fmt.Println("Helmsman version: " + version)
-
 	if !toolExists("helm") {
-		log.Fatal("ERROR: helm is not installed/configured correctly. Aborting!")
+		logError("ERROR: helm is not installed/configured correctly. Aborting!")
 	}
 
 	if !toolExists("kubectl") {
-		log.Fatal("ERROR: kubectl is not installed/configured correctly. Aborting!")
+		logError("ERROR: kubectl is not installed/configured correctly. Aborting!")
 	}
 
 	// read the TOML/YAML desired state file
@@ -69,11 +71,11 @@ func init() {
 		if result {
 			log.Printf(msg)
 		} else {
-			log.Fatal(msg)
+			logError(msg)
 		}
 
 		if err := mergo.Merge(&s, &fileState); err != nil {
-			log.Fatalf("Failed to merge desired state file %s", f)
+			logError("Failed to merge desired state file" + f)
 		}
 	}
 
