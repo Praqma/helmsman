@@ -32,6 +32,8 @@ var keepUntrackedReleases bool
 var appVersion = "v1.4.0-rc"
 var helmVersion string
 var kubectlVersion string
+var pwd string
+var relativeDir string
 
 func main() {
 	// set the kubecontext to be used Or create it if it does not exist

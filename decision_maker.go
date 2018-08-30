@@ -260,8 +260,11 @@ func getTimeout(r *release) string {
 // getValuesFiles return partial install/upgrade release command to substitute the -f flag in Helm.
 func getValuesFiles(r *release) string {
 	if r.ValuesFile != "" {
-		return " -f " + r.ValuesFile
+		return " -f " + pwd + "/" + relativeDir + "/" + r.ValuesFile
 	} else if len(r.ValuesFiles) > 0 {
+		for i := 0; i < len(r.ValuesFiles); i++ {
+			r.ValuesFiles[i] = pwd + "/" + relativeDir + "/" + r.ValuesFiles[i]
+		}
 		return " -f " + strings.Join(r.ValuesFiles, " -f ")
 	}
 	return ""

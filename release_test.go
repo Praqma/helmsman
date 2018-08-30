@@ -60,7 +60,7 @@ func Test_validateRelease(t *testing.T) {
 				s: st,
 			},
 			want:  false,
-			want1: "valuesFile must be a valid file path for a yaml file, Or can be left empty.",
+			want1: "valuesFile must be a valid relative (from your first dsf file) file path for a yaml file, Or can be left empty.",
 		}, {
 			name: "test case 3",
 			args: args{
@@ -78,7 +78,7 @@ func Test_validateRelease(t *testing.T) {
 				s: st,
 			},
 			want:  false,
-			want1: "valuesFile must be a valid file path for a yaml file, Or can be left empty.",
+			want1: "valuesFile must be a valid relative (from your first dsf file) file path for a yaml file, Or can be left empty.",
 		}, {
 			name: "test case 4",
 			args: args{
@@ -241,7 +241,7 @@ func Test_validateRelease(t *testing.T) {
 				s: st,
 			},
 			want:  false,
-			want1: "the value for valueFile 'xyz.yaml' must be a valid file path for a yaml file.",
+			want1: "the value for valueFile 'xyz.yaml' must be a valid relative (from your first dsf file) file path for a yaml file.",
 		}, {
 			name: "test case 13",
 			args: args{
