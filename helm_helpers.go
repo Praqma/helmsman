@@ -23,18 +23,20 @@ type releaseState struct {
 	TillerNamespace string
 }
 
+type releaseInfo struct {
+	Name            string `json:"Name"`
+	Revision        int    `json:"Revision"`
+	Updated         string `json:"Updated"`
+	Status          string `json:"Status"`
+	Chart           string `json:"Chart"`
+	AppVersion      string `json:"AppVersion,omitempty"`
+	Namespace       string `json:"Namespace"`
+	TillerNamespace string `json:",omitempty"`
+}
+
 type tillerReleases struct {
-	Next     string `json:"Next"`
-	Releases []struct {
-		Name            string `json:"Name"`
-		Revision        int    `json:"Revision"`
-		Updated         string `json:"Updated"`
-		Status          string `json:"Status"`
-		Chart           string `json:"Chart"`
-		AppVersion      string `json:"AppVersion,omitempty"`
-		Namespace       string `json:"Namespace"`
-		TillerNamespace string `json:",omitempty"`
-	} `json:"Releases"`
+	Next     string        `json:"Next"`
+	Releases []releaseInfo `json:"Releases"`
 }
 
 // getHelmClientVersion returns Helm client Version
@@ -92,24 +94,16 @@ func getTillerReleases(tillerNS string) tillerReleases {
 		json.Unmarshal([]byte(result), &out)
 	} else {
 		lines := strings.Split(result, "\n")
-		index := 0
 		for i, l := range lines {
 			if l == "" || (strings.HasPrefix(strings.TrimSpace(l), "NAME") && strings.HasSuffix(strings.TrimSpace(l), "NAMESPACE")) {
 				continue
 			} else {
+
 				r, _ := strconv.Atoi(strings.Fields(lines[i])[1])
 				t := strings.Fields(lines[i])[2] + " " + strings.Fields(lines[i])[3] + " " + strings.Fields(lines[i])[4] + " " +
 					strings.Fields(lines[i])[5] + " " + strings.Fields(lines[i])[6]
 
-				out.Releases[index].Revision = r
-				out.Releases[index].Updated = t
-				out.Releases[index].Status = strings.Fields(lines[i])[7]
-				out.Releases[index].Chart = strings.Fields(lines[i])[8]
-				out.Releases[index].Namespace = strings.Fields(lines[i])[9]
-				out.Releases[index].Name = strings.Fields(lines[i])[0]
-				//out.Releases[index].AppVersion = ""
-				//out.Releases[index].TillerNamespace = tillerNS
-				index++
+				out.Releases = append(out.Releases, releaseInfo{Name: strings.Fields(lines[i])[0], Revision: r, Updated: t, Status: strings.Fields(lines[i])[7], Chart: strings.Fields(lines[i])[8], Namespace: strings.Fields(lines[i])[9], AppVersion: "", TillerNamespace: ""})
 			}
 		}
 
