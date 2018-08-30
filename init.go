@@ -42,6 +42,17 @@ func init() {
 	helmVersion = strings.TrimSpace(strings.SplitN(getHelmClientVersion(), ": ", 2)[1])
 	kubectlVersion = strings.TrimSpace(strings.SplitN(getKubectlClientVersion(), ": ", 2)[1])
 
+	// initializing pwd and relative directory for DSF(s) and values files
+	pwd, _ = os.Getwd()
+	lastSlashIndex := -1
+	if len(files) > 0 {
+		lastSlashIndex = strings.LastIndex(files[0], "/")
+	}
+	relativeDir = "."
+	if lastSlashIndex != -1 {
+		relativeDir = files[0][:lastSlashIndex]
+	}
+
 	if v {
 		fmt.Println("Helmsman version: " + appVersion)
 		os.Exit(0)

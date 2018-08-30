@@ -31,7 +31,7 @@ type release struct {
 // validateRelease validates if a release inside a desired state meets the specifications or not.
 // check the full specification @ https://github.com/Praqma/helmsman/docs/desired_state_spec.md
 func validateRelease(appLabel string, r *release, names map[string]map[string]bool, s state) (bool, string) {
-	_, err := os.Stat(r.ValuesFile)
+	_, err := os.Stat(pwd + "/" + relativeDir + "/" + r.ValuesFile)
 	if r.Name == "" {
 		r.Name = appLabel
 	}
@@ -64,13 +64,13 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 	}
 
 	if r.ValuesFile != "" && (!isOfType(r.ValuesFile, ".yaml") || err != nil) {
-		return false, "valuesFile must be a valid file path for a yaml file, Or can be left empty."
+		return false, "valuesFile must be a valid relative (from your first dsf file) file path for a yaml file, Or can be left empty."
 	} else if r.ValuesFile != "" && len(r.ValuesFiles) > 0 {
 		return false, "valuesFile and valuesFiles should not be used together."
 	} else if len(r.ValuesFiles) > 0 {
 		for _, filePath := range r.ValuesFiles {
-			if _, pathErr := os.Stat(filePath); !isOfType(filePath, ".yaml") || pathErr != nil {
-				return false, "the value for valueFile '" + filePath + "' must be a valid file path for a yaml file."
+			if _, pathErr := os.Stat(pwd + "/" + relativeDir + "/" + filePath); !isOfType(filePath, ".yaml") || pathErr != nil {
+				return false, "the value for valueFile '" + filePath + "' must be a valid relative (from your first dsf file) file path for a yaml file."
 			}
 		}
 	}

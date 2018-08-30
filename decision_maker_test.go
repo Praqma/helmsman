@@ -1,6 +1,8 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
 func Test_getValuesFiles(t *testing.T) {
 	type args struct {
@@ -27,7 +29,7 @@ func Test_getValuesFiles(t *testing.T) {
 				},
 				//s: st,
 			},
-			want: " -f test_files/values.yaml",
+			want: " -f " + pwd + "/" + relativeDir + "/test_files/values.yaml",
 		},
 		{
 			name: "test case 2",
@@ -45,7 +47,7 @@ func Test_getValuesFiles(t *testing.T) {
 				},
 				//s: st,
 			},
-			want: " -f test_files/values.yaml",
+			want: " -f " + pwd + "/" + relativeDir + "/test_files/values.yaml",
 		},
 		{
 			name: "test case 1",
@@ -63,7 +65,7 @@ func Test_getValuesFiles(t *testing.T) {
 				},
 				//s: st,
 			},
-			want: " -f test_files/values.yaml -f test_files/values2.yaml",
+			want: " -f " + pwd + "/" + relativeDir + "/test_files/values.yaml -f " + pwd + "/" + relativeDir + "/test_files/values2.yaml",
 		},
 	}
 	for _, tt := range tests {
