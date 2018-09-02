@@ -81,7 +81,7 @@ func getTillerReleases(tillerNS string) tillerReleases {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm list --all " + outputFormat + " --tiller-namespace " + tillerNS + getNSTLSFlags(tillerNS)},
+		Args:        []string{"-c", "helm list --all --max 0 " + outputFormat + " --tiller-namespace " + tillerNS + getNSTLSFlags(tillerNS)},
 		Description: "listing all existing releases in namespace [ " + tillerNS + " ]...",
 	}
 
@@ -139,47 +139,6 @@ func buildState() {
 			TillerNamespace: rel.Releases[i].TillerNamespace,
 		}
 	}
-}
-
-// Deprecated: listReleases lists releases in a given namespace and with a given status
-func listReleases(namespace string, scope string) string {
-	var options string
-	if scope == "all" {
-		options = "--all -q"
-	} else if scope == "deleted" {
-		options = "--deleted -q"
-	} else if scope == "deployed" && namespace != "" {
-		options = "--deployed -q --namespace " + namespace
-	} else if scope == "deployed" && namespace == "" {
-		options = "--deployed -q "
-	} else if scope == "failed" {
-		options = "--failed -q"
-	} else {
-		options = "--all -q"
-		log.Println("INFO: scope " + scope + " is not valid, using [ all ] instead!")
-	}
-
-	ns := namespace
-	tls := ""
-	if namespace == "" {
-		ns = "all"
-		tls = getNSTLSFlags("kube-system")
-	} else {
-		tls = getNSTLSFlags(namespace)
-	}
-
-	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm list " + options + tls},
-		Description: "listing the existing releases in namespace [ " + ns + " ] with status [ " + scope + " ]",
-	}
-
-	exitCode, result := cmd.exec(debug, verbose)
-	if exitCode != 0 {
-		log.Fatal("ERROR: failed to list " + scope + " releases in " + ns + " namespace(s): " + result)
-	}
-
-	return result
 }
 
 // helmRealseExists checks if a Helm release is/was deployed in a k8s cluster.
