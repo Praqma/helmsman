@@ -1,5 +1,5 @@
 ---
-version: v1.3.0-rc
+version: v1.5.0
 ---
 
 # install releases 
@@ -8,7 +8,7 @@ You can run helmsman with the [example.toml](https://github.com/Praqma/helmsman/
 
 ``` 
 
-$ helmsman -apply -f example.toml 
+$ helmsman --apply -f example.toml 
 2017/11/19 18:17:57 Parsed [[ example.toml ]] successfully and found [ 2 ] apps.
 2017/11/19 18:17:59 WARN: I could not create namespace [staging ]. It already exists. I am skipping this.
 2017/11/19 18:17:59 WARN: I could not create namespace [default ]. It already exists. I am skipping this.
@@ -35,10 +35,10 @@ You can then change your desire, for example to disable the Jenkins release that
 
 Then run Helmsman again and it will detect that you want to delete Jenkins:
 
-> Note: deleting the jenkins app entry in example.toml WILL NOT resultin deleting the jenkins release. It simply means that Helmsman is no longer responsible for managing it.
+> Note: As of v1.4.0-rc, deleting the jenkins app entry in the desired state file WILL result in deleting the jenkins release. To prevent this, use the `--keep-untracked-releases` flag with your Helmsman command.
 
 ```
-$ helmsman -apply -f example.toml 
+$ helmsman --apply -f example.toml 
 2017/11/19 18:28:27 Parsed [[ example.toml ]] successfully and found [ 2 ] apps.
 2017/11/19 18:28:29 WARN: I could not create namespace [staging ]. It already exists. I am skipping this.
 2017/11/19 18:28:29 WARN: I could not create namespace [default ]. It already exists. I am skipping this.
@@ -98,10 +98,11 @@ apps:
 
 # rollback releases 
 
+> Rollbacks in helm versions 2.8.2 and higher may not work due to a [bug](https://github.com/helm/helm/issues/3722).  
 Similarly, if you change `enabled` back to `true`, it will figure out that you would like to roll it back. 
 
 ```
-$ helmsman -apply -f example.toml 
+$ helmsman --apply -f example.toml 
 2017/11/19 18:30:41 Parsed [[ example.toml ]] successfully and found [ 2 ] apps.
 2017/11/19 18:30:42 WARN: I could not create namespace [staging ]. It already exists. I am skipping this.
 2017/11/19 18:30:43 WARN: I could not create namespace [default ]. It already exists. I am skipping this.
@@ -116,7 +117,7 @@ DECISION: release [ artifactory ] is desired to be upgraded. Planing this for yo
 
 # upgrade releases
 
-Everytime you run Helmsman, (unless the release is [protected or deployed in a protected namespace](protect_namespaces_and_releases.md)) it will upgrade existing deployed releases to the version you specified in the desired state file. It also applies the `values.yaml` file you specify with each install/upgrade. This means that when you don't change anything for a specific release, Helmsman would upgrade with the `values.yaml` file you provide (just in case it is a new file or you changed something there.)
+Every time you run Helmsman, (unless the release is [protected or deployed in a protected namespace](protect_namespaces_and_releases.md)) it will upgrade existing deployed releases to the version you specified in the desired state file. It also applies the `values.yaml` file you specify with each install/upgrade. This means that when you don't change anything for a specific release, Helmsman would upgrade with the `values.yaml` file you provide (just in case it is a new file or you changed something there.)
 
 If you change the chart, the existing release will be deleted and a new one with the same name will be created using the new chart.
 

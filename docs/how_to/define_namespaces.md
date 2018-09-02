@@ -1,5 +1,5 @@
 ---
-version: v1.3.0-rc
+version: v1.5.0
 ---
 
 # define namespaces
@@ -29,7 +29,11 @@ namespaces:
 
 >For details on protecting a namespace, please check the [namespace/release protection guide](protect_namespaces_and_releases.md)
 
+## Deploying Tiller into namespaces 
+
 As of `v1.2.0-rc`, you can instruct Helmsman to deploy Tiller into specific namespaces (with or without TLS).
+
+> By default Tiller will be deployed into `kube-system` even if you don't define kube-system in the namespaces section. To prevent deploying Tiller into `kube-system, see the subsection below.
 
 ```toml
 [namespaces]
@@ -57,6 +61,22 @@ namespaces:
     clientKey: "s3://mybucket/mydir/helm.key.pem"
 ```
 
+### Preventing Tiller deployment in kube-system 
+
+By default Tiller will be deployed into `kube-system` even if you don't define kube-system in the namespaces section. To prevent this, simply add `kube-system` into your namespaces section. Since `installTiller` for namespaces is by default false, Helmsman will not deploy Tiller in `kube-system`.
+
+```toml
+[namespaces]
+[namespaces.kube-system]
+# installTiller = false  # this line is not needed since the default is false, but can be added for human readability.
+```
+```yaml
+namespaces:
+  kube-system:
+    #installTiller: false # this line is not needed since the default is false, but can be added for human readability.
+```
+
+## Deploying releases with specific Tillers
 You can then tell Helmsman to deploy specific releases in a specific namespace:
 
 ```toml

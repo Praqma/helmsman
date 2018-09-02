@@ -16,5 +16,5 @@ When using Helmsman, we recommend the following best practices:
 
 - Don't maintain the same release in multiple DSFs. 
 
-- While the decision on how many DSFs to use and what each can contain is up to you and depends on your case, we recommend coming up with your own rule for that and following it.
+- While the decision on how many DSFs to use and what each can contain is up to you and depends on your case, we recommend coming up with your own rule for how to split them.
 

@@ -21,10 +21,10 @@ To plan without executing:
 ``` $ helmsman -f example.toml ```
 
 To plan and execute the plan:
-``` $ helmsman -apply -f example.toml ```
+``` $ helmsman --apply -f example.toml ```
 
 To show debugging details:
-``` $ helmsman -debug -apply -f example.toml ```
+``` $ helmsman --debug --apply -f example.toml ```
 
 # Features
 
@@ -46,9 +46,9 @@ To show debugging details:
 Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the different versions.
 ```
 # on Linux
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.4.0-rc/helmsman_1.4.0-rc_linux_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.5.0/helmsman_1.5.0_linux_amd64.tar.gz | tar zx
 # on MacOS
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.4.0-rc/helmsman_1.4.0-rc_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.5.0/helmsman_1.5.0_darwin_amd64.tar.gz | tar zx
 
 mv helmsman /usr/local/bin/helmsman
 ```
@@ -67,6 +67,7 @@ Helmsman lets you:
 - [install/delete/upgrade/rollback your helm charts from code](https://github.com/Praqma/helmsman/blob/master/docs/how_to/manipulate_apps.md).
 - [work safely in a multitenant cluster](https://github.com/Praqma/helmsman/blob/master/docs/how_to/multitenant_clusters_guide.md).
 - [pass secrets/user input to helm charts from environment variables](https://github.com/Praqma/helmsman/blob/master/docs/how_to/pass_secrets_from_env_variables.md).
+- [send Slack notifications from Helmsman](https://github.com/Praqma/helmsman/blob/master/docs/how_to/send_slack_notifications_from_helmsman.md)
 - [test releases when they are first installed](https://github.com/Praqma/helmsman/blob/master/docs/how_to/test_charts.md).
 - [use public and private helm charts](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_private_helm_charts.md).
 - [use locally developed helm charts (the tar archives)](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_local_charts.md).

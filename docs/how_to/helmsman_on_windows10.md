@@ -2,9 +2,11 @@
 version: v1.1.0
 ---
 
+> This guide has not been thoroughly tested.
+
 # Using Helmsman from a docker image on Windows 10
 
-If you have Windows 10 with Docker installed, you might be able to run Helmsman in a linux container on Windows.
+If you have Windows 10 with Docker installed, you **might** be able to run Helmsman in a linux container on Windows.
 
 1. Switch to the Linux containers from the docker tray icon.
 2. Configure your local kubectl on Windows to connect to your cluster.
