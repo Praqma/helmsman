@@ -111,7 +111,7 @@ Helmsman will delete the jenkins release from the `staging` namespace and instal
 
 Helmsman does not automatically move PVCs across namespaces. You have to follow the steps below to retain your data when moving an app to a different namespace.
 
-Persistent Volumes (PV) are accessed through Persistent Volume Claims (PVC). But **PVCs are namespaced object** which means moving an application from one namespace to another will result in a new PVC created in the new namespace. The old PV -which possibly contains your application data- will still be mounted to the old PVC (the one in the old namespace) even if you have deleted your application helm release.
+Persistent Volumes (PV) are accessed through Persistent Volume Claims (PVC). But **PVCs are namespaced objects** which means moving an application from one namespace to another will result in a new PVC created in the new namespace. The old PV -which possibly contains your application data- will still be mounted to the old PVC (the one in the old namespace) even if you have deleted your application helm release.
 
 Now, the newly created PVC (in the new namespace) will not be able to mount to the old PV and instead it will mount to any other available one or (in the case of dynamic provisioning) will provision a new PV. This means the application in the new namespace does not have the old data. Don't panic, the old PV is still there and contains your old data.
 
@@ -131,7 +131,7 @@ kubectl delete pvc <your-pvc-name> --namespace <the-old-namespace>
 ```
 Since, we changed the Reclaim Policy to Retain, the PV will stay around (with all your data).
 
-3. The PV is now the **Released** state but not yet available for mounting.
+3. The PV is now in the **Released** state but not yet available for mounting.
 
 ```
 kubectl get pv

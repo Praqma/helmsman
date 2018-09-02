@@ -281,7 +281,7 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 
 // deployTiller deploys Helm's Tiller in a specific namespace with a serviceAccount
 // If serviceAccount is not provided (empty string), the defaultServiceAccount is used.
-// If no defaultServiceAccount is provided, Tiller is deployed with the namespace default service account
+// If no defaultServiceAccount is provided, A service account is created and Tiller is deployed with the new service account
 // If no namespace is provided, Tiller is deployed to kube-system
 func deployTiller(namespace string, serviceAccount string, defaultServiceAccount string) (bool, string) {
 	log.Println("INFO: deploying Tiller in namespace [ " + namespace + " ].")

@@ -1,5 +1,5 @@
 ---
-version: v1.4.0-rc
+version: v1.5.0
 ---
 
 # Helmsman desired state specification
@@ -8,7 +8,7 @@ This document describes the specification for how to write your Helm charts desi
 
 - [Metadata](#metadata) [Optional] -- metadata for any human reader of the desired state file.
 - [Certificates](#certificates) [Optional] -- only needed when you want Helmsman to connect kubectl to your cluster for you.
-- [Settings](#settings) -- data about your k8s cluster. 
+- [Settings](#settings) -- data about your k8s cluster and how to deploy Helm on it if needed. 
 - [Namespaces](#namespaces) -- defines the namespaces where you want your Helm charts to be deployed.
 - [Helm Repos](#helm-repos) -- defines the repos where you want to get Helm charts from.
 - [Apps](#apps) -- defines the applications/charts you want to manage in your cluster.
@@ -119,13 +119,14 @@ settings:
 
 Optional : No.
 
-Synopsis: defines the namespaces to be used/created in your k8s cluster and wether they are protected or not. It also defines if Tiller should be deployed in these namespaces and with what configurations (TLS and service account). You can add as many namespaces as you like.
-If a namespaces does not already exist, Helmsman will create it.
+Synopsis: defines the namespaces to be used/created in your k8s cluster and whether they are protected or not. It also defines if Tiller should be deployed in these namespaces and with what configurations (TLS and service account). You can add as many namespaces as you like.
+If a namespace does not already exist, Helmsman will create it.
 
 Options: 
 - protected : defines if a namespace is protected (true or false). Default false.
-- installTiller: defines if Tiller should be deployed in this namespace or not. Default is false. Any chart desired to be deployed into a namespace with a Tiller deployed, will be deployed using that Tiller and not the one in kube-system. 
-> Tiller will ALWAYS be deployed into `kube-system`, even if you set installTiller for kube-system to false.
+> For the definition of what a protected namespace means, check the [protection guide](how_to/protect_namespaces_and_releases.md)
+- installTiller: defines if Tiller should be deployed in this namespace or not. Default is false. Any chart desired to be deployed into a namespace with a Tiller deployed, will be deployed using that Tiller and not the one in kube-system unless you use the `TillerNamespace` option (see the [Apps](#apps) section below) to use another Tiller.
+> By default Tiller will be deployed into `kube-system` even if you don't define kube-system in the namespaces section. To prevent deploying Tiller into `kube-system, add kube-system in your namespaces section and set its installTiller to false.
 
 - tillerServiceAccount: defines what service account to use when deploying Tiller. If this is not set, the following options are considered:
 
@@ -141,12 +142,13 @@ Options:
     - clientCert: the SSL certificate for the Helm client.
     - clientKey: the SSL certificate private key for the Helm client.
 
-> For the definition of what a protected namespace means, check the [protection guide](how_to/protect_namespaces_and_releases.md)
-
 Example: 
 
 ```toml
 [namespaces]
+# to prevent deploying Tiller into kube-system, use the two lines below
+# [namespaces.kube-system]
+# installTiller = false # this line can be omitted since installTiller defaults to false
 [namespaces.staging]
 [namespaces.dev]
 protected = false
@@ -163,6 +165,9 @@ clientKey = "s3://mybucket/mydir/helm.key.pem"
 
 ```yaml
 namespaces:
+  # to prevent deploying Tiller into kube-system, use the two lines below
+  # kube-system: 
+  #  installTiller: false # this line can be omitted since installTiller defaults to false
   staging:
   dev:
     protected: false
@@ -238,6 +243,7 @@ Options:
 - description : a release metadata for human readers.
 - valuesFile  : a valid path to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFiles together. Leaving it empty uses the default chart values.
 - valuesFiles : array of valid paths to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFile together. Leaving it empty uses the default chart values.
+> The values file(s) path is relative from the location of the (first) desired state file you pass in your Helmsman command.
 - purge       : defines whether to use the Helm purge flag when deleting the release. (true/false)
 - test        : defines whether to run the chart tests whenever the release is installed.
 - protected   : defines if the release should be protected against changes. Namespace-level protection has higher priority than this flag. Check the [protection guide](how_to/protect_namespaces_and_releases.md) for more details.
