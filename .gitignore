@@ -2,5 +2,7 @@
 *.key
 *.crt
 /dist
+/vendor/
 *.world
 *.world1
+helmsman
