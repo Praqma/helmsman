@@ -1,5 +1,5 @@
 ---
-version: v1.4.0-rc
+version: v1.5.0
 ---
 
 ![helmsman-logo](docs/images/helmsman.png)
