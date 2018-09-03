@@ -6,11 +6,11 @@ metadata:
   description: "example Desired State File for demo purposes."
 
 # paths to the certificate for connecting to the cluster
-# You can skip this if you use Helmsman on a machine with kubectl already connected to your k8s cluster. 
+# You can skip this if you use Helmsman on a machine with kubectl already connected to your k8s cluster.
 # you have to use exact key names here : 'caCrt' for certificate and 'caKey' for the key and caClient for the client certificate
 certificates:
   #caClient: "gs://mybucket/client.crt" # GCS bucket path
-  #caCrt: "s3://mybucket/ca.crt" # S3 bucket path 
+  #caCrt: "s3://mybucket/ca.crt" # S3 bucket path
   #caKey: "../ca.key" # valid local file relative path
 
 settings:
@@ -22,6 +22,7 @@ settings:
   #serviceAccount: "foo" # k8s serviceaccount must be already defined, validation error will be thrown otherwise
   storageBackend: "secret" # default is configMap
   #slackWebhook:  "$slack" # or your slack webhook url
+  #reverseDelete: "no" # reverse the priorities on delete
 
 # define your environments and their k8s namespaces
 namespaces:
@@ -31,7 +32,7 @@ namespaces:
     protected: false
     installTiller: true
     #tillerServiceAccount: "tiller-staging" # should already exist in the staging namespace
-    #caCert: "secrets/ca.cert.pem" # or an env var, e.g. "$CA_CERT_PATH" 
+    #caCert: "secrets/ca.cert.pem" # or an env var, e.g. "$CA_CERT_PATH"
     #tillerCert: "secrets/tiller.cert.pem" # or S3 bucket s3://mybucket/tiller.crt
     #tillerKey: "secrets/tiller.key.pem"  # or GCS bucket gs://mybucket/tiller.key
     #clientCert: "secrets/helm.cert.pem"
