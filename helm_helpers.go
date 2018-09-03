@@ -117,7 +117,7 @@ func getTillerReleases(tillerNS string) tillerReleases {
 	return out
 }
 
-// buildState builds the currentState map contianing information about all releases existing in a k8s cluster
+// buildState builds the currentState map containing information about all releases existing in a k8s cluster
 func buildState() {
 	log.Println("INFO: mapping the current helm state ...")
 	currentState = make(map[string]releaseState)
