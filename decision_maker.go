@@ -7,9 +7,11 @@ import (
 
 var outcome plan
 var releases string
+var settings map[string]string
 
 // makePlan creates a plan of the actions needed to make the desired state come true.
 func makePlan(s *state) *plan {
+	settings = s.Settings
 	outcome = createPlan()
 	buildState()
 
@@ -149,13 +151,18 @@ func deleteRelease(r *release, rs releaseState) {
 		purgeDesc = "and purged!"
 	}
 
+	priority := r.Priority
+	if settings["reverseDelete"] == "yes" {
+		priority = priority * -1
+	}
+
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", "helm delete " + p + " " + r.Name + getCurrentTillerNamespaceFlag(rs) + getTLSFlags(r)},
 		Description: "deleting release [ " + r.Name + " ] from namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
-	outcome.addCommand(cmd, r.Priority, r)
-	logDecision("DECISION: release [ "+r.Name+" ] is desired to be deleted "+purgeDesc+". Planing this for you!", r.Priority)
+	outcome.addCommand(cmd, priority, r)
+	logDecision("DECISION: release [ "+r.Name+" ] is desired to be deleted "+purgeDesc+". Planing this for you!", priority)
 }
 
 // inspectUpgradeScenario evaluates if a release should be upgraded.
