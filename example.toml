@@ -82,7 +82,7 @@
   # artifactory will be deployed using the Tiller in the kube-system namespace
   [apps.artifactory]
     namespace = "production" # maps to the namespace as defined in namespaces above
-    enabled = true # change to false if you want to delete this app release [default = flase]
+    enabled = true # change to false if you want to delete this app release [default = false]
     chart = "stable/artifactory" # changing the chart name means delete and recreate this release
     version = "7.0.6" # chart version
     ### Optional values below
