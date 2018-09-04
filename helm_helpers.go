@@ -335,7 +335,7 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 	}
 
 	storageBackend := ""
-	if v, ok := s.Settings["storageBackend"]; ok && v == "secret" {
+	if s.Settings.StorageBackend == "secret" {
 		storageBackend = " --override 'spec.template.spec.containers[0].command'='{/tiller,--storage=secret}'"
 	}
 	cmd := command{
@@ -353,10 +353,7 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 // initHelm initializes helm on a k8s cluster and deploys Tiller in one or more namespaces
 func initHelm() (bool, string) {
 
-	defaultSA := ""
-	if value, ok := s.Settings["serviceAccount"]; ok {
-		defaultSA = value
-	}
+	defaultSA := s.Settings.ServiceAccount
 
 	if v, ok := s.Namespaces["kube-system"]; ok {
 		if v.InstallTiller {

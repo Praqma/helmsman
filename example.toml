@@ -24,7 +24,7 @@
   serviceAccount = "tiller" # k8s serviceaccount. If it does not exist, it will be created.
   storageBackend = "secret" # default is configMap
 #  slackWebhook = "$slack" # or "your slack webhook url"
-#  reverseDelete = "no" # reverse the priorities on delete
+#  reverseDelete = false # reverse the priorities on delete
 
 
 # define your environments and their k8s namespaces

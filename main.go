@@ -37,7 +37,7 @@ var relativeDir string
 
 func main() {
 	// set the kubecontext to be used Or create it if it does not exist
-	if !setKubeContext(s.Settings["kubeContext"]) {
+	if !setKubeContext(s.Settings.KubeContext) {
 		if r, msg := createContext(); !r {
 			logError(msg)
 		}
