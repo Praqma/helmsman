@@ -7,7 +7,7 @@ import (
 
 var outcome plan
 var releases string
-var settings map[string]string
+var settings config
 
 // makePlan creates a plan of the actions needed to make the desired state come true.
 func makePlan(s *state) *plan {
@@ -152,7 +152,7 @@ func deleteRelease(r *release, rs releaseState) {
 	}
 
 	priority := r.Priority
-	if settings["reverseDelete"] == "yes" {
+	if settings.ReverseDelete == true {
 		priority = priority * -1
 	}
 

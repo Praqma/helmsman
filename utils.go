@@ -306,8 +306,8 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 
 // logError sends a notification on slack if a webhook URL is provided and logs the error before terminating.
 func logError(msg string) {
-	if _, err := url.ParseRequestURI(s.Settings["slackWebhook"]); err == nil {
-		notifySlack(msg, s.Settings["slackWebhook"], true, apply)
+	if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err == nil {
+		notifySlack(msg, s.Settings.SlackWebhook, true, apply)
 	}
 	log.Fatal(msg)
 }

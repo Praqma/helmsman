@@ -8,7 +8,7 @@ The `priority` flag in Apps definition allows you to define the order at which a
 
 Priority is an optional flag and has a default value of 0 (zero). If set, it can only use a negative value. The lower the value, the higher the priority.
 
-If you want your apps te de deleted in the reverse order as they where created, you can also use the optional `Settings` flag `reverseDelete`, to acheive this, set it to `"yes"`
+If you want your apps te de deleted in the reverse order as they where created, you can also use the optional `Settings` flag `reverseDelete`, to acheive this, set it to `true`
 
 ## Example
 
@@ -19,7 +19,7 @@ If you want your apps te de deleted in the reverse order as they where created, 
 
 [settings]
   kubeContext = "minikube"
-  reverseDelete = "no" # Optional flat to reverse the priorities when deletting
+  reverseDelete = false # Optional flag to reverse the priorities when deletting
 
 [namespaces]
   [namespaces.staging]

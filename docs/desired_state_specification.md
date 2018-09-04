@@ -86,7 +86,7 @@ The following options can be skipped if your kubectl context is already created 
 - serviceAccount: the name of the service account to use to initiate helm. This should have enough permissions to allow Helm to work and should exist already in the cluster. More details can be found in [helm's RBAC guide](https://github.com/kubernetes/helm/blob/master/docs/rbac.md)
 - storageBackend : by default Helm stores release information in configMaps, using secrets is for storage is recommended for security. Setting this flag to `secret` will deploy/upgrade Tiller with the `--storage=secret`. Other values will be skipped and configMaps will be used.
 - slackWebhook : a [Slack](slack.com) Webhook URL to receive Helmsman notifications. This can be passed directly or in an environment variable.
-- reverseDelete : if set to `"yes"` it will reverse the priority order whilst deleting.
+- reverseDelete : if set to `true` it will reverse the priority order whilst deleting.
 
 > If you use `storageBackend` with a Tiller that has been previously deployed with configMaps as storage backend, you need to migrate your release information from the configMap to the new secret on your own. Helm does not support this yet.
 
@@ -102,12 +102,12 @@ kubeContext = "minikube"
 # serviceAccount = "my-service-account"
 # storageBackend = "secret"
 # slackWebhook = $MY_SLACK_WEBHOOK
-# reverseDelete = "no"
+# reverseDelete = false
 ```
 
 ```yaml
 settings:
-  kubeContext = "minikube"
+  kubeContext: "minikube"
   #username: "admin"
   #password: "$K8S_PASSWORD"
   #clusterURI: "https://192.168.99.100:8443"
@@ -115,7 +115,7 @@ settings:
   #serviceAccount: "my-service-account"
   #storageBackend: "secret"
   #slackWebhook: "$MY_SLACK_WEBHOOK"
-  #reverseDelete: "no"
+  #reverseDelete: false
 ```
 
 ## Namespaces
