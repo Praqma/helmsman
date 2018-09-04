@@ -1,8 +1,8 @@
 .DEFAULT_GOAL := help
 
 PKGS := $(shell go list ./... | grep -v /vendor/)
-TAG   = $(shell git describe --tags --abbrev=0 HEAD)
-LAST  = $(shell git describe --tags --abbrev=0 HEAD^)
+TAG   = $(shell git describe --always --tags --abbrev=0 HEAD)
+LAST  = $(shell git describe --always --tags --abbrev=0 HEAD^)
 BODY  = "`git log ${LAST}..HEAD --oneline --decorate` `printf '\n\#\#\# [Build Info](${BUILD_URL})'`"
 DATE  = $(shell date +'%d%m%y')
 
@@ -33,7 +33,7 @@ dependencies: ## Ensure all the necessary dependencies
 .PHONY: dependencies
 
 build: dependencies ## Build the package
-	@go build -ldflags '-X main.version='${TAG}-${DATE}' -extldflags "-static"'
+	@go build -ldflags '-X main.version="${TAG}-${DATE}" -extldflags "-static"'
 
 generate:
 	@go generate #${PKGS}
