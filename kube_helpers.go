@@ -90,11 +90,11 @@ func createNamespace(ns string) {
 // It returns true if successful, false otherwise
 func createContext() (bool, string) {
 
-	if s.Settings["password"] == "" || s.Settings["username"] == "" || s.Settings["clusterURI"] == "" {
-		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
+	if s.Settings.Password == "" || s.Settings.Username == "" || s.Settings.ClusterURI == "" {
+		return false, "ERROR: failed to create context [ " + s.Settings.KubeContext + " ] " +
 			"as you did not specify enough information in the Settings section of your desired state file."
 	} else if s.Certificates == nil || s.Certificates["caCrt"] == "" || s.Certificates["caKey"] == "" {
-		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ] " +
+		return false, "ERROR: failed to create context [ " + s.Settings.KubeContext + " ] " +
 			"as you did not provide Certifications to use in your desired state file."
 	}
 
@@ -128,8 +128,8 @@ func createContext() (bool, string) {
 	}
 
 	// connecting to the cluster
-	setCredentialsCmd := "kubectl config set-credentials " + s.Settings["username"] + " --username=" + s.Settings["username"] +
-		" --password=" + s.Settings["password"] + " --client-key=" + caKey
+	setCredentialsCmd := "kubectl config set-credentials " + s.Settings.Username + " --username=" + s.Settings.Username +
+		" --password=" + s.Settings.Password + " --client-key=" + caKey
 	if caClient != "" {
 		setCredentialsCmd = setCredentialsCmd + " --client-certificate=" + caClient
 	}
@@ -140,32 +140,32 @@ func createContext() (bool, string) {
 	}
 
 	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
-		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]:  " + err
+		return false, "ERROR: failed to create context [ " + s.Settings.KubeContext + " ]:  " + err
 	}
 
 	cmd = command{
 		Cmd: "bash",
-		Args: []string{"-c", "kubectl config set-cluster " + s.Settings["kubeContext"] + " --server=" + s.Settings["clusterURI"] +
+		Args: []string{"-c", "kubectl config set-cluster " + s.Settings.KubeContext + " --server=" + s.Settings.ClusterURI +
 			" --certificate-authority=" + caCrt},
 		Description: "creating kubectl context - setting cluster.",
 	}
 
 	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
-		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]: " + err
+		return false, "ERROR: failed to create context [ " + s.Settings.KubeContext + " ]: " + err
 	}
 
 	cmd = command{
 		Cmd: "bash",
-		Args: []string{"-c", "kubectl config set-context " + s.Settings["kubeContext"] + " --cluster=" + s.Settings["kubeContext"] +
-			" --user=" + s.Settings["username"]},
+		Args: []string{"-c", "kubectl config set-context " + s.Settings.KubeContext + " --cluster=" + s.Settings.KubeContext +
+			" --user=" + s.Settings.Username},
 		Description: "creating kubectl context - setting context.",
 	}
 
 	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
-		return false, "ERROR: failed to create context [ " + s.Settings["kubeContext"] + " ]: " + err
+		return false, "ERROR: failed to create context [ " + s.Settings.KubeContext + " ]: " + err
 	}
 
-	if setKubeContext(s.Settings["kubeContext"]) {
+	if setKubeContext(s.Settings.KubeContext) {
 		return true, ""
 	}
 
@@ -272,7 +272,7 @@ func labelResource(r *release) {
 		log.Println("INFO: applying Helmsman lables to [ " + r.Name + " ] in namespace [ " + r.Namespace + " ] ")
 		storageBackend := "configmap"
 
-		if v, ok := s.Settings["storageBackend"]; ok && v == "secret" {
+		if s.Settings.StorageBackend == "secret" {
 			storageBackend = "secret"
 		}
 
@@ -297,7 +297,7 @@ func getHelmsmanReleases() map[string]map[string]bool {
 	releases := make(map[string]map[string]bool)
 	storageBackend := "configmap"
 
-	if v, ok := s.Settings["storageBackend"]; ok && v == "secret" {
+	if s.Settings.StorageBackend == "secret" {
 		storageBackend = "secret"
 	}
 

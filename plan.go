@@ -72,8 +72,8 @@ func (p plan) execPlan() {
 			if cmd.targetRelease != nil {
 				labelResource(cmd.targetRelease)
 			}
-			if _, err := url.ParseRequestURI(s.Settings["slackWebhook"]); err == nil {
-				notifySlack(cmd.Command.Description+" ... SUCCESS!", s.Settings["slackWebhook"], false, true)
+			if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err == nil {
+				notifySlack(cmd.Command.Description+" ... SUCCESS!", s.Settings.SlackWebhook, false, true)
 			}
 		}
 	}
@@ -98,13 +98,13 @@ func (p plan) printPlan() {
 
 // sendPlanToSlack sends the description of plan commands to slack if a webhook is provided.
 func (p plan) sendPlanToSlack() {
-	if _, err := url.ParseRequestURI(s.Settings["slackWebhook"]); err == nil {
+	if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err == nil {
 		str := ""
 		for _, c := range p.Commands {
 			str = str + c.Command.Description + "\n"
 		}
 
-		notifySlack(strings.TrimRight(str, "\n"), s.Settings["slackWebhook"], false, false)
+		notifySlack(strings.TrimRight(str, "\n"), s.Settings.SlackWebhook, false, false)
 	}
 
 }

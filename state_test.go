@@ -9,7 +9,7 @@ func Test_state_validate(t *testing.T) {
 	type fields struct {
 		Metadata     map[string]string
 		Certificates map[string]string
-		Settings     map[string]string
+		Settings     config
 		Namespaces   map[string]namespace
 		HelmRepos    map[string]string
 		Apps         map[string]*release
@@ -27,11 +27,11 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "s3://some-bucket/12345.key",
 				},
-				Settings: map[string]string{
-					"kubeContext": "minikube",
-					"username":    "admin",
-					"password":    "$K8S_PASSWORD",
-					"clusterURI":  "https://192.168.99.100:8443",
+				Settings: config{
+					KubeContext: "minikube",
+					Username:    "admin",
+					Password:    "$K8S_PASSWORD",
+					ClusterURI:  "https://192.168.99.100:8443",
 				},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
@@ -51,7 +51,7 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "s3://some-bucket/12345.key",
 				},
-				Settings: nil,
+				Settings: config{},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
 				},
@@ -70,11 +70,11 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "s3://some-bucket/12345.key",
 				},
-				Settings: map[string]string{
-					"kubeContext": "",
-					"username":    "admin",
-					"password":    "$K8S_PASSWORD",
-					"clusterURI":  "https://192.168.99.100:8443",
+				Settings: config{
+					KubeContext: "",
+					Username:    "admin",
+					Password:    "$K8S_PASSWORD",
+					ClusterURI:  "https://192.168.99.100:8443",
 				},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
@@ -94,8 +94,8 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "s3://some-bucket/12345.key",
 				},
-				Settings: map[string]string{
-					"kubeContext": "minikube",
+				Settings: config{
+					KubeContext: "minikube",
 				},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
@@ -115,11 +115,11 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "s3://some-bucket/12345.key",
 				},
-				Settings: map[string]string{
-					"kubeContext": "minikube",
-					"username":    "admin",
-					"password":    "K8S_PASSWORD",
-					"clusterURI":  "https://192.168.99.100:8443",
+				Settings: config{
+					KubeContext: "minikube",
+					Username:    "admin",
+					Password:    "K8S_PASSWORD",
+					ClusterURI:  "https://192.168.99.100:8443",
 				},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
@@ -139,11 +139,11 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "s3://some-bucket/12345.key",
 				},
-				Settings: map[string]string{
-					"kubeContext": "minikube",
-					"username":    "admin",
-					"password":    "K8S_PASSWORD",
-					"clusterURI":  "$URI", // unset env
+				Settings: config{
+					KubeContext: "minikube",
+					Username:    "admin",
+					Password:    "K8S_PASSWORD",
+					ClusterURI:  "$URI", // unset env
 				},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
@@ -163,11 +163,11 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "s3://some-bucket/12345.key",
 				},
-				Settings: map[string]string{
-					"kubeContext": "minikube",
-					"username":    "admin",
-					"password":    "K8S_PASSWORD",
-					"clusterURI":  "$SET_URI", // set env var
+				Settings: config{
+					KubeContext: "minikube",
+					Username:    "admin",
+					Password:    "K8S_PASSWORD",
+					ClusterURI:  "$SET_URI", // set env var
 				},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
@@ -187,11 +187,11 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "s3://some-bucket/12345.key",
 				},
-				Settings: map[string]string{
-					"kubeContext": "minikube",
-					"username":    "admin",
-					"password":    "K8S_PASSWORD",
-					"clusterURI":  "https//192.168.99.100:8443", // invalid url
+				Settings: config{
+					KubeContext: "minikube",
+					Username:    "admin",
+					Password:    "K8S_PASSWORD",
+					ClusterURI:  "https//192.168.99.100:8443", // invalid url
 				},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
@@ -210,11 +210,11 @@ func Test_state_validate(t *testing.T) {
 				Certificates: map[string]string{
 					"caCrt": "s3://some-bucket/12345.crt",
 				},
-				Settings: map[string]string{
-					"kubeContext": "minikube",
-					"username":    "admin",
-					"password":    "$K8S_PASSWORD",
-					"clusterURI":  "https://192.168.99.100:8443",
+				Settings: config{
+					KubeContext: "minikube",
+					Username:    "admin",
+					Password:    "$K8S_PASSWORD",
+					ClusterURI:  "https://192.168.99.100:8443",
 				},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
@@ -231,11 +231,11 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: map[string]string{
-					"kubeContext": "minikube",
-					"username":    "admin",
-					"password":    "$K8S_PASSWORD",
-					"clusterURI":  "https://192.168.99.100:8443",
+				Settings: config{
+					KubeContext: "minikube",
+					Username:    "admin",
+					Password:    "$K8S_PASSWORD",
+					ClusterURI:  "https://192.168.99.100:8443",
 				},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
@@ -255,11 +255,11 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "http://someurl.com/",
 				},
-				Settings: map[string]string{
-					"kubeContext": "minikube",
-					"username":    "admin",
-					"password":    "$K8S_PASSWORD",
-					"clusterURI":  "https://192.168.99.100:8443",
+				Settings: config{
+					KubeContext: "minikube",
+					Username:    "admin",
+					Password:    "$K8S_PASSWORD",
+					ClusterURI:  "https://192.168.99.100:8443",
 				},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
@@ -276,8 +276,8 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: map[string]string{
-					"kubeContext": "minikube",
+				Settings: config{
+					KubeContext: "minikube",
 				},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
@@ -294,8 +294,8 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: map[string]string{
-					"kubeContext": "minikube",
+				Settings: config{
+					KubeContext: "minikube",
 				},
 				Namespaces: nil,
 				HelmRepos: map[string]string{
@@ -310,8 +310,8 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: map[string]string{
-					"kubeContext": "minikube",
+				Settings: config{
+					KubeContext: "minikube",
 				},
 				Namespaces: map[string]namespace{},
 				HelmRepos: map[string]string{
@@ -326,8 +326,8 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: map[string]string{
-					"kubeContext": "minikube",
+				Settings: config{
+					KubeContext: "minikube",
 				},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
@@ -341,8 +341,8 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: map[string]string{
-					"kubeContext": "minikube",
+				Settings: config{
+					KubeContext: "minikube",
 				},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
@@ -356,8 +356,8 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: map[string]string{
-					"kubeContext": "minikube",
+				Settings: config{
+					KubeContext: "minikube",
 				},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
@@ -374,8 +374,8 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: map[string]string{
-					"kubeContext": "minikube",
+				Settings: config{
+					KubeContext: "minikube",
 				},
 				Namespaces: map[string]namespace{
 					"staging": namespace{false, false, "", "", "", "", "", ""},
