@@ -1,6 +1,6 @@
 # Contribution Guide
 
-Pull requests, feeback/feature requests are all welcome. This guide will be updated overtime. 
+Pull requests, feeback/feature requests are all welcome. This guide will be updated overtime.
 
 ## Build helmsman from source
 
@@ -8,12 +8,7 @@ To build helmsman from source, you need go:1.9+.  Follow the steps below:
 
 ```
 git clone https://github.com/Praqma/helmsman.git
-go get github.com/BurntSushi/toml
-go get github.com/Praqma/helmsman/gcs 
-go get github.com/Praqma/helmsman/aws
-go get github.com/imdario/mergo
-TAG=$(git describe --abbrev=0 --tags)-$(date +"%s")
-go build -ldflags '-X main.version='$TAG' -extldflags "-static"'
+make build
 ```
 
 ## Submitting pull requests
