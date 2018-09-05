@@ -11,53 +11,37 @@ jobs:
       - run:
           name: Build helmsman
           command: |
-            echo "fetching dependencies ..."
-            go get github.com/Praqma/helmsman/gcs 
-            go get github.com/Praqma/helmsman/aws
-            go get github.com/imdario/mergo
-            go get github.com/hashicorp/go-version
             echo "building ..."
-            TAG=$(git describe --abbrev=0 --tags)-$(date +"%d%m%y")
-            go build -ldflags '-X main.version='$TAG' -extldflags "-static"'
-  
+            make build
+
   test:
-    docker: 
+    docker:
       - image: praqma/helmsman-test
     steps:
-      - checkout 
+      - checkout
       - run:
-          name: Unit test helmsman  
+          name: Unit test helmsman
           command: |
-            echo "fetching dependencies ..."
-            go get github.com/Praqma/helmsman/gcs 
-            go get github.com/Praqma/helmsman/aws
-            go get github.com/imdario/mergo
-            go get github.com/hashicorp/go-version
             echo "running tests ..."
-            go test -v
-  release: 
-    docker: 
+            make test
+  release:
+    docker:
       - image: praqma/helmsman-test
     steps:
-      - checkout 
-      - run: 
+      - checkout
+      - run:
           name: Release helmsman
           command: |
             TAG_SHA=$(git rev-parse $(git describe --abbrev=0 --tags))
             LAST_COMMIT=$(git rev-parse HEAD)
-            if [ "${TAG_SHA}" == "${LAST_COMMIT}" ]; then 
-              echo "fetching dependencies ..."
-              go get github.com/Praqma/helmsman/gcs 
-              go get github.com/Praqma/helmsman/aws
-              go get github.com/imdario/mergo
-              go get github.com/hashicorp/go-version
+            if [ "${TAG_SHA}" == "${LAST_COMMIT}" ]; then
               echo "releasing ..."
-              goreleaser --release-notes release-notes.md 
-            else 
+              make release
+            else
               echo "No release is needed yet."
               exit 0
-            fi    
-     
+            fi
+
       # - setup_remote_docker
       # - run:
       #     name: build docker images and push them to dockerhub
@@ -71,7 +55,7 @@ jobs:
       #       docker build -t praqma/helmsman:$TAG-helm-v2.7.2 --build-arg HELM_VERSION=v2.7.2 dockerfile/.
       #       docker push praqma/helmsman:$TAG-helm-v2.7.2
 
-                
+
 workflows:
   version: 2
   build-test-push-release:
@@ -79,12 +63,12 @@ workflows:
       - build
       - test:
           requires:
-            - build       
+            - build
       - release:
           requires:
             - test
           filters:
             branches:
-              only: master 
+              only: master
             tags:
-              only: /^v.*/       
+              only: /^v.*/

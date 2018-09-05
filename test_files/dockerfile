@@ -8,7 +8,7 @@ ENV HELM_VERSION v2.7.0
 RUN apk add --update ca-certificates \
     && apk add --update -t deps curl \
     && curl -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_LATEST_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl \
-    && chmod +x /usr/local/bin/kubectl 
+    && chmod +x /usr/local/bin/kubectl
 
 RUN apk add --update --no-cache ca-certificates git \
     && apk add --update -t deps curl tar gzip make bash \
@@ -16,9 +16,7 @@ RUN apk add --update --no-cache ca-certificates git \
     && mv /tmp/linux-amd64/helm /usr/local/bin/helm \
     && chmod +x /usr/local/bin/helm \
     && rm -rf /tmp/linux-amd64
-    
-RUN go get github.com/BurntSushi/toml \ 
-    && go get github.com/goreleaser/goreleaser \
-    && go get github.com/imdario/mergo
+
+RUN go get github.com/goreleaser/goreleaser
 
 WORKDIR src/helmsman
