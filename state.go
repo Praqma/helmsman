@@ -20,11 +20,23 @@ type namespace struct {
 	ClientKey            string `yaml:"clientKey"`
 }
 
+// config type represents the settings fields
+type config struct {
+	KubeContext    string `yaml:"kubeContext"`
+	Username       string `yaml:"username"`
+	Password       string `yaml:"password"`
+	ClusterURI     string `yaml:"clusterURI"`
+	ServiceAccount string `yaml:"serviceAccount"`
+	StorageBackend string `yaml:"storageBackend"`
+	SlackWebhook   string `yaml:"slackWebhook"`
+	ReverseDelete  bool   `yaml:"reverseDelete"`
+}
+
 // state type represents the desired state of applications on a k8s cluster.
 type state struct {
 	Metadata     map[string]string    `yaml:"metadata"`
 	Certificates map[string]string    `yaml:"certificates"`
-	Settings     map[string]string    `yaml:"settings"`
+	Settings     config               `yaml:"settings"`
 	Namespaces   map[string]namespace `yaml:"namespaces"`
 	HelmRepos    map[string]string    `yaml:"helmRepos"`
 	Apps         map[string]*release  `yaml:"apps"`
@@ -35,43 +47,46 @@ type state struct {
 func (s state) validate() (bool, string) {
 
 	// settings
-	if s.Settings == nil || len(s.Settings) == 0 {
+	if s.Settings == (config{}) {
 		return false, "ERROR: settings validation failed -- no settings table provided in state file."
-	} else if value, ok := s.Settings["kubeContext"]; !ok || value == "" {
+	} else if s.Settings.KubeContext == "" {
 		return false, "ERROR: settings validation failed -- you have not provided a " +
 			"kubeContext to use. Can't work without it. Sorry!"
-	} else if value, ok = s.Settings["clusterURI"]; ok {
+	} else if s.Settings.ClusterURI != "" {
 
-		s.Settings["clusterURI"] = subsituteEnv(value)
-		if _, err := url.ParseRequestURI(s.Settings["clusterURI"]); err != nil {
+		s.Settings.ClusterURI = subsituteEnv(s.Settings.ClusterURI)
+		if _, err := url.ParseRequestURI(s.Settings.ClusterURI); err != nil {
 			return false, "ERROR: settings validation failed -- clusterURI must have a valid URL set in an env variable or passed directly. Either the env var is missing/empty or the URL is invalid."
 		}
 
-		if _, ok = s.Settings["username"]; !ok {
+		if s.Settings.Username == "" {
 			return false, "ERROR: settings validation failed -- username must be provided if clusterURI is defined."
 		}
-		if value, ok = s.Settings["password"]; ok {
-			s.Settings["password"] = subsituteEnv(value)
+		if s.Settings.Password != "" {
+			s.Settings.Password = subsituteEnv(s.Settings.Password)
 		} else {
 			return false, "ERROR: settings validation failed -- password must be provided if clusterURI is defined."
 		}
 
-		if s.Settings["password"] == "" {
+		if s.Settings.Password == "" {
 			return false, "ERROR: settings validation failed -- password should be set as an env variable. It is currently missing or empty. "
 		}
 	}
 
 	// slack webhook validation (if provided)
-	if value, ok := s.Settings["slackWebhook"]; ok {
-		s.Settings["slackWebhook"] = subsituteEnv(value)
-		if _, err := url.ParseRequestURI(s.Settings["slackWebhook"]); err != nil {
+	if s.Settings.SlackWebhook != "" {
+		s.Settings.SlackWebhook = subsituteEnv(s.Settings.SlackWebhook)
+		if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err != nil {
 			return false, "ERROR: settings validation failed -- slackWebhook must be a valid URL."
 		}
 	}
 
 	// certificates
 	if s.Certificates != nil && len(s.Certificates) != 0 {
-		_, ok1 := s.Settings["clusterURI"]
+		ok1 := false
+		if s.Settings.ClusterURI != "" {
+			ok1 = true
+		}
 		_, ok2 := s.Certificates["caCrt"]
 		_, ok3 := s.Certificates["caKey"]
 		if ok1 && (!ok2 || !ok3) {
@@ -90,7 +105,7 @@ func (s state) validate() (bool, string) {
 		}
 
 	} else {
-		if _, ok := s.Settings["clusterURI"]; ok {
+		if s.Settings.ClusterURI != "" {
 			return false, "ERROR: certifications validation failed -- You want me to connect to your cluster for you " +
 				"but have not given me the cert/key to do so. Please add [caCrt] and [caKey] under Certifications. You might also need to provide [clientCrt]."
 		}
@@ -206,7 +221,7 @@ func (s state) print() {
 	printMap(s.Certificates)
 	fmt.Println("\nSettings: ")
 	fmt.Println("--------- ")
-	printMap(s.Settings)
+	fmt.Printf("%+v\n", s.Settings)
 	fmt.Println("\nNamespaces: ")
 	fmt.Println("------------- ")
 	printNamespacesMap(s.Namespaces)
