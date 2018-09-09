@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -187,9 +188,14 @@ func inspectUpgradeScenario(r *release, rs releaseState) {
 				r.Namespace+" ]]", r.Priority)
 
 		} else {
-			upgradeRelease(r)
-			logDecision("DECISION: release [ "+r.Name+" ] is desired to be enabled and is currently enabled."+
-				"I will upgrade it in case you changed your values.yaml!", r.Priority)
+			if diff := diffRelease(r); diff != "" {
+				upgradeRelease(r)
+				logDecision("DECISION: release [ "+r.Name+" ] is desired to be enabled and is currently enabled. "+
+					"I will upgrade it!", r.Priority)
+			} else {
+				logDecision("DECISION: release [ "+r.Name+" ] is desired to be enabled and is currently enabled. "+
+					"Nothing to do here!", r.Priority)
+			}
 		}
 	} else {
 		reInstallRelease(r, rs)
@@ -200,6 +206,26 @@ func inspectUpgradeScenario(r *release, rs releaseState) {
 			" ]] might not correctly connect to existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/move_charts_across_namespaces.md"+
 			" for details if this release uses PV and PVC.", r.Priority)
 	}
+}
+
+// diffRelease diffs an existing release with the specified values.yaml
+func diffRelease(r *release) string {
+	exitCode := 0
+	msg := ""
+
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm diff upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + r.Version + " " + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r)},
+		Description: "upgrading release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
+	}
+
+	if exitCode, msg = cmd.exec(debug, verbose); exitCode != 0 {
+		logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + msg)
+	} else {
+		fmt.Println(msg)
+	}
+
+	return msg
 }
 
 // upgradeRelease upgrades an existing release with the specified values.yaml

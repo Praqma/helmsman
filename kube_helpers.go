@@ -269,7 +269,7 @@ func createRole(namespace string) (bool, string) {
 // labelResource applies Helmsman specific labels to Helm's state resources (secrets/configmaps)
 func labelResource(r *release) {
 	if r.Enabled {
-		log.Println("INFO: applying Helmsman lables to [ " + r.Name + " ] in namespace [ " + r.Namespace + " ] ")
+		log.Println("INFO: applying Helmsman labels to [ " + r.Name + " ] in namespace [ " + r.Namespace + " ] ")
 		storageBackend := "configmap"
 
 		if s.Settings.StorageBackend == "secret" {
