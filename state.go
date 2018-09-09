@@ -123,10 +123,10 @@ func (s state) validate() (bool, string) {
 			if ns.InstallTiller && ns.UseTiller {
 				return false, "ERROR: namespaces validation failed -- installTiller and useTiller can't be used together for namespace [ " + k + " ]"
 			}
-			if !ns.InstallTiller {
-				log.Println("INFO: namespace validation -- Tiller is NOT desired to be deployed in namespace [ " + k + " ].")
-			} else if !ns.UseTiller {
+			if ns.UseTiller {
 				log.Println("INFO: namespace validation -- a pre-installed Tiller is desired to be used in namespace [ " + k + " ].")
+			} else if !ns.InstallTiller {
+				log.Println("INFO: namespace validation -- Tiller is NOT desired to be deployed in namespace [ " + k + " ].")
 			} else {
 				if tillerTLSEnabled(k) {
 					// validating the TLS certs and keys for Tiller
