@@ -355,9 +355,9 @@ func initHelm() (bool, string) {
 
 	defaultSA := s.Settings.ServiceAccount
 
-	if v, ok := s.Namespaces["kube-system"]; ok {
-		if v.InstallTiller {
-			if ok, err := deployTiller("kube-system", v.TillerServiceAccount, defaultSA); !ok {
+	if ns, ok := s.Namespaces["kube-system"]; ok {
+		if ns.InstallTiller {
+			if ok, err := deployTiller("kube-system", ns.TillerServiceAccount, defaultSA); !ok {
 				return false, err
 			}
 		}

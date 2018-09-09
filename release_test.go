@@ -10,7 +10,7 @@ func Test_validateRelease(t *testing.T) {
 		Metadata:     make(map[string]string),
 		Certificates: make(map[string]string),
 		Settings:     (config{}),
-		Namespaces:   map[string]namespace{"namespace": namespace{false, false, "", "", "", "", "", ""}},
+		Namespaces:   map[string]namespace{"namespace": namespace{false, false, false, "", "", "", "", "", ""}},
 		HelmRepos:    make(map[string]string),
 		Apps:         make(map[string]*release),
 	}
