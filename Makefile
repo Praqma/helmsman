@@ -48,7 +48,7 @@ test: dependencies ## Run unit tests
 .PHONY: test
 
 cross: dependencies ## Create binaries for all OSs
-	@env CGO_ENABLED=0 gox -os '!freebsd !netbsd' -arch '!arm' -output 	"dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}'
+	@env CGO_ENABLED=0 gox -os '!freebsd !netbsd' -arch '!arm' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}'
 .PHONY: cross
 
 release: dependencies ## Generate a new release

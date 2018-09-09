@@ -67,12 +67,16 @@ func init() {
 		logVersions()
 	}
 
+	if !toolExists("kubectl") {
+		logError("ERROR: kubectl is not installed/configured correctly. Aborting!")
+	}
+
 	if !toolExists("helm") {
 		logError("ERROR: helm is not installed/configured correctly. Aborting!")
 	}
 
-	if !toolExists("kubectl") {
-		logError("ERROR: kubectl is not installed/configured correctly. Aborting!")
+	if !helmPluginExists("diff") {
+		logError("ERROR: helm diff plugin is not installed/configured correctly. Aborting!")
 	}
 
 	// read the TOML/YAML desired state file
@@ -125,4 +129,22 @@ func toolExists(tool string) bool {
 	}
 
 	return true
+}
+
+// helmPluginExists returns true if the plugin is present in the environment and false otherwise.
+// It takes as input the plugin's name to check if it is recognizable or not. e.g. diff
+func helmPluginExists(plugin string) bool {
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm plugin list"},
+		Description: "validating that " + plugin + " is installed.",
+	}
+
+	exitCode, result := cmd.exec(debug, false)
+
+	if exitCode != 0 {
+		return false
+	}
+
+	return strings.Contains(result, plugin)
 }
