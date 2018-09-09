@@ -12,6 +12,7 @@ import (
 type namespace struct {
 	Protected            bool   `yaml:"protected"`
 	InstallTiller        bool   `yaml:"installTiller"`
+	UseTiller            bool   `yaml:"useTiller"`
 	TillerServiceAccount string `yaml:"tillerServiceAccount"`
 	CaCert               string `yaml:"caCert"`
 	TillerCert           string `yaml:"tillerCert"`
@@ -118,19 +119,24 @@ func (s state) validate() (bool, string) {
 				"to work with!"
 		}
 
-		for k, v := range s.Namespaces {
-			if !v.InstallTiller {
+		for k, ns := range s.Namespaces {
+			if ns.InstallTiller && ns.UseTiller {
+				return false, "ERROR: namespaces validation failed -- installTiller and useTiller can't be used together for namespace [ " + k + " ]"
+			}
+			if !ns.InstallTiller {
 				log.Println("INFO: namespace validation -- Tiller is NOT desired to be deployed in namespace [ " + k + " ].")
+			} else if !ns.UseTiller {
+				log.Println("INFO: namespace validation -- a pre-installed Tiller is desired to be used in namespace [ " + k + " ].")
 			} else {
 				if tillerTLSEnabled(k) {
 					// validating the TLS certs and keys for Tiller
 					// if they are valid, their values (if they are env vars) are substituted
 					var ok1, ok2, ok3, ok4, ok5 bool
-					ok1, v.CaCert = isValidCert(v.CaCert)
-					ok2, v.ClientCert = isValidCert(v.ClientCert)
-					ok3, v.ClientKey = isValidCert(v.ClientKey)
-					ok4, v.TillerCert = isValidCert(v.TillerCert)
-					ok5, v.TillerKey = isValidCert(v.TillerKey)
+					ok1, ns.CaCert = isValidCert(ns.CaCert)
+					ok2, ns.ClientCert = isValidCert(ns.ClientCert)
+					ok3, ns.ClientKey = isValidCert(ns.ClientKey)
+					ok4, ns.TillerCert = isValidCert(ns.TillerCert)
+					ok5, ns.TillerKey = isValidCert(ns.TillerKey)
 					if !ok1 || !ok2 || !ok3 || !ok4 || !ok5 {
 						return false, "ERROR: namespaces validation failed  -- some certs/keys are not valid for Tiller TLS in namespace [ " + k + " ]."
 					}
