@@ -23,6 +23,7 @@ jobs:
           name: Unit test helmsman
           command: |
             echo "running tests ..."
+            helm plugin install https://github.com/databus23/helm-diff
             make test
   release:
     docker:
