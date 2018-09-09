@@ -36,6 +36,7 @@ RUN apk --no-cache update \
     && mkdir -p ~/.helm/plugins \
     && helm plugin install https://github.com/hypnoglow/helm-s3.git \
     && helm plugin install https://github.com/nouney/helm-gcs \
+    && helm plugin install https://github.com/databus23/helm-diff \
     && rm -rf /tmp/linux-amd64
 
 COPY --from=kube /usr/local/bin/kubectl /bin/kubectl
