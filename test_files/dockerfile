@@ -15,6 +15,8 @@ RUN apk add --update --no-cache ca-certificates git \
     && curl -L http://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar zxv -C /tmp \
     && mv /tmp/linux-amd64/helm /usr/local/bin/helm \
     && chmod +x /usr/local/bin/helm \
+    && mkdir -p ~/.helm/plugins \
+    && helm plugin install https://github.com/databus23/helm-diff \
     && rm -rf /tmp/linux-amd64
 
 RUN go get github.com/goreleaser/goreleaser
