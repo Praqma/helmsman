@@ -52,8 +52,8 @@ func main() {
 	}
 
 	// check if helm Tiller is ready
-	for k, v := range s.Namespaces {
-		if v.InstallTiller {
+	for k, ns := range s.Namespaces {
+		if ns.InstallTiller || ns.UseTiller {
 			waitForTiller(k)
 		}
 	}

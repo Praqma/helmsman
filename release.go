@@ -36,14 +36,14 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 		r.Name = appLabel
 	}
 	if r.TillerNamespace != "" {
-		if v, ok := s.Namespaces[r.TillerNamespace]; !ok {
+		if ns, ok := s.Namespaces[r.TillerNamespace]; !ok {
 			return false, "tillerNamespace specified, but the namespace specified does not exist!"
-		} else if !v.InstallTiller {
-			return false, "tillerNamespace specified, but that namespace does not have installTiller set to true."
+		} else if !ns.InstallTiller && !ns.UseTiller {
+			return false, "tillerNamespace specified, but that namespace does not have neither installTiller nor useTiller set to true."
 		}
 	} else if getDesiredTillerNamespace(r) == "kube-system" {
-		if v, ok := s.Namespaces["kube-system"]; ok && !v.InstallTiller {
-			return false, "app is desired to be deployed using Tiller from [[ kube-system ]] but kube-system is not desired to have a Tiller. You can use another Tiller with the 'tillerNamespace' option or deploy Tiller in kube-system. "
+		if ns, ok := s.Namespaces["kube-system"]; ok && !ns.InstallTiller && !ns.UseTiller {
+			return false, "app is desired to be deployed using Tiller from [[ kube-system ]] but kube-system is not desired to have a Tiller installed nor use an existing Tiller. You can use another Tiller with the 'tillerNamespace' option or deploy Tiller in kube-system. "
 		}
 	}
 	if names[r.Name][getDesiredTillerNamespace(r)] {

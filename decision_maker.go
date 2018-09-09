@@ -342,7 +342,7 @@ func getDesiredTillerNamespaceFlag(r *release) string {
 func getDesiredTillerNamespace(r *release) string {
 	if r.TillerNamespace != "" {
 		return r.TillerNamespace
-	} else if v, ok := s.Namespaces[r.Namespace]; ok && v.InstallTiller {
+	} else if ns, ok := s.Namespaces[r.Namespace]; ok && (ns.InstallTiller || ns.UseTiller) {
 		return r.Namespace
 	}
 
