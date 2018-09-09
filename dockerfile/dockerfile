@@ -1,7 +1,7 @@
-FROM golang:1.9 as builder
+FROM golang:1.10-alpine3.7 as builder
 WORKDIR /go/src/
+RUN apk --no-cache add make git
 RUN git clone https://github.com/Praqma/helmsman.git
-RUN apk --no-cache add make
 
 #  build a statically linked binary so that it works on stripped linux images such as alpine/busybox.
 RUN cd helmsman \
