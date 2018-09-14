@@ -100,6 +100,7 @@ func main() {
 
 // cleanup deletes the k8s certificates and keys files
 // It also deletes any Tiller TLS certs and keys
+// and secret files
 func cleanup() {
 	if _, err := os.Stat("ca.crt"); err == nil {
 		deleteFile("ca.crt")
@@ -128,6 +129,17 @@ func cleanup() {
 		}
 		if _, err := os.Stat(k + "-client.key"); err == nil {
 			deleteFile(k + "-client.key")
+		}
+	}
+
+	for _, app := range s.Apps {
+		if _, err := os.Stat(app.SecretFile + ".dec"); err == nil {
+			deleteFile(app.SecretFile + ".dec")
+		}
+		for _, secret := range app.SecretFiles {
+			if _, err := os.Stat(secret + ".dec"); err == nil {
+				deleteFile(secret + ".dec")
+			}
 		}
 	}
 }
