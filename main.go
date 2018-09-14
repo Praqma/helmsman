@@ -20,10 +20,12 @@ func (i *stringArray) Set(value string) error {
 var s state
 var debug bool
 var files stringArray
+var envFiles stringArray
 var apply bool
 var help bool
 var v bool
 var verbose bool
+var noBanner bool
 var nsOverride string
 var checkCleanup bool
 var skipValidation bool
