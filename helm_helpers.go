@@ -439,3 +439,20 @@ func deleteUntrackedRelease(release string, tillerNamespace string) {
 
 	outcome.addCommand(cmd, -800, nil)
 }
+
+// decrypt a helm secret file
+func decryptSecret(name string) bool {
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm secrets dec " + name},
+		Description: "Decrypting " + name,
+	}
+
+	exitCode, _ := cmd.exec(debug, false)
+
+	if exitCode != 0 {
+		return false
+	}
+
+	return true
+}
