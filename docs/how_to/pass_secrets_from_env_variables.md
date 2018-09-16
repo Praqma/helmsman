@@ -23,7 +23,7 @@ Starting from v0.1.3, Helmsman allows you to pass secrets and other user input t
     [apps.jira.set] # the format is [apps.<<release_name (as defined above)>>.set]
     db_username= "$JIRA_DB_USERNAME" # pass any number of key/value pairs where the key is the input expected by the helm charts and the value is an env variable name starting with $
     db_password= "$JIRA_DB_PASSWORD"
-    # ...
+# ...
 
 ```
 
