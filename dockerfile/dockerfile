@@ -14,7 +14,7 @@ RUN cd helmsman \
     && CGO_ENABLED=0 GOOS=linux go install -a -ldflags '-X main.version='$TAG' -extldflags "-static"' .
 
 FROM alpine:3.6 as kube
-ENV KUBE_LATEST_VERSION="v1.10.0"
+ENV KUBE_LATEST_VERSION="v1.11.3"
 
 RUN apk add --update ca-certificates
 RUN apk add --update -t deps curl
@@ -33,11 +33,19 @@ RUN apk --no-cache update \
     && curl -L http://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar zxv -C /tmp \
     && mv /tmp/linux-amd64/helm /usr/local/bin/helm \
     && chmod +x /usr/local/bin/helm \
-    && mkdir -p ~/.helm/plugins \
-    && helm plugin install https://github.com/hypnoglow/helm-s3.git \
+    && rm -rf /tmp/linux-amd64  \
+    && mkdir -p ~/.helm/plugins
+
+RUN adduser -D -g '' helmsman \
+    && chown -R helmsman ~/.helm
+
+#USER helmsman
+
+RUN helm plugin install https://github.com/hypnoglow/helm-s3.git \
     && helm plugin install https://github.com/nouney/helm-gcs \
     && helm plugin install https://github.com/databus23/helm-diff \
-    && rm -rf /tmp/linux-amd64
+    && helm plugin install https://github.com/futuresimple/helm-secrets \
+    && rm -r /tmp/helm-diff /tmp/helm-diff.tgz
 
 COPY --from=kube /usr/local/bin/kubectl /bin/kubectl
 COPY --from=builder /go/bin/helmsman   /bin/helmsman
