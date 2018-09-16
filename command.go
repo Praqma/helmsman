@@ -44,7 +44,7 @@ func (c command) exec(debug bool, verbose bool) (int, string) {
 	cmd.Stderr = &stderr
 
 	if err := cmd.Start(); err != nil {
-		log.Fatalf("ERROR: cmd.Start: %v", err)
+		logError("ERROR: cmd.Start: " + err.Error())
 	}
 
 	if err := cmd.Wait(); err != nil {
@@ -53,7 +53,7 @@ func (c command) exec(debug bool, verbose bool) (int, string) {
 				return status.ExitStatus(), stderr.String()
 			}
 		} else {
-			log.Fatalf("ERROR: cmd.Wait: %v", err)
+			logError("ERROR: cmd.Wait: " + err.Error())
 		}
 	}
 

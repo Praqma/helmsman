@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/logrusorgru/aurora"
 )
 
 func checkCredentialsEnvVar() bool {
@@ -38,14 +39,14 @@ func ReadFile(bucketName string, filename string, outFile string) {
 	sess, err := session.NewSession()
 
 	if err != nil {
-		log.Fatal("ERROR: Can't create AWS session: " + err.Error())
+		log.Fatal(aurora.Bold(aurora.Red("ERROR: Can't create AWS session: " + err.Error())))
 	}
 	// create S3 download manger
 	downloader := s3manager.NewDownloader(sess)
 
 	file, err := os.Create(outFile)
 	if err != nil {
-		log.Fatal("ERROR: Failed to open file " + outFile + ": " + err.Error())
+		log.Fatal(aurora.Bold(aurora.Red("ERROR: Failed to open file " + outFile + ": " + err.Error())))
 	}
 
 	defer file.Close()
@@ -56,7 +57,7 @@ func ReadFile(bucketName string, filename string, outFile string) {
 			Key:    aws.String(filename),
 		})
 	if err != nil {
-		log.Fatal("ERROR: Failed to download file  " + filename + " from S3: " + err.Error())
+		log.Fatal(aurora.Bold(aurora.Red("ERROR: Failed to download file  " + filename + " from S3: " + err.Error())))
 	}
 
 	log.Println("INFO: Successfully downloaded " + filename + " from S3 as " + outFile)
