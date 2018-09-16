@@ -247,6 +247,10 @@ Options:
 - valuesFile  : a valid path to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFiles together. Leaving it empty uses the default chart values.
 - valuesFiles : array of valid paths to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFile together. Leaving it empty uses the default chart values.
 > The values file(s) path is relative from the location of the (first) desired state file you pass in your Helmsman command.
+- secretsFile  : a valid path to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFiles together. Leaving it empty uses the default chart secrets.
+- secretsFiles : array of valid paths to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFile together. Leaving it empty uses the default chart secrets.
+> The secrets file(s) path is relative from the location of the (first) desired state file you pass in your Helmsman command.
+> To use the secrets files you must have the helm-secrets plugin
 - purge       : defines whether to use the Helm purge flag when deleting the release. (true/false)
 - test        : defines whether to run the chart tests whenever the release is installed.
 - protected   : defines if the release should be protected against changes. Namespace-level protection has higher priority than this flag. Check the [protection guide](how_to/protect_namespaces_and_releases.md) for more details.

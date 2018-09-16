@@ -304,11 +304,17 @@ func getValuesFiles(r *release) string {
 	}
 
 	if r.SecretFile != "" {
+		if !helmPluginExists("secrets") {
+			logError("ERROR: helm secrets plugin is not installed/configured correctly. Aborting!")
+		}
 		if ok := decryptSecret(r.SecretFile); !ok {
 			logError("Failed to decrypt secret file" + r.SecretFile)
 		}
 		fileList = append(fileList, pwd+"/"+relativeDir+"/"+r.SecretFile+".dec")
 	} else if len(r.SecretFiles) > 0 {
+		if !helmPluginExists("secrets") {
+			logError("ERROR: helm secrets plugin is not installed/configured correctly. Aborting!")
+		}
 		for i := 0; i < len(r.SecretFiles); i++ {
 			r.SecretFiles[i] = pwd + "/" + relativeDir + "/" + r.SecretFiles[i]
 			if ok := decryptSecret(r.SecretFiles[i]); !ok {
