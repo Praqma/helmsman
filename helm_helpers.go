@@ -325,12 +325,10 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 
 	tls := ""
 	if tillerTLSEnabled(namespace) {
-		tillerCert := downloadFile(s.Namespaces[namespace].TillerCert, namespace+"-tiller.cert")
-		tillerKey := downloadFile(s.Namespaces[namespace].TillerKey, namespace+"-tiller.key")
-		caCert := downloadFile(s.Namespaces[namespace].CaCert, namespace+"-ca.cert")
-		// client cert and key
-		downloadFile(s.Namespaces[namespace].ClientCert, namespace+"-client.cert")
-		downloadFile(s.Namespaces[namespace].ClientKey, namespace+"-client.key")
+		tillerCert := namespace + "-tiller.cert"
+		tillerKey := namespace + "-tiller.key"
+		caCert := namespace + "-ca.cert"
+
 		tls = " --tiller-tls --tiller-tls-cert " + tillerCert + " --tiller-tls-key " + tillerKey + " --tiller-tls-verify --tls-ca-cert " + caCert
 	}
 
@@ -372,6 +370,14 @@ func initHelm() (bool, string) {
 			if ok, err := deployTiller(k, ns.TillerServiceAccount, defaultSA); !ok {
 				return false, err
 			}
+		}
+		if tillerTLSEnabled(k) {
+			downloadFile(s.Namespaces[k].TillerCert, k+"-tiller.cert")
+			downloadFile(s.Namespaces[k].TillerKey, k+"-tiller.key")
+			downloadFile(s.Namespaces[k].CaCert, k+"-ca.cert")
+			// client cert and key
+			downloadFile(s.Namespaces[k].ClientCert, k+"-client.cert")
+			downloadFile(s.Namespaces[k].ClientKey, k+"-client.key")
 		}
 	}
 
