@@ -17,6 +17,8 @@ type release struct {
 	Version         string
 	ValuesFile      string   `yaml:"valuesFile"`
 	ValuesFiles     []string `yaml:"valuesFiles"`
+	SecretFile      string   `yaml:"secretFile"`
+	SecretFiles     []string `yaml:"secretFiles"`
 	Purge           bool
 	Test            bool
 	Protected       bool
@@ -71,6 +73,18 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 		return false, "valuesFile and valuesFiles should not be used together."
 	} else if len(r.ValuesFiles) > 0 {
 		for _, filePath := range r.ValuesFiles {
+			if _, pathErr := os.Stat(pwd + "/" + relativeDir + "/" + filePath); !isOfType(filePath, ".yaml") || pathErr != nil {
+				return false, "the value for valueFile '" + filePath + "' must be a valid relative (from your first dsf file) file path for a yaml file."
+			}
+		}
+	}
+
+	if r.SecretFile != "" && (!isOfType(r.SecretFile, ".yaml") || err != nil) {
+		return false, "secretFile must be a valid relative (from your first dsf file) file path for a yaml file, Or can be left empty."
+	} else if r.SecretFile != "" && len(r.SecretFiles) > 0 {
+		return false, "secretFile and secretFiles should not be used together."
+	} else if len(r.SecretFiles) > 0 {
+		for _, filePath := range r.SecretFiles {
 			if _, pathErr := os.Stat(pwd + "/" + relativeDir + "/" + filePath); !isOfType(filePath, ".yaml") || pathErr != nil {
 				return false, "the value for valueFile '" + filePath + "' must be a valid relative (from your first dsf file) file path for a yaml file."
 			}
