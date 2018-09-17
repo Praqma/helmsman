@@ -34,6 +34,7 @@ var helmVersion string
 var kubectlVersion string
 var pwd string
 var relativeDir string
+var dryRun bool
 
 func main() {
 	// set the kubecontext to be used Or create it if it does not exist
@@ -87,7 +88,7 @@ func main() {
 	p.printPlan()
 	p.sendPlanToSlack()
 
-	if apply {
+	if apply || dryRun {
 		p.execPlan()
 	}
 

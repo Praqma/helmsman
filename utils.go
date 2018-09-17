@@ -19,6 +19,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/Praqma/helmsman/aws"
 	"github.com/Praqma/helmsman/gcs"
+	"github.com/logrusorgru/aurora"
 )
 
 // printMap prints to the console any map of string keys and values.
@@ -56,16 +57,16 @@ func toTOML(file string, s *state) {
 	)
 
 	if err := toml.NewEncoder(&buff).Encode(s); err != nil {
-		log.Fatal(err)
+		logError(err.Error())
 		os.Exit(1)
 	}
 	newFile, err = os.Create(file)
 	if err != nil {
-		log.Fatal(err)
+		logError(err.Error())
 	}
 	bytesWritten, err := newFile.Write(buff.Bytes())
 	if err != nil {
-		log.Fatal(err)
+		logError(err.Error())
 	}
 	log.Printf("Wrote %d bytes.\n", bytesWritten)
 	newFile.Close()
@@ -94,16 +95,16 @@ func toYAML(file string, s *state) {
 	)
 
 	if err := yaml.NewEncoder(&buff).Encode(s); err != nil {
-		log.Fatal(err)
+		logError(err.Error())
 		os.Exit(1)
 	}
 	newFile, err = os.Create(file)
 	if err != nil {
-		log.Fatal(err)
+		logError(err.Error())
 	}
 	bytesWritten, err := newFile.Write(buff.Bytes())
 	if err != nil {
-		log.Fatal(err)
+		logError(err.Error())
 	}
 	log.Printf("Wrote %d bytes.\n", bytesWritten)
 	newFile.Close()
@@ -126,7 +127,7 @@ func toFile(file string, s *state) {
 	} else if isOfType(file, ".yaml") {
 		fromYAML(file, s)
 	} else {
-		log.Fatal("State file does not have toml/yaml extension.")
+		logError("ERROR: State file does not have toml/yaml extension.")
 	}
 }
 
@@ -141,7 +142,7 @@ func isOfType(filename string, filetype string) bool {
 func readFile(filepath string) string {
 	data, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		log.Fatal("ERROR: failed to read [ " + filepath + " ] file content: " + err.Error())
+		logError("ERROR: failed to read [ " + filepath + " ] file content: " + err.Error())
 	}
 	return string(data)
 }
@@ -155,6 +156,7 @@ func printHelp() {
 	fmt.Println("Options:")
 	fmt.Println("-f                        desired state file name(s), may be supplied more than once to merge state files.")
 	fmt.Println("--debug                   prints basic logs during execution.")
+	fmt.Println("--dry-run                 apply the dry-run option for helm commands.")
 	fmt.Println("--apply                   generates and applies an action plan.")
 	fmt.Println("--verbose                 prints more verbose logs during execution.")
 	fmt.Println("--ns-override             overrides defined namespaces with a provided one.")
@@ -226,19 +228,19 @@ func downloadFile(path string, outfile string) string {
 func copyFile(source string, destination string) {
 	from, err := os.Open(source)
 	if err != nil {
-		log.Fatal("ERROR: while copying " + source + " to " + destination + " : " + err.Error())
+		logError("ERROR: while copying " + source + " to " + destination + " : " + err.Error())
 	}
 	defer from.Close()
 
 	to, err := os.OpenFile(destination, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
-		log.Fatal("ERROR: while copying " + source + " to " + destination + " : " + err.Error())
+		logError("ERROR: while copying " + source + " to " + destination + " : " + err.Error())
 	}
 	defer to.Close()
 
 	_, err = io.Copy(to, from)
 	if err != nil {
-		log.Fatal("ERROR: while copying " + source + " to " + destination + " : " + err.Error())
+		logError("ERROR: while copying " + source + " to " + destination + " : " + err.Error())
 	}
 }
 
@@ -246,7 +248,7 @@ func copyFile(source string, destination string) {
 func deleteFile(path string) {
 	log.Println("INFO: cleaning up ... deleting " + path)
 	if err := os.Remove(path); err != nil {
-		log.Fatal("ERROR: could not delete file: " + path)
+		logError("ERROR: could not delete file: " + path)
 	}
 }
 
@@ -293,7 +295,7 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal("ERROR: while sending notifications to slack" + err.Error())
+		logError("ERROR: while sending notifications to slack" + err.Error())
 	}
 	defer resp.Body.Close()
 
@@ -308,7 +310,7 @@ func logError(msg string) {
 	if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err == nil {
 		notifySlack(msg, s.Settings.SlackWebhook, true, apply)
 	}
-	log.Fatal(msg)
+	log.Fatal(aurora.Bold(aurora.Red(msg)))
 }
 
 // getBucketElements returns a map containing the bucket name and the file path inside the bucket

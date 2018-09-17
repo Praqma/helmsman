@@ -127,7 +127,7 @@ func buildState() {
 		// skipping the header from helm output
 		time, err := time.Parse("Mon Jan _2 15:04:05 2006", rel.Releases[i].Updated)
 		if err != nil {
-			log.Fatal("ERROR: while converting release time: " + err.Error())
+			logError("ERROR: while converting release time: " + err.Error())
 		}
 
 		currentState[rel.Releases[i].Name+"-"+rel.Releases[i].TillerNamespace] = releaseState{
@@ -237,7 +237,7 @@ func waitForTiller(namespace string) {
 			time.Sleep(5 * time.Second)
 			exitCode, err = cmd.exec(debug, verbose)
 		} else {
-			log.Fatal("ERROR: while waiting for helm Tiller to be ready in namespace [ " + namespace + " ] : " + err)
+			logError("ERROR: while waiting for helm Tiller to be ready in namespace [ " + namespace + " ] : " + err)
 		}
 		attempt = attempt + 1
 	}

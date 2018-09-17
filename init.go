@@ -27,6 +27,7 @@ func init() {
 	flag.Var(&files, "f", "desired state file name(s), may be supplied more than once to merge state files")
 	flag.BoolVar(&apply, "apply", false, "apply the plan directly")
 	flag.BoolVar(&debug, "debug", false, "show the execution logs")
+	flag.BoolVar(&dryRun, "dry-run", false, "apply the dry-run option for helm commands.")
 	flag.BoolVar(&help, "help", false, "show Helmsman help")
 	flag.BoolVar(&v, "v", false, "show the version")
 	flag.BoolVar(&verbose, "verbose", false, "show verbose execution logs")
@@ -38,6 +39,10 @@ func init() {
 	flag.Parse()
 
 	fmt.Println(banner + "version: " + appVersion + "\n" + slogan)
+
+	if dryRun && apply {
+		logError("ERROR: --apply and --dry-run can't be used together.")
+	}
 
 	helmVersion = strings.TrimSpace(strings.SplitN(getHelmClientVersion(), ": ", 2)[1])
 	kubectlVersion = strings.TrimSpace(strings.SplitN(getKubectlClientVersion(), ": ", 2)[1])
@@ -98,7 +103,7 @@ func init() {
 		// validate the desired state content
 		if len(files) > 0 {
 			if result, msg := s.validate(); !result { // syntax validation
-				log.Fatal(msg)
+				logError(msg)
 			}
 		}
 	} else {
