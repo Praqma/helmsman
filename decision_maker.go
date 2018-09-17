@@ -292,13 +292,41 @@ func getTimeout(r *release) string {
 
 // getValuesFiles return partial install/upgrade release command to substitute the -f flag in Helm.
 func getValuesFiles(r *release) string {
+	var fileList []string
+
 	if r.ValuesFile != "" {
-		return " -f " + pwd + "/" + relativeDir + "/" + r.ValuesFile
+		fileList = append(fileList, pwd+"/"+relativeDir+"/"+r.ValuesFile)
 	} else if len(r.ValuesFiles) > 0 {
 		for i := 0; i < len(r.ValuesFiles); i++ {
 			r.ValuesFiles[i] = pwd + "/" + relativeDir + "/" + r.ValuesFiles[i]
 		}
-		return " -f " + strings.Join(r.ValuesFiles, " -f ")
+		fileList = append(fileList, r.ValuesFiles...)
+	}
+
+	if r.SecretFile != "" {
+		if !helmPluginExists("secrets") {
+			logError("ERROR: helm secrets plugin is not installed/configured correctly. Aborting!")
+		}
+		if ok := decryptSecret(r.SecretFile); !ok {
+			logError("Failed to decrypt secret file" + r.SecretFile)
+		}
+		fileList = append(fileList, pwd+"/"+relativeDir+"/"+r.SecretFile+".dec")
+	} else if len(r.SecretFiles) > 0 {
+		if !helmPluginExists("secrets") {
+			logError("ERROR: helm secrets plugin is not installed/configured correctly. Aborting!")
+		}
+		for i := 0; i < len(r.SecretFiles); i++ {
+			r.SecretFiles[i] = pwd + "/" + relativeDir + "/" + r.SecretFiles[i]
+			if ok := decryptSecret(r.SecretFiles[i]); !ok {
+				logError("Failed to decrypt secret file" + r.SecretFiles[i])
+			}
+			r.SecretFiles[i] = r.SecretFiles[i] + ".dec"
+		}
+		fileList = append(fileList, r.SecretFiles...)
+	}
+
+	if len(fileList) > 0 {
+		return " -f " + strings.Join(fileList, " -f ")
 	}
 	return ""
 }
