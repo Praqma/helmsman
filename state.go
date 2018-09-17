@@ -55,7 +55,7 @@ func (s state) validate() (bool, string) {
 			"kubeContext to use. Can't work without it. Sorry!"
 	} else if s.Settings.ClusterURI != "" {
 
-		s.Settings.ClusterURI = subsituteEnv(s.Settings.ClusterURI)
+		s.Settings.ClusterURI = substituteEnv(s.Settings.ClusterURI)
 		if _, err := url.ParseRequestURI(s.Settings.ClusterURI); err != nil {
 			return false, "ERROR: settings validation failed -- clusterURI must have a valid URL set in an env variable or passed directly. Either the env var is missing/empty or the URL is invalid."
 		}
@@ -64,7 +64,7 @@ func (s state) validate() (bool, string) {
 			return false, "ERROR: settings validation failed -- username must be provided if clusterURI is defined."
 		}
 		if s.Settings.Password != "" {
-			s.Settings.Password = subsituteEnv(s.Settings.Password)
+			s.Settings.Password = substituteEnv(s.Settings.Password)
 		} else {
 			return false, "ERROR: settings validation failed -- password must be provided if clusterURI is defined."
 		}
@@ -76,7 +76,7 @@ func (s state) validate() (bool, string) {
 
 	// slack webhook validation (if provided)
 	if s.Settings.SlackWebhook != "" {
-		s.Settings.SlackWebhook = subsituteEnv(s.Settings.SlackWebhook)
+		s.Settings.SlackWebhook = substituteEnv(s.Settings.SlackWebhook)
 		if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err != nil {
 			return false, "ERROR: settings validation failed -- slackWebhook must be a valid URL."
 		}
@@ -184,19 +184,9 @@ func (s state) validate() (bool, string) {
 	return true, ""
 }
 
-// subsituteEnv checks if a string is an env variable (contains '$'), then it returns its value
-// if the env variable is empty or unset, an empty string is returned
-// if the string does not contain '$', it is returned as is.
-func subsituteEnv(name string) string {
-	if strings.Contains(name, "$") {
-		return os.ExpandEnv(name)
-	}
-	return name
-}
-
 // isValidCert checks if a certificate/key path/URI is valid
 func isValidCert(value string) (bool, string) {
-	tmp := subsituteEnv(value)
+	tmp := substituteEnv(value)
 	_, err1 := url.ParseRequestURI(tmp)
 	_, err2 := os.Stat(tmp)
 	if err2 != nil && (err1 != nil || (!strings.HasPrefix(tmp, "s3://") && !strings.HasPrefix(tmp, "gs://"))) {

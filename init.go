@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/imdario/mergo"
+	"github.com/joho/godotenv"
 )
 
 const (
@@ -25,12 +26,14 @@ const (
 func init() {
 	//parsing command line flags
 	flag.Var(&files, "f", "desired state file name(s), may be supplied more than once to merge state files")
+	flag.Var(&envFiles, "e", "file(s) to load environment variables from (default .env), may be supplied more than once")
 	flag.BoolVar(&apply, "apply", false, "apply the plan directly")
 	flag.BoolVar(&debug, "debug", false, "show the execution logs")
 	flag.BoolVar(&dryRun, "dry-run", false, "apply the dry-run option for helm commands.")
 	flag.BoolVar(&help, "help", false, "show Helmsman help")
 	flag.BoolVar(&v, "v", false, "show the version")
 	flag.BoolVar(&verbose, "verbose", false, "show verbose execution logs")
+	flag.BoolVar(&noBanner, "no-banner", false, "don't show the banner")
 	flag.StringVar(&nsOverride, "ns-override", "", "override defined namespaces with this one")
 	flag.BoolVar(&skipValidation, "skip-validation", false, "skip desired state validation")
 	flag.BoolVar(&applyLabels, "apply-labels", false, "apply Helmsman labels to Helm state for all defined apps.")
@@ -38,7 +41,9 @@ func init() {
 
 	flag.Parse()
 
-	fmt.Println(banner + "version: " + appVersion + "\n" + slogan)
+	if !noBanner {
+		fmt.Println(banner + "version: " + appVersion + "\n" + slogan)
+	}
 
 	if dryRun && apply {
 		logError("ERROR: --apply and --dry-run can't be used together.")
@@ -83,6 +88,28 @@ func init() {
 	if !helmPluginExists("diff") {
 		logError("ERROR: helm diff plugin is not installed/configured correctly. Aborting!")
 	}
+
+	// read the env file
+	if len(envFiles) == 0 {
+		if _, err := os.Stat(".env"); err == nil {
+			err = godotenv.Load()
+			if err != nil {
+				logError("Error loading .env file")
+			}
+		}
+	}
+
+	for _, e := range envFiles {
+		err := godotenv.Load(e)
+		if err != nil {
+			logError("Error loading " + e + " env file")
+		}
+	}
+
+	// print all env variables
+	// for _, pair := range os.Environ() {
+	// 	fmt.Println(pair)
+	// }
 
 	// read the TOML/YAML desired state file
 	var fileState state

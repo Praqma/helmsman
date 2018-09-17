@@ -173,24 +173,14 @@ func logVersions() {
 	log.Println("VERBOSE: Helm client version: " + helmVersion)
 }
 
-// envVarExists checks if an environment variable is set or not and returns it.
-// empty string is returned for unset env vars
-// it accepts env var with/without '$' at the beginning
-// if an env var 'v' does not exist, 'v' is returned as the value
-func envVarExists(v string) (bool, string) {
-
-	if strings.HasPrefix(v, "$") {
-		v = strings.SplitAfter(v, "$")[1]
+// substituteEnv checks if a string has an env variable (contains '$'), then it returns its value
+// if the env variable is empty or unset, an empty string is returned
+// if the string does not contain '$', it is returned as is.
+func substituteEnv(name string) string {
+	if strings.Contains(name, "$") {
+		return os.ExpandEnv(name)
 	}
-
-	value, ok := os.LookupEnv(v)
-
-	//  return the value as is if no env var with that key is set.
-	if !ok {
-		return ok, v
-	}
-
-	return ok, value
+	return name
 }
 
 // sliceContains checks if a string slice contains a given string
