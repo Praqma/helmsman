@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/logrusorgru/aurora"
 )
 
 // orderedDecision type representing a Decision and it's priority weight
@@ -64,12 +66,18 @@ func (p *plan) addDecision(decision string, priority int) {
 // execPlan executes the commands (actions) which were added to the plan.
 func (p plan) execPlan() {
 	p.sortPlan()
-	log.Println("INFO: Executing the plan ... ")
+	if len(p.Commands) > 0 {
+		log.Println("INFO: Executing the plan ... ")
+	} else {
+		log.Println("INFO: Nothing to execute ... ")
+	}
+
 	for _, cmd := range p.Commands {
 		if exitCode, msg := cmd.Command.exec(debug, verbose); exitCode != 0 {
 			logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + msg)
 		} else {
-			if cmd.targetRelease != nil {
+			log.Println(aurora.Cyan(msg))
+			if cmd.targetRelease != nil && !dryRun {
 				labelResource(cmd.targetRelease)
 			}
 			if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err == nil {
@@ -90,9 +98,9 @@ func (p plan) printPlanCmds() {
 // printPlan prints the decisions made in a plan.
 func (p plan) printPlan() {
 	fmt.Println("----------------------")
-	log.Printf("INFO: Plan generated at: %s \n", p.Created.Format("Mon Jan _2 2006 15:04:05"))
+	log.Println(aurora.Bold(aurora.Green("INFO: Plan generated at: " + p.Created.Format("Mon Jan _2 2006 15:04:05"))))
 	for _, decision := range p.Decisions {
-		fmt.Println(decision.Description + " -- priority: " + strconv.Itoa(decision.Priority))
+		fmt.Println(aurora.Green(decision.Description + " -- priority: " + strconv.Itoa(decision.Priority)))
 	}
 }
 

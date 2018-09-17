@@ -102,7 +102,7 @@ func installRelease(r *release) {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm install " + r.Chart + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + " --version " + r.Version + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r)},
+		Args:        []string{"-c", "helm install " + r.Chart + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + " --version " + r.Version + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
 		Description: "installing release [ " + r.Name + " ] in namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(cmd, r.Priority, r)
@@ -123,7 +123,7 @@ func rollbackRelease(r *release, rs releaseState) {
 
 		cmd := command{
 			Cmd:         "bash",
-			Args:        []string{"-c", "helm rollback " + r.Name + " " + getReleaseRevision(rs) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r)},
+			Args:        []string{"-c", "helm rollback " + r.Name + " " + getReleaseRevision(rs) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
 			Description: "rolling back release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 		}
 		outcome.addCommand(cmd, r.Priority, r)
@@ -159,7 +159,7 @@ func deleteRelease(r *release, rs releaseState) {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm delete " + p + " " + r.Name + getCurrentTillerNamespaceFlag(rs) + getTLSFlags(r)},
+		Args:        []string{"-c", "helm delete " + p + " " + r.Name + getCurrentTillerNamespaceFlag(rs) + getTLSFlags(r) + getDryRunFlags()},
 		Description: "deleting release [ " + r.Name + " ] from namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(cmd, priority, r)
@@ -232,7 +232,7 @@ func diffRelease(r *release) string {
 func upgradeRelease(r *release) {
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + r.Version + " --force " + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r)},
+		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + r.Version + " --force " + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
 		Description: "upgrading release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 
@@ -245,14 +245,14 @@ func reInstallRelease(r *release, rs releaseState) {
 
 	delCmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm delete --purge " + r.Name + getCurrentTillerNamespaceFlag(rs) + getTLSFlags(r)},
+		Args:        []string{"-c", "helm delete --purge " + r.Name + getCurrentTillerNamespaceFlag(rs) + getTLSFlags(r) + getDryRunFlags()},
 		Description: "deleting release [ " + r.Name + " ] from namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(delCmd, r.Priority, r)
 
 	installCmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm install " + r.Chart + " --version " + r.Version + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r)},
+		Args:        []string{"-c", "helm install " + r.Chart + " --version " + r.Version + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
 		Description: "installing release [ " + r.Name + " ] in namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(installCmd, r.Priority, r)
@@ -406,4 +406,12 @@ func getTLSFlags(r *release) string {
 	}
 
 	return tls
+}
+
+// getDryRunFlags returns dry-run flag
+func getDryRunFlags() string {
+	if dryRun {
+		return " --dry-run --debug "
+	}
+	return ""
 }
