@@ -1,12 +1,12 @@
-# v1.5.0
+# v1.6.0
 
 > If you are already using an older version of Helmsman than v1.4.0-rc, please read the changes below carefully and follow the upgrade guide [here](docs/migrating_to_v1.4.0-rc.md)
 
-- Adding `--keep-untracked-releases` option to prevent cleaning up untracked release that are managed by Helmsman.
-- Restricting the untracked releases clean up (when enabled) to the ones only in the defined namespace in the desired state file.
-- Support using multiple desired state files which are merged at runtime. Issue #62. Thanks to @norwoodj
-- Support using the `json` output of newer versions of helm. Fixes #61. Thanks to @luisdavim
-- Fix relative paths for values files. Issue #59
-- Adding `timeout` & `no-hooks` as additional release deployment options. Issue #55
+- Adding support for helm secrets plugin (thanks to @luisdavim). issue #54
+- Adding support for using helm diff to determine when upgrades are needed and show the diff. 
+- Allowing env vars to be loaded from files using Godotenv (thanks to @luisdavim)
+- Adding `--dry-run` option in Helmsman to perform a helm dry-run operation. Issues #77 #60 
+- Adding `useTiller` option in namespaces definitions to use existing Tillers. Issue #71
+- Other minor code improvements and color coded output.  
 
     
