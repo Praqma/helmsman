@@ -31,7 +31,7 @@ var checkCleanup bool
 var skipValidation bool
 var applyLabels bool
 var keepUntrackedReleases bool
-var appVersion = "v1.5.0"
+var appVersion = "v1.6.0"
 var helmVersion string
 var kubectlVersion string
 var pwd string
