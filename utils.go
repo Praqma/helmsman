@@ -155,6 +155,7 @@ func printHelp() {
 	fmt.Println()
 	fmt.Println("Options:")
 	fmt.Println("-f                        desired state file name(s), may be supplied more than once to merge state files.")
+	fmt.Println("-e                        file(s) to load environment variables from (default .env), may be supplied more than once")
 	fmt.Println("--debug                   prints basic logs during execution.")
 	fmt.Println("--dry-run                 apply the dry-run option for helm commands.")
 	fmt.Println("--apply                   generates and applies an action plan.")
@@ -164,6 +165,7 @@ func printHelp() {
 	fmt.Println("--apply-labels            applies Helmsman labels to Helm state for all defined apps.")
 	fmt.Println("--keep-untracked-releases keep releases that are managed by Helmsman and are no longer tracked in your desired state.")
 	fmt.Println("--help                    prints Helmsman help.")
+	fmt.Println("--no-banner               don't show the banner")
 	fmt.Println("-v                        prints Helmsman version.")
 }
 
