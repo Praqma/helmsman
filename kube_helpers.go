@@ -314,7 +314,7 @@ func getHelmsmanReleases() map[string]map[string]bool {
 	}
 
 	lines := strings.Split(output, "\n")
-	if strings.ToUpper("No resources found") == strings.ToUpper(strings.TrimSpace(output)) {
+	if strings.ToUpper("No resources found.") == strings.ToUpper(strings.TrimSpace(output)) {
 		return releases
 	}
 	for i := 0; i < len(lines); i++ {
