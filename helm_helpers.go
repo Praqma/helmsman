@@ -62,7 +62,7 @@ func getAllReleases() tillerReleases {
 		result.Releases = append(result.Releases, getTillerReleases("kube-system").Releases...)
 	}
 	for ns, v := range s.Namespaces {
-		if v.InstallTiller {
+		if v.InstallTiller || v.UseTiller {
 			result.Releases = append(result.Releases, getTillerReleases(ns).Releases...)
 		}
 	}
