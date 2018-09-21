@@ -223,7 +223,6 @@ func diffRelease(r *release) string {
 		Description: "upgrading release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 
-	fmt.Println(cmd)
 	if exitCode, msg = cmd.exec(debug, verbose); exitCode != 0 {
 		logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + msg)
 	} else {
