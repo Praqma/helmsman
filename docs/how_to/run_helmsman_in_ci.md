@@ -4,13 +4,13 @@ version: v1.3.0-rc
 
 # Run Helmsman in CI
 
-You can run Helmsman as a job in your CI system using the [helmsman docker image](https://hub.docker.com/r/praqma/helmsman/). 
+You can run Helmsman as a job in your CI system using the [helmsman docker image](https://hub.docker.com/r/praqma/helmsman/).
 The following example is a `config.yml` file for CircleCI but can be replicated for other CI systems.
 
 ```
 version: 2
 jobs:
-    
+
     deploy-apps:
       docker:
         - image: praqma/helmsman:v1.5.0
@@ -26,7 +26,7 @@ workflows:
   build:
     jobs:
       - deploy-apps
-``` 
+```
 
 > IMPORTANT: If your CI build logs are publicly readable, don't use the `--verbose` flag as logs any secrets being passed from env vars to the helm charts.
 
