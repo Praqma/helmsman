@@ -22,7 +22,6 @@ var debug bool
 var files stringArray
 var envFiles stringArray
 var apply bool
-var help bool
 var v bool
 var verbose bool
 var noBanner bool
