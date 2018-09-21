@@ -2,15 +2,15 @@
 version: v1.3.0-rc
 ---
 
-# Namespace and Release Protection 
+# Namespace and Release Protection
 
-Since helmsman is used with version controlled code and is often configured to be triggered as part of a CI pipeline, accidental mistakes could happen by the user (e.g, disabling a production application and taking out of service as a result of a mistaken change in the desired state file). 
+Since helmsman is used with version controlled code and is often configured to be triggered as part of a CI pipeline, accidental mistakes could happen by the user (e.g, disabling a production application and taking out of service as a result of a mistaken change in the desired state file).
 
-Helmsman provides the `plan` flag which helps you see the actions that it will take based on your desired state file before actually doing them. We recommend to use a `plan-hold-approve` pipeline when using helmsman with production clusters. 
+Helmsman provides the `plan` flag which helps you see the actions that it will take based on your desired state file before actually doing them. We recommend to use a `plan-hold-approve` pipeline when using helmsman with production clusters.
 
-As of version v1.0.0, helmsman provides a fine-grained mechanism to protect releases/namespaces from accidental desired state file changes. 
+As of version v1.0.0, helmsman provides a fine-grained mechanism to protect releases/namespaces from accidental desired state file changes.
 
-## Protection definition 
+## Protection definition
 
 - When a release (application) is protected, it CANNOT:
     - deleted
@@ -20,14 +20,14 @@ As of version v1.0.0, helmsman provides a fine-grained mechanism to protect rele
 - A release CAN be moved into protection from a non-protected state.
 - If a protected release need to be updated/changed or even deleted, this is possible, but the protection has to be removed first (i.e. remove the namespace/release from the protected state). This explained further below.
 
-> A release is an instance (installation) of an application which has been packaged as a helm chart. 
+> A release is an instance (installation) of an application which has been packaged as a helm chart.
 
 ## Protection mechanism
 Protection is supported in two forms:
 
 - **Namespace-level Protection**: is defined at the namespace level. A namespace can be declaratively defined to be protected in the desired state file as in the example below:
 
-```toml 
+```toml
 [namespaces]
   [namespaces.staging]
   protected = false
@@ -42,15 +42,15 @@ Protection is supported in two forms:
 [apps]
 
     [apps.jenkins]
-    name = "jenkins" 
+    name = "jenkins"
     description = "jenkins"
-    namespace = "staging" 
-    enabled = true 
-    chart = "stable/jenkins" 
-    version = "0.9.1" 
-    valuesFile = "" 
-    purge = false 
-    test = false 
+    namespace = "staging"
+    enabled = true
+    chart = "stable/jenkins"
+    version = "0.9.1"
+    valuesFile = ""
+    purge = false
+    test = false
     protected = true # defining this release to be protected.
 ```
 

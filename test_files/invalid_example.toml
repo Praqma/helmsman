@@ -6,10 +6,10 @@ maintainer = "k8s-admin"
 [certificates]
 
 [settings]
-kubeContext =  
+kubeContext =
 
 [namespaces]
-staging = "staging" 
+staging = "staging"
 production = "default"
 
 [helmRepos]

@@ -15,7 +15,7 @@ Alternatively YAML declaration is also acceptable [example yaml file](https://gi
 
 The desired state file (DSF) follows the [desired state specification](https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md).
 
-Helmsman sees what you desire, validates that your desire makes sense (e.g. that the charts you desire are available in the repos you defined), compares it with the current state of Helm and figures out what to do to make your desire come true. 
+Helmsman sees what you desire, validates that your desire makes sense (e.g. that the charts you desire are available in the repos you defined), compares it with the current state of Helm and figures out what to do to make your desire come true.
 
 To plan without executing:
 ``` $ helmsman -f example.toml ```
@@ -28,15 +28,15 @@ To show debugging details:
 
 # Features
 
-- **Built for CD**: Helmsman can be used as a docker image or a binary. 
+- **Built for CD**: Helmsman can be used as a docker image or a binary.
 - **Applications as code**: describe your desired applications and manage them from a single version-controlled declarative file.
 - **Suitable for Multitenant Clusters**: deploy Tiller in different namespaces with service accounts and TLS.
-- **Easy to use**: deep knowledge of Helm CLI and Kubectl is NOT mandatory to use Helmsman. 
-- **Plan, View, apply**: you can run Helmsman to generate and view a plan with/without executing it. 
+- **Easy to use**: deep knowledge of Helm CLI and Kubectl is NOT mandatory to use Helmsman.
+- **Plan, View, apply**: you can run Helmsman to generate and view a plan with/without executing it.
 - **Portable**: Helmsman can be used to manage charts deployments on any k8s cluster.
 - **Protect Namespaces/Releases**: you can define certain namespaces/releases to be protected against accidental human mistakes.
 - **Define the order of managing releases**: you can define the priorities at which releases are managed by helmsman (useful for dependencies).
-- **Idempotency**: As long your desired state file does not change, you can execute Helmsman several times and get the same result. 
+- **Idempotency**: As long your desired state file does not change, you can execute Helmsman several times and get the same result.
 - **Continue from failures**: In the case of partial deployment due to a specific chart deployment failure, fix your helm chart and execute Helmsman again without needing to rollback the partial successes first.
 
 # Install
@@ -78,7 +78,7 @@ Helmsman lets you:
 - [Override the defined namespaces to deploy all releases in a specific namespace](https://github.com/Praqma/helmsman/blob/master/docs/how_to/override_defined_namespaces.md)
 
 
-## Usage 
+## Usage
 
 Helmsman can be used in three different settings:
 

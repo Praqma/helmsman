@@ -11,7 +11,7 @@ org = "orgX"
 maintainer = "k8s-admin"
 
 [settings]
-kubeContext = "minikube" 
+kubeContext = "minikube"
 
 [namespaces]
 [namespaces.staging]
@@ -22,27 +22,27 @@ stable = "https://kubernetes-charts.storage.googleapis.com"
 [apps]
 
     [apps.jenkins]
-    name = "jenkins" 
+    name = "jenkins"
     description = "jenkins"
-    namespace = "staging" 
-    enabled = true 
-    chart = "stable/jenkins" 
-    version = "0.9.1" 
-    valuesFile = "" 
-    purge = false 
-    test = false 
+    namespace = "staging"
+    enabled = true
+    chart = "stable/jenkins"
+    version = "0.9.1"
+    valuesFile = ""
+    purge = false
+    test = false
 
 
     [apps.artifactory]
-    name = "artifactory" 
+    name = "artifactory"
     description = "artifactory"
-    namespace = "staging" 
-    enabled = true 
-    chart = "stable/artifactory" 
-    version = "6.2.0" 
-    valuesFile = "" 
-    purge = false 
-    test = false 
+    namespace = "staging"
+    enabled = true
+    chart = "stable/artifactory"
+    version = "6.2.0"
+    valuesFile = ""
+    purge = false
+    test = false
 ```
 
 ```yaml

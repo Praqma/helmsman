@@ -26,9 +26,9 @@ You can include multiple yaml value files to separate configuration for differen
     [apps.jenkins-test]
     name = "jenkins-test" # should be unique across all apps
     description = "test release of jenkins, testing xyz feature"
-    namespace = "staging" 
-    enabled = true 
-    chart = "stable/jenkins" 
+    namespace = "staging"
+    enabled = true
+    chart = "stable/jenkins"
     version = "0.9.1" # chart version
     valuesFiles = [
         "../my-jenkins-common-values.yaml",
