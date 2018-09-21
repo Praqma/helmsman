@@ -19,7 +19,6 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/Praqma/helmsman/aws"
 	"github.com/Praqma/helmsman/gcs"
-	"github.com/logrusorgru/aurora"
 )
 
 // printMap prints to the console any map of string keys and values.
@@ -166,6 +165,8 @@ func printHelp() {
 	fmt.Println("--keep-untracked-releases keep releases that are managed by Helmsman and are no longer tracked in your desired state.")
 	fmt.Println("--help                    prints Helmsman help.")
 	fmt.Println("--no-banner               don't show the banner")
+	fmt.Println("--no-color                don't use colors")
+	fmt.Println("--no-fancy                don't show the banner and don't use colors")
 	fmt.Println("-v                        prints Helmsman version.")
 }
 
@@ -302,7 +303,7 @@ func logError(msg string) {
 	if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err == nil {
 		notifySlack(msg, s.Settings.SlackWebhook, true, apply)
 	}
-	log.Fatal(aurora.Bold(aurora.Red(msg)))
+	log.Fatal(style.Bold(style.Red(msg)))
 }
 
 // getBucketElements returns a map containing the bucket name and the file path inside the bucket

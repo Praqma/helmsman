@@ -9,7 +9,11 @@ import (
 
 	"github.com/imdario/mergo"
 	"github.com/joho/godotenv"
+	"github.com/logrusorgru/aurora"
 )
+
+// colorizer
+var style aurora.Aurora
 
 const (
 	banner = " _          _ \n" +
@@ -34,12 +38,21 @@ func init() {
 	flag.BoolVar(&v, "v", false, "show the version")
 	flag.BoolVar(&verbose, "verbose", false, "show verbose execution logs")
 	flag.BoolVar(&noBanner, "no-banner", false, "don't show the banner")
+	flag.BoolVar(&noColors, "no-color", false, "don't use colors")
+	flag.BoolVar(&noFancy, "no-fancy", false, "don't display the banner and don't use colors")
 	flag.StringVar(&nsOverride, "ns-override", "", "override defined namespaces with this one")
 	flag.BoolVar(&skipValidation, "skip-validation", false, "skip desired state validation")
 	flag.BoolVar(&applyLabels, "apply-labels", false, "apply Helmsman labels to Helm state for all defined apps.")
 	flag.BoolVar(&keepUntrackedReleases, "keep-untracked-releases", false, "keep releases that are managed by Helmsman and are no longer tracked in your desired state.")
 
 	flag.Parse()
+
+	if noFancy {
+		noColors = true
+		noBanner = true
+	}
+
+	style = aurora.NewAurora(!noColors)
 
 	if !noBanner {
 		fmt.Println(banner + "version: " + appVersion + "\n" + slogan)

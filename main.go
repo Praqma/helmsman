@@ -26,6 +26,8 @@ var help bool
 var v bool
 var verbose bool
 var noBanner bool
+var noColors bool
+var noFancy bool
 var nsOverride string
 var checkCleanup bool
 var skipValidation bool
