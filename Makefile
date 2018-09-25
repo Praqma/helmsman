@@ -44,7 +44,7 @@ check:
 .PHONY: check
 
 test: dependencies ## Run unit tests
-	@go test -v -cover -p=1 #${PKGS}
+	@go test -v -cover -p=1 -args -f example.toml  #${PKGS}
 .PHONY: test
 
 cross: dependencies ## Create binaries for all OSs
