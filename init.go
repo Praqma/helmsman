@@ -9,7 +9,11 @@ import (
 
 	"github.com/imdario/mergo"
 	"github.com/joho/godotenv"
+	"github.com/logrusorgru/aurora"
 )
+
+// colorizer
+var style aurora.Aurora
 
 const (
 	banner = " _          _ \n" +
@@ -21,6 +25,15 @@ const (
 	slogan = "A Helm-Charts-as-Code tool.\n\n"
 )
 
+func printUsage() {
+	fmt.Println(banner + "\n")
+	fmt.Println("Helmsman version: " + appVersion)
+	fmt.Println("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
+	fmt.Println()
+	fmt.Println("Usage: helmsman [options]")
+	flag.PrintDefaults()
+}
+
 // init is executed after all package vars are initialized [before the main() func in this case].
 // It checks if Helm and Kubectl exist and configures: the connection to the k8s cluster, helm repos, namespaces, etc.
 func init() {
@@ -30,19 +43,28 @@ func init() {
 	flag.BoolVar(&apply, "apply", false, "apply the plan directly")
 	flag.BoolVar(&debug, "debug", false, "show the execution logs")
 	flag.BoolVar(&dryRun, "dry-run", false, "apply the dry-run option for helm commands.")
-	flag.BoolVar(&help, "help", false, "show Helmsman help")
 	flag.BoolVar(&v, "v", false, "show the version")
 	flag.BoolVar(&verbose, "verbose", false, "show verbose execution logs")
 	flag.BoolVar(&noBanner, "no-banner", false, "don't show the banner")
+	flag.BoolVar(&noColors, "no-color", false, "don't use colors")
+	flag.BoolVar(&noFancy, "no-fancy", false, "don't display the banner and don't use colors")
 	flag.StringVar(&nsOverride, "ns-override", "", "override defined namespaces with this one")
 	flag.BoolVar(&skipValidation, "skip-validation", false, "skip desired state validation")
 	flag.BoolVar(&applyLabels, "apply-labels", false, "apply Helmsman labels to Helm state for all defined apps.")
 	flag.BoolVar(&keepUntrackedReleases, "keep-untracked-releases", false, "keep releases that are managed by Helmsman and are no longer tracked in your desired state.")
 
+	flag.Usage = printUsage
 	flag.Parse()
 
+	if noFancy {
+		noColors = true
+		noBanner = true
+	}
+
+	style = aurora.NewAurora(!noColors)
+
 	if !noBanner {
-		fmt.Println(banner + "version: " + appVersion + "\n" + slogan)
+		fmt.Println(banner + " version: " + appVersion + "\n" + slogan)
 	}
 
 	if dryRun && apply {
@@ -65,11 +87,6 @@ func init() {
 
 	if v {
 		fmt.Println("Helmsman version: " + appVersion)
-		os.Exit(0)
-	}
-
-	if help {
-		printHelp()
 		os.Exit(0)
 	}
 
