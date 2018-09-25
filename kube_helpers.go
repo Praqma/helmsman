@@ -304,10 +304,13 @@ func getHelmsmanReleases() map[string]map[string]bool {
 
 	namespaces := make([]string, len(s.Namespaces))
 	i := 0
-	for s := range s.Namespaces {
-		namespaces[i] = s
-		i++
+	for s, v := range s.Namespaces {
+		if v.InstallTiller || v.UseTiller {
+			namespaces[i] = s
+			i++
+		}
 	}
+	namespaces = namespaces[0:i]
 	if v, ok := s.Namespaces["kube-system"]; !ok || (ok && (v.UseTiller || v.InstallTiller)) {
 		namespaces = append(namespaces, "kube-system")
 	}
