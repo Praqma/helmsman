@@ -11,6 +11,9 @@ import (
 	"github.com/logrusorgru/aurora"
 )
 
+// colorizer
+var style aurora.Aurora
+
 func checkCredentialsEnvVar() bool {
 
 	if os.Getenv("AWS_ACCESS_KEY_ID") == "" || os.Getenv("AWS_SECRET_ACCESS_KEY") == "" {
@@ -29,10 +32,11 @@ func checkCredentialsEnvVar() bool {
 }
 
 // ReadFile reads a file from S3 bucket and saves it in a desired location.
-func ReadFile(bucketName string, filename string, outFile string) {
+func ReadFile(bucketName string, filename string, outFile string, noColors bool) {
+	style = aurora.NewAurora(!noColors)
 	// Checking env vars are set to configure AWS
 	if !checkCredentialsEnvVar() {
-		log.Fatal("Failed to find the AWS env vars needed to configure AWS. Please make sure they are set in the environment.")
+		log.Fatal(style.Bold(style.Red("ERROR: Failed to find the AWS env vars needed to configure AWS. Please make sure they are set in the environment.")))
 	}
 
 	// Create Session -- use config (credentials + region) from env vars or aws profile

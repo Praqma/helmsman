@@ -178,12 +178,12 @@ func downloadFile(path string, outfile string) string {
 	if strings.HasPrefix(path, "s3") {
 
 		tmp := getBucketElements(path)
-		aws.ReadFile(tmp["bucketName"], tmp["filePath"], outfile)
+		aws.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, noColors)
 
 	} else if strings.HasPrefix(path, "gs") {
 
 		tmp := getBucketElements(path)
-		gcs.ReadFile(tmp["bucketName"], tmp["filePath"], outfile)
+		gcs.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, noColors)
 
 	} else {
 

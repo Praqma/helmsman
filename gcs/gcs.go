@@ -12,6 +12,9 @@ import (
 	"golang.org/x/net/context"
 )
 
+// colorizer
+var style aurora.Aurora
+
 // Auth checks for GCLOUD_CREDENTIALS in the environment
 // returns true if they exist and creates a json credentials file and sets the GOOGLE_APPLICATION_CREDENTIALS env var
 // returns false if credentials are not found
@@ -38,7 +41,8 @@ func Auth() bool {
 }
 
 // ReadFile reads a file from storage bucket and saves it in a desired location.
-func ReadFile(bucketName string, filename string, outFile string) {
+func ReadFile(bucketName string, filename string, outFile string, noColors bool) {
+	style = aurora.NewAurora(!noColors)
 	if !Auth() {
 		log.Fatal(style.Bold(style.Red("ERROR: Failed to find the GCLOUD_CREDENTIALS env var. Please make sure it is set in the environment.")))
 	}
