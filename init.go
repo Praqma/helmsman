@@ -74,6 +74,15 @@ func init() {
 	helmVersion = strings.TrimSpace(strings.SplitN(getHelmClientVersion(), ": ", 2)[1])
 	kubectlVersion = strings.TrimSpace(strings.SplitN(getKubectlClientVersion(), ": ", 2)[1])
 
+	if verbose {
+		logVersions()
+	}
+
+	if len(files) == 0 {
+		log.Println("INFO: No desired state files provided.")
+		os.Exit(0)
+	}
+
 	// initializing pwd and relative directory for DSF(s) and values files
 	pwd, _ = os.Getwd()
 	lastSlashIndex := -1
@@ -88,10 +97,6 @@ func init() {
 	if v {
 		fmt.Println("Helmsman version: " + appVersion)
 		os.Exit(0)
-	}
-
-	if verbose {
-		logVersions()
 	}
 
 	if !toolExists("kubectl") {
