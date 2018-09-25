@@ -384,7 +384,7 @@ func initHelm() (bool, string) {
 	return true, ""
 }
 
-// cleanUntrackedReleases checks for any releases that are managed by Helmsman and is no longer tracked by the desired state
+// cleanUntrackedReleases checks for any releases that are managed by Helmsman and are no longer tracked by the desired state
 // It compares the currently deployed releases with "MANAGED-BY=HELMSMAN" labels with Apps defined in the desired state
 // For all untracked releases found, a decision is made to delete them and is added to the Helmsman plan
 // NOTE: Untracked releases don't benefit from either namespace or application protection.
@@ -393,20 +393,18 @@ func cleanUntrackedReleases() {
 	toDelete := make(map[string]map[string]bool)
 	log.Println("INFO: checking if any Helmsman managed releases are no longer tracked by your desired state ...")
 	for ns, releases := range getHelmsmanReleases() {
-		if v, ok := s.Namespaces[ns]; ok && v.InstallTiller {
-			for r := range releases {
-				tracked := false
-				for _, app := range s.Apps {
-					if app.Name == r && getDesiredTillerNamespace(app) == ns {
-						tracked = true
-					}
+		for r := range releases {
+			tracked := false
+			for _, app := range s.Apps {
+				if app.Name == r && getDesiredTillerNamespace(app) == ns {
+					tracked = true
 				}
-				if !tracked {
-					if _, ok := toDelete[ns]; !ok {
-						toDelete[ns] = make(map[string]bool)
-					}
-					toDelete[ns][r] = true
+			}
+			if !tracked {
+				if _, ok := toDelete[ns]; !ok {
+					toDelete[ns] = make(map[string]bool)
 				}
+				toDelete[ns][r] = true
 			}
 		}
 	}
