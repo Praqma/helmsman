@@ -63,9 +63,8 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 	}
 	if r.Version == "" {
 		return false, "version can't be empty."
-	} else {
-		r.Version = substituteEnv(r.Version)
 	}
+	r.Version = substituteEnv(r.Version)
 
 	if r.ValuesFile != "" && (!isOfType(r.ValuesFile, ".yaml") || err != nil) {
 		return false, "valuesFile must be a valid relative (from your first dsf file) file path for a yaml file, Or can be left empty."
