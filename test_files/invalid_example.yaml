@@ -6,10 +6,10 @@ metadata:
 certificates:
 
 settings:
-  kubeContext:  
+  kubeContext:
 
 namespaces:
-  staging: "staging" 
+  staging: "staging"
   production: "default"
 
 helmRepos:

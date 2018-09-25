@@ -31,11 +31,11 @@ namespaces:
 
 ## Using your existing Tillers (available from v1.6.0)
 
-If you would like to use custom configuration when deploying your Tiller, you can do that before using Helmsman and then use the `useTiller` option in your namespace definition. 
+If you would like to use custom configuration when deploying your Tiller, you can do that before using Helmsman and then use the `useTiller` option in your namespace definition.
 
 This will allow Helmsman to use your existing Tiller as it is. Note that you can't set both `useTiller` and `installTiller` to true at the same time.
 
-```toml 
+```toml
 [namespaces]
 [namespaces.production]
   useTiller = true
@@ -47,7 +47,7 @@ namespaces:
     useTiller: true
 ```
 
-## Deploying Tiller into namespaces 
+## Deploying Tiller into namespaces
 
 As of `v1.2.0-rc`, you can instruct Helmsman to deploy Tiller into specific namespaces (with or without TLS).
 
@@ -79,7 +79,7 @@ namespaces:
     clientKey: "s3://mybucket/mydir/helm.key.pem"
 ```
 
-### Preventing Tiller deployment in kube-system 
+### Preventing Tiller deployment in kube-system
 
 By default Tiller will be deployed into `kube-system` even if you don't define kube-system in the namespaces section. To prevent this, simply add `kube-system` into your namespaces section. Since `installTiller` for namespaces is by default false, Helmsman will not deploy Tiller in `kube-system`.
 
@@ -102,19 +102,19 @@ You can then tell Helmsman to deploy specific releases in a specific namespace:
 [apps]
 
     [apps.jenkins]
-    name = "jenkins" 
+    name = "jenkins"
     description = "jenkins"
     namespace = "production" # pointing to the namespace defined above
-    enabled = true 
-    chart = "stable/jenkins" 
-    version = "0.9.1" 
-    valuesFile = "" 
-    purge = false 
-    test = true  
+    enabled = true
+    chart = "stable/jenkins"
+    version = "0.9.1"
+    valuesFile = ""
+    purge = false
+    test = true
 
 ...
 
-``` 
+```
 
 ```yaml
 ...
@@ -134,5 +134,5 @@ apps:
 
 ```
 
-In the above example, `Jenkins` will be deployed in the production namespace using the Tiller deployed in the production namespace. If the production namespace was not configured to have Tiller deployed there, Jenkins will be deployed using the Tiller in `kube-system`. 
+In the above example, `Jenkins` will be deployed in the production namespace using the Tiller deployed in the production namespace. If the production namespace was not configured to have Tiller deployed there, Jenkins will be deployed using the Tiller in `kube-system`.
 

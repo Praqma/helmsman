@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/logrusorgru/aurora"
 )
 
 // orderedDecision type representing a Decision and it's priority weight
@@ -76,7 +74,7 @@ func (p plan) execPlan() {
 		if exitCode, msg := cmd.Command.exec(debug, verbose); exitCode != 0 {
 			logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + msg)
 		} else {
-			log.Println(aurora.Cyan(msg))
+			log.Println(style.Cyan(msg))
 			if cmd.targetRelease != nil && !dryRun {
 				labelResource(cmd.targetRelease)
 			}
@@ -98,9 +96,9 @@ func (p plan) printPlanCmds() {
 // printPlan prints the decisions made in a plan.
 func (p plan) printPlan() {
 	fmt.Println("----------------------")
-	log.Println(aurora.Bold(aurora.Green("INFO: Plan generated at: " + p.Created.Format("Mon Jan _2 2006 15:04:05"))))
+	log.Println(style.Bold(style.Green("INFO: Plan generated at: " + p.Created.Format("Mon Jan _2 2006 15:04:05"))))
 	for _, decision := range p.Decisions {
-		fmt.Println(aurora.Green(decision.Description + " -- priority: " + strconv.Itoa(decision.Priority)))
+		fmt.Println(style.Green(decision.Description + " -- priority: " + strconv.Itoa(decision.Priority)))
 	}
 }
 

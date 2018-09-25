@@ -212,10 +212,14 @@ func inspectUpgradeScenario(r *release, rs releaseState) {
 func diffRelease(r *release) string {
 	exitCode := 0
 	msg := ""
+	colorFlag := ""
+	if noColors {
+		colorFlag = "--no-color "
+	}
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm diff upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + r.Version + " " + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r)},
+		Args:        []string{"-c", "helm diff " + colorFlag + "upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + r.Version + " " + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r)},
 		Description: "upgrading release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 

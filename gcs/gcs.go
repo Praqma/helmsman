@@ -28,7 +28,7 @@ func Auth() bool {
 		err := ioutil.WriteFile(credFile, d, 0644)
 
 		if err != nil {
-			log.Fatal(aurora.Bold(aurora.Red("ERROR: Cannot create credentials file: " + err.Error())))
+			log.Fatal(style.Bold(style.Red("ERROR: Cannot create credentials file: " + err.Error())))
 		}
 
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", credFile)
@@ -40,13 +40,13 @@ func Auth() bool {
 // ReadFile reads a file from storage bucket and saves it in a desired location.
 func ReadFile(bucketName string, filename string, outFile string) {
 	if !Auth() {
-		log.Fatal(aurora.Bold(aurora.Red("ERROR: Failed to find the GCLOUD_CREDENTIALS env var. Please make sure it is set in the environment.")))
+		log.Fatal(style.Bold(style.Red("ERROR: Failed to find the GCLOUD_CREDENTIALS env var. Please make sure it is set in the environment.")))
 	}
 
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
 	if err != nil {
-		log.Fatal(aurora.Bold(aurora.Red("ERROR: Failed to configure Storage bucket: " + err.Error())))
+		log.Fatal(style.Bold(style.Red("ERROR: Failed to configure Storage bucket: " + err.Error())))
 	}
 	storageBucket := client.Bucket(bucketName)
 
@@ -56,7 +56,7 @@ func ReadFile(bucketName string, filename string, outFile string) {
 	// Read the object.
 	r, err := obj.NewReader(ctx)
 	if err != nil {
-		log.Fatal(aurora.Bold(aurora.Red("ERROR: Failed to create object reader: " + err.Error())))
+		log.Fatal(style.Bold(style.Red("ERROR: Failed to create object reader: " + err.Error())))
 	}
 	defer r.Close()
 
@@ -64,14 +64,14 @@ func ReadFile(bucketName string, filename string, outFile string) {
 	var writers []io.Writer
 	file, err := os.Create(outFile)
 	if err != nil {
-		log.Fatal(aurora.Bold(aurora.Red("ERROR: Failed to create an output file: " + err.Error())))
+		log.Fatal(style.Bold(style.Red("ERROR: Failed to create an output file: " + err.Error())))
 	}
 	writers = append(writers, file)
 	defer file.Close()
 
 	dest := io.MultiWriter(writers...)
 	if _, err := io.Copy(dest, r); err != nil {
-		log.Fatal(aurora.Bold(aurora.Red("ERROR: Failed to read object content: " + err.Error())))
+		log.Fatal(style.Bold(style.Red("ERROR: Failed to read object content: " + err.Error())))
 	}
 	log.Println("INFO: Successfully downloaded " + filename + " from GCS as " + outFile)
 }
