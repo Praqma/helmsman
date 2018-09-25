@@ -294,6 +294,7 @@ func labelResource(r *release) {
 // The releases are categorized by the namespaces in which their Tiller is running
 // The returned map format is: map[<Tiller namespace>:map[<releases managed by Helmsman and deployed using this Tiller>:true]]
 func getHelmsmanReleases() map[string]map[string]bool {
+	var lines []string
 	releases := make(map[string]map[string]bool)
 	storageBackend := "configmap"
 
@@ -301,31 +302,42 @@ func getHelmsmanReleases() map[string]map[string]bool {
 		storageBackend = "secret"
 	}
 
-	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "kubectl get " + storageBackend + " --all-namespaces -l MANAGED-BY=HELMSMAN"},
-		Description: "getting helm releases which are managed by Helmsman.",
+	namespaces := make([]string, len(s.Namespaces))
+	i := 0
+	for s := range s.Namespaces {
+		namespaces[i] = s
+		i++
+	}
+	if v, ok := s.Namespaces["kube-system"]; !ok || (ok && (v.UseTiller || v.InstallTiller)) {
+		namespaces = append(namespaces, "kube-system")
 	}
 
-	exitCode, output := cmd.exec(debug, verbose)
+	for _, ns := range namespaces {
+		cmd := command{
+			Cmd:         "bash",
+			Args:        []string{"-c", "kubectl get " + storageBackend + " -n " + ns + " -l MANAGED-BY=HELMSMAN"},
+			Description: "getting helm releases which are managed by Helmsman in namespace [[ " + ns + " ]].",
+		}
 
-	if exitCode != 0 {
-		logError(output)
-	}
+		exitCode, output := cmd.exec(debug, verbose)
 
-	lines := strings.Split(output, "\n")
-	if strings.ToUpper("No resources found.") == strings.ToUpper(strings.TrimSpace(output)) {
-		return releases
-	}
-	for i := 0; i < len(lines); i++ {
-		if lines[i] == "" || (strings.HasPrefix(strings.TrimSpace(lines[i]), "NAMESPACE") && strings.HasSuffix(strings.TrimSpace(lines[i]), "AGE")) {
-			continue
-		} else {
-			fields := strings.Fields(lines[i])
-			if _, ok := releases[fields[0]]; !ok {
-				releases[fields[0]] = make(map[string]bool)
+		if exitCode != 0 {
+			logError(output)
+		}
+		if strings.ToUpper("No resources found.") != strings.ToUpper(strings.TrimSpace(output)) {
+			lines = strings.Split(output, "\n")
+		}
+
+		for i := 0; i < len(lines); i++ {
+			if lines[i] == "" || strings.HasSuffix(strings.TrimSpace(lines[i]), "AGE") {
+				continue
+			} else {
+				fields := strings.Fields(lines[i])
+				if _, ok := releases[fields[0]]; !ok {
+					releases[ns] = make(map[string]bool)
+				}
+				releases[ns][fields[0][0:strings.LastIndex(fields[0], ".v")]] = true
 			}
-			releases[fields[0]][fields[1][0:strings.LastIndex(fields[1], ".v")]] = true
 		}
 	}
 
