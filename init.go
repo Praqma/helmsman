@@ -43,6 +43,7 @@ func init() {
 	flag.BoolVar(&apply, "apply", false, "apply the plan directly")
 	flag.BoolVar(&debug, "debug", false, "show the execution logs")
 	flag.BoolVar(&dryRun, "dry-run", false, "apply the dry-run option for helm commands.")
+	flag.BoolVar(&destroy, "destroy", false, "delete all deployed releases. Purge delete is used if the purge option is set to true for the releases.")
 	flag.BoolVar(&v, "v", false, "show the version")
 	flag.BoolVar(&verbose, "verbose", false, "show verbose execution logs")
 	flag.BoolVar(&noBanner, "no-banner", false, "don't show the banner")
@@ -69,6 +70,10 @@ func init() {
 
 	if dryRun && apply {
 		logError("ERROR: --apply and --dry-run can't be used together.")
+	}
+
+	if destroy && apply {
+		logError("ERROR: --destroy and --apply can't be used together.")
 	}
 
 	helmVersion = strings.TrimSpace(strings.SplitN(getHelmClientVersion(), ": ", 2)[1])
@@ -127,11 +132,6 @@ func init() {
 			logError("Error loading " + e + " env file")
 		}
 	}
-
-	// print all env variables
-	// for _, pair := range os.Environ() {
-	// 	fmt.Println(pair)
-	// }
 
 	// read the TOML/YAML desired state file
 	var fileState state

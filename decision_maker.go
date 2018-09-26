@@ -26,6 +26,12 @@ func makePlan(s *state) *plan {
 // decide makes a decision about what commands (actions) need to be executed
 // to make a release section of the desired state come true.
 func decide(r *release, s *state) {
+	if destroy {
+		if ok, rs := helmReleaseExists(r, ""); ok {
+			deleteRelease(r, rs)
+			return
+		}
+	}
 
 	// check for deletion
 	if !r.Enabled {
