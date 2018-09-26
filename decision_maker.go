@@ -102,7 +102,7 @@ func installRelease(r *release) {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm install " + r.Chart + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + " --version " + r.Version + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
+		Args:        []string{"-c", "helm install " + r.Chart + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + " --version " + r.Version + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
 		Description: "installing release [ " + r.Name + " ] in namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(cmd, r.Priority, r)
@@ -219,7 +219,7 @@ func diffRelease(r *release) string {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm diff " + colorFlag + "upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + r.Version + " " + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r)},
+		Args:        []string{"-c", "helm diff " + colorFlag + "upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + r.Version + " " + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r)},
 		Description: "upgrading release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 
@@ -236,7 +236,7 @@ func diffRelease(r *release) string {
 func upgradeRelease(r *release) {
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + r.Version + " --force " + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
+		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + r.Version + " --force " + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
 		Description: "upgrading release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 
@@ -256,7 +256,7 @@ func reInstallRelease(r *release, rs releaseState) {
 
 	installCmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm install " + r.Chart + " --version " + r.Version + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + getSetValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
+		Args:        []string{"-c", "helm install " + r.Chart + " --version " + r.Version + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
 		Description: "installing release [ " + r.Name + " ] in namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(installCmd, r.Priority, r)
@@ -341,6 +341,16 @@ func getSetValues(r *release) string {
 	for k, v := range r.Set {
 		value := substituteEnv(v)
 		result = result + " --set " + k + "=\"" + strings.Replace(value, ",", "\\,", -1) + "\""
+	}
+	return result
+}
+
+// getSetStringValues returns --set-string params to be used with helm install/upgrade commands
+func getSetStringValues(r *release) string {
+	result := ""
+	for k, v := range r.SetString {
+		value := substituteEnv(v)
+		result = result + " --set-string " + k + "=\"" + strings.Replace(value, ",", "\\,", -1) + "\""
 	}
 	return result
 }
