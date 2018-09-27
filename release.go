@@ -5,28 +5,31 @@ import (
 	"log"
 	"os"
 	"strings"
+
+	version "github.com/hashicorp/go-version"
 )
 
 // release type representing Helm releases which are described in the desired state
 type release struct {
-	Name            string
-	Description     string
-	Namespace       string
-	Enabled         bool
-	Chart           string
-	Version         string
+	Name            string   `yaml:"name"`
+	Description     string   `yaml:"description"`
+	Namespace       string   `yaml:"namespace"`
+	Enabled         bool     `yaml:"enabled"`
+	Chart           string   `yaml:"chart"`
+	Version         string   `yaml:"version"`
 	ValuesFile      string   `yaml:"valuesFile"`
 	ValuesFiles     []string `yaml:"valuesFiles"`
 	SecretFile      string   `yaml:"secretFile"`
 	SecretFiles     []string `yaml:"secretFiles"`
-	Purge           bool
-	Test            bool
-	Protected       bool
-	Wait            bool
-	Priority        int
-	TillerNamespace string
+	Purge           bool     `yaml:"purge"`
+	Test            bool     `yaml:"test"`
+	Protected       bool     `yaml:"protected"`
+	Wait            bool     `yaml:"wait"`
+	Priority        int      `yaml:"priority"`
+	TillerNamespace string   `yaml:"tillerNamespace"`
 	Set             map[string]string
-	NoHooks         bool
+	SetString       map[string]string `yaml:"setString"`
+	NoHooks         bool              `yaml:"noHooks"`
 	Timeout         int
 }
 
@@ -103,6 +106,14 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 		names[r.Name][r.Namespace] = true
 	} else {
 		names[r.Name]["kube-system"] = true
+	}
+
+	if len(r.SetString) > 0 {
+		v1, _ := version.NewVersion(helmVersion)
+		setStringConstraint, _ := version.NewConstraint(">=2.9.0")
+		if !setStringConstraint.Check(v1) {
+			return false, "you are using setString in your desired state, but your helm client does not support it. You need helm v2.9.0 or above for this feature."
+		}
 	}
 
 	return true, ""

@@ -32,12 +32,13 @@ var checkCleanup bool
 var skipValidation bool
 var applyLabels bool
 var keepUntrackedReleases bool
-var appVersion = "v1.6.1"
+var appVersion = "v1.6.2"
 var helmVersion string
 var kubectlVersion string
 var pwd string
 var relativeDir string
 var dryRun bool
+var destroy bool
 
 func main() {
 	// set the kubecontext to be used Or create it if it does not exist
@@ -81,6 +82,9 @@ func main() {
 	}
 
 	log.Println("INFO: checking what I need to do for your charts ... ")
+	if destroy {
+		log.Println("WARN: --destroy is enabled. Your releases will be deleted!")
+	}
 
 	p := makePlan(&s)
 	if !keepUntrackedReleases {
@@ -91,7 +95,7 @@ func main() {
 	p.printPlan()
 	p.sendPlanToSlack()
 
-	if apply || dryRun {
+	if apply || dryRun || destroy {
 		p.execPlan()
 	}
 

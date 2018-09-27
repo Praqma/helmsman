@@ -3,7 +3,7 @@
 FROM golang:1.10-alpine3.7 as builder
 
 ENV KUBE_VERSION v1.8.2
-ENV HELM_VERSION v2.7.0
+ENV HELM_VERSION v2.10.0
 
 RUN apk add --update --no-cache ca-certificates git \
     && apk add --update -t deps curl tar gzip make bash \
