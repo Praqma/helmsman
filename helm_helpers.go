@@ -203,7 +203,7 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 	for app, r := range apps {
 		cmd := command{
 			Cmd:         "bash",
-			Args:        []string{"-c", "helm search " + r.Chart + " --version " + r.Version + " -l"},
+			Args:        []string{"-c", "helm search " + r.Chart + " --version " + strconv.Quote(r.Version) + " -l"},
 			Description: "validating if chart " + r.Chart + "-" + r.Version + " is available in the defined repos.",
 		}
 
@@ -256,7 +256,7 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 		}
 		cmd := command{
 			Cmd:         "bash",
-			Args:        []string{"-c", "helm repo add " + repoName + " " + url},
+			Args:        []string{"-c", "helm repo add " + repoName + " " + strconv.Quote(url)},
 			Description: "adding repo " + repoName,
 		}
 
