@@ -13,6 +13,7 @@ jobs:
           name: Build helmsman
           command: |
             echo "building ..."
+            make tools
             make build
 
   test:
