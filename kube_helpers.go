@@ -81,7 +81,7 @@ func createNamespace(ns string) {
 	}
 
 	if exitCode, _ := cmd.exec(debug, verbose); exitCode != 0 {
-		log.Println("WARN: I could not create namespace [" +
+		log.Println("WARN: I could not create namespace [ " +
 			ns + " ]. It already exists. I am skipping this.")
 	}
 }
