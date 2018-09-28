@@ -307,10 +307,11 @@ func getValuesFiles(r *release) string {
 	if r.ValuesFile != "" {
 		fileList = append(fileList, pwd+"/"+relativeDir+"/"+r.ValuesFile)
 	} else if len(r.ValuesFiles) > 0 {
+		tempValuesFiles := make([]string, len(r.ValuesFiles))
 		for i := 0; i < len(r.ValuesFiles); i++ {
-			r.ValuesFiles[i] = pwd + "/" + relativeDir + "/" + r.ValuesFiles[i]
+			tempValuesFiles[i] = pwd + "/" + relativeDir + "/" + r.ValuesFiles[i]
 		}
-		fileList = append(fileList, r.ValuesFiles...)
+		fileList = append(fileList, tempValuesFiles...)
 	}
 
 	if r.SecretFile != "" {
