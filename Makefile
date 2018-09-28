@@ -1,10 +1,33 @@
 .DEFAULT_GOAL := help
 
-PKGS := $(shell go list ./... | grep -v /vendor/)
-TAG   = $(shell git describe --always --tags --abbrev=0 HEAD)
-LAST  = $(shell git describe --always --tags --abbrev=0 HEAD^)
-BODY  = "`git log ${LAST}..HEAD --oneline --decorate` `printf '\n\#\#\# [Build Info](${BUILD_URL})'`"
-DATE  = $(shell date +'%d%m%y')
+PKGS   := $(shell go list ./... | grep -v /vendor/)
+TAG    := $(shell git describe --always --tags --abbrev=0 HEAD)
+LAST   := $(shell git describe --always --tags --abbrev=0 HEAD^)
+BODY   := "`git log ${LAST}..HEAD --oneline --decorate` `printf '\n\#\#\# [Build Info](${BUILD_URL})'`"
+DATE   := $(shell date +'%d%m%y')
+
+# Ensure we have an unambiguous GOPATH.
+GOPATH := $(shell go env GOPATH)
+
+ifneq "$(or $(findstring :,$(GOPATH)),$(findstring ;,$(GOPATH)))" ""
+  $(error GOPATHs with multiple entries are not supported)
+endif
+
+GOPATH := $(realpath $(GOPATH))
+ifeq ($(strip $(GOPATH)),)
+  $(error GOPATH is not set and could not be automatically determined)
+endif
+
+SRCDIR := $(GOPATH)/src/
+
+ifeq ($(filter $(GOPATH)%,$(CURDIR)),)
+  GOPATH := $(shell mktemp -d "/tmp/dep.XXXXXXXX")
+  SRCDIR := $(GOPATH)/src/
+  SHELL  := if test -d $(SRCDIR)helmsman/; then cd $(SRCDIR)helmsman/; fi; sh
+endif
+
+# $(info SHELL set to "$(SHELL)")
+# $(info GOPATH set to $(GOPATH))
 
 ifneq ($(OS),Windows_NT)
   # Before we start test that we have the mandatory executables available
@@ -32,29 +55,43 @@ dependencies: ## Ensure all the necessary dependencies
 	@go get -t -d -v ./...
 .PHONY: dependencies
 
-build: dependencies ## Build the package
+$(SRCDIR):
+	@mkdir -p $(SRCDIR)
+	@ln -s $(CURDIR) $(SRCDIR)
+
+dep: $(SRCDIR) ## Ensure vendors with dep
+	@dep ensure
+.PHONY: dep
+
+dep-update: $(SRCDIR) ## Ensure vendors with dep
+	@dep ensure --update
+.PHONY: dep-update
+
+build: dep ## Build the package
 	@go build -ldflags '-X main.version="${TAG}-${DATE}" -extldflags "-static"'
 
 generate:
 	@go generate #${PKGS}
 .PHONY: generate
 
-check:
+check: dep
+	@dep check
 	@go vet #${PKGS}
 .PHONY: check
 
-test: dependencies ## Run unit tests
-	@go test -v -cover -p=1 -args -f example.toml  #${PKGS}
+test: dep ## Run unit tests
+	@go test -v -cover -p=1 -args -f example.toml
 .PHONY: test
 
-cross: dependencies ## Create binaries for all OSs
+cross: dep ## Create binaries for all OSs
 	@env CGO_ENABLED=0 gox -os '!freebsd !netbsd' -arch '!arm' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}'
 .PHONY: cross
 
-release: dependencies ## Generate a new release
-	goreleaser --release-notes release-notes.md
+release: dep ## Generate a new release
+	@goreleaser --release-notes release-notes.md
 
 tools: ## Get extra tools used by this makefile
+	@go get -u github.com/golang/dep/cmd/dep
 	@go get -u github.com/mitchellh/gox
 	@go get -u github.com/goreleaser/goreleaser
 .PHONY: tools
