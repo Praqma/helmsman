@@ -4,6 +4,7 @@
 version: 2
 jobs:
   build:
+    working_directory: "/go/src/helmsman"
     docker:
       - image: praqma/helmsman-test
     steps:
@@ -15,6 +16,7 @@ jobs:
             make build
 
   test:
+    working_directory: "/go/src/helmsman"
     docker:
       - image: praqma/helmsman-test
     steps:
@@ -25,6 +27,7 @@ jobs:
             echo "running tests ..."
             make test
   release:
+    working_directory: "/go/src/helmsman"
     docker:
       - image: praqma/helmsman-test
     steps:
