@@ -46,6 +46,13 @@ To run a dry-run:
 
 ## From binary
 
+Please make sure the following are installed prior to using `helmsman`:
+
+- [kubectl](https://github.com/kubernetes/kubectl)
+- [helm](https://github.com/helm/helm)
+- [helm-diff](https://github.com/databus23/helm-diff) (`helmsman` >= 1.6.0)
+
+
 Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the different versions.
 ```
 # on Linux
