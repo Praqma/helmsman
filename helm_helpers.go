@@ -366,11 +366,6 @@ func initHelm() (bool, string) {
 	}
 
 	for k, ns := range s.Namespaces {
-		if ns.InstallTiller && k != "kube-system" {
-			if ok, err := deployTiller(k, ns.TillerServiceAccount, defaultSA); !ok {
-				return false, err
-			}
-		}
 		if tillerTLSEnabled(k) {
 			downloadFile(s.Namespaces[k].TillerCert, k+"-tiller.cert")
 			downloadFile(s.Namespaces[k].TillerKey, k+"-tiller.key")
@@ -378,6 +373,11 @@ func initHelm() (bool, string) {
 			// client cert and key
 			downloadFile(s.Namespaces[k].ClientCert, k+"-client.cert")
 			downloadFile(s.Namespaces[k].ClientKey, k+"-client.key")
+		}
+		if ns.InstallTiller && k != "kube-system" {
+			if ok, err := deployTiller(k, ns.TillerServiceAccount, defaultSA); !ok {
+				return false, err
+			}
 		}
 	}
 
