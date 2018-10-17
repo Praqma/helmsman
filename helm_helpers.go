@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -179,10 +180,16 @@ func getReleaseChartName(rs releaseState) string {
 
 // getReleaseChartVersion extracts and returns the Helm chart version from the chart info in a release state.
 // example: chart in release state is returns "jenkins-0.9.0" and this functions will extract "0.9.0" from it.
+// It should also handle semver-valid pre-release/meta information, example: in: jenkins-0.9.0-1, out: 0.9.0-1
+// in the event of an error, an empty string is returned.
 func getReleaseChartVersion(rs releaseState) string {
 	chart := rs.Chart
-	runes := []rune(chart)
-	return string(runes[strings.LastIndexByte(chart, '-')+1 : len(chart)])
+	re := regexp.MustCompile("-([0-9]+\\.[0-9]+\\.[0-9]+.*)")
+	matches := re.FindStringSubmatch(chart)
+	if len(matches) > 1 {
+		return matches[1]
+	}
+	return ""
 }
 
 // getNSTLSFlags returns TLS flags for a given namespace if it's deployed with TLS
