@@ -19,8 +19,8 @@ type release struct {
 	Version         string   `yaml:"version"`
 	ValuesFile      string   `yaml:"valuesFile"`
 	ValuesFiles     []string `yaml:"valuesFiles"`
-	SecretFile      string   `yaml:"secretFile"`
-	SecretFiles     []string `yaml:"secretFiles"`
+	SecretsFile     string   `yaml:"secretsFile"`
+	SecretsFiles    []string `yaml:"secretsFiles"`
 	Purge           bool     `yaml:"purge"`
 	Test            bool     `yaml:"test"`
 	Protected       bool     `yaml:"protected"`
@@ -76,19 +76,19 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 	} else if len(r.ValuesFiles) > 0 {
 		for _, filePath := range r.ValuesFiles {
 			if _, pathErr := os.Stat(pwd + "/" + relativeDir + "/" + filePath); !isOfType(filePath, ".yaml") || pathErr != nil {
-				return false, "the value for valueFile '" + filePath + "' must be a valid relative (from your first dsf file) file path for a yaml file."
+				return false, "the value for valuesFile '" + filePath + "' must be a valid relative (from your first dsf file) file path for a yaml file."
 			}
 		}
 	}
 
-	if r.SecretFile != "" && (!isOfType(r.SecretFile, ".yaml") || err != nil) {
-		return false, "secretFile must be a valid relative (from your first dsf file) file path for a yaml file, Or can be left empty."
-	} else if r.SecretFile != "" && len(r.SecretFiles) > 0 {
-		return false, "secretFile and secretFiles should not be used together."
-	} else if len(r.SecretFiles) > 0 {
-		for _, filePath := range r.SecretFiles {
+	if r.SecretsFile != "" && (!isOfType(r.SecretsFile, ".yaml") || err != nil) {
+		return false, "secretsFile must be a valid relative (from your first dsf file) file path for a yaml file, Or can be left empty."
+	} else if r.SecretsFile != "" && len(r.SecretsFiles) > 0 {
+		return false, "secretsFile and secretsFiles should not be used together."
+	} else if len(r.SecretsFiles) > 0 {
+		for _, filePath := range r.SecretsFiles {
 			if _, pathErr := os.Stat(pwd + "/" + relativeDir + "/" + filePath); !isOfType(filePath, ".yaml") || pathErr != nil {
-				return false, "the value for valueFile '" + filePath + "' must be a valid relative (from your first dsf file) file path for a yaml file."
+				return false, "the value for secretsFile '" + filePath + "' must be a valid relative (from your first dsf file) file path for a yaml file."
 			}
 		}
 	}

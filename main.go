@@ -142,10 +142,10 @@ func cleanup() {
 	}
 
 	for _, app := range s.Apps {
-		if _, err := os.Stat(app.SecretFile + ".dec"); err == nil {
-			deleteFile(app.SecretFile + ".dec")
+		if _, err := os.Stat(app.SecretsFile + ".dec"); err == nil {
+			deleteFile(app.SecretsFile + ".dec")
 		}
-		for _, secret := range app.SecretFiles {
+		for _, secret := range app.SecretsFiles {
 			if _, err := os.Stat(secret + ".dec"); err == nil {
 				deleteFile(secret + ".dec")
 			}
