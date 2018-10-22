@@ -196,7 +196,7 @@ func inspectUpgradeScenario(r *release, rs releaseState) {
 		} else {
 			if diff := diffRelease(r); diff != "" {
 				upgradeRelease(r)
-				logDecision("DECISION: release [ "+r.Name+" ] is desired to be enabled and is currently enabled. "+
+				logDecision("DECISION: release [ "+r.Name+" ] is currently enabled and have some changed parameters. "+
 					"I will upgrade it!", r.Priority)
 			} else {
 				logDecision("DECISION: release [ "+r.Name+" ] is desired to be enabled and is currently enabled. "+
@@ -232,7 +232,9 @@ func diffRelease(r *release) string {
 	if exitCode, msg = cmd.exec(debug, verbose); exitCode != 0 {
 		logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + msg)
 	} else {
-		fmt.Println(msg)
+		if verbose || showDiff {
+			fmt.Println(msg)
+		}
 	}
 
 	return msg
