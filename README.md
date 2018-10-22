@@ -1,5 +1,5 @@
 ---
-version: v1.6.2
+version: v1.6.3
 ---
 
 ![helmsman-logo](docs/images/helmsman.png)
@@ -56,9 +56,9 @@ Please make sure the following are installed prior to using `helmsman`:
 Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the different versions.
 ```
 # on Linux
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.6.2/helmsman_1.6.2_linux_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.6.3/helmsman_1.6.3_linux_amd64.tar.gz | tar zx
 # on MacOS
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.6.2/helmsman_1.6.2_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.6.3/helmsman_1.6.3_darwin_amd64.tar.gz | tar zx
 
 mv helmsman /usr/local/bin/helmsman
 ```
