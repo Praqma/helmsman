@@ -316,26 +316,26 @@ func getValuesFiles(r *release) string {
 		fileList = append(fileList, tempValuesFiles...)
 	}
 
-	if r.SecretFile != "" {
+	if r.SecretsFile != "" {
 		if !helmPluginExists("secrets") {
 			logError("ERROR: helm secrets plugin is not installed/configured correctly. Aborting!")
 		}
-		if ok := decryptSecret(r.SecretFile); !ok {
-			logError("Failed to decrypt secret file" + r.SecretFile)
+		if ok := decryptSecret(r.SecretsFile); !ok {
+			logError("Failed to decrypt secret file" + r.SecretsFile)
 		}
-		fileList = append(fileList, pwd+"/"+relativeDir+"/"+r.SecretFile+".dec")
-	} else if len(r.SecretFiles) > 0 {
+		fileList = append(fileList, pwd+"/"+relativeDir+"/"+r.SecretsFile+".dec")
+	} else if len(r.SecretsFiles) > 0 {
 		if !helmPluginExists("secrets") {
 			logError("ERROR: helm secrets plugin is not installed/configured correctly. Aborting!")
 		}
-		for i := 0; i < len(r.SecretFiles); i++ {
-			r.SecretFiles[i] = pwd + "/" + relativeDir + "/" + r.SecretFiles[i]
-			if ok := decryptSecret(r.SecretFiles[i]); !ok {
-				logError("Failed to decrypt secret file" + r.SecretFiles[i])
+		for i := 0; i < len(r.SecretsFiles); i++ {
+			r.SecretsFiles[i] = pwd + "/" + relativeDir + "/" + r.SecretsFiles[i]
+			if ok := decryptSecret(r.SecretsFiles[i]); !ok {
+				logError("Failed to decrypt secret file" + r.SecretsFiles[i])
 			}
-			r.SecretFiles[i] = r.SecretFiles[i] + ".dec"
+			r.SecretsFiles[i] = r.SecretsFiles[i] + ".dec"
 		}
-		fileList = append(fileList, r.SecretFiles...)
+		fileList = append(fileList, r.SecretsFiles...)
 	}
 
 	if len(fileList) > 0 {

@@ -241,7 +241,7 @@ func Test_validateRelease(t *testing.T) {
 				s: st,
 			},
 			want:  false,
-			want1: "the value for valueFile 'xyz.yaml' must be a valid relative (from your first dsf file) file path for a yaml file.",
+			want1: "the value for valuesFile 'xyz.yaml' must be a valid relative (from your first dsf file) file path for a yaml file.",
 		}, {
 			name: "test case 13",
 			args: args{
