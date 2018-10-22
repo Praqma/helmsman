@@ -39,6 +39,7 @@ var pwd string
 var relativeDir string
 var dryRun bool
 var destroy bool
+var showDiff bool
 
 func main() {
 	// set the kubecontext to be used Or create it if it does not exist
