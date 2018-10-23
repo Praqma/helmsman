@@ -69,11 +69,11 @@ func main() {
 		if _, ok := s.Namespaces["kube-system"]; !ok {
 			waitForTiller("kube-system")
 		}
+	}
 
-		// add repos -- fails if they are not valid
-		if r, msg := addHelmRepos(s.HelmRepos); !r {
-			logError(msg)
-		}
+	// add repos -- fails if they are not valid
+	if r, msg := addHelmRepos(s.HelmRepos); !r {
+		logError(msg)
 	}
 
 	if !skipValidation {
