@@ -35,8 +35,6 @@ var keepUntrackedReleases bool
 var appVersion = "v1.6.3"
 var helmVersion string
 var kubectlVersion string
-var pwd string
-var relativeDir string
 var dryRun bool
 var destroy bool
 var showDiff bool

@@ -29,7 +29,7 @@ func Test_getValuesFiles(t *testing.T) {
 				},
 				//s: st,
 			},
-			want: " -f " + pwd + "/" + relativeDir + "/test_files/values.yaml",
+			want: " -f test_files/values.yaml",
 		},
 		{
 			name: "test case 2",
@@ -47,7 +47,7 @@ func Test_getValuesFiles(t *testing.T) {
 				},
 				//s: st,
 			},
-			want: " -f " + pwd + "/" + relativeDir + "/test_files/values.yaml",
+			want: " -f test_files/values.yaml",
 		},
 		{
 			name: "test case 1",
@@ -65,7 +65,7 @@ func Test_getValuesFiles(t *testing.T) {
 				},
 				//s: st,
 			},
-			want: " -f " + pwd + "/" + relativeDir + "/test_files/values.yaml -f " + pwd + "/" + relativeDir + "/test_files/values2.yaml",
+			want: " -f test_files/values.yaml -f test_files/values2.yaml",
 		},
 	}
 	for _, tt := range tests {

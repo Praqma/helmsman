@@ -60,7 +60,7 @@ func Test_validateRelease(t *testing.T) {
 				s: st,
 			},
 			want:  false,
-			want1: "valuesFile must be a valid relative (from your first dsf file) file path for a yaml file, Or can be left empty.",
+			want1: "valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to \"xyz.yaml\").",
 		}, {
 			name: "test case 3",
 			args: args{
@@ -78,7 +78,7 @@ func Test_validateRelease(t *testing.T) {
 				s: st,
 			},
 			want:  false,
-			want1: "valuesFile must be a valid relative (from your first dsf file) file path for a yaml file, Or can be left empty.",
+			want1: "valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to \"test_files/values.xml\").",
 		}, {
 			name: "test case 4",
 			args: args{
@@ -241,7 +241,7 @@ func Test_validateRelease(t *testing.T) {
 				s: st,
 			},
 			want:  false,
-			want1: "the value for valuesFile 'xyz.yaml' must be a valid relative (from your first dsf file) file path for a yaml file.",
+			want1: "valuesFiles must be valid relative (from dsf file) file paths for a yaml file; path at index 0 provided path resolved to \"xyz.yaml\".",
 		}, {
 			name: "test case 13",
 			args: args{
@@ -252,7 +252,7 @@ func Test_validateRelease(t *testing.T) {
 					Enabled:     true,
 					Chart:       "repo/chartX",
 					Version:     "1.0",
-					ValuesFiles: []string{"test_files/values.yaml", "test_files/values2.yaml"},
+					ValuesFiles: []string{"./test_files/values.yaml", "./test_files/values2.yaml"},
 					Purge:       true,
 					Test:        true,
 				},
