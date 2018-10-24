@@ -252,7 +252,7 @@ func Test_validateRelease(t *testing.T) {
 					Enabled:     true,
 					Chart:       "repo/chartX",
 					Version:     "1.0",
-					ValuesFiles: []string{"./test_files/values.yaml", "./test_files/values2.yaml"},
+					ValuesFiles: []string{"./test_files/values.yaml", "test_files/values2.yaml"},
 					Purge:       true,
 					Test:        true,
 				},
