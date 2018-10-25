@@ -131,6 +131,7 @@ Options:
 - **installTiller**: defines if Tiller should be deployed in this namespace or not. Default is false. Any chart desired to be deployed into a namespace with a Tiller deployed, will be deployed using that Tiller and not the one in kube-system unless you use the `TillerNamespace` option (see the [Apps](#apps) section below) to use another Tiller.
 > By default Tiller will be deployed into `kube-system` even if you don't define kube-system in the namespaces section. To prevent deploying Tiller into `kube-system, add kube-system in your namespaces section and set its installTiller to false.
 -**useTiller**: defines that you would like to use an existing Tiller from that namespace. Can't be set together with `installTiller`
+- **labels** : defines labels to be added to the namespace, doesn't remove existing labels but updates them if the label key exists with any other different value. You can define any key/value pairs. Default is empty.
 
 - **tillerServiceAccount**: defines what service account to use when deploying Tiller. If this is not set, the following options are considered:
 
@@ -166,6 +167,8 @@ tillerCert = "secrets/tiller.cert.pem"
 tillerKey = "$TILLER_KEY" # where TILLER_KEY=secrets/tiller.key.pem
 clientCert = "gs://mybucket/mydir/helm.cert.pem"
 clientKey = "s3://mybucket/mydir/helm.key.pem"
+[namespaces.production.labels]
+env = "prod"
 ```
 
 ```yaml
@@ -186,6 +189,8 @@ namespaces:
     tillerKey: "$TILLER_KEY" # where TILLER_KEY=secrets/tiller.key.pem
     clientCert: "gs://mybucket/mydir/helm.cert.pem"
     clientKey: "s3://mybucket/mydir/helm.key.pem"
+    labels:
+      env: "prod"
 ```
 
 ## Helm Repos

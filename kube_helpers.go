@@ -55,8 +55,9 @@ func createRBAC(sa string, namespace string, sharedTiller bool) (bool, string) {
 // If --ns-override flag is used, it only creates the provided namespace in that flag
 func addNamespaces(namespaces map[string]namespace) {
 	if nsOverride == "" {
-		for ns := range namespaces {
-			createNamespace(ns)
+		for nsName, ns := range namespaces {
+			createNamespace(nsName)
+			labelNamespace(nsName, ns.Labels)
 		}
 	} else {
 		createNamespace(nsOverride)
@@ -83,6 +84,22 @@ func createNamespace(ns string) {
 	if exitCode, _ := cmd.exec(debug, verbose); exitCode != 0 {
 		log.Println("WARN: I could not create namespace [ " +
 			ns + " ]. It already exists. I am skipping this.")
+	}
+}
+
+// labelNamespace labels a namespace with provided labels
+func labelNamespace(ns string, labels map[string]string) {
+	for k, v := range labels {
+		cmd := command{
+			Cmd:         "bash",
+			Args:        []string{"-c", "kubectl label --overwrite namespace/" + ns + " " + k + "=" + v},
+			Description: "labeling namespace  " + ns,
+		}
+
+		if exitCode, _ := cmd.exec(debug, verbose); exitCode != 0 {
+			log.Println("WARN: I could not label namespace [ " + ns + " with " + k + "=" + v +
+				" ]. It already exists. I am skipping this.")
+		}
 	}
 }
 
