@@ -10,15 +10,16 @@ import (
 
 // namespace type represents the fields of a namespace
 type namespace struct {
-	Protected            bool   `yaml:"protected"`
-	InstallTiller        bool   `yaml:"installTiller"`
-	UseTiller            bool   `yaml:"useTiller"`
-	TillerServiceAccount string `yaml:"tillerServiceAccount"`
-	CaCert               string `yaml:"caCert"`
-	TillerCert           string `yaml:"tillerCert"`
-	TillerKey            string `yaml:"tillerKey"`
-	ClientCert           string `yaml:"clientCert"`
-	ClientKey            string `yaml:"clientKey"`
+	Protected            bool              `yaml:"protected"`
+	InstallTiller        bool              `yaml:"installTiller"`
+	UseTiller            bool              `yaml:"useTiller"`
+	TillerServiceAccount string            `yaml:"tillerServiceAccount"`
+	CaCert               string            `yaml:"caCert"`
+	TillerCert           string            `yaml:"tillerCert"`
+	TillerKey            string            `yaml:"tillerKey"`
+	ClientCert           string            `yaml:"clientCert"`
+	ClientKey            string            `yaml:"clientKey"`
+	Labels               map[string]string `yaml:"labels"`
 }
 
 // config type represents the settings fields
