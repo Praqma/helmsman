@@ -244,7 +244,7 @@ func diffRelease(r *release) string {
 func upgradeRelease(r *release) {
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + r.Version + " --force " + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
+		Args:        []string{"-c", "helm upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + " --force " + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
 		Description: "upgrading release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 
