@@ -307,13 +307,9 @@ func getValuesFiles(r *release) string {
 	var fileList []string
 
 	if r.ValuesFile != "" {
-		fileList = append(fileList, pwd+"/"+relativeDir+"/"+r.ValuesFile)
+		fileList = append(fileList,r.ValuesFile)
 	} else if len(r.ValuesFiles) > 0 {
-		tempValuesFiles := make([]string, len(r.ValuesFiles))
-		for i := 0; i < len(r.ValuesFiles); i++ {
-			tempValuesFiles[i] = pwd + "/" + relativeDir + "/" + r.ValuesFiles[i]
-		}
-		fileList = append(fileList, tempValuesFiles...)
+		fileList = append(fileList, r.ValuesFiles...)
 	}
 
 	if r.SecretsFile != "" {
@@ -323,13 +319,13 @@ func getValuesFiles(r *release) string {
 		if ok := decryptSecret(r.SecretsFile); !ok {
 			logError("Failed to decrypt secret file" + r.SecretsFile)
 		}
-		fileList = append(fileList, pwd+"/"+relativeDir+"/"+r.SecretsFile+".dec")
+		fileList = append(fileList, r.SecretsFile+".dec")
 	} else if len(r.SecretsFiles) > 0 {
 		if !helmPluginExists("secrets") {
 			logError("ERROR: helm secrets plugin is not installed/configured correctly. Aborting!")
 		}
 		for i := 0; i < len(r.SecretsFiles); i++ {
-			r.SecretsFiles[i] = pwd + "/" + relativeDir + "/" + r.SecretsFiles[i]
+			r.SecretsFiles[i] = r.SecretsFiles[i]
 			if ok := decryptSecret(r.SecretsFiles[i]); !ok {
 				logError("Failed to decrypt secret file" + r.SecretsFiles[i])
 			}
