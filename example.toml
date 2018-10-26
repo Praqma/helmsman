@@ -43,6 +43,8 @@
 #    tillerKey = "secrets/tiller.key.pem"  # or GCS bucket gs://mybucket/tiller.key
 #    clientCert = "secrets/helm.cert.pem"
 #    clientKey = "secrets/helm.key.pem"
+    [namespaces.staging.labels]
+      env = "staging"
 
 
 # define any private/public helm charts repos you would like to get charts from
