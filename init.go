@@ -89,17 +89,6 @@ func init() {
 		os.Exit(0)
 	}
 
-	// initializing pwd and relative directory for DSF(s) and values files
-	pwd, _ = os.Getwd()
-	lastSlashIndex := -1
-	if len(files) > 0 {
-		lastSlashIndex = strings.LastIndex(files[0], "/")
-	}
-	relativeDir = "."
-	if lastSlashIndex != -1 {
-		relativeDir = files[0][:lastSlashIndex]
-	}
-
 	if v {
 		fmt.Println("Helmsman version: " + appVersion)
 		os.Exit(0)

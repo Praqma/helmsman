@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,8 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"gopkg.in/yaml.v2"
 
 	"github.com/BurntSushi/toml"
 	"github.com/Praqma/helmsman/aws"
@@ -41,6 +40,8 @@ func fromTOML(file string, s *state) (bool, string) {
 	if _, err := toml.DecodeFile(file, s); err != nil {
 		return false, err.Error()
 	}
+
+	resolvePaths(file, s)
 
 	return true, "INFO: Parsed TOML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
 }
@@ -81,6 +82,9 @@ func fromYAML(file string, s *state) (bool, string) {
 	if err = yaml.Unmarshal(yamlFile, s); err != nil {
 		return false, err.Error()
 	}
+
+	resolvePaths(file, s)
+
 	return true, "INFO: Parsed YAML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
 }
 
@@ -127,6 +131,25 @@ func toFile(file string, s *state) {
 		fromYAML(file, s)
 	} else {
 		logError("ERROR: State file does not have toml/yaml extension.")
+	}
+}
+
+func resolvePaths(relativeToFile string, s *state) {
+	dir := filepath.Dir(relativeToFile)
+	for k, v := range s.Apps {
+		if v.ValuesFile != "" {
+			v.ValuesFile, _ = filepath.Abs(filepath.Join(dir, v.ValuesFile))
+		}
+		if v.SecretsFile != "" {
+			v.SecretsFile, _ = filepath.Abs(filepath.Join(dir, v.SecretsFile))
+		}
+		for i, f := range v.ValuesFiles {
+			v.ValuesFiles[i], _ = filepath.Abs(filepath.Join(dir, f))
+		}
+		for i, f := range v.SecretsFiles {
+			v.SecretsFiles[i], _ = filepath.Abs(filepath.Join(dir, f))
+		}
+		s.Apps[k] = v
 	}
 }
 
