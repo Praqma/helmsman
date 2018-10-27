@@ -18,7 +18,7 @@ RUN cd helmsman \
 
 # The image to keep
 FROM alpine:3.7
-RUN apk add --update --no-cache ca-certificates git
+RUN apk add --update --no-cache ca-certificates git openssh
 
 ARG HELM_VERSION=v2.10.0
 ARG KUBE_VERSION="v1.11.3"
