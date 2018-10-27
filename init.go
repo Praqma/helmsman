@@ -49,6 +49,7 @@ func init() {
 	flag.BoolVar(&noBanner, "no-banner", false, "don't show the banner")
 	flag.BoolVar(&noColors, "no-color", false, "don't use colors")
 	flag.BoolVar(&noFancy, "no-fancy", false, "don't display the banner and don't use colors")
+	flag.BoolVar(&noNs, "no-ns", false, "don't create namespaces")
 	flag.StringVar(&nsOverride, "ns-override", "", "override defined namespaces with this one")
 	flag.BoolVar(&skipValidation, "skip-validation", false, "skip desired state validation")
 	flag.BoolVar(&applyLabels, "apply-labels", false, "apply Helmsman labels to Helm state for all defined apps.")
