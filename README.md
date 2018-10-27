@@ -1,5 +1,5 @@
 ---
-version: v1.6.3
+version: v1.7.0
 ---
 
 ![helmsman-logo](docs/images/helmsman.png)
@@ -46,19 +46,21 @@ To run a dry-run:
 
 ## From binary
 
-Please make sure the following are installed prior to using `helmsman`:
+Please make sure the following are installed prior to using `helmsman` as a binary (the docker image contains all of them):
 
 - [kubectl](https://github.com/kubernetes/kubectl)
-- [helm](https://github.com/helm/helm)
+- [helm](https://github.com/helm/helm) (for `helmsman` >= 1.6.0, use helm >= 2.10.0. this is due to a dependency bug #87 )
 - [helm-diff](https://github.com/databus23/helm-diff) (`helmsman` >= 1.6.0)
+
+If you use private helm repos, you will need either `helm-gcs` or `helm-s3` plugin. See the [docs](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_private_helm_charts.md) for details.
 
 
 Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the different versions.
 ```
 # on Linux
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.6.3/helmsman_1.6.3_linux_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.7.0/helmsman_1.7.0_linux_amd64.tar.gz | tar zx
 # on MacOS
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.6.3/helmsman_1.6.3_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.7.0/helmsman_1.7.0_darwin_amd64.tar.gz | tar zx
 
 mv helmsman /usr/local/bin/helmsman
 ```
