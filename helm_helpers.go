@@ -88,6 +88,11 @@ func getTillerReleases(tillerNS string) tillerReleases {
 
 	exitCode, result := cmd.exec(debug, verbose)
 	if exitCode != 0 {
+		if !apply {
+			log.Println("INFO: " + strings.Replace(result, "Error: ", "", 1))
+			return tillerReleases{}
+		}
+
 		logError("ERROR: failed to list all releases in namespace [ " + tillerNS + " ]: " + result)
 	}
 	var out tillerReleases

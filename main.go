@@ -27,6 +27,7 @@ var verbose bool
 var noBanner bool
 var noColors bool
 var noFancy bool
+var noNs bool
 var nsOverride string
 var checkCleanup bool
 var skipValidation bool
@@ -48,22 +49,26 @@ func main() {
 		checkCleanup = true
 	}
 
-	// add/validate namespaces
-	addNamespaces(s.Namespaces)
-
-	if r, msg := initHelm(); !r {
-		logError(msg)
-	}
-
-	// check if helm Tiller is ready
-	for k, ns := range s.Namespaces {
-		if ns.InstallTiller || ns.UseTiller {
-			waitForTiller(k)
+	if apply {
+		// add/validate namespaces
+		if !noNs {
+			addNamespaces(s.Namespaces)
 		}
-	}
 
-	if _, ok := s.Namespaces["kube-system"]; !ok {
-		waitForTiller("kube-system")
+		if r, msg := initHelm(); !r {
+			logError(msg)
+		}
+
+		// check if helm Tiller is ready
+		for k, ns := range s.Namespaces {
+			if ns.InstallTiller || ns.UseTiller {
+				waitForTiller(k)
+			}
+		}
+
+		if _, ok := s.Namespaces["kube-system"]; !ok {
+			waitForTiller("kube-system")
+		}
 	}
 
 	// add repos -- fails if they are not valid
