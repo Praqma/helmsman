@@ -21,9 +21,9 @@ import (
 )
 
 // printMap prints to the console any map of string keys and values.
-func printMap(m map[string]string) {
+func printMap(m map[string]string, indent int) {
 	for key, value := range m {
-		fmt.Println(key, " : ", value)
+		fmt.Println(strings.Repeat("\t", indent)+key, " : ", value)
 	}
 }
 
