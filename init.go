@@ -134,9 +134,29 @@ func init() {
 			logError(msg)
 		}
 
-		if err := mergo.Merge(&s, &fileState); err != nil {
+		// Merge Apps that already existed in the state
+		for appName, app := range fileState.Apps {
+			if _, ok := s.Apps[appName]; ok {
+				if err := mergo.Merge(s.Apps[appName], app, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
+					logError("Failed to merge " + appName + " from desired state file" + f)
+				}
+			}
+		}
+
+		// Merge the remaining Apps
+		if err := mergo.Merge(&s.Apps, &fileState.Apps); err != nil {
 			logError("Failed to merge desired state file" + f)
 		}
+		// All the apps are already merged, make fileState.Apps empty to avoid conflicts in the final merge
+		fileState.Apps = make(map[string]*release)
+
+		if err := mergo.Merge(&s, &fileState, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
+			logError("Failed to merge desired state file" + f)
+		}
+	}
+
+	if debug {
+		s.print()
 	}
 
 	if !skipValidation {

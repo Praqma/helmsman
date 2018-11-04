@@ -11,26 +11,26 @@ import (
 
 // release type representing Helm releases which are described in the desired state
 type release struct {
-	Name            string   `yaml:"name"`
-	Description     string   `yaml:"description"`
-	Namespace       string   `yaml:"namespace"`
-	Enabled         bool     `yaml:"enabled"`
-	Chart           string   `yaml:"chart"`
-	Version         string   `yaml:"version"`
-	ValuesFile      string   `yaml:"valuesFile"`
-	ValuesFiles     []string `yaml:"valuesFiles"`
-	SecretsFile     string   `yaml:"secretsFile"`
-	SecretsFiles    []string `yaml:"secretsFiles"`
-	Purge           bool     `yaml:"purge"`
-	Test            bool     `yaml:"test"`
-	Protected       bool     `yaml:"protected"`
-	Wait            bool     `yaml:"wait"`
-	Priority        int      `yaml:"priority"`
-	TillerNamespace string   `yaml:"tillerNamespace"`
-	Set             map[string]string
+	Name            string            `yaml:"name"`
+	Description     string            `yaml:"description"`
+	Namespace       string            `yaml:"namespace"`
+	Enabled         bool              `yaml:"enabled"`
+	Chart           string            `yaml:"chart"`
+	Version         string            `yaml:"version"`
+	ValuesFile      string            `yaml:"valuesFile"`
+	ValuesFiles     []string          `yaml:"valuesFiles"`
+	SecretsFile     string            `yaml:"secretsFile"`
+	SecretsFiles    []string          `yaml:"secretsFiles"`
+	Purge           bool              `yaml:"purge"`
+	Test            bool              `yaml:"test"`
+	Protected       bool              `yaml:"protected"`
+	Wait            bool              `yaml:"wait"`
+	Priority        int               `yaml:"priority"`
+	TillerNamespace string            `yaml:"tillerNamespace"`
+	Set             map[string]string `yaml:"set"`
 	SetString       map[string]string `yaml:"setString"`
 	NoHooks         bool              `yaml:"noHooks"`
-	Timeout         int
+	Timeout         int               `yaml:"timeout"`
 }
 
 // validateRelease validates if a release inside a desired state meets the specifications or not.
@@ -155,6 +155,6 @@ func (r release) print() {
 	fmt.Println("\tno-hooks : ", r.NoHooks)
 	fmt.Println("\ttimeout : ", r.Timeout)
 	fmt.Println("\tvalues to override from env:")
-	printMap(r.Set)
+	printMap(r.Set, 2)
 	fmt.Println("------------------- ")
 }
