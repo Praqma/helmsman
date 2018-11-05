@@ -353,7 +353,7 @@ func getHelmsmanReleases() map[string]map[string]bool {
 				continue
 			} else {
 				fields := strings.Fields(lines[i])
-				if _, ok := releases[fields[0]]; !ok {
+				if _, ok := releases[ns]; !ok {
 					releases[ns] = make(map[string]bool)
 				}
 				releases[ns][fields[0][0:strings.LastIndex(fields[0], ".v")]] = true
