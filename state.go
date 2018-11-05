@@ -212,10 +212,10 @@ func (s state) print() {
 
 	fmt.Println("\nMetadata: ")
 	fmt.Println("--------- ")
-	printMap(s.Metadata)
+	printMap(s.Metadata, 0)
 	fmt.Println("\nCertificates: ")
 	fmt.Println("--------- ")
-	printMap(s.Certificates)
+	printMap(s.Certificates, 0)
 	fmt.Println("\nSettings: ")
 	fmt.Println("--------- ")
 	fmt.Printf("%+v\n", s.Settings)
@@ -224,7 +224,7 @@ func (s state) print() {
 	printNamespacesMap(s.Namespaces)
 	fmt.Println("\nRepositories: ")
 	fmt.Println("------------- ")
-	printMap(s.HelmRepos)
+	printMap(s.HelmRepos, 0)
 	fmt.Println("\nApplications: ")
 	fmt.Println("--------------- ")
 	for _, r := range s.Apps {
