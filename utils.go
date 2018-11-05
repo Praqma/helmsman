@@ -37,7 +37,12 @@ func printNamespacesMap(m map[string]namespace) {
 // fromTOML reads a toml file and decodes it to a state type.
 // It uses the BurntSuchi TOML parser which throws an error if the TOML file is not valid.
 func fromTOML(file string, s *state) (bool, string) {
-	if _, err := toml.DecodeFile(file, s); err != nil {
+	rawTomlFile, err := ioutil.ReadFile(file)
+	if err != nil {
+		return false, err.Error()
+	}
+	tomlFile := substituteEnv(string(rawTomlFile))
+	if _, err := toml.Decode(tomlFile, s); err != nil {
 		return false, err.Error()
 	}
 
@@ -75,10 +80,11 @@ func toTOML(file string, s *state) {
 // fromYAML reads a yaml file and decodes it to a state type.
 // parser which throws an error if the YAML file is not valid.
 func fromYAML(file string, s *state) (bool, string) {
-	yamlFile, err := ioutil.ReadFile(file)
+	rawYamlFile, err := ioutil.ReadFile(file)
 	if err != nil {
 		return false, err.Error()
 	}
+	yamlFile := []byte(substituteEnv(string(rawYamlFile)))
 	if err = yaml.Unmarshal(yamlFile, s); err != nil {
 		return false, err.Error()
 	}
@@ -175,12 +181,18 @@ func logVersions() {
 	log.Println("VERBOSE: Helm client version: " + helmVersion)
 }
 
+// add $$ escaping for $ strings
+func expandEnv(s string) string {
+	os.Setenv("HELMSMAN_DOLLAR", "$")
+	return os.ExpandEnv(strings.Replace(s, "$$", "${HELMSMAN_DOLLAR}", -1))
+}
+
 // substituteEnv checks if a string has an env variable (contains '$'), then it returns its value
 // if the env variable is empty or unset, an empty string is returned
 // if the string does not contain '$', it is returned as is.
 func substituteEnv(name string) string {
 	if strings.Contains(name, "$") {
-		return os.ExpandEnv(name)
+		return expandEnv(name)
 	}
 	return name
 }
