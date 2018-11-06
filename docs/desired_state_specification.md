@@ -13,6 +13,9 @@ This document describes the specification for how to write your Helm charts desi
 - [Helm Repos](#helm-repos) -- defines the repos where you want to get Helm charts from.
 - [Apps](#apps) -- defines the applications/charts you want to manage in your cluster.
 
+
+> You can use environment variables in the desired state files. The environment variable name should start with "$", or encapsulated in "$(", ")". "$" characters can be escaped like "$$".
+
 ## Metadata
 
 Optional : Yes.
@@ -47,7 +50,6 @@ Options:
 - **caKey** : a valid S3/GCS bucket or local relative file path to a client key file.
 - **caClient**: a valid S3/GCS bucket or local relative file path to a client certificate file.
 
-> You can use environment variables to pass the values of the options above. The environment variable name should start with $
 
 > bucket format is: <s3 or gs>://bucket-name/dir1/dir2/.../file.extension
 
