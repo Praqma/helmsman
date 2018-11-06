@@ -14,7 +14,7 @@ This document describes the specification for how to write your Helm charts desi
 - [Apps](#apps) -- defines the applications/charts you want to manage in your cluster.
 
 
-> You can use environment variables in the desired state files. The environment variable name should start with "$", or encapsulated in "$(", ")". "$" characters can be escaped like "$$".
+> You can use environment variables in the desired state files. The environment variable name should start with "$", or encapsulated in "${", "}". "$" characters can be escaped like "$$".
 
 ## Metadata
 
