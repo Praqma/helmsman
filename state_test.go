@@ -156,31 +156,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 7 -- settings/clusterURI-env-var",
-			fields: fields{
-				Metadata: make(map[string]string),
-				Certificates: map[string]string{
-					"caCrt": "s3://some-bucket/12345.crt",
-					"caKey": "s3://some-bucket/12345.key",
-				},
-				Settings: config{
-					KubeContext: "minikube",
-					Username:    "admin",
-					Password:    "K8S_PASSWORD",
-					ClusterURI:  "$SET_URI", // set env var
-				},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, false, false, "", "", "", "", "", "", make(map[string]string)},
-				},
-				HelmRepos: map[string]string{
-					"stable": "https://kubernetes-charts.storage.googleapis.com",
-					"myrepo": "s3://my-repo/charts",
-				},
-				Apps: make(map[string]*release),
-			},
-			want: true,
-		}, {
-			name: "test case 8 -- settings/clusterURI-invalid",
+			name: "test case 7 -- settings/clusterURI-invalid",
 			fields: fields{
 				Metadata: make(map[string]string),
 				Certificates: map[string]string{
@@ -204,7 +180,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 9 -- certifications/missing key",
+			name: "test case 8 -- certifications/missing key",
 			fields: fields{
 				Metadata: make(map[string]string),
 				Certificates: map[string]string{
@@ -227,7 +203,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 10 -- certifications/nil_value",
+			name: "test case 9 -- certifications/nil_value",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -248,7 +224,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 11 -- certifications/invalid_s3",
+			name: "test case 10 -- certifications/invalid_s3",
 			fields: fields{
 				Metadata: make(map[string]string),
 				Certificates: map[string]string{
@@ -272,7 +248,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 12 -- certifications/nil_value_pass",
+			name: "test case 11 -- certifications/nil_value_pass",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -290,7 +266,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: true,
 		}, {
-			name: "test case 13 -- namespaces/nil_value",
+			name: "test case 12 -- namespaces/nil_value",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -306,7 +282,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 14 -- namespaces/empty",
+			name: "test case 13 -- namespaces/empty",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -322,7 +298,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 15 -- helmRepos/nil_value",
+			name: "test case 14 -- helmRepos/nil_value",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -337,7 +313,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 16 -- helmRepos/empty",
+			name: "test case 15 -- helmRepos/empty",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -352,7 +328,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 17 -- helmRepos/empty_repo_value",
+			name: "test case 16 -- helmRepos/empty_repo_value",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -370,7 +346,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 18 -- helmRepos/invalid_repo_value",
+			name: "test case 17 -- helmRepos/invalid_repo_value",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
