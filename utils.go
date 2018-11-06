@@ -181,18 +181,14 @@ func logVersions() {
 	log.Println("VERBOSE: Helm client version: " + helmVersion)
 }
 
-// add $$ escaping for $ strings
-func expandEnv(s string) string {
-	os.Setenv("HELMSMAN_DOLLAR", "$")
-	return os.ExpandEnv(strings.Replace(s, "$$", "${HELMSMAN_DOLLAR}", -1))
-}
-
 // substituteEnv checks if a string has an env variable (contains '$'), then it returns its value
 // if the env variable is empty or unset, an empty string is returned
 // if the string does not contain '$', it is returned as is.
 func substituteEnv(name string) string {
 	if strings.Contains(name, "$") {
-		return expandEnv(name)
+		// add $$ escaping for $ strings
+		os.Setenv("HELMSMAN_DOLLAR", "$")
+		return os.ExpandEnv(strings.Replace(name, "$$", "${HELMSMAN_DOLLAR}", -1))
 	}
 	return name
 }
