@@ -66,7 +66,6 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 	if r.Version == "" {
 		return false, "version can't be empty."
 	}
-	r.Version = r.Version
 
 	_, err := os.Stat(r.ValuesFile)
 	if r.ValuesFile != "" && (!isOfType(r.ValuesFile, ".yaml") || err != nil) {
