@@ -307,7 +307,7 @@ func getValuesFiles(r *release) string {
 	var fileList []string
 
 	if r.ValuesFile != "" {
-		fileList = append(fileList,r.ValuesFile)
+		fileList = append(fileList, r.ValuesFile)
 	} else if len(r.ValuesFiles) > 0 {
 		fileList = append(fileList, r.ValuesFiles...)
 	}
@@ -344,8 +344,7 @@ func getValuesFiles(r *release) string {
 func getSetValues(r *release) string {
 	result := ""
 	for k, v := range r.Set {
-		value := substituteEnv(v)
-		result = result + " --set " + k + "=\"" + strings.Replace(value, ",", "\\,", -1) + "\""
+		result = result + " --set " + k + "=\"" + strings.Replace(v, ",", "\\,", -1) + "\""
 	}
 	return result
 }
@@ -354,8 +353,7 @@ func getSetValues(r *release) string {
 func getSetStringValues(r *release) string {
 	result := ""
 	for k, v := range r.SetString {
-		value := substituteEnv(v)
-		result = result + " --set-string " + k + "=\"" + strings.Replace(value, ",", "\\,", -1) + "\""
+		result = result + " --set-string " + k + "=\"" + strings.Replace(v, ",", "\\,", -1) + "\""
 	}
 	return result
 }
