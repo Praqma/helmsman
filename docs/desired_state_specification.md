@@ -256,14 +256,14 @@ Options:
 - **description** : a release metadata for human readers.
 - **valuesFile**  : a valid path to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFiles together. Leaving it empty uses the default chart values.
 - **valuesFiles** : array of valid paths to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFile together. Leaving it empty uses the default chart values.
-> The values file(s) path is resolved when the DSF yaml/toml file is loaded, relative to the path that the dsf was loaded from. 
+> The values file(s) path is resolved when the DSF yaml/toml file is loaded, relative to the path that the dsf was loaded from.
 - **secretsFile**  : a valid path to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFiles together. Leaving it empty uses the default chart secrets.
 - **secretsFiles** : array of valid paths to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFile together. Leaving it empty uses the default chart secrets.
 > The secrets file(s) path is resolved when the DSF yaml/toml file is loaded, relative to the path that the dsf was loaded from.
 > To use the secrets files you must have the helm-secrets plugin
-- **purge**       : defines whether to use the Helm purge flag when deleting the release. (true/false)
-- **test**        : defines whether to run the chart tests whenever the release is installed.
-- **protected**   : defines if the release should be protected against changes. Namespace-level protection has higher priority than this flag. Check the [protection guide](how_to/protect_namespaces_and_releases.md) for more details.
+- **purge**       : defines whether to use the Helm purge flag when deleting the release. Default is false.
+- **test**        : defines whether to run the chart tests whenever the release is installed. Default is false.
+- **protected**   : defines if the release should be protected against changes. Namespace-level protection has higher priority than this flag. Check the [protection guide](how_to/protect_namespaces_and_releases.md) for more details. Default is false.
 - **wait**        : defines whether Helmsman should block execution until all k8s resources are in a ready state. Default is false.
 - **timeout**     : helm timeout in seconds. Default 300 seconds.
 - **noHooks**     : helm noHooks option. If true, it will disable pre/post upgrade hooks. Default is false.
@@ -295,7 +295,7 @@ Example:
     secret1="$SECRET_ENV_VAR1"
     secret2="SECRET_ENV_VAR2" # works with/without $ at the beginning
   [apps.jenkins.setString]
-    longInt = "1234567890"  
+    longInt = "1234567890"
 ```
 
 ```yaml
@@ -316,6 +316,6 @@ apps:
     set:
       secret1: "$SECRET_ENV_VAR1"
       secret2: "$SECRET_ENV_VAR2"
-    setString: 
-      longInt: "1234567890"  
+    setString:
+      longInt: "1234567890"
 ```
