@@ -39,6 +39,7 @@ var kubectlVersion string
 var dryRun bool
 var destroy bool
 var showDiff bool
+var suppressDiffSecrets bool
 
 func main() {
 	// set the kubecontext to be used Or create it if it does not exist
