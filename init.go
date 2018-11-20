@@ -55,6 +55,7 @@ func init() {
 	flag.BoolVar(&applyLabels, "apply-labels", false, "apply Helmsman labels to Helm state for all defined apps.")
 	flag.BoolVar(&keepUntrackedReleases, "keep-untracked-releases", false, "keep releases that are managed by Helmsman and are no longer tracked in your desired state.")
 	flag.BoolVar(&showDiff, "show-diff", false, "show helm diff results. Can expose sensitive information.")
+	flag.BoolVar(&suppressDiffSecrets, "suppress-diff-secrets", false, "don't show secrets in helm diff output.")
 
 	flag.Usage = printUsage
 	flag.Parse()
