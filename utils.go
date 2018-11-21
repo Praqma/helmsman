@@ -86,7 +86,7 @@ func fromYAML(file string, s *state) (bool, string) {
 		return false, err.Error()
 	}
 	yamlFile := []byte(substituteEnv(string(rawYamlFile)))
-	if err = yaml.Unmarshal(yamlFile, s); err != nil {
+	if err = yaml.UnmarshalStrict(yamlFile, s); err != nil {
 		return false, err.Error()
 	}
 
