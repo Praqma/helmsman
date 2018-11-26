@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"log"
@@ -14,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/BurntSushi/toml"
 	"github.com/Praqma/helmsman/aws"
@@ -157,6 +158,35 @@ func resolvePaths(relativeToFile string, s *state) {
 		}
 		s.Apps[k] = v
 	}
+	//resolving paths for k8s certificate files
+	for k, v := range s.Certificates {
+		if _, err := url.ParseRequestURI(v); err != nil {
+			v, _ = filepath.Abs(filepath.Join(dir, v))
+		}
+		s.Certificates[k] = v
+	}
+	// resolving paths for helm certificate files
+	for k, v := range s.Namespaces {
+		if tillerTLSEnabled(k) {
+			if _, err := url.ParseRequestURI(v.CaCert); err != nil {
+				v.CaCert, _ = filepath.Abs(filepath.Join(dir, v.CaCert))
+			}
+			if _, err := url.ParseRequestURI(v.ClientCert); err != nil {
+				v.ClientCert, _ = filepath.Abs(filepath.Join(dir, v.ClientCert))
+			}
+			if _, err := url.ParseRequestURI(v.ClientKey); err != nil {
+				v.ClientKey, _ = filepath.Abs(filepath.Join(dir, v.ClientKey))
+			}
+			if _, err := url.ParseRequestURI(v.TillerCert); err != nil {
+				v.TillerCert, _ = filepath.Abs(filepath.Join(dir, v.TillerCert))
+			}
+			if _, err := url.ParseRequestURI(v.TillerKey); err != nil {
+				v.TillerKey, _ = filepath.Abs(filepath.Join(dir, v.TillerKey))
+			}
+		}
+		s.Namespaces[k] = v
+	}
+
 }
 
 // isOfType checks if the file extension of a filename/path is the same as "filetype".
