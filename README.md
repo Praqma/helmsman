@@ -1,5 +1,5 @@
 ---
-version: v1.7.0
+version: v1.7.1
 ---
 
 ![helmsman-logo](docs/images/helmsman.png)
@@ -58,9 +58,9 @@ If you use private helm repos, you will need either `helm-gcs` or `helm-s3` plug
 Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the different versions.
 ```
 # on Linux
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.7.0/helmsman_1.7.0_linux_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.7.1/helmsman_1.7.1_linux_amd64.tar.gz | tar zx
 # on MacOS
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.7.0/helmsman_1.7.0_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.7.1/helmsman_1.7.1_darwin_amd64.tar.gz | tar zx
 
 mv helmsman /usr/local/bin/helmsman
 ```

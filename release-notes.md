@@ -1,10 +1,9 @@
-# v1.7.0
+# v1.7.1
 
 > If you are already using an older version of Helmsman than v1.4.0-rc, please read the changes below carefully and follow the upgrade guide [here](docs/migrating_to_v1.4.0-rc.md)
 
-- Resources (Tillers, namespaces, service accounts) will not be created without the `--apply` flag. Fixes #65 and #100.
-- adding `--no-ns` option to prevent helmsman from creating namespaces. This allows users to create namespaces using their own custom charts. Fixes #71 and #100.
-- Adding namespace labels. PR #111
-- Fixing a bug that deletes untracked releases when running with `--dry-run`. PR #110
-- Improving values and secrets file pahts resolution relative to dsf(s). PR #109
+- Improving env variable expansion across DSFs. PR #122. This change requires `$` signs in strings inside DSFs to be escaped as `$$`. If not escaped, they will be treated as variables.   
+- Adding `suppress-diff-secrets` for suppressing helm diff secrets. PR #132
+- Support overriding existing values when merging DSFs. PR #119
+- Fixing minor issues. PRs #131 #128 #130 #131 #118 
 
