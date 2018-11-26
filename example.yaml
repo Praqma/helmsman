@@ -75,8 +75,8 @@ apps:
       set: # values to override values from values.yaml with values from env vars-- useful for passing secrets to charts
         AdminPassword: "$JENKINS_PASSWORD" # $JENKINS_PASSWORD must exist in the environment
         AdminUser: "admin"
-      setString: 
-        MyLongIntVar: "1234567890" 
+      setString:
+        MyLongIntVar: "1234567890"
 
 
     # artifactory will be deployed using the Tiller in the kube-system namespace
