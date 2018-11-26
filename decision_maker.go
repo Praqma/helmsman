@@ -219,13 +219,17 @@ func diffRelease(r *release) string {
 	exitCode := 0
 	msg := ""
 	colorFlag := ""
+	suppressDiffSecretsFlag := ""
 	if noColors {
 		colorFlag = "--no-color "
+	}
+	if suppressDiffSecrets {
+		suppressDiffSecretsFlag = "--suppress-secrets "
 	}
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm diff " + colorFlag + "upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + " " + getSetValues(r) + getSetStringValues(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getNoHooks(r)},
+		Args:        []string{"-c", "helm diff " + colorFlag + suppressDiffSecretsFlag + "upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + " " + getSetValues(r) + getSetStringValues(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r)},
 		Description: "diffing release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 
