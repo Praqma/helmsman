@@ -81,6 +81,19 @@ func Test_getReleaseChartVersion(t *testing.T) {
 				},
 			},
 			want: "",
+		}, {
+			name: "test case 6: version includes v",
+			args: args{
+				r: releaseState{
+					Revision:        0,
+					Updated:         time.Now(),
+					Status:          "",
+					Chart:           "cert-manager-v0.5.2",
+					Namespace:       "",
+					TillerNamespace: "",
+				},
+			},
+			want: "v0.5.2",
 		},
 	}
 	for _, tt := range tests {
