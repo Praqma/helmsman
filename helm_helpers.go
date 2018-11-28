@@ -189,7 +189,7 @@ func getReleaseChartName(rs releaseState) string {
 // in the event of an error, an empty string is returned.
 func getReleaseChartVersion(rs releaseState) string {
 	chart := rs.Chart
-	re := regexp.MustCompile("-([0-9]+\\.[0-9]+\\.[0-9]+.*)")
+	re := regexp.MustCompile("-(v?[0-9]+\\.[0-9]+\\.[0-9]+.*)")
 	matches := re.FindStringSubmatch(chart)
 	if len(matches) > 1 {
 		return matches[1]
