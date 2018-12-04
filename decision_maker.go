@@ -236,7 +236,7 @@ func diffRelease(r *release) string {
 	if exitCode, msg = cmd.exec(debug, verbose); exitCode != 0 {
 		logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + msg)
 	} else {
-		if verbose || showDiff {
+		if (verbose || showDiff) && msg != "" {
 			fmt.Println(msg)
 		}
 	}
