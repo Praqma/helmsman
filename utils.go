@@ -135,7 +135,7 @@ func toFile(file string, s *state) {
 	if isOfType(file, ".toml") {
 		toTOML(file, s)
 	} else if isOfType(file, ".yaml") {
-		fromYAML(file, s)
+		toYAML(file, s)
 	} else {
 		logError("ERROR: State file does not have toml/yaml extension.")
 	}
