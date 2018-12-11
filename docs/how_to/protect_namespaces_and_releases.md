@@ -32,7 +32,7 @@ Protection is supported in two forms:
   [namespaces.staging]
   protected = false
   [namespaces.production]
-  prtoected = true
+  protected = true
 
 ```
 
