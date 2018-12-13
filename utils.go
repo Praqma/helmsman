@@ -143,6 +143,7 @@ func toFile(file string, s *state) {
 
 func resolvePaths(relativeToFile string, s *state) {
 	dir := filepath.Dir(relativeToFile)
+
 	for k, v := range s.Apps {
 		if v.ValuesFile != "" {
 			v.ValuesFile, _ = filepath.Abs(filepath.Join(dir, v.ValuesFile))
@@ -156,9 +157,25 @@ func resolvePaths(relativeToFile string, s *state) {
 		for i, f := range v.SecretsFiles {
 			v.SecretsFiles[i], _ = filepath.Abs(filepath.Join(dir, f))
 		}
+
+		if v.Chart != "" {
+			var repoOrDir = filepath.Dir(v.Chart)
+			_, isRepo := s.HelmRepos[repoOrDir]
+			if !isRepo {
+				// if there is no repo for the chart, we assume it's intended to be a local path
+
+				// support env vars in path
+				v.Chart = os.ExpandEnv(v.Chart)
+				// respect absolute paths to charts but resolve relative paths
+				if !filepath.IsAbs(v.Chart) {
+					v.Chart, _ = filepath.Abs(filepath.Join(dir, v.Chart))
+				}
+			}
+		}
+
 		s.Apps[k] = v
 	}
-	//resolving paths for k8s certificate files
+	// resolving paths for k8s certificate files
 	for k, v := range s.Certificates {
 		if _, err := url.ParseRequestURI(v); err != nil {
 			v, _ = filepath.Abs(filepath.Join(dir, v))

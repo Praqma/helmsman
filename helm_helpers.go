@@ -3,13 +3,14 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Praqma/helmsman/gcs"
-	version "github.com/hashicorp/go-version"
+	"github.com/hashicorp/go-version"
 )
 
 var currentState map[string]releaseState
@@ -211,18 +212,44 @@ func getNSTLSFlags(ns string) string {
 // Valid charts are the ones that can be found in the defined repos.
 // This function uses Helm search to verify if the chart can be found or not.
 func validateReleaseCharts(apps map[string]*release) (bool, string) {
+	versionExtractor := regexp.MustCompile(`version:\s?(.*)`)
 
 	for app, r := range apps {
-		cmd := command{
-			Cmd:         "bash",
-			Args:        []string{"-c", "helm search " + r.Chart + " --version " + strconv.Quote(r.Version) + " -l"},
-			Description: "validating if chart " + r.Chart + "-" + r.Version + " is available in the defined repos.",
+
+		isLocal := filepath.IsAbs(r.Chart)
+		if isLocal {
+			cmd := command{
+				Cmd:         "bash",
+				Args:        []string{"-c", "helm inspect chart " + r.Chart},
+				Description: "validating if chart at " + r.Chart + " is available.",
+			}
+
+			if exitCode, output := cmd.exec(debug, verbose); exitCode != 0 {
+				maybeRepo := filepath.Base(filepath.Dir(r.Chart))
+				return false, "ERROR: chart at " + r.Chart + " for app [" + app + "] could not be found. Did you mean to add a repo named '" + maybeRepo +"'?"
+			} else {
+				matches := versionExtractor.FindStringSubmatch(output)
+				if len(matches) == 2 {
+					version := matches[1]
+					if r.Version != version {
+						return false, "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified for " +
+							"app [" + app + "] but the chart found at that path has version " + version + " which does not match."
+					}
+				}
+			}
+		} else {
+			cmd := command{
+				Cmd:         "bash",
+				Args:        []string{"-c", "helm search " + r.Chart + " --version " + strconv.Quote(r.Version) + " -l"},
+				Description: "validating if chart " + r.Chart + "-" + r.Version + " is available in the defined repos.",
+			}
+
+			if exitCode, result := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
+				return false, "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " +
+					"app [" + app + "] but is not found in the defined repos."
+			}
 		}
 
-		if exitCode, result := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
-			return false, "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " +
-				"app [" + app + "] but is not found in the defined repos."
-		}
 	}
 	return true, ""
 }
