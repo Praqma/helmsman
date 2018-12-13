@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	version "github.com/hashicorp/go-version"
+	"github.com/hashicorp/go-version"
 )
 
 // release type representing Helm releases which are described in the desired state

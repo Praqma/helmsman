@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -268,7 +269,7 @@ func reInstallRelease(r *release, rs releaseState) {
 
 	installCmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm install " + r.Chart + " --version " + r.Version + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
+		Args:        []string{"-c", "helm install " + r.Chart+ " --version " + r.Version + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
 		Description: "installing release [ " + r.Name + " ] in namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(installCmd, r.Priority, r)
@@ -283,12 +284,18 @@ func logDecision(decision string, priority int) {
 }
 
 // extractChartName extracts the Helm chart name from full chart name in the desired state.
-// example: it extracts "chartY" from "repoX/chartY"
+// example: it extracts "chartY" from "repoX/chartY" and "chartZ" from "c:\charts\chartZ"
 func extractChartName(releaseChart string) string {
 
-	return strings.TrimSpace(strings.Split(releaseChart, "/")[1])
+	m := chartNameExtractor.FindStringSubmatch(releaseChart)
+	if len(m) == 2 {
+		return m[1]
+	}
 
+	return ""
 }
+
+var chartNameExtractor = regexp.MustCompile(`[\\/]([^\\/]+)$`)
 
 // getNoHooks returns the no-hooks flag for install/upgrade commands
 func getNoHooks(r *release) string {
