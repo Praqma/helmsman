@@ -43,10 +43,10 @@ func decide(r *release, s *state) {
 
 			} else {
 				logDecision("DECISION: release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
-					"you remove its protection.", r.Priority)
+					"you remove its protection.", r.Priority, noop)
 			}
 		} else {
-			logDecision("DECISION: release [ "+r.Name+" ] is set to be disabled but is not yet deployed. Skipping.", r.Priority)
+			logDecision("DECISION: release [ "+r.Name+" ] is set to be disabled but is not yet deployed. Skipping.", r.Priority, noop)
 		}
 
 	} else { // check for install/upgrade/rollback
@@ -56,7 +56,7 @@ func decide(r *release, s *state) {
 
 			} else {
 				logDecision("DECISION: release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
-					"you remove its protection.", r.Priority)
+					"you remove its protection.", r.Priority, noop)
 			}
 
 		} else if ok, rs := helmReleaseExists(r, "deleted"); ok {
@@ -66,19 +66,19 @@ func decide(r *release, s *state) {
 
 			} else {
 				logDecision("DECISION: release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
-					"you remove its protection.", r.Priority)
+					"you remove its protection.", r.Priority, noop)
 			}
 
 		} else if ok, rs := helmReleaseExists(r, "failed"); ok {
 
 			if !isProtected(r, rs) {
 
-				logDecision("DECISION: release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in FAILED state. I will upgrade it for you. Hope it gets fixed!", r.Priority)
+				logDecision("DECISION: release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in FAILED state. I will upgrade it for you. Hope it gets fixed!", r.Priority, change)
 				upgradeRelease(r)
 
 			} else {
 				logDecision("DECISION: release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
-					"you remove its protection.", r.Priority)
+					"you remove its protection.", r.Priority, noop)
 			}
 		} else {
 
@@ -99,7 +99,7 @@ func testRelease(r *release) {
 		Description: "running tests for release [ " + r.Name + " ]",
 	}
 	outcome.addCommand(cmd, r.Priority, r)
-	logDecision("DECISION: release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is required to be tested when installed. Got it!", r.Priority)
+	logDecision("DECISION: release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is required to be tested when installed. Got it!", r.Priority, noop)
 
 }
 
@@ -113,7 +113,7 @@ func installRelease(r *release) {
 	}
 	outcome.addCommand(cmd, r.Priority, r)
 	logDecision("DECISION: release [ "+r.Name+" ] is not installed. Will install it in namespace [[ "+
-		r.Namespace+" ]] using Tiller in [ "+getDesiredTillerNamespace(r)+" ]", r.Priority)
+		r.Namespace+" ]] using Tiller in [ "+getDesiredTillerNamespace(r)+" ]", r.Priority, create)
 
 	if r.Test {
 		testRelease(r)
@@ -135,16 +135,16 @@ func rollbackRelease(r *release, rs releaseState) {
 		outcome.addCommand(cmd, r.Priority, r)
 		upgradeRelease(r) // this is to reflect any changes in values file(s)
 		logDecision("DECISION: release [ "+r.Name+" ] is currently deleted and is desired to be rolledback to "+
-			"namespace [[ "+r.Namespace+" ]] . It will also be upgraded in case values have changed.", r.Priority)
+			"namespace [[ "+r.Namespace+" ]] . It will also be upgraded in case values have changed.", r.Priority, change)
 
 	} else {
 
 		reInstallRelease(r, rs)
 		logDecision("DECISION: release [ "+r.Name+" ] is deleted BUT from namespace [[ "+rs.Namespace+
-			" ]]. Will purge delete it from there and install it in namespace [[ "+r.Namespace+" ]]", r.Priority)
+			" ]]. Will purge delete it from there and install it in namespace [[ "+r.Namespace+" ]]", r.Priority, change)
 		logDecision("WARNING: rolling back release [ "+r.Name+" ] from [[ "+rs.Namespace+" ]] to [[ "+r.Namespace+
 			" ]] might not correctly connect to existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/move_charts_across_namespaces.md"+
-			" for details if this release uses PV and PVC.", r.Priority)
+			" for details if this release uses PV and PVC.", r.Priority, change)
 
 	}
 }
@@ -169,7 +169,7 @@ func deleteRelease(r *release, rs releaseState) {
 		Description: "deleting release [ " + r.Name + " ] from namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(cmd, priority, r)
-	logDecision("DECISION: release [ "+r.Name+" ] is desired to be deleted "+purgeDesc+". Planing this for you!", priority)
+	logDecision("DECISION: release [ "+r.Name+" ] is desired to be deleted "+purgeDesc+". Planing this for you!", priority, delete)
 }
 
 // inspectUpgradeScenario evaluates if a release should be upgraded.
@@ -185,32 +185,32 @@ func inspectUpgradeScenario(r *release, rs releaseState) {
 		if extractChartName(r.Chart) == getReleaseChartName(rs) && r.Version != getReleaseChartVersion(rs) {
 			// upgrade
 			upgradeRelease(r)
-			logDecision("DECISION: release [ "+r.Name+" ] is desired to be upgraded. Planing this for you!", r.Priority)
+			logDecision("DECISION: release [ "+r.Name+" ] is desired to be upgraded. Planing this for you!", r.Priority, change)
 
 		} else if extractChartName(r.Chart) != getReleaseChartName(rs) {
 			reInstallRelease(r, rs)
 			logDecision("DECISION: release [ "+r.Name+" ] is desired to use a new Chart [ "+r.Chart+
 				" ]. I am planning a purge delete of the current release and will install it with the new chart in namespace [[ "+
-				r.Namespace+" ]]", r.Priority)
+				r.Namespace+" ]]", r.Priority, change)
 
 		} else {
 			if diff := diffRelease(r); diff != "" {
 				upgradeRelease(r)
 				logDecision("DECISION: release [ "+r.Name+" ] is currently enabled and have some changed parameters. "+
-					"I will upgrade it!", r.Priority)
+					"I will upgrade it!", r.Priority, change)
 			} else {
 				logDecision("DECISION: release [ "+r.Name+" ] is desired to be enabled and is currently enabled. "+
-					"Nothing to do here!", r.Priority)
+					"Nothing to do here!", r.Priority, noop)
 			}
 		}
 	} else {
 		reInstallRelease(r, rs)
 		logDecision("DECISION: release [ "+r.Name+" ] is desired to be enabled in a new namespace [[ "+r.Namespace+
 			" ]]. I am planning a purge delete of the current release from namespace [[ "+rs.Namespace+" ]] "+
-			"and will install it for you in namespace [[ "+r.Namespace+" ]]", r.Priority)
+			"and will install it for you in namespace [[ "+r.Namespace+" ]]", r.Priority, change)
 		logDecision("WARNING: moving release [ "+r.Name+" ] from [[ "+rs.Namespace+" ]] to [[ "+r.Namespace+
 			" ]] might not correctly connect to existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/move_charts_across_namespaces.md"+
-			" for details if this release uses PV and PVC.", r.Priority)
+			" for details if this release uses PV and PVC.", r.Priority, change)
 	}
 }
 
@@ -276,9 +276,9 @@ func reInstallRelease(r *release, rs releaseState) {
 
 // logDecision adds the decisions made to the plan.
 // Depending on the debug flag being set or not, it will either log the the decision to output or not.
-func logDecision(decision string, priority int) {
+func logDecision(decision string, priority int, decisionType decisionType) {
 
-	outcome.addDecision(decision, priority)
+	outcome.addDecision(decision, priority, decisionType)
 
 }
 

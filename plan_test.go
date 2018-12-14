@@ -104,7 +104,7 @@ func Test_plan_addDecision(t *testing.T) {
 				Decisions: tt.fields.Decisions,
 				Created:   tt.fields.Created,
 			}
-			p.addDecision(tt.args.decision, 0)
+			p.addDecision(tt.args.decision, 0, noop)
 			if got := len(p.Decisions); got != 1 {
 				t.Errorf("addDecision(): got  %v, want 1", got)
 			}
