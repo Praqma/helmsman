@@ -8,12 +8,32 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/logrusorgru/aurora"
 )
+
+// decisionType type representing type of Decision for console output
+type decisionType int
+
+const (
+	create decisionType = iota + 1
+	change
+	delete
+	noop
+)
+
+var decisionColor = map[decisionType]aurora.Color{
+	create: aurora.BlueFg,
+	change: aurora.BrownFg,
+	delete: aurora.RedFg,
+	noop:   aurora.GreenFg,
+}
 
 // orderedDecision type representing a Decision and it's priority weight
 type orderedDecision struct {
 	Description string
 	Priority    int
+	Type        decisionType
 }
 
 // orderedCommand type representing a Command and it's priority weight and the targeted release from the desired state
@@ -53,10 +73,11 @@ func (p *plan) addCommand(cmd command, priority int, r *release) {
 }
 
 // addDecision adds a decision type to the plan
-func (p *plan) addDecision(decision string, priority int) {
+func (p *plan) addDecision(decision string, priority int, decisionType decisionType) {
 	od := orderedDecision{
 		Description: decision,
 		Priority:    priority,
+		Type:        decisionType,
 	}
 	p.Decisions = append(p.Decisions, od)
 }
@@ -98,7 +119,7 @@ func (p plan) printPlan() {
 	fmt.Println("----------------------")
 	log.Println(style.Bold(style.Green("INFO: Plan generated at: " + p.Created.Format("Mon Jan _2 2006 15:04:05"))))
 	for _, decision := range p.Decisions {
-		fmt.Println(style.Green(decision.Description + " -- priority: " + strconv.Itoa(decision.Priority)))
+		fmt.Println(style.Colorize(decision.Description+" -- priority: "+strconv.Itoa(decision.Priority), decisionColor[decision.Type]))
 	}
 }
 
