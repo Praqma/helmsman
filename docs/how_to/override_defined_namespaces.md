@@ -36,7 +36,7 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     [apps.jenkins]
     name = "jenkins" # should be unique across all apps
     description = "jenkins"
-    namespace = "production" # maps to the namespace as defined in environmetns above
+    namespace = "production" # maps to the namespace as defined in environments above
     enabled = true # change to false if you want to delete this app release [empty = false]
     chart = "stable/jenkins" # changing the chart name means delete and recreate this chart
     version = "0.14.3" # chart version
@@ -45,7 +45,7 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     [apps.artifactory]
     name = "artifactory" # should be unique across all apps
     description = "artifactory"
-    namespace = "staging" # maps to the namespace as defined in environmetns above
+    namespace = "staging" # maps to the namespace as defined in environments above
     enabled = true # change to false if you want to delete this app release [empty = false]
     chart = "stable/artifactory" # changing the chart name means delete and recreate this chart
     version = "7.0.6" # chart version
