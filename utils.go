@@ -122,9 +122,9 @@ func toYAML(file string, s *state) {
 
 // invokes either yaml or toml parser considering file extension
 func fromFile(file string, s *state) (bool, string) {
-	if isOfType(file, ".toml") {
+	if isOfType(file, []string{".toml"}) {
 		return fromTOML(file, s)
-	} else if isOfType(file, ".yaml") {
+	} else if isOfType(file, []string{".yaml", ".yml"}) {
 		return fromYAML(file, s)
 	} else {
 		return false, "State file does not have toml/yaml extension."
@@ -132,9 +132,9 @@ func fromFile(file string, s *state) (bool, string) {
 }
 
 func toFile(file string, s *state) {
-	if isOfType(file, ".toml") {
+	if isOfType(file, []string{".toml"}) {
 		toTOML(file, s)
-	} else if isOfType(file, ".yaml") {
+	} else if isOfType(file, []string{".yaml", ".yml"}) {
 		toYAML(file, s)
 	} else {
 		logError("ERROR: State file does not have toml/yaml extension.")
@@ -208,8 +208,13 @@ func resolvePaths(relativeToFile string, s *state) {
 
 // isOfType checks if the file extension of a filename/path is the same as "filetype".
 // isisOfType is case insensitive. filetype should contain the "." e.g. ".yaml"
-func isOfType(filename string, filetype string) bool {
-	return filepath.Ext(strings.ToLower(filename)) == strings.ToLower(filetype)
+func isOfType(filename string, filetypes []string) bool {
+	lowerMap := make(map[string]struct{})
+	for _, v := range filetypes {
+		lowerMap[strings.ToLower(v)] = struct{}{}
+	}
+	_, result := lowerMap[filepath.Ext(strings.ToLower(filename))]
+	return result
 }
 
 // readFile returns the content of a file as a string.

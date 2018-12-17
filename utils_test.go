@@ -296,8 +296,8 @@ func Test_fromYAML_Expand(t *testing.T) {
 
 func Test_isOfType(t *testing.T) {
 	type args struct {
-		filename string
-		filetype string
+		filename  string
+		filetypes []string
 	}
 	tests := []struct {
 		name string
@@ -307,29 +307,36 @@ func Test_isOfType(t *testing.T) {
 		{
 			name: "test case 1 -- valid xml check",
 			args: args{
-				filename: "name.xml",
-				filetype: ".xml",
+				filename:  "name.xml",
+				filetypes: []string{".xml"},
 			},
 			want: true,
 		}, {
 			name: "test case 2 -- valid yaml check",
 			args: args{
-				filename: "another_name.yaml",
-				filetype: ".yaml",
+				filename:  "another_name.yaml",
+				filetypes: []string{".yaml", ".yml"},
 			},
 			want: true,
 		}, {
-			name: "test case 3 -- invalid yaml check",
+			name: "test case 3 -- valid (short) yaml check",
 			args: args{
-				filename: "name.xml",
-				filetype: ".yaml",
+				filename:  "another_name.yml",
+				filetypes: []string{".yaml", ".yml"},
+			},
+			want: true,
+		}, {
+			name: "test case 4 -- invalid yaml check",
+			args: args{
+				filename:  "name.xml",
+				filetypes: []string{".yaml", ".yml"},
 			},
 			want: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := isOfType(tt.args.filename, tt.args.filetype); got != tt.want {
+			if got := isOfType(tt.args.filename, tt.args.filetypes); got != tt.want {
 				t.Errorf("isOfType() = %v, want %v", got, tt.want)
 			}
 		})
