@@ -98,7 +98,7 @@ apps:
     enabled: true
     chart: "stable/artifactory"
     version: "6.2.0" # chart version
-    valuesFile: "../my-artificatory-production-values.yaml"
+    valuesFile: "../my-artifactory-production-values.yaml"
 
   # the jenkins release below is being tested in the staging namespace
   jenkins-test:
@@ -131,7 +131,7 @@ Often, you would have multiple apps developed in separate source code repositori
 
 Each repository will have a Helmsman desired state file (DSF). But it is important to consider the notes below on using multiple desired state files with one cluster.
 
-If you need supporting applications (charts) for your application (e.g, reverse proxies, DB, k8s dashborad etc.), you can describe the desired state for these in a separate file which can live in another repository. Adding such file in the pipeline where you create your cluster from code makes total "DevOps" sense.
+If you need supporting applications (charts) for your application (e.g, reverse proxies, DB, k8s dashboard etc.), you can describe the desired state for these in a separate file which can live in another repository. Adding such file in the pipeline where you create your cluster from code makes total "DevOps" sense.
 
 ## Notes on using multiple Helmsman desired state files with the same cluster
 
