@@ -73,7 +73,14 @@ Helmsman has been packaged in Archlinux under `helmsman-bin` for the latest bina
 
 # Documentation
 
-Documentation and How-Tos can be found [here](https://github.com/Praqma/helmsman/blob/master/docs/).
+- [Documentation and How-Tos](https://github.com/Praqma/helmsman/blob/master/docs/).
+
+- [Desired state specification](https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md).
+
+- [CMD reference](https://github.com/Praqma/helmsman/blob/master/docs/cmd_reference.md)
+
+
+
 Helmsman lets you:
 
 - [install/delete/upgrade/rollback your helm charts from code](https://github.com/Praqma/helmsman/blob/master/docs/how_to/manipulate_apps.md).
