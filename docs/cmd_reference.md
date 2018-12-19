@@ -8,39 +8,55 @@ This is the list of the available CMD options in Helmsman:
 
 > you can find the CMD options for the version you are using by typing: `helmsman -h` or `helmsman --help`
 
-  --apply
+  `--apply`
         apply the plan directly.
-  --apply-labels
+        
+  `--apply-labels`
         apply Helmsman labels to Helm state for all defined apps.
-  --debug
+        
+  `--debug`
         show the execution logs.
-  --destroy
+        
+  `--destroy`
         delete all deployed releases. Purge delete is used if the purge option is set to true for the releases.
-  --dry-run
+        
+  `--dry-run`
         apply the dry-run option for helm commands.
-  -e value
+        
+  `-e value`
         file(s) to load environment variables from (default .env), may be supplied more than once.
-  -f value
+        
+  `-f value`
         desired state file name(s), may be supplied more than once to merge state files.
-  --keep-untracked-releases
+        
+  `--keep-untracked-releases`
         keep releases that are managed by Helmsman and are no longer tracked in your desired state.
-  --no-banner
+        
+  `--no-banner`
         don't show the banner.
-  --no-color
+        
+  `--no-color`
         don't use colors.
-  --no-fancy
+        
+  `--no-fancy`
         don't display the banner and don't use colors.
-  --no-ns
+        
+  `--no-ns`
         don't create namespaces.
-  --ns-override string
+        
+  `--ns-override string`
         override defined namespaces with this one.
-  --show-diff
+        
+  `--show-diff`
         show helm diff results. Can expose sensitive information.
-  --skip-validation
+        
+  `--skip-validation`
         skip desired state validation.
-  --suppress-diff-secrets
+        
+  `--suppress-diff-secrets`
         don't show secrets in helm diff output.
-  -v    
-        show the version.
-  --verbose
+        
+  `-v`    show the version.
+        
+  `--verbose`
         show verbose execution logs.
