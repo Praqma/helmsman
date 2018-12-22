@@ -23,6 +23,8 @@ settings:
   storageBackend: "secret" # default is configMap
   #slackWebhook:  "$slack" # or your slack webhook url
   #reverseDelete: false # reverse the priorities on delete
+  
+  #tillerless: true # runs helm in tillerless mode using
 
 # define your environments and their k8s namespaces
 namespaces:

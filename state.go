@@ -32,6 +32,7 @@ type config struct {
 	StorageBackend string `yaml:"storageBackend"`
 	SlackWebhook   string `yaml:"slackWebhook"`
 	ReverseDelete  bool   `yaml:"reverseDelete"`
+	Tillerless     bool   `yaml:"tillerless"`
 }
 
 // state type represents the desired state of applications on a k8s cluster.

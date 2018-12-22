@@ -160,6 +160,11 @@ func init() {
 		s.print()
 	}
 
+	// validate that if we are running in tillerless mode, and we don't have the tiller plugin installed we should fail.
+	if !helmPluginExists("tiller") && s.Settings.Tillerless {
+		logError("ERROR: tillerless operation is specified and helm tiller plugin is not installed/configured correctly. Aborting!")
+	}
+
 	if !skipValidation {
 		// validate the desired state content
 		if len(files) > 0 {

@@ -58,14 +58,16 @@ func getHelmClientVersion() string {
 
 // getAllReleases fetches a list of all releases in a k8s cluster
 func getAllReleases() tillerReleases {
+
 	// result := make(map[string]interface{})
 	var result tillerReleases
 	if _, ok := s.Namespaces["kube-system"]; !ok {
-		result.Releases = append(result.Releases, getTillerReleases("kube-system").Releases...)
+		result.Releases = append(result.Releases, getTillerReleases("kube-system", s.Settings.Tillerless).Releases...)
 	}
+
 	for ns, v := range s.Namespaces {
 		if v.InstallTiller || v.UseTiller {
-			result.Releases = append(result.Releases, getTillerReleases(ns).Releases...)
+			result.Releases = append(result.Releases, getTillerReleases(ns, s.Settings.Tillerless).Releases...)
 		}
 	}
 
@@ -73,7 +75,7 @@ func getAllReleases() tillerReleases {
 }
 
 // getTillerReleases gets releases deployed with a given Tiller (in a given namespace)
-func getTillerReleases(tillerNS string) tillerReleases {
+func getTillerReleases(tillerNS string, tillerless bool) tillerReleases {
 	v1, _ := version.NewVersion(helmVersion)
 	jsonConstraint, _ := version.NewConstraint(">=2.10.0-rc.1")
 	var outputFormat string
@@ -83,7 +85,7 @@ func getTillerReleases(tillerNS string) tillerReleases {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm list --all --max 0 " + outputFormat + " --tiller-namespace " + tillerNS + getNSTLSFlags(tillerNS)},
+		Args:        []string{"-c", helmCommand(tillerNS, tillerless) + " list --all --max 0 " + outputFormat + " --tiller-namespace " + tillerNS + getNSTLSFlags(tillerNS)},
 		Description: "listing all existing releases in namespace [ " + tillerNS + " ]...",
 	}
 
@@ -96,6 +98,7 @@ func getTillerReleases(tillerNS string) tillerReleases {
 
 		logError("ERROR: failed to list all releases in namespace [ " + tillerNS + " ]: " + result)
 	}
+
 	var out tillerReleases
 	if jsonConstraint.Check(v1) {
 		json.Unmarshal([]byte(result), &out)
@@ -127,6 +130,7 @@ func getTillerReleases(tillerNS string) tillerReleases {
 // buildState builds the currentState map containing information about all releases existing in a k8s cluster
 func buildState() {
 	log.Println("INFO: mapping the current helm state ...")
+
 	currentState = make(map[string]releaseState)
 	rel := getAllReleases()
 
@@ -226,7 +230,7 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 
 			if exitCode, output := cmd.exec(debug, verbose); exitCode != 0 {
 				maybeRepo := filepath.Base(filepath.Dir(r.Chart))
-				return false, "ERROR: chart at " + r.Chart + " for app [" + app + "] could not be found. Did you mean to add a repo named '" + maybeRepo +"'?"
+				return false, "ERROR: chart at " + r.Chart + " for app [" + app + "] could not be found. Did you mean to add a repo named '" + maybeRepo + "'?"
 			} else {
 				matches := versionExtractor.FindStringSubmatch(output)
 				if len(matches) == 2 {
@@ -454,14 +458,14 @@ func cleanUntrackedReleases() {
 		for ns, releases := range toDelete {
 			for r := range releases {
 				logDecision("DECISION: untracked release found: release [ "+r+" ] from Tiller in namespace [ "+ns+" ]. It will be deleted.", -800, delete)
-				deleteUntrackedRelease(r, ns)
+				deleteUntrackedRelease(r, ns, s.Settings.Tillerless)
 			}
 		}
 	}
 }
 
 // deleteUntrackedRelease creates the helm command to purge delete an untracked release
-func deleteUntrackedRelease(release string, tillerNamespace string) {
+func deleteUntrackedRelease(release string, tillerNamespace string, tillerless bool) {
 
 	tls := ""
 	if tillerTLSEnabled(tillerNamespace) {
@@ -470,7 +474,7 @@ func deleteUntrackedRelease(release string, tillerNamespace string) {
 	}
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm delete --purge " + release + " --tiller-namespace " + tillerNamespace + tls + getDryRunFlags()},
+		Args:        []string{"-c", helmCommand(tillerNamespace, tillerless) + " delete --purge " + release + " --tiller-namespace " + tillerNamespace + tls + getDryRunFlags()},
 		Description: "deleting untracked release [ " + release + " ] from Tiller in namespace [[ " + tillerNamespace + " ]]",
 	}
 
