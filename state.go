@@ -20,6 +20,7 @@ type config struct {
 	ReverseDelete   bool   `yaml:"reverseDelete"`
 	BearerToken     bool   `yaml:"bearerToken"`
 	BearerTokenPath string `yaml:"bearerTokenPath"`
+	Tillerless      bool   `yaml:"tillerless"`
 }
 
 // state type represents the desired state of applications on a k8s cluster.
