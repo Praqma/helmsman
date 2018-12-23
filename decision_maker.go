@@ -51,7 +51,7 @@ func decide(r *release, s *state) {
 			if !isProtected(r, rs) {
 
 				// delete it
-				deleteRelease(r, rs, s)
+				deleteRelease(r, rs)
 
 			} else {
 				logDecision("DECISION: release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
@@ -64,7 +64,7 @@ func decide(r *release, s *state) {
 	} else { // check for install/upgrade/rollback
 		if ok, rs := helmReleaseExists(r, "deployed"); ok {
 			if !isProtected(r, rs) {
-				inspectUpgradeScenario(r, rs, s) // upgrade or move
+				inspectUpgradeScenario(r, rs) // upgrade or move
 
 			} else {
 				logDecision("DECISION: release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
@@ -74,7 +74,7 @@ func decide(r *release, s *state) {
 		} else if ok, rs := helmReleaseExists(r, "deleted"); ok {
 			if !isProtected(r, rs) {
 
-				rollbackRelease(r, rs, s) // rollback
+				rollbackRelease(r, rs) // rollback
 
 			} else {
 				logDecision("DECISION: release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
@@ -86,7 +86,7 @@ func decide(r *release, s *state) {
 			if !isProtected(r, rs) {
 
 				logDecision("DECISION: release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in FAILED state. I will upgrade it for you. Hope it gets fixed!", r.Priority, change)
-				upgradeRelease(r, s)
+				upgradeRelease(r)
 
 			} else {
 				logDecision("DECISION: release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
@@ -94,7 +94,7 @@ func decide(r *release, s *state) {
 			}
 		} else {
 
-			installRelease(r, s) // install a new release
+			installRelease(r) // install a new release
 
 		}
 
@@ -106,8 +106,8 @@ func decide(r *release, s *state) {
 // operate without a tiller it will return `helm tiller run NAMESPACE -- helm`
 // where NAMESPACE is the namespace that the release is configured to use.
 // If not configured to run without a tiller will just return `helm`.
-func helmCommand(namespace string, tillerless bool) string {
-	if tillerless {
+func helmCommand(namespace string) string {
+	if settings.Tillerless {
 		return "helm tiller run " + namespace + " -- helm"
 	}
 
@@ -116,15 +116,15 @@ func helmCommand(namespace string, tillerless bool) string {
 
 // helmCommandFromConfig calls helmCommand returning the correct way to invoke
 // helm.
-func helmCommandFromConfig(r *release, s *state) string {
-	return helmCommand(getDesiredTillerNamespace(r), s.Settings.Tillerless)
+func helmCommandFromConfig(r *release) string {
+	return helmCommand(getDesiredTillerNamespace(r))
 }
 
 // testRelease creates a Helm command to test a particular release.
-func testRelease(r *release, s *state) {
+func testRelease(r *release) {
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r, s) + " test " + r.Name + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r)},
+		Args:        []string{"-c", helmCommandFromConfig(r) + " test " + r.Name + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r)},
 		Description: "running tests for release [ " + r.Name + " ]",
 	}
 	outcome.addCommand(cmd, r.Priority, r)
@@ -133,11 +133,11 @@ func testRelease(r *release, s *state) {
 }
 
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
-func installRelease(r *release, s *state) {
+func installRelease(r *release) {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r, s) + " upgrade --install " + r.Name + " " + r.Chart + " --version " + strconv.Quote(r.Version) + " --namespace " + r.Namespace + getValuesFiles(r) + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r)},
+		Args:        []string{"-c", helmCommandFromConfig(r) + " install " + r.Chart + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + " --version " + r.Version + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
 		Description: "installing release [ " + r.Name + " ] in namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(cmd, r.Priority, r)
@@ -145,30 +145,30 @@ func installRelease(r *release, s *state) {
 		r.Namespace+" ]] using Tiller in [ "+getDesiredTillerNamespace(r)+" ]", r.Priority, create)
 
 	if r.Test {
-		testRelease(r, s)
+		testRelease(r)
 	}
 }
 
 // rollbackRelease evaluates if a rollback action needs to be taken for a given release.
 // if the release is already deleted but from a different namespace than the one specified in input,
 // it purge deletes it and create it in the specified namespace.
-func rollbackRelease(r *release, rs releaseState, s *state) {
+func rollbackRelease(r *release, rs releaseState) {
 
 	if r.Namespace == rs.Namespace {
 
 		cmd := command{
 			Cmd:         "bash",
-			Args:        []string{"-c", helmCommandFromConfig(r, s) + " rollback " + r.Name + " " + getReleaseRevision(rs) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
+			Args:        []string{"-c", helmCommandFromConfig(r) + " rollback " + r.Name + " " + getReleaseRevision(rs) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
 			Description: "rolling back release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 		}
 		outcome.addCommand(cmd, r.Priority, r)
-		upgradeRelease(r, s) // this is to reflect any changes in values file(s)
+		upgradeRelease(r) // this is to reflect any changes in values file(s)
 		logDecision("DECISION: release [ "+r.Name+" ] is currently deleted and is desired to be rolledback to "+
 			"namespace [[ "+r.Namespace+" ]] . It will also be upgraded in case values have changed.", r.Priority, change)
 
 	} else {
 
-		reInstallRelease(r, rs, s)
+		reInstallRelease(r, rs)
 		logDecision("DECISION: release [ "+r.Name+" ] is deleted BUT from namespace [[ "+rs.Namespace+
 			" ]]. Will purge delete it from there and install it in namespace [[ "+r.Namespace+" ]]", r.Priority, change)
 		logDecision("WARNING: rolling back release [ "+r.Name+" ] from [[ "+rs.Namespace+" ]] to [[ "+r.Namespace+
@@ -179,7 +179,7 @@ func rollbackRelease(r *release, rs releaseState, s *state) {
 }
 
 // deleteRelease deletes a release from a particular Tiller in a k8s cluster
-func deleteRelease(r *release, rs releaseState, s *state) {
+func deleteRelease(r *release, rs releaseState) {
 	p := ""
 	purgeDesc := ""
 	if r.Purge {
@@ -194,7 +194,7 @@ func deleteRelease(r *release, rs releaseState, s *state) {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r, s) + " delete " + p + " " + r.Name + getCurrentTillerNamespaceFlag(rs) + getTLSFlags(r) + getDryRunFlags()},
+		Args:        []string{"-c", helmCommandFromConfig(r) + " delete " + p + " " + r.Name + getCurrentTillerNamespaceFlag(rs) + getTLSFlags(r) + getDryRunFlags()},
 		Description: "deleting release [ " + r.Name + " ] from namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(cmd, priority, r)
@@ -208,24 +208,24 @@ func deleteRelease(r *release, rs releaseState, s *state) {
 // it will be purge deleted and installed in the same namespace using the new chart.
 // - If the release is NOT in the same namespace specified in the input,
 // it will be purge deleted and installed in the new namespace.
-func inspectUpgradeScenario(r *release, rs releaseState, s *state) {
+func inspectUpgradeScenario(r *release, rs releaseState) {
 
 	if r.Namespace == rs.Namespace {
 		if extractChartName(r.Chart) == getReleaseChartName(rs) && r.Version != getReleaseChartVersion(rs) {
 			// upgrade
-			diffRelease(r, s)
-			upgradeRelease(r, s)
+			diffRelease(r)
+			upgradeRelease(r)
 			logDecision("DECISION: release [ "+r.Name+" ] is desired to be upgraded. Planning this for you!", r.Priority, change)
 
 		} else if extractChartName(r.Chart) != getReleaseChartName(rs) {
-			reInstallRelease(r, rs, s)
+			reInstallRelease(r, rs)
 			logDecision("DECISION: release [ "+r.Name+" ] is desired to use a new Chart [ "+r.Chart+
 				" ]. I am planning a purge delete of the current release and will install it with the new chart in namespace [[ "+
 				r.Namespace+" ]]", r.Priority, change)
 
 		} else {
-			if diff := diffRelease(r, s); diff != "" {
-				upgradeRelease(r, s)
+			if diff := diffRelease(r); diff != "" {
+				upgradeRelease(r)
 				logDecision("DECISION: release [ "+r.Name+" ] is currently enabled and have some changed parameters. "+
 					"I will upgrade it!", r.Priority, change)
 			} else {
@@ -234,7 +234,7 @@ func inspectUpgradeScenario(r *release, rs releaseState, s *state) {
 			}
 		}
 	} else {
-		reInstallRelease(r, rs, s)
+		reInstallRelease(r, rs)
 		logDecision("DECISION: release [ "+r.Name+" ] is desired to be enabled in a new namespace [[ "+r.Namespace+
 			" ]]. I am planning a purge delete of the current release from namespace [[ "+rs.Namespace+" ]] "+
 			"and will install it for you in namespace [[ "+r.Namespace+" ]]", r.Priority, change)
@@ -245,7 +245,7 @@ func inspectUpgradeScenario(r *release, rs releaseState, s *state) {
 }
 
 // diffRelease diffs an existing release with the specified values.yaml
-func diffRelease(r *release, s *state) string {
+func diffRelease(r *release) string {
 	exitCode := 0
 	msg := ""
 	colorFlag := ""
@@ -259,7 +259,7 @@ func diffRelease(r *release, s *state) string {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r, s) + " diff " + colorFlag + suppressDiffSecretsFlag + "upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + " " + getSetValues(r) + getSetStringValues(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r)},
+		Args:        []string{"-c", helmCommandFromConfig(r) + " diff " + colorFlag + suppressDiffSecretsFlag + "upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + " " + getSetValues(r) + getSetStringValues(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r)},
 		Description: "diffing release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 
@@ -275,10 +275,10 @@ func diffRelease(r *release, s *state) string {
 }
 
 // upgradeRelease upgrades an existing release with the specified values.yaml
-func upgradeRelease(r *release, s *state) {
+func upgradeRelease(r *release) {
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r, s) + " upgrade " + r.Name + " " + r.Chart + " --version " + strconv.Quote(r.Version) + getValuesFiles(r) + " --force " + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r)},
+		Args:        []string{"-c", helmCommandFromConfig(r) + " upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + " --force " + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
 		Description: "upgrading release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 
@@ -287,18 +287,18 @@ func upgradeRelease(r *release, s *state) {
 
 // reInstallRelease purge deletes a release and reinstalls it.
 // This is used when moving a release to another namespace or when changing the chart used for it.
-func reInstallRelease(r *release, rs releaseState, s *state) {
+func reInstallRelease(r *release, rs releaseState) {
 
 	delCmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r, s) + " delete --purge " + r.Name + getCurrentTillerNamespaceFlag(rs) + getTLSFlags(r) + getDryRunFlags()},
+		Args:        []string{"-c", helmCommandFromConfig(r) + " delete --purge " + r.Name + getCurrentTillerNamespaceFlag(rs) + getTLSFlags(r) + getDryRunFlags()},
 		Description: "deleting release [ " + r.Name + " ] from namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(delCmd, r.Priority, r)
 
 	installCmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r, s) + " upgrade --install " + r.Name + " " + r.Chart + " --version " + strconv.Quote(r.Version) + " --namespace " + r.Namespace + getValuesFiles(r) + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r)},
+		Args:        []string{"-c", helmCommandFromConfig(r) + " install " + r.Chart + " --version " + r.Version + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
 		Description: "installing release [ " + r.Name + " ] in namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(installCmd, r.Priority, r)
