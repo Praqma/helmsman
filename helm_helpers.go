@@ -62,12 +62,12 @@ func getAllReleases() tillerReleases {
 	// result := make(map[string]interface{})
 	var result tillerReleases
 	if _, ok := s.Namespaces["kube-system"]; !ok {
-		result.Releases = append(result.Releases, getTillerReleases("kube-system", s.Settings.Tillerless).Releases...)
+		result.Releases = append(result.Releases, getTillerReleases("kube-system").Releases...)
 	}
 
 	for ns, v := range s.Namespaces {
 		if v.InstallTiller || v.UseTiller {
-			result.Releases = append(result.Releases, getTillerReleases(ns, s.Settings.Tillerless).Releases...)
+			result.Releases = append(result.Releases, getTillerReleases(ns).Releases...)
 		}
 	}
 
@@ -75,7 +75,7 @@ func getAllReleases() tillerReleases {
 }
 
 // getTillerReleases gets releases deployed with a given Tiller (in a given namespace)
-func getTillerReleases(tillerNS string, tillerless bool) tillerReleases {
+func getTillerReleases(tillerNS string) tillerReleases {
 	v1, _ := version.NewVersion(helmVersion)
 	jsonConstraint, _ := version.NewConstraint(">=2.10.0-rc.1")
 	var outputFormat string
@@ -85,7 +85,7 @@ func getTillerReleases(tillerNS string, tillerless bool) tillerReleases {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", helmCommand(tillerNS, tillerless) + " list --all --max 0 " + outputFormat + " --tiller-namespace " + tillerNS + getNSTLSFlags(tillerNS)},
+		Args:        []string{"-c", helmCommand(tillerNS) + " list --all --max 0 " + outputFormat + " --tiller-namespace " + tillerNS + getNSTLSFlags(tillerNS)},
 		Description: "listing all existing releases in namespace [ " + tillerNS + " ]...",
 	}
 
@@ -458,14 +458,14 @@ func cleanUntrackedReleases() {
 		for ns, releases := range toDelete {
 			for r := range releases {
 				logDecision("DECISION: untracked release found: release [ "+r+" ] from Tiller in namespace [ "+ns+" ]. It will be deleted.", -800, delete)
-				deleteUntrackedRelease(r, ns, s.Settings.Tillerless)
+				deleteUntrackedRelease(r, ns)
 			}
 		}
 	}
 }
 
 // deleteUntrackedRelease creates the helm command to purge delete an untracked release
-func deleteUntrackedRelease(release string, tillerNamespace string, tillerless bool) {
+func deleteUntrackedRelease(release string, tillerNamespace string) {
 
 	tls := ""
 	if tillerTLSEnabled(tillerNamespace) {
@@ -474,7 +474,7 @@ func deleteUntrackedRelease(release string, tillerNamespace string, tillerless b
 	}
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", helmCommand(tillerNamespace, tillerless) + " delete --purge " + release + " --tiller-namespace " + tillerNamespace + tls + getDryRunFlags()},
+		Args:        []string{"-c", helmCommand(tillerNamespace) + " delete --purge " + release + " --tiller-namespace " + tillerNamespace + tls + getDryRunFlags()},
 		Description: "deleting untracked release [ " + release + " ] from Tiller in namespace [[ " + tillerNamespace + " ]]",
 	}
 
