@@ -170,7 +170,7 @@ func deleteRelease(r *release, rs releaseState) {
 		Description: "deleting release [ " + r.Name + " ] from namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(cmd, priority, r)
-	logDecision("DECISION: release [ "+r.Name+" ] is desired to be deleted "+purgeDesc+". Planing this for you!", priority, delete)
+	logDecision("DECISION: release [ "+r.Name+" ] is desired to be deleted "+purgeDesc+". Planning this for you!", priority, delete)
 }
 
 // inspectUpgradeScenario evaluates if a release should be upgraded.
@@ -186,7 +186,7 @@ func inspectUpgradeScenario(r *release, rs releaseState) {
 		if extractChartName(r.Chart) == getReleaseChartName(rs) && r.Version != getReleaseChartVersion(rs) {
 			// upgrade
 			upgradeRelease(r)
-			logDecision("DECISION: release [ "+r.Name+" ] is desired to be upgraded. Planing this for you!", r.Priority, change)
+			logDecision("DECISION: release [ "+r.Name+" ] is desired to be upgraded. Planning this for you!", r.Priority, change)
 
 		} else if extractChartName(r.Chart) != getReleaseChartName(rs) {
 			reInstallRelease(r, rs)
