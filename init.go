@@ -40,6 +40,7 @@ func init() {
 	//parsing command line flags
 	flag.Var(&files, "f", "desired state file name(s), may be supplied more than once to merge state files")
 	flag.Var(&envFiles, "e", "file(s) to load environment variables from (default .env), may be supplied more than once")
+	flag.StringVar(&kubeconfig, "kubeconfig", "", "path to the kubeconfig file to use for CLI requests")
 	flag.BoolVar(&apply, "apply", false, "apply the plan directly")
 	flag.BoolVar(&debug, "debug", false, "show the execution logs")
 	flag.BoolVar(&dryRun, "dry-run", false, "apply the dry-run option for helm commands.")
@@ -94,6 +95,10 @@ func init() {
 	if v {
 		fmt.Println("Helmsman version: " + appVersion)
 		os.Exit(0)
+	}
+
+	if kubeconfig != "" {
+		os.Setenv("KUBECONFIG", kubeconfig)
 	}
 
 	if !toolExists("kubectl") {
