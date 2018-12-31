@@ -192,6 +192,10 @@ func createContext() (bool, string) {
 // setKubeContext sets your kubectl context to the one specified in the desired state file.
 // It returns false if it fails to set the context. This means the context does not exist.
 func setKubeContext(context string) bool {
+	if context == "" {
+		return getKubeContext()
+	}
+
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", "kubectl config use-context " + context},
@@ -202,6 +206,25 @@ func setKubeContext(context string) bool {
 
 	if exitCode != 0 {
 		log.Println("INFO: KubeContext: " + context + " does not exist. I will try to create it.")
+		return false
+	}
+
+	return true
+}
+
+// getKubeContext gets your kubectl context.
+// It returns false if no context is set.
+func getKubeContext() bool {
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "kubectl config current-context"},
+		Description: "getting kubectl context",
+	}
+
+	exitCode, result := cmd.exec(debug, verbose)
+
+	if exitCode != 0 || result == "" {
+		log.Println("INFO: Kubectl context is not set")
 		return false
 	}
 
