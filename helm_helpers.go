@@ -226,7 +226,7 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 
 			if exitCode, output := cmd.exec(debug, verbose); exitCode != 0 {
 				maybeRepo := filepath.Base(filepath.Dir(r.Chart))
-				return false, "ERROR: chart at " + r.Chart + " for app [" + app + "] could not be found. Did you mean to add a repo named '" + maybeRepo +"'?"
+				return false, "ERROR: chart at " + r.Chart + " for app [" + app + "] could not be found. Did you mean to add a repo named '" + maybeRepo + "'?"
 			} else {
 				matches := versionExtractor.FindStringSubmatch(output)
 				if len(matches) == 2 {
