@@ -28,6 +28,13 @@ settings:
 namespaces:
   production:
     protected: true
+    limits:
+      default:
+        cpu: "300m"
+        memory: "200Mi"
+      defaultRequest:
+        cpu: "200m"
+        memory: "100Mi"
   staging:
     protected: false
     installTiller: true
