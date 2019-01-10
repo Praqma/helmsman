@@ -1,3 +1,8 @@
+#  This is a docker image for helmsman
+
+ARG KUBE_VERSION=v1.11.3
+ARG HELM_VERSION=v2.11.0
+
 FROM golang:1.10-alpine3.7 as builder
 
 WORKDIR /go/src/
@@ -18,20 +23,17 @@ RUN cd helmsman \
 
 # The image to keep
 FROM alpine:3.7
-RUN apk add --update --no-cache ca-certificates git openssh
-
-ARG HELM_VERSION=v2.10.0
-ARG KUBE_VERSION="v1.11.3"
 
 RUN apk --no-cache update \
-    && rm -rf /var/cache/apk/* \
+    && apk add --update --no-cache ca-certificates git openssh \
     && apk add --update -t deps curl tar gzip make bash \
+    && rm -rf /var/cache/apk/* \
     && curl -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl \
     && chmod +x /usr/local/bin/kubectl \
     && curl -L http://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar zxv -C /tmp \
     && mv /tmp/linux-amd64/helm /usr/local/bin/helm \
-    && chmod +x /usr/local/bin/helm \
-    && rm -rf /tmp/linux-amd64
+    && rm -rf /tmp/linux-amd64 \
+    && chmod +x /usr/local/bin/helm
 
 COPY --from=builder /go/bin/helmsman   /bin/helmsman
 
