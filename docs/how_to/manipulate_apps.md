@@ -45,8 +45,8 @@ $ helmsman --apply -f example.toml
 2017/11/19 18:29:01 INFO: Executing the following plan ...
 ---------------
 Ok, I have generated a plan for you at: 2017-11-19 18:28:29.437061909 +0100 CET m=+1.987623555
-DECISION: release [ jenkins ] is desired to be deleted . Planing this for you!
-DECISION: release [ artifactory ] is desired to be upgraded. Planing this for you!
+DECISION: release [ jenkins ] is desired to be deleted . Planning this for you!
+DECISION: release [ artifactory ] is desired to be upgraded. Planning this for you!
 2017/11/19 18:29:01 INFO: attempting: --   deleting release [ jenkins ]
 2017/11/19 18:29:11 INFO: attempting: --   upgrading release [ artifactory ]
 ```
@@ -110,7 +110,7 @@ $ helmsman --apply -f example.toml
 ---------------
 Ok, I have generated a plan for you at: 2017-11-19 18:30:43.108693039 +0100 CET m=+1.978435517
 DECISION: release [ jenkins ] is currently deleted and is desired to be rolledback to namespace [[ staging ]] . No problem!
-DECISION: release [ artifactory ] is desired to be upgraded. Planing this for you!
+DECISION: release [ artifactory ] is desired to be upgraded. Planning this for you!
 2017/11/19 18:30:49 INFO: attempting: --   rolling back release [ jenkins ]
 2017/11/19 18:30:50 INFO: attempting: --   upgrading release [ artifactory ]
 ```
