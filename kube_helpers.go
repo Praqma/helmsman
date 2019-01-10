@@ -1,8 +1,11 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 )
 
 // validateServiceAccount checks if k8s service account exists in a given namespace
@@ -58,6 +61,7 @@ func addNamespaces(namespaces map[string]namespace) {
 		for nsName, ns := range namespaces {
 			createNamespace(nsName)
 			labelNamespace(nsName, ns.Labels)
+			setLimits(nsName, ns.Limits)
 		}
 	} else {
 		createNamespace(nsOverride)
@@ -101,6 +105,49 @@ func labelNamespace(ns string, labels map[string]string) {
 				" ]. It already exists. I am skipping this.")
 		}
 	}
+}
+
+// setLimits creates a LimitRange resource in the provided Namespace
+func setLimits(ns string, lims limits) {
+
+	if lims == (limits{}) {
+		return
+	}
+
+	definition := `---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: limit-range
+spec:
+  limits:
+  - type: Container
+`
+	d, err := yaml.Marshal(&lims)
+	if err != nil {
+		logError(err.Error())
+	}
+
+	definition = definition + Indent(string(d), strings.Repeat(" ", 4))
+
+	if err := ioutil.WriteFile("temp-LimitRange.yaml", []byte(definition), 0666); err != nil {
+		logError(err.Error())
+	}
+
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "kubectl apply -f temp-LimitRange.yaml -n " + ns},
+		Description: "creating LimitRange in namespace [ " + ns + " ]",
+	}
+
+	exitCode, e := cmd.exec(debug, verbose)
+
+	if exitCode != 0 {
+		logError("ERROR: failed to create LimitRange in namespace [ " + ns + " ]: " + e)
+	}
+
+	deleteFile("temp-LimitRange.yaml")
+
 }
 
 // createContext creates a context -connecting to a k8s cluster- in kubectl config.

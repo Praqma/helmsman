@@ -389,3 +389,18 @@ func replaceStringInFile(input []byte, outfile string, replacements map[string]s
 		logError(err.Error())
 	}
 }
+
+// Indent inserts prefix at the beginning of each non-empty line of s. The
+// end-of-line marker is NL.
+func Indent(s, prefix string) string {
+	var res []byte
+	bol := true
+	for _, c := range []byte(s) {
+		if bol && c != '\n' {
+			res = append(res, []byte(prefix)...)
+		}
+		res = append(res, c)
+		bol = c == '\n'
+	}
+	return string(res)
+}
