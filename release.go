@@ -119,15 +119,6 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 	return true, ""
 }
 
-// checkNamespaceDefined checks if a given namespace is defined in the namespaces section of the desired state file
-func checkNamespaceDefined(ns string, s state) bool {
-	_, ok := s.Namespaces[ns]
-	if !ok {
-		return false
-	}
-	return true
-}
-
 // overrideNamespace overrides a release defined namespace with a new given one
 func overrideNamespace(r *release, newNs string) {
 	log.Println("INFO: overriding namespace for app:  " + r.Name)

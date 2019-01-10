@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"strings"
 	"syscall"
 )
 
@@ -35,7 +36,7 @@ func (c command) exec(debug bool, verbose bool) (int, string) {
 		log.Println("INFO: " + c.Description)
 	}
 	if verbose {
-		log.Println("VERBOSE: " + c.Args[1])
+		log.Println("VERBOSE: " + strings.Join(c.Args[1:], " "))
 	}
 
 	cmd := exec.Command(c.Cmd, c.Args...)

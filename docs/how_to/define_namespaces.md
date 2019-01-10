@@ -7,14 +7,14 @@ version: v1.6.0
 You can define namespaces to be used in your cluster. If they don't exist, Helmsman will create them for you.
 
 ```toml
-...
+#...
 
 [namespaces]
 [namespaces.staging]
 [namespaces.production]
   protected = true # default is false
 
-...
+#...
 ```
 
 ```yaml
@@ -23,7 +23,6 @@ namespaces:
   staging:
   production:
     protected: true # default is false
-
 
 ```
 
@@ -98,7 +97,7 @@ namespaces:
 You can then tell Helmsman to deploy specific releases in a specific namespace:
 
 ```toml
-...
+#...
 [apps]
 
     [apps.jenkins]
@@ -112,12 +111,12 @@ You can then tell Helmsman to deploy specific releases in a specific namespace:
     purge = false
     test = true
 
-...
+#...
 
 ```
 
 ```yaml
-...
+#...
 apps:
   jenkins:
     name: "jenkins"
@@ -130,9 +129,74 @@ apps:
     purge: false
     test: true
 
-...
+#...
 
 ```
 
 In the above example, `Jenkins` will be deployed in the production namespace using the Tiller deployed in the production namespace. If the production namespace was not configured to have Tiller deployed there, Jenkins will be deployed using the Tiller in `kube-system`.
 
+## Setting limit ranges
+
+As of `v1.7.3-rc`, you can instruct Helmsman to deploy `LimitRange`s into specific namespaces by setting the limits in the namespace specification.
+
+Example:
+
+```toml
+[namespaces]
+# to prevent deploying Tiller into kube-system, use the two lines below
+# [namespaces.kube-system]
+# installTiller = false # this line can be omitted since installTiller defaults to false
+[namespaces.staging]
+[namespaces.dev]
+useTiller = true # use a Tiller which has been deployed in dev namespace
+protected = false
+[namespaces.production]
+protected = true
+installTiller = true
+tillerServiceAccount = "tiller-production"
+caCert = "secrets/ca.cert.pem"
+tillerCert = "secrets/tiller.cert.pem"
+tillerKey = "$TILLER_KEY" # where TILLER_KEY=secrets/tiller.key.pem
+clientCert = "gs://mybucket/mydir/helm.cert.pem"
+clientKey = "s3://mybucket/mydir/helm.key.pem"
+[namespaces.production.labels]
+env = "prod"
+[namespaces.production.limits]
+[namespaces.production.limits.default]
+cpu = "300m"
+memory = "200Mi"
+[namespaces.production.limits.defaultRequest]
+cpu = "200m"
+memory = "100Mi"
+```
+
+```yaml
+namespaces:
+  # to prevent deploying Tiller into kube-system, use the two lines below
+  # kube-system:
+  #  installTiller: false # this line can be omitted since installTiller defaults to false
+  staging:
+  dev:
+    protected: false
+    useTiller: true # use a Tiller which has been deployed in dev namespace
+  production:
+    protected: true
+    installTiller: true
+    tillerServiceAccount: "tiller-production"
+    caCert: "secrets/ca.cert.pem"
+    tillerCert: "secrets/tiller.cert.pem"
+    tillerKey: "$TILLER_KEY" # where TILLER_KEY=secrets/tiller.key.pem
+    clientCert: "gs://mybucket/mydir/helm.cert.pem"
+    clientKey: "s3://mybucket/mydir/helm.key.pem"
+    limits:
+      default:
+        cpu: "300m"
+        memory: "200Mi"
+      defaultRequest:
+        cpu: "200m"
+        memory: "100Mi"
+    labels:
+      env: "prod"
+```
+
+You can read more about the `LimitRange` specification [here](https://docs.openshift.com/enterprise/3.2/dev_guide/compute_resources.html#dev-viewing-limit-ranges).
