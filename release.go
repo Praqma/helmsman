@@ -29,6 +29,7 @@ type release struct {
 	TillerNamespace string            `yaml:"tillerNamespace"`
 	Set             map[string]string `yaml:"set"`
 	SetString       map[string]string `yaml:"setString"`
+	helmFlags       []string          `yaml:"helmFlags"`
 	NoHooks         bool              `yaml:"noHooks"`
 	Timeout         int               `yaml:"timeout"`
 }
