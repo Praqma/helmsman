@@ -1,7 +1,5 @@
 #  This is a docker image for helmsman
 
-ARG KUBE_VERSION=v1.11.3
-ARG HELM_VERSION=v2.11.0
 
 FROM golang:1.10-alpine3.7 as builder
 
@@ -24,6 +22,12 @@ RUN cd helmsman \
 # The image to keep
 FROM alpine:3.7
 
+ARG KUBE_VERSION
+ARG HELM_VERSION
+
+ENV KUBE_VERSION ${KUBE_VERSION:-v1.11.3}
+ENV HELM_VERSION ${HELM_VERSION:-v2.11.0}
+
 RUN apk --no-cache update \
     && apk add --update --no-cache ca-certificates git openssh \
     && apk add --update -t deps curl tar gzip make bash \
@@ -36,9 +40,6 @@ RUN apk --no-cache update \
     && chmod +x /usr/local/bin/helm
 
 COPY --from=builder /go/bin/helmsman   /bin/helmsman
-
-#RUN adduser -D -g '' helmsman
-#USER helmsman
 
 RUN mkdir -p ~/.helm/plugins \
     && helm plugin install https://github.com/hypnoglow/helm-s3.git \
