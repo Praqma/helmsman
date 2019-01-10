@@ -21,6 +21,7 @@ var s state
 var debug bool
 var files stringArray
 var envFiles stringArray
+var kubeconfig string
 var apply bool
 var v bool
 var verbose bool

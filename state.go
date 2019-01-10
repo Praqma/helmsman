@@ -37,7 +37,7 @@ func (s state) validate() (bool, string) {
 	// settings
 	if s.Settings == (config{}) {
 		return false, "ERROR: settings validation failed -- no settings table provided in state file."
-	} else if s.Settings.KubeContext == "" {
+	} else if s.Settings.KubeContext == "" && !getKubeContext() {
 		return false, "ERROR: settings validation failed -- you have not provided a " +
 			"kubeContext to use. Can't work without it. Sorry!"
 	} else if s.Settings.ClusterURI != "" {
@@ -46,6 +46,9 @@ func (s state) validate() (bool, string) {
 			return false, "ERROR: settings validation failed -- clusterURI must have a valid URL set in an env variable or passed directly. Either the env var is missing/empty or the URL is invalid."
 		}
 
+		if s.Settings.KubeContext == "" {
+			return false, "ERROR: settings validation failed -- KubeContext must be provided if clusterURI is defined."
+		}
 		if s.Settings.Username == "" {
 			return false, "ERROR: settings validation failed -- username must be provided if clusterURI is defined."
 		}
