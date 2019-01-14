@@ -51,7 +51,7 @@ func main() {
 		checkCleanup = true
 	}
 
-	if apply {
+	if apply || dryRun {
 		// add/validate namespaces
 		if !noNs {
 			addNamespaces(s.Namespaces)
