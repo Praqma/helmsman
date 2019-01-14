@@ -115,7 +115,7 @@ In a multitenant setting, it is also recommended to deploy Tiller with TLS enabl
 
 [namespaces]
     [namespaces.kube-system]
-    installTiller = false # has no effect. Tiller is always deployed in kube-system
+    installTiller = true
     caCert = "secrets/kube-system/ca.cert.pem"
     tillerCert = "secrets/kube-system/tiller.cert.pem"
     tillerKey = "$TILLER_KEY" # where TILLER_KEY=secrets/kube-system/tiller.key.pem
