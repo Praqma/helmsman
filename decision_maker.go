@@ -336,11 +336,14 @@ func getValuesFiles(r *release) string {
 			logError("ERROR: helm secrets plugin is not installed/configured correctly. Aborting!")
 		}
 		for i := 0; i < len(r.SecretsFiles); i++ {
-			r.SecretsFiles[i] = r.SecretsFiles[i]
 			if ok := decryptSecret(r.SecretsFiles[i]); !ok {
 				logError("Failed to decrypt secret file" + r.SecretsFiles[i])
 			}
-			r.SecretsFiles[i] = r.SecretsFiles[i] + ".dec"
+			// if .dec extension is added before to the secret filename, don't add it again.
+			// This happens at upgrade time (where diff and upgrade both call this function)
+			if !isOfType(r.SecretsFiles[i], []string{".dec"}) {
+				r.SecretsFiles[i] = r.SecretsFiles[i] + ".dec"
+			}
 		}
 		fileList = append(fileList, r.SecretsFiles...)
 	}
