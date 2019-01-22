@@ -1,9 +1,10 @@
-# v1.7.3-rc
+# v1.7.3
 
 > If you are already using an older version of Helmsman than v1.4.0-rc, please read the changes below carefully and follow the upgrade guide [here](docs/migrating_to_v1.4.0-rc.md)
 
 # Fixes:
 
+- Addition fixes to 1.7.3-rc: PRs #175 #176 #177 #178
 - fixing docker images helm verions with and updating dependencies. Issues: #157 #156. PR: #158 #165
 - adding `batch` to the RBAC API groups. Issue: #160. PR: #162
 
