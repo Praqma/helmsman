@@ -30,7 +30,7 @@ var noColors bool
 var noFancy bool
 var noNs bool
 var nsOverride string
-var checkCleanup bool
+var shouldCleanup bool
 var skipValidation bool
 var applyLabels bool
 var keepUntrackedReleases bool
@@ -48,7 +48,7 @@ func main() {
 		if r, msg := createContext(); !r {
 			logError(msg)
 		}
-		checkCleanup = true
+		shouldCleanup = true
 	}
 
 	if apply || dryRun {
@@ -105,7 +105,7 @@ func main() {
 		p.execPlan()
 	}
 
-	if checkCleanup {
+	if shouldCleanup {
 		cleanup()
 	}
 
