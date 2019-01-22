@@ -260,6 +260,25 @@ func Test_validateRelease(t *testing.T) {
 			},
 			want:  true,
 			want1: "",
+		}, {
+			name: "test case 14",
+			args: args{
+				r: &release{
+					Name:        "release14",
+					Description: "",
+					Namespace:   "namespace",
+					Enabled:     true,
+					Chart:       "repo/chartX",
+					Version:     "1.0",
+					ValuesFiles: []string{"./test_files/values.yaml", "test_files/values2.yaml"},
+					Purge:       true,
+					Test:        true,
+					Set:         map[string]string{"some_var": "$SOME_VAR"},
+				},
+				s: st,
+			},
+			want:  false,
+			want1: "env var [ $SOME_VAR ] is not set, but is wanted to be passed for [ some_var ] in [[ release14 ]]",
 		},
 	}
 	names := make(map[string]map[string]bool)
