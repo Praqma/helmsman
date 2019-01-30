@@ -39,6 +39,7 @@ namespaces:
     protected: false
     installTiller: true
     #tillerServiceAccount: "tiller-staging" # should already exist in the staging namespace
+    #tillerRole: "cluster-admin" # Give tiller full access to the cluster
     #caCert: "secrets/ca.cert.pem" # or an env var, e.g. "$CA_CERT_PATH"
     #tillerCert: "secrets/tiller.cert.pem" # or S3 bucket s3://mybucket/tiller.crt
     #tillerKey: "secrets/tiller.key.pem"  # or GCS bucket gs://mybucket/tiller.key
