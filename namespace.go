@@ -31,6 +31,7 @@ type namespace struct {
 	ClientKey            string            `yaml:"clientKey"`
 	Limits               limits            `yaml:"limits,omitempty"`
 	Labels               map[string]string `yaml:"labels"`
+	Annotations          map[string]string `yaml:"annotations"`
 }
 
 // checkNamespaceDefined checks if a given namespace is defined in the namespaces section of the desired state file
