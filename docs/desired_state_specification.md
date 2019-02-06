@@ -134,6 +134,7 @@ Options:
 > By default Tiller will be deployed into `kube-system` even if you don't define kube-system in the namespaces section. To prevent deploying Tiller into `kube-system, add kube-system in your namespaces section and set its installTiller to false.
 -**useTiller**: defines that you would like to use an existing Tiller from that namespace. Can't be set together with `installTiller`
 - **labels** : defines labels to be added to the namespace, doesn't remove existing labels but updates them if the label key exists with any other different value. You can define any key/value pairs. Default is empty.
+- **annotations** : defines annotations to be added to the namespace. It behaves the same way as the labels option.
 - **limits** : defines a [LimitRange](https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/memory-default-namespace/) to be configured on the namespace
 
 - **tillerServiceAccount**: defines what service account to use when deploying Tiller. If this is not set, the following options are considered:
@@ -172,6 +173,8 @@ clientCert = "gs://mybucket/mydir/helm.cert.pem"
 clientKey = "s3://mybucket/mydir/helm.key.pem"
 [namespaces.production.labels]
 env = "prod"
+[namespaces.production.annotations]
+iam.amazonaws.com/role = "dynamodb-reader"
 [namespaces.production.limits]
 [namespaces.production.limits.default]
 cpu = "300m"
@@ -208,6 +211,8 @@ namespaces:
         memory: "100Mi"
     labels:
       env: "prod"
+    annotations:
+      iam.amazonaws.com/role: "dynamodb-reader"
 ```
 
 ## Helm Repos
