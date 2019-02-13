@@ -4,6 +4,6 @@ metadata:
   name: helmsman-tiller
   namespace: <<namespace>>
 rules:
-- apiGroups: ["", "batch", "extensions", "apps"]
+- apiGroups: ["", "batch", "extensions", "apps", "rbac.authorization.k8s.io"]
   resources: ["*"]
   verbs: ["*"]
