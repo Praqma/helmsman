@@ -132,6 +132,7 @@ Options:
 > For the definition of what a protected namespace means, check the [protection guide](how_to/protect_namespaces_and_releases.md)
 - **installTiller**: defines if Tiller should be deployed in this namespace or not. Default is false. Any chart desired to be deployed into a namespace with a Tiller deployed, will be deployed using that Tiller and not the one in kube-system unless you use the `TillerNamespace` option (see the [Apps](#apps) section below) to use another Tiller.
 > By default Tiller will be deployed into `kube-system` even if you don't define kube-system in the namespaces section. To prevent deploying Tiller into `kube-system, add kube-system in your namespaces section and set its installTiller to false.
+-**tillerRole**: specify the role to use.  If 'cluster-admin' a clusterrolebinding will be used else a rolebinding will be used.
 -**useTiller**: defines that you would like to use an existing Tiller from that namespace. Can't be set together with `installTiller`
 - **labels** : defines labels to be added to the namespace, doesn't remove existing labels but updates them if the label key exists with any other different value. You can define any key/value pairs. Default is empty.
 - **limits** : defines a [LimitRange](https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/memory-default-namespace/) to be configured on the namespace
@@ -139,7 +140,7 @@ Options:
 - **tillerServiceAccount**: defines what service account to use when deploying Tiller. If this is not set, the following options are considered:
 
   1. If the `serviceAccount` defined in the `settings` section exists in the namespace you want to deploy Tiller in, it will be used, else
-  2. Helmsman creates the service account in that namespace and binds it to a role. If the namespace is kube-system, the service account is bound to `cluster-admin` clusterrole. Otherwise, a new role called `helmsman-tiller` is created in that namespace and only gives access to that namespace.
+  2. Helmsman creates the service account in that namespace and binds it to a role. If the namespace is kube-system, the service account is bound to `cluster-admin` clusterrole. Otherwise, a new role called `helmsman-tiller` is created in that namespace and only gives access to that namespace. The role can be overriden with the tillerRole option.
 
   > If `installTiller` is not defined or set to false, this flag is ignored.
 
