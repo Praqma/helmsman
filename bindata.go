@@ -6,13 +6,36 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 )
+
+func bindataRead(data []byte, name string) ([]byte, error) {
+	gz, err := gzip.NewReader(bytes.NewBuffer(data))
+	if err != nil {
+		return nil, fmt.Errorf("Read %q: %v", name, err)
+	}
+
+	var buf bytes.Buffer
+	_, err = io.Copy(&buf, gz)
+	clErr := gz.Close()
+
+	if err != nil {
+		return nil, fmt.Errorf("Read %q: %v", name, err)
+	}
+	if clErr != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
 
 type asset struct {
 	bytes []byte
@@ -45,18 +68,13 @@ func (fi bindataFileInfo) Sys() interface{} {
 	return nil
 }
 
-var _dataRoleYaml = []byte(`kind: Role
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: helmsman-tiller
-  namespace: <<namespace>>
-rules:
-- apiGroups: ["", "extensions", "apps"]
-  resources: ["*"]
-  verbs: ["*"]`)
+var _dataRoleYaml = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x74\x8e\xc1\x4a\x03\x31\x10\x86\xef\x79\x8a\x61\x8f\xe2\xae\xf4\x26\xa1\x14\xaa\x2e\x7a\xb0\x1e\xaa\x08\x22\x1e\x26\xe9\x40\x43\xd3\x4c\x98\x49\x8a\xf8\xf4\x92\x20\x7b\xf3\x34\xf3\xfd\x3f\x33\x7c\xa7\x90\x0e\x16\xf6\x1c\xc9\x60\x0e\xef\x24\x1a\x38\x59\x10\x87\x7e\xc2\x5a\x8e\x2c\xe1\x07\x4b\xe0\x34\x9d\x6e\x75\x0a\x7c\x73\x59\x39\x2a\xb8\x32\x67\x2a\x78\xc0\x82\xd6\x00\x24\x3c\x93\x85\xf5\x5a\x38\xd2\xd8\x60\xb3\xf9\x4b\x35\xa3\xef\xd5\x02\xbd\x8a\xe8\x28\x6a\x3b\x05\xb8\xdf\xcf\xdb\xb7\xf9\x61\xbc\xfb\xb0\xf0\x34\x3f\xef\x5e\x77\xdb\x17\x23\x35\x92\x5a\x33\x02\xe6\xf0\x28\x5c\xb3\x5a\xf8\x1c\x86\x6b\x18\x1c\x16\x7f\x6c\x0b\x7d\x17\x4a\xcd\x56\x1b\x61\xce\x7d\xfe\x2b\x3e\x7c\x19\x00\x21\xe5\x2a\x9e\xfa\xb7\xab\x1e\x5d\x48\xdc\x82\xbf\x01\x00\x00\xff\xff\xfa\x4b\x3c\xe3\x0e\x01\x00\x00")
 
 func dataRoleYamlBytes() ([]byte, error) {
-	return _dataRoleYaml, nil
+	return bindataRead(
+		_dataRoleYaml,
+		"data/role.yaml",
+	)
 }
 
 func dataRoleYaml() (*asset, error) {
@@ -65,7 +83,7 @@ func dataRoleYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "data/role.yaml", size: 198, mode: os.FileMode(420), modTime: time.Unix(1531758991, 0)}
+	info := bindataFileInfo{name: "data/role.yaml", size: 270, mode: os.FileMode(420), modTime: time.Unix(1550050901, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -164,7 +182,6 @@ type bintree struct {
 	Func     func() (*asset, error)
 	Children map[string]*bintree
 }
-
 var _bintree = &bintree{nil, map[string]*bintree{
 	"data": &bintree{nil, map[string]*bintree{
 		"role.yaml": &bintree{dataRoleYaml, map[string]*bintree{}},
@@ -217,3 +234,4 @@ func _filePath(dir, name string) string {
 	cannonicalName := strings.Replace(name, "\\", "/", -1)
 	return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
 }
+

@@ -29,19 +29,19 @@ func validateServiceAccount(sa string, namespace string) (bool, string) {
 }
 
 // createRBAC creates a k8s service account and bind it to a (Cluster)Role
-// If sharedTiller is true , it binds the service account to cluster-admin role. Otherwise,
+// role can be "cluster-admin" or any other custom name
 // It binds it to a new role called "helmsman-tiller"
 func createRBAC(sa string, namespace string, role string) (bool, string) {
 	var ok bool
 	var err string
 	if ok, err = createServiceAccount(sa, namespace); ok {
-		if role == "cluster-admin" {
+		if role == "cluster-admin" || (role == "" && namespace == "kube-system") {
 			if ok, err = createRoleBinding(role, sa, namespace); ok {
 				return true, ""
 			}
 			return false, err
 		}
-		if ok, err = createRole(namespace); ok {
+		if ok, err = createRole(namespace, role); ok {
 			if ok, err = createRoleBinding(role, sa, namespace); ok {
 				return true, ""
 			}
@@ -123,7 +123,6 @@ func annotateNamespace(ns string, labels map[string]string) {
 		}
 	}
 }
-
 
 // setLimits creates a LimitRange resource in the provided Namespace
 func setLimits(ns string, lims limits) {
@@ -319,7 +318,7 @@ func createRoleBinding(role string, saName string, namespace string) (bool, stri
 	clusterRole := false
 	resource := "rolebinding"
 	if role == "" {
-		if namespace == "kube-system"{
+		if namespace == "kube-system" {
 			role = "cluster-admin"
 		} else {
 			role = "helmsman-tiller"
@@ -330,7 +329,6 @@ func createRoleBinding(role string, saName string, namespace string) (bool, stri
 		clusterRole = true
 		resource = "clusterrolebinding"
 	}
-
 
 	bindingOption := "--role=" + role
 	if clusterRole {
@@ -353,26 +351,25 @@ func createRoleBinding(role string, saName string, namespace string) (bool, stri
 	return true, ""
 }
 
-// createRole creates a k8s Role in a given namespace
-func createRole(namespace string) (bool, string) {
+// createRole creates a k8s Role in a given namespace from a template
+func createRole(namespace string, role string) (bool, string) {
 
 	// load static resource
 	resource, e := Asset("data/role.yaml")
 	if e != nil {
 		logError(e.Error())
 	}
-	replaceStringInFile(resource, "temp-modified-role.yaml", map[string]string{"<<namespace>>": namespace})
+	replaceStringInFile(resource, "temp-modified-role.yaml", map[string]string{"<<namespace>>": namespace, "<<role-name>>": role})
 
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", "kubectl apply -f temp-modified-role.yaml "},
-		Description: "creating role [helmsman-tiller] in namespace [ " + namespace + " ]",
+		Description: "creating role [" + role + "] in namespace [ " + namespace + " ]",
 	}
 
 	exitCode, err := cmd.exec(debug, verbose)
 
 	if exitCode != 0 {
-		//logError("ERROR: failed to create Tiller role in namespace [ " + namespace + " ]: " + err)
 		return false, err
 	}
 
