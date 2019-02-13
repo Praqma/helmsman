@@ -479,7 +479,7 @@ func getDryRunFlags() string {
 func getHelmFlags(r *release) string {
 	var flags string
 
-	for _, flag := range r.helmFlags {
+	for _, flag := range r.HelmFlags {
 		flags = flags + " " + flag
 	}
 	return getNoHooks(r) + getTimeout(r) + getDryRunFlags() + flags
