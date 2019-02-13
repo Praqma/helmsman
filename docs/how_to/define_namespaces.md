@@ -161,6 +161,8 @@ clientCert = "gs://mybucket/mydir/helm.cert.pem"
 clientKey = "s3://mybucket/mydir/helm.key.pem"
 [namespaces.production.labels]
 env = "prod"
+[namespaces.production.annotations]
+iam.amazonaws.com/role = "dynamodb-reader"
 [namespaces.production.limits]
 [namespaces.production.limits.default]
 cpu = "300m"
@@ -197,6 +199,8 @@ namespaces:
         memory: "100Mi"
     labels:
       env: "prod"
+    annotations:
+      iam.amazonaws.com/role: "dynamodb-reader"
 ```
 
 You can read more about the `LimitRange` specification [here](https://docs.openshift.com/enterprise/3.2/dev_guide/compute_resources.html#dev-viewing-limit-ranges).
