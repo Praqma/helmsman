@@ -31,18 +31,18 @@ func validateServiceAccount(sa string, namespace string) (bool, string) {
 // createRBAC creates a k8s service account and bind it to a (Cluster)Role
 // If sharedTiller is true , it binds the service account to cluster-admin role. Otherwise,
 // It binds it to a new role called "helmsman-tiller"
-func createRBAC(sa string, namespace string, sharedTiller bool) (bool, string) {
+func createRBAC(sa string, namespace string, role string) (bool, string) {
 	var ok bool
 	var err string
 	if ok, err = createServiceAccount(sa, namespace); ok {
-		if sharedTiller {
-			if ok, err = createRoleBinding("cluster-admin", sa, namespace); ok {
+		if role == "cluster-admin" {
+			if ok, err = createRoleBinding(role, sa, namespace); ok {
 				return true, ""
 			}
 			return false, err
 		}
 		if ok, err = createRole(namespace); ok {
-			if ok, err = createRoleBinding("helmsman-tiller", sa, namespace); ok {
+			if ok, err = createRoleBinding(role, sa, namespace); ok {
 				return true, ""
 			}
 			return false, err
@@ -318,16 +318,26 @@ func createServiceAccount(saName string, namespace string) (bool, string) {
 func createRoleBinding(role string, saName string, namespace string) (bool, string) {
 	clusterRole := false
 	resource := "rolebinding"
+	if role == "" {
+		if namespace == "kube-system"{
+			role = "cluster-admin"
+		} else {
+			role = "helmsman-tiller"
+		}
+	}
+
 	if role == "cluster-admin" {
 		clusterRole = true
 		resource = "clusterrolebinding"
 	}
+
 
 	bindingOption := "--role=" + role
 	if clusterRole {
 		bindingOption = "--clusterrole=" + role
 	}
 
+	log.Println("INFO: creating " + resource + " for service account [ " + saName + " ] in namespace [ " + namespace + " ] with role: " + role + ".")
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", "kubectl create " + resource + " " + saName + "-binding " + bindingOption + " --serviceaccount " + namespace + ":" + saName + " -n " + namespace},

@@ -24,6 +24,7 @@ type namespace struct {
 	InstallTiller        bool              `yaml:"installTiller"`
 	UseTiller            bool              `yaml:"useTiller"`
 	TillerServiceAccount string            `yaml:"tillerServiceAccount"`
+	TillerRole           string            `yaml:"tillerRole"`
 	CaCert               string            `yaml:"caCert"`
 	TillerCert           string            `yaml:"tillerCert"`
 	TillerKey            string            `yaml:"tillerKey"`
@@ -50,6 +51,7 @@ func (n namespace) print() {
 	fmt.Println("\tinstallTiller : ", n.InstallTiller)
 	fmt.Println("\tuseTiller : ", n.UseTiller)
 	fmt.Println("\ttillerServiceAccount : ", n.TillerServiceAccount)
+	fmt.Println("\ttillerRole: ", n.TillerRole)
 	fmt.Println("\tcaCert : ", n.CaCert)
 	fmt.Println("\ttillerCert : ", n.TillerCert)
 	fmt.Println("\ttillerKey : ", n.TillerKey)
