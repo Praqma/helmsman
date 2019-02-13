@@ -61,6 +61,7 @@ func addNamespaces(namespaces map[string]namespace) {
 		for nsName, ns := range namespaces {
 			createNamespace(nsName)
 			labelNamespace(nsName, ns.Labels)
+			annotateNamespace(nsName, ns.Annotations)
 			setLimits(nsName, ns.Limits)
 		}
 	} else {
@@ -106,6 +107,23 @@ func labelNamespace(ns string, labels map[string]string) {
 		}
 	}
 }
+
+// annotateNamespace annotates a namespace with provided annotations
+func annotateNamespace(ns string, labels map[string]string) {
+	for k, v := range labels {
+		cmd := command{
+			Cmd:         "bash",
+			Args:        []string{"-c", "kubectl annotate --overwrite namespace/" + ns + " " + k + "=" + v},
+			Description: "annotating namespace  " + ns,
+		}
+
+		if exitCode, _ := cmd.exec(debug, verbose); exitCode != 0 {
+			log.Println("WARN: I could not annotate namespace [ " + ns + " with " + k + "=" + v +
+				" ]. It already exists. I am skipping this.")
+		}
+	}
+}
+
 
 // setLimits creates a LimitRange resource in the provided Namespace
 func setLimits(ns string, lims limits) {
