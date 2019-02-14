@@ -34,6 +34,13 @@ func validateServiceAccount(sa string, namespace string) (bool, string) {
 func createRBAC(sa string, namespace string, role string) (bool, string) {
 	var ok bool
 	var err string
+	if role == "" {
+		if namespace == "kube-system" {
+			role = "cluster-admin"
+		} else {
+			role = "helmsman-tiller"
+		}
+	}
 	if ok, err = createServiceAccount(sa, namespace); ok {
 		if role == "cluster-admin" || (role == "" && namespace == "kube-system") {
 			if ok, err = createRoleBinding(role, sa, namespace); ok {
@@ -317,13 +324,6 @@ func createServiceAccount(saName string, namespace string) (bool, string) {
 func createRoleBinding(role string, saName string, namespace string) (bool, string) {
 	clusterRole := false
 	resource := "rolebinding"
-	if role == "" {
-		if namespace == "kube-system" {
-			role = "cluster-admin"
-		} else {
-			role = "helmsman-tiller"
-		}
-	}
 
 	if role == "cluster-admin" {
 		clusterRole = true
