@@ -447,18 +447,21 @@ func getCurrentTillerNamespaceFlag(rs releaseState) string {
 // otherwise, it will be the certs/keys for the kube-system namespace.
 func getTLSFlags(r *release) string {
 	tls := ""
+	ns := s.Namespaces[r.TillerNamespace]
 	if r.TillerNamespace != "" {
-		if tillerTLSEnabled(r.TillerNamespace) {
+		if tillerTLSEnabled(ns) {
 
 			tls = " --tls --tls-ca-cert " + r.TillerNamespace + "-ca.cert --tls-cert " + r.TillerNamespace + "-client.cert --tls-key " + r.TillerNamespace + "-client.key "
 		}
 	} else if s.Namespaces[r.Namespace].InstallTiller {
-		if tillerTLSEnabled(r.Namespace) {
+		ns := s.Namespaces[r.Namespace]
+		if tillerTLSEnabled(ns) {
 
 			tls = " --tls --tls-ca-cert " + r.Namespace + "-ca.cert --tls-cert " + r.Namespace + "-client.cert --tls-key " + r.Namespace + "-client.key "
 		}
 	} else {
-		if tillerTLSEnabled("kube-system") {
+		ns := s.Namespaces["kube-system"]
+		if tillerTLSEnabled(ns) {
 
 			tls = " --tls --tls-ca-cert kube-system-ca.cert --tls-cert kube-system-client.cert --tls-key kube-system-client.key "
 		}

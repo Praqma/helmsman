@@ -184,7 +184,7 @@ func resolvePaths(relativeToFile string, s *state) {
 	}
 	// resolving paths for helm certificate files
 	for k, v := range s.Namespaces {
-		if tillerTLSEnabled(k) {
+		if tillerTLSEnabled(v) {
 			if _, err := url.ParseRequestURI(v.CaCert); err != nil {
 				v.CaCert, _ = filepath.Abs(filepath.Join(dir, v.CaCert))
 			}

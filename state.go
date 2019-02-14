@@ -113,22 +113,28 @@ func (s state) validate() (bool, string) {
 				log.Println("INFO: namespace validation -- a pre-installed Tiller is desired to be used in namespace [ " + k + " ].")
 			} else if !ns.InstallTiller {
 				log.Println("INFO: namespace validation -- Tiller is NOT desired to be deployed in namespace [ " + k + " ].")
-			} else {
-				if tillerTLSEnabled(k) {
-					// validating the TLS certs and keys for Tiller
-					// if they are valid, their values (if they are env vars) are substituted
-					var ok1, ok2, ok3, ok4, ok5 bool
-					ok1, ns.CaCert = isValidCert(ns.CaCert)
-					ok2, ns.ClientCert = isValidCert(ns.ClientCert)
-					ok3, ns.ClientKey = isValidCert(ns.ClientKey)
-					ok4, ns.TillerCert = isValidCert(ns.TillerCert)
-					ok5, ns.TillerKey = isValidCert(ns.TillerKey)
+			}
+
+			if ns.UseTiller || ns.InstallTiller {
+				// validating the TLS certs and keys for Tiller
+				// if they are valid, their values (if they are env vars) are substituted
+				var ok1, ok2, ok3, ok4, ok5 bool
+				ok1, ns.CaCert = isValidCert(ns.CaCert)
+				ok2, ns.ClientCert = isValidCert(ns.ClientCert)
+				ok3, ns.ClientKey = isValidCert(ns.ClientKey)
+				ok4, ns.TillerCert = isValidCert(ns.TillerCert)
+				ok5, ns.TillerKey = isValidCert(ns.TillerKey)
+
+				if ns.InstallTiller {
 					if !ok1 || !ok2 || !ok3 || !ok4 || !ok5 {
-						return false, "ERROR: namespaces validation failed  -- some certs/keys are not valid for Tiller TLS in namespace [ " + k + " ]."
+						log.Println("INFO: namespace validation -- Either no or invalid certs/keys provided for DEPLOYING Tiller with TLS in namespace [ " + k + " ].")
 					}
-					log.Println("INFO: namespace validation -- Tiller is desired to be deployed with TLS in namespace [ " + k + " ]. ")
-				} else {
-					log.Println("INFO: namespace validation -- Tiller is desired to be deployed WITHOUT TLS in namespace [ " + k + " ]. ")
+					log.Println("INFO: namespace validation -- Tiller is desired to be DEPLOYED with TLS in namespace [ " + k + " ]. ")
+				} else if ns.UseTiller {
+					if !ok1 || !ok2 || !ok3 {
+						log.Println("INFO: namespace validation -- Either no or invalid certs/keys provided for USING Tiller with TLS in namespace [ " + k + " ].")
+					}
+					log.Println("INFO: namespace validation -- Tiller is desired to be USED with TLS in namespace [ " + k + " ]. ")
 				}
 			}
 		}
@@ -180,13 +186,19 @@ func isValidCert(value string) (bool, string) {
 	return true, value
 }
 
-// tillerTLSEnabled checks if Tiller is desired to be deployed with TLS enabled for a given namespace
-// TLS is considered desired ONLY if all certs and keys for both Tiller and the Helm client are defined.
-func tillerTLSEnabled(namespace string) bool {
-
-	ns := s.Namespaces[namespace]
-	if ns.CaCert != "" && ns.TillerCert != "" && ns.TillerKey != "" && ns.ClientCert != "" && ns.ClientKey != "" {
-		return true
+// tillerTLSEnabled checks if Tiller is desired to be deployed with TLS enabled for a given namespace or
+// if helmsman is supposed to use an existing Tiller which is secured with TLS.
+// For deploying Tiller, TLS is considered desired ONLY if all certs and keys for both Tiller and the Helm client are provided.
+// For using an existing Tiller, TLS is considered desired ONLY if "CaCert" & "ClientCert" & "ClientKey" are provided.
+func tillerTLSEnabled(ns namespace) bool {
+	if ns.UseTiller {
+		if ns.CaCert != "" && ns.ClientCert != "" && ns.ClientKey != "" {
+			return true
+		}
+	} else if ns.InstallTiller {
+		if ns.CaCert != "" && ns.TillerCert != "" && ns.TillerKey != "" && ns.ClientCert != "" && ns.ClientKey != "" {
+			return true
+		}
 	}
 	return false
 }
