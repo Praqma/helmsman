@@ -1,8 +1,10 @@
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
-  name: helmsman-tiller
+  name: <<role-name>>
   namespace: <<namespace>>
+  labels:
+    CREATED-BY: HELMSMAN
 rules:
 - apiGroups: ["", "batch", "extensions", "apps", "rbac.authorization.k8s.io"]
   resources: ["*"]
