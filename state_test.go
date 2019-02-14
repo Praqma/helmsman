@@ -298,7 +298,79 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 14 -- helmRepos/nil_value",
+			name: "test case 14 -- namespaces/use and install tiller",
+			fields: fields{
+				Metadata:     make(map[string]string),
+				Certificates: nil,
+				Settings: config{
+					KubeContext: "minikube",
+				},
+				Namespaces: map[string]namespace{
+					"staging": namespace{false, true, true, "", "", "", "", "", "", "", (limits{}), make(map[string]string), make(map[string]string)},
+				},
+				HelmRepos: map[string]string{
+					"stable": "https://kubernetes-charts.storage.googleapis.com",
+					"myrepo": "s3://my-repo/charts",
+				},
+				Apps: make(map[string]*release),
+			},
+			want: false,
+		}, {
+			name: "test case 15 -- namespaces/use tiller with tls-valid",
+			fields: fields{
+				Metadata:     make(map[string]string),
+				Certificates: nil,
+				Settings: config{
+					KubeContext: "minikube",
+				},
+				Namespaces: map[string]namespace{
+					"staging": namespace{false, false, true, "", "", "s3://some-bucket/12345.crt", "", "", "s3://some-bucket/12345.crt", "s3://some-bucket/12345.crt", (limits{}), make(map[string]string), make(map[string]string)},
+				},
+				HelmRepos: map[string]string{
+					"stable": "https://kubernetes-charts.storage.googleapis.com",
+					"myrepo": "s3://my-repo/charts",
+				},
+				Apps: make(map[string]*release),
+			},
+			want: true,
+		}, {
+			name: "test case 16 -- namespaces/use tiller with tls-not enough certs",
+			fields: fields{
+				Metadata:     make(map[string]string),
+				Certificates: nil,
+				Settings: config{
+					KubeContext: "minikube",
+				},
+				Namespaces: map[string]namespace{
+					"staging": namespace{false, false, true, "", "", "", "", "", "s3://some-bucket/12345.crt", "s3://some-bucket/12345.crt", (limits{}), make(map[string]string), make(map[string]string)},
+				},
+				HelmRepos: map[string]string{
+					"stable": "https://kubernetes-charts.storage.googleapis.com",
+					"myrepo": "s3://my-repo/charts",
+				},
+				Apps: make(map[string]*release),
+			},
+			want: true,
+		}, {
+			name: "test case 17 -- namespaces/deploy tiller with tls- valid",
+			fields: fields{
+				Metadata:     make(map[string]string),
+				Certificates: nil,
+				Settings: config{
+					KubeContext: "minikube",
+				},
+				Namespaces: map[string]namespace{
+					"staging": namespace{false, true, false, "", "", "s3://some-bucket/12345.crt", "s3://some-bucket/12345.crt", "s3://some-bucket/12345.crt", "s3://some-bucket/12345.crt", "s3://some-bucket/12345.crt", (limits{}), make(map[string]string), make(map[string]string)},
+				},
+				HelmRepos: map[string]string{
+					"stable": "https://kubernetes-charts.storage.googleapis.com",
+					"myrepo": "s3://my-repo/charts",
+				},
+				Apps: make(map[string]*release),
+			},
+			want: true,
+		}, {
+			name: "test case 18 -- helmRepos/nil_value",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -313,7 +385,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 15 -- helmRepos/empty",
+			name: "test case 19 -- helmRepos/empty",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -328,7 +400,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 16 -- helmRepos/empty_repo_value",
+			name: "test case 20 -- helmRepos/empty_repo_value",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -346,7 +418,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 17 -- helmRepos/invalid_repo_value",
+			name: "test case 21 -- helmRepos/invalid_repo_value",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,

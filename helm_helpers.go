@@ -199,11 +199,12 @@ func getReleaseChartVersion(rs releaseState) string {
 }
 
 // getNSTLSFlags returns TLS flags for a given namespace if it's deployed with TLS
-func getNSTLSFlags(ns string) string {
+func getNSTLSFlags(namespace string) string {
 	tls := ""
+	ns := s.Namespaces[namespace]
 	if tillerTLSEnabled(ns) {
 
-		tls = " --tls --tls-ca-cert " + ns + "-ca.cert --tls-cert " + ns + "-client.cert --tls-key " + ns + "-client.key "
+		tls = " --tls --tls-ca-cert " + namespace + "-ca.cert --tls-cert " + namespace + "-client.cert --tls-key " + namespace + "-client.key "
 	}
 	return tls
 }
@@ -359,7 +360,8 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 	tillerNameSpace := " --tiller-namespace " + namespace
 
 	tls := ""
-	if tillerTLSEnabled(namespace) {
+	ns := s.Namespaces[namespace]
+	if tillerTLSEnabled(ns) {
 		shouldCleanup = true // needed to activate cleaning up the certs upon exit
 		tillerCert := namespace + "-tiller.cert"
 		tillerKey := namespace + "-tiller.key"
@@ -390,7 +392,7 @@ func initHelm() (bool, string) {
 	defaultSA := s.Settings.ServiceAccount
 
 	for k, ns := range s.Namespaces {
-		if tillerTLSEnabled(k) {
+		if tillerTLSEnabled(ns) {
 			downloadFile(s.Namespaces[k].TillerCert, k+"-tiller.cert")
 			downloadFile(s.Namespaces[k].TillerKey, k+"-tiller.key")
 			downloadFile(s.Namespaces[k].CaCert, k+"-ca.cert")
@@ -461,7 +463,8 @@ func cleanUntrackedReleases() {
 func deleteUntrackedRelease(release string, tillerNamespace string) {
 
 	tls := ""
-	if tillerTLSEnabled(tillerNamespace) {
+	ns := s.Namespaces[tillerNamespace]
+	if tillerTLSEnabled(ns) {
 
 		tls = " --tls --tls-ca-cert " + tillerNamespace + "-ca.cert --tls-cert " + tillerNamespace + "-client.cert --tls-key " + tillerNamespace + "-client.key "
 	}
