@@ -128,13 +128,15 @@ func (s state) validate() (bool, string) {
 				if ns.InstallTiller {
 					if !ok1 || !ok2 || !ok3 || !ok4 || !ok5 {
 						log.Println("INFO: namespace validation -- Either no or invalid certs/keys provided for DEPLOYING Tiller with TLS in namespace [ " + k + " ].")
+					} else {
+						log.Println("INFO: namespace validation -- Tiller is desired to be DEPLOYED with TLS in namespace [ " + k + " ]. ")
 					}
-					log.Println("INFO: namespace validation -- Tiller is desired to be DEPLOYED with TLS in namespace [ " + k + " ]. ")
 				} else if ns.UseTiller {
 					if !ok1 || !ok2 || !ok3 {
 						log.Println("INFO: namespace validation -- Either no or invalid certs/keys provided for USING Tiller with TLS in namespace [ " + k + " ].")
+					} else {
+						log.Println("INFO: namespace validation -- Tiller is desired to be USED with TLS in namespace [ " + k + " ]. ")
 					}
-					log.Println("INFO: namespace validation -- Tiller is desired to be USED with TLS in namespace [ " + k + " ]. ")
 				}
 			}
 		}
