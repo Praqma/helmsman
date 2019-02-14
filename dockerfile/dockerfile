@@ -27,6 +27,7 @@ ARG HELM_VERSION
 
 ENV KUBE_VERSION ${KUBE_VERSION:-v1.11.3}
 ENV HELM_VERSION ${HELM_VERSION:-v2.11.0}
+ENV HELM_DIFF_VERSION ${HELM_DIFF_VERSION:-v2.11.0+3}
 
 RUN apk --no-cache update \
     && apk add --update --no-cache ca-certificates git openssh \
@@ -44,7 +45,7 @@ COPY --from=builder /go/bin/helmsman   /bin/helmsman
 RUN mkdir -p ~/.helm/plugins \
     && helm plugin install https://github.com/hypnoglow/helm-s3.git \
     && helm plugin install https://github.com/nouney/helm-gcs \
-    && helm plugin install https://github.com/databus23/helm-diff \
+    && helm plugin install https://github.com/databus23/helm-diff --version ${HELM_DIFF_VERSION} \
     && helm plugin install https://github.com/futuresimple/helm-secrets \
     && rm -r /tmp/helm-diff /tmp/helm-diff.tgz
 
