@@ -28,10 +28,13 @@ func makePlan(s *state) *plan {
 // to make a release section of the desired state come true.
 func decide(r *release, s *state) {
 	if destroy {
-		if ok, rs := helmReleaseExists(r, ""); ok {
+		if ok, rs := helmReleaseExists(r, "DEPLOYED"); ok {
 			deleteRelease(r, rs)
-			return
 		}
+		if ok, rs := helmReleaseExists(r, "FAILED"); ok {
+			deleteRelease(r, rs)
+		}
+		return
 	}
 
 	// check for deletion
