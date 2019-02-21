@@ -251,6 +251,28 @@ helmRepos:
   myGCSrepo: "gs://my-GCS-private-repo/charts"
 ```
 
+## Preconfigured Helm Repos
+
+Optional : Yes.
+
+Synopsis: defines the list of helm repositories that the helmsman will consider already preconfigured and thus will not try to overwrite it's configuration.
+
+The primary use-case is if you have some helm repositories that require HTTP basic authentication and you don't want to store the password into the helmsman.yaml. In this case you can execute the following sequence to have those repositories configured:
+
+Set up the helmsman configuration:
+
+```toml
+preconfiguredHelmRepos = [ "myrepo1", "myrepo2" ]
+```
+
+```yaml
+preconfiguredHelmRepos:
+- myrepo1
+- myrepo2
+```
+
+> In this case you will manually need to execute `helm repo add myrepo1 <URL> --username= --password=`
+
 ## Apps
 
 Optional : Yes.
