@@ -13,14 +13,14 @@ certificates:
   #caCrt: "s3://mybucket/ca.crt" # S3 bucket path
   #caKey: "../ca.key" # valid local file relative path
 
-settings:
-  kubeContext: "minikube" # will try connect to this context first, if it does not exist, it will be created using the details below
+# settings:
+  #kubeContext: "minikube" # will try connect to this context first, if it does not exist, it will be created using the details below
   #username: "admin"
   #password: "$K8S_PASSWORD" # the name of an environment variable containing the k8s password
-  clusterURI: "$SET_URI" # the name of an environment variable containing the cluster API
+  #clusterURI: "$SET_URI" # the name of an environment variable containing the cluster API
   #clusterURI: "https://192.168.99.100:8443" # equivalent to the above
   #serviceAccount: "foo" # k8s serviceaccount must be already defined, validation error will be thrown otherwise
-  storageBackend: "secret" # default is configMap
+  #storageBackend: "secret" # default is configMap
   #slackWebhook:  "$slack" # or your slack webhook url
   #reverseDelete: false # reverse the priorities on delete
 

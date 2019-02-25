@@ -73,12 +73,12 @@ certificates:
 
 ## Settings
 
-Optional : No.
+Optional : Yes.
 
 Synopsis: provides settings for connecting to your k8s cluster and configuring Helm's Tiller in the cluster.
 
 Options:
-- kubeContext : this is always required and defines what context to use in kubectl. Helmsman will try connect to this context first, if it does not exist, it will try to create it (i.e. connect to a k8s cluster) using the options below.
+- kubeContext : optionally define what context to use in kubectl. Helmsman will try connect to this context first, if it does not exist, it will try to create it (i.e. connect to a k8s cluster) using the options below.
 
 The following options can be skipped if your kubectl context is already created and you don't want Helmsman to connect kubectl to your cluster for you. When using Helmsman in CI pipeline, these details are required to connect to your cluster every time the pipeline is executed.
 

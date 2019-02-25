@@ -35,9 +35,7 @@ type state struct {
 func (s state) validate() (bool, string) {
 
 	// settings
-	if s.Settings == (config{}) {
-		return false, "ERROR: settings validation failed -- no settings table provided in state file."
-	} else if s.Settings.KubeContext == "" && !getKubeContext() {
+	if s.Settings.KubeContext == "" && !getKubeContext() {
 		return false, "ERROR: settings validation failed -- you have not provided a " +
 			"kubeContext to use. Can't work without it. Sorry!"
 	} else if s.Settings.ClusterURI != "" {
