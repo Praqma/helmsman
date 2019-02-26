@@ -44,26 +44,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: true,
 		}, {
-			name: "test case 2 -- settings/nil_value is allowed",
-			fields: fields{
-				Metadata: make(map[string]string),
-				Certificates: map[string]string{
-					"caCrt": "s3://some-bucket/12345.crt",
-					"caKey": "s3://some-bucket/12345.key",
-				},
-				Settings: config{},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, false, false, "", "", "", "", "", "", "", (limits{}), make(map[string]string), make(map[string]string)},
-				},
-				HelmRepos: map[string]string{
-					"stable": "https://kubernetes-charts.storage.googleapis.com",
-					"myrepo": "s3://my-repo/charts",
-				},
-				Apps: make(map[string]*release),
-			},
-			want: true,
-		}, {
-			name: "test case 3 -- settings/empty_context",
+			name: "test case 2 -- settings/empty_context",
 			fields: fields{
 				Metadata: make(map[string]string),
 				Certificates: map[string]string{
@@ -87,7 +68,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 4 -- settings/optional_params",
+			name: "test case 3 -- settings/optional_params",
 			fields: fields{
 				Metadata: make(map[string]string),
 				Certificates: map[string]string{
@@ -108,7 +89,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: true,
 		}, {
-			name: "test case 5 -- settings/password-passed-directly",
+			name: "test case 4 -- settings/password-passed-directly",
 			fields: fields{
 				Metadata: make(map[string]string),
 				Certificates: map[string]string{
@@ -132,7 +113,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: true,
 		}, {
-			name: "test case 6 -- settings/clusterURI-empty-env-var",
+			name: "test case 5 -- settings/clusterURI-empty-env-var",
 			fields: fields{
 				Metadata: make(map[string]string),
 				Certificates: map[string]string{
@@ -156,7 +137,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 7 -- settings/clusterURI-invalid",
+			name: "test case 6 -- settings/clusterURI-invalid",
 			fields: fields{
 				Metadata: make(map[string]string),
 				Certificates: map[string]string{
@@ -180,7 +161,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 8 -- certifications/missing key",
+			name: "test case 7 -- certifications/missing key",
 			fields: fields{
 				Metadata: make(map[string]string),
 				Certificates: map[string]string{
@@ -203,7 +184,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 9 -- certifications/nil_value",
+			name: "test case 8 -- certifications/nil_value",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -224,7 +205,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 10 -- certifications/invalid_s3",
+			name: "test case 9 -- certifications/invalid_s3",
 			fields: fields{
 				Metadata: make(map[string]string),
 				Certificates: map[string]string{
@@ -248,7 +229,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 11 -- certifications/nil_value_pass",
+			name: "test case 10 -- certifications/nil_value_pass",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -266,7 +247,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: true,
 		}, {
-			name: "test case 12 -- namespaces/nil_value",
+			name: "test case 11 -- namespaces/nil_value",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -282,7 +263,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 13 -- namespaces/empty",
+			name: "test case 12 -- namespaces/empty",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -298,7 +279,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 14 -- namespaces/use and install tiller",
+			name: "test case 13 -- namespaces/use and install tiller",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -316,7 +297,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 15 -- namespaces/use tiller with tls-valid",
+			name: "test case 14 -- namespaces/use tiller with tls-valid",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -334,7 +315,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: true,
 		}, {
-			name: "test case 16 -- namespaces/use tiller with tls-not enough certs",
+			name: "test case 15 -- namespaces/use tiller with tls-not enough certs",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -352,7 +333,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: true,
 		}, {
-			name: "test case 17 -- namespaces/deploy tiller with tls- valid",
+			name: "test case 16 -- namespaces/deploy tiller with tls- valid",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -370,7 +351,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: true,
 		}, {
-			name: "test case 18 -- helmRepos/nil_value",
+			name: "test case 17 -- helmRepos/nil_value",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -385,7 +366,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 19 -- helmRepos/empty",
+			name: "test case 18 -- helmRepos/empty",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -400,7 +381,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 20 -- helmRepos/empty_repo_value",
+			name: "test case 19 -- helmRepos/empty_repo_value",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
@@ -418,7 +399,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 21 -- helmRepos/invalid_repo_value",
+			name: "test case 20 -- helmRepos/invalid_repo_value",
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
