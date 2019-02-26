@@ -44,7 +44,7 @@ func Test_state_validate(t *testing.T) {
 			},
 			want: true,
 		}, {
-			name: "test case 2 -- settings/nil_value",
+			name: "test case 2 -- settings/nil_value is allowed",
 			fields: fields{
 				Metadata: make(map[string]string),
 				Certificates: map[string]string{
@@ -61,7 +61,7 @@ func Test_state_validate(t *testing.T) {
 				},
 				Apps: make(map[string]*release),
 			},
-			want: false,
+			want: true,
 		}, {
 			name: "test case 3 -- settings/empty_context",
 			fields: fields{

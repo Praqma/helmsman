@@ -128,6 +128,10 @@ func cleanup() {
 		deleteFile("client.crt")
 	}
 
+	if _, err := os.Stat("bearer.token"); err == nil {
+		deleteFile("bearer.token")
+	}
+
 	for k := range s.Namespaces {
 		if _, err := os.Stat(k + "-tiller.cert"); err == nil {
 			deleteFile(k + "-tiller.cert")

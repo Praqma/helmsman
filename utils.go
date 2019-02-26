@@ -175,6 +175,12 @@ func resolvePaths(relativeToFile string, s *state) {
 
 		s.Apps[k] = v
 	}
+	// resolving paths for Bearer Token path in settings
+	if s.Settings.BearerTokenPath != "" {
+		if _, err := url.ParseRequestURI(s.Settings.BearerTokenPath); err != nil {
+			s.Settings.BearerTokenPath, _ = filepath.Abs(filepath.Join(dir, s.Settings.BearerTokenPath))
+		}
+	}
 	// resolving paths for k8s certificate files
 	for k, v := range s.Certificates {
 		if _, err := url.ParseRequestURI(v); err != nil {
@@ -256,7 +262,7 @@ func sliceContains(slice []string, s string) bool {
 }
 
 // downloadFile downloads a file from GCS or AWS buckets and name it with a given outfile
-// if downloaded, returns the outfile name. If the file path is local file system path, it is returned as is.
+// if downloaded, returns the outfile name. If the file path is local file system path, it is copied to current directory.
 func downloadFile(path string, outfile string) string {
 	if strings.HasPrefix(path, "s3") {
 

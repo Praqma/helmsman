@@ -177,13 +177,20 @@ spec:
 // createContext creates a context -connecting to a k8s cluster- in kubectl config.
 // It returns true if successful, false otherwise
 func createContext() (bool, string) {
-
-	if s.Settings.Password == "" || s.Settings.Username == "" || s.Settings.ClusterURI == "" {
-		return false, "ERROR: failed to create context [ " + s.Settings.KubeContext + " ] " +
-			"as you did not specify enough information in the Settings section of your desired state file."
-	} else if s.Certificates == nil || s.Certificates["caCrt"] == "" || s.Certificates["caKey"] == "" {
-		return false, "ERROR: failed to create context [ " + s.Settings.KubeContext + " ] " +
-			"as you did not provide Certifications to use in your desired state file."
+	if s.Settings.BearerToken && s.Settings.BearerTokenPath == "" {
+		log.Println("INFO: creating kube context with bearer token from K8S service account.")
+		s.Settings.BearerTokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+	} else if s.Settings.BearerToken && s.Settings.BearerTokenPath != "" {
+		log.Println("INFO: creating kube context with bearer token from " + s.Settings.BearerTokenPath)
+	} else if s.Settings.Password == "" || s.Settings.Username == "" || s.Settings.ClusterURI == "" {
+		return false, "ERROR: missing information to create context [ " + s.Settings.KubeContext + " ] " +
+			"you are either missing PASSWORD, USERNAME or CLUSTERURI in the Settings section of your desired state file."
+	} else if !s.Settings.BearerToken && (s.Certificates == nil || s.Certificates["caCrt"] == "" || s.Certificates["caKey"] == "") {
+		return false, "ERROR: missing information to create context [ " + s.Settings.KubeContext + " ] " +
+			"you are either missing caCrt or caKey or both in the Certifications section of your desired state file."
+	} else if s.Settings.BearerToken && (s.Certificates == nil || s.Certificates["caCrt"] == "") {
+		return false, "ERROR: missing information to create context [ " + s.Settings.KubeContext + " ] " +
+			"caCrt is missing in the Certifications section of your desired state file."
 	}
 
 	// set certs locations (relative filepath, GCS bucket, AWS bucket)
@@ -215,11 +222,24 @@ func createContext() (bool, string) {
 
 	}
 
+	// bearer token
+	tokenPath := "bearer.token"
+	if s.Settings.BearerToken && s.Settings.BearerTokenPath != "" {
+		downloadFile(s.Settings.BearerTokenPath, tokenPath)
+	}
+
 	// connecting to the cluster
-	setCredentialsCmd := "kubectl config set-credentials " + s.Settings.Username + " --username=" + s.Settings.Username +
-		" --password=" + s.Settings.Password + " --client-key=" + caKey
-	if caClient != "" {
-		setCredentialsCmd = setCredentialsCmd + " --client-certificate=" + caClient
+	setCredentialsCmd := ""
+	if s.Settings.BearerToken {
+		token := readFile(tokenPath)
+		setCredentialsCmd = "kubectl config set-credentials " + s.Settings.Username + " --username=" + s.Settings.Username +
+			" --token=" + token
+	} else {
+		setCredentialsCmd = "kubectl config set-credentials " + s.Settings.Username + " --username=" + s.Settings.Username +
+			" --password=" + s.Settings.Password + " --client-key=" + caKey
+		if caClient != "" {
+			setCredentialsCmd = setCredentialsCmd + " --client-certificate=" + caClient
+		}
 	}
 	cmd := command{
 		Cmd:         "bash",
