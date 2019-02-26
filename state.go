@@ -37,7 +37,7 @@ type state struct {
 func (s state) validate() (bool, string) {
 
 	// settings
-	if s.Settings.KubeContext == "" && !getKubeContext() {
+	if (s.Settings == (config{}) || s.Settings.KubeContext == "") && !getKubeContext() {
 		return false, "ERROR: settings validation failed -- you have not defined a " +
 			"kubeContext to use. Either define it in the desired state file or pass a kubeconfig with --kubeconfig to use an existing context."
 	} else if s.Settings.ClusterURI != "" {
