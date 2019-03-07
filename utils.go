@@ -18,6 +18,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/Praqma/helmsman/aws"
+	"github.com/Praqma/helmsman/azure"
 	"github.com/Praqma/helmsman/gcs"
 )
 
@@ -274,6 +275,11 @@ func downloadFile(path string, outfile string) string {
 		tmp := getBucketElements(path)
 		gcs.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, noColors)
 
+	} else if strings.HasPrefix(path, "az") {
+
+		tmp := getBucketElements(path)
+		azure.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, noColors)
+
 	} else {
 
 		log.Println("INFO: " + outfile + " will be used from local file system.")
@@ -372,7 +378,7 @@ func logError(msg string) {
 }
 
 // getBucketElements returns a map containing the bucket name and the file path inside the bucket
-// this func works for S3 and GCS bucket links of the format:
+// this func works for S3, Azure and GCS bucket links of the format:
 // s3 or gs://bucketname/dir.../file.ext
 func getBucketElements(link string) map[string]string {
 

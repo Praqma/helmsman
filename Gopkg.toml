@@ -24,7 +24,10 @@
 #   go-tests = true
 #   unused-packages = true
 
-
+[[constraint]]
+  version = "0.3.0"
+  name = "github.com/Azure/azure-storage-blob-go"
+  
 [[constraint]]
   name = "cloud.google.com/go"
   version = "0.28.0"
