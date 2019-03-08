@@ -71,6 +71,8 @@ func main() {
 		if _, ok := s.Namespaces["kube-system"]; !ok {
 			waitForTiller("kube-system")
 		}
+	} else {
+		initHelmClientOnly()
 	}
 
 	// add repos -- fails if they are not valid
@@ -126,6 +128,10 @@ func cleanup() {
 
 	if _, err := os.Stat("client.crt"); err == nil {
 		deleteFile("client.crt")
+	}
+
+	if _, err := os.Stat("bearer.token"); err == nil {
+		deleteFile("bearer.token")
 	}
 
 	for k := range s.Namespaces {

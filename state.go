@@ -10,14 +10,16 @@ import (
 
 // config type represents the settings fields
 type config struct {
-	KubeContext    string `yaml:"kubeContext"`
-	Username       string `yaml:"username"`
-	Password       string `yaml:"password"`
-	ClusterURI     string `yaml:"clusterURI"`
-	ServiceAccount string `yaml:"serviceAccount"`
-	StorageBackend string `yaml:"storageBackend"`
-	SlackWebhook   string `yaml:"slackWebhook"`
-	ReverseDelete  bool   `yaml:"reverseDelete"`
+	KubeContext     string `yaml:"kubeContext"`
+	Username        string `yaml:"username"`
+	Password        string `yaml:"password"`
+	ClusterURI      string `yaml:"clusterURI"`
+	ServiceAccount  string `yaml:"serviceAccount"`
+	StorageBackend  string `yaml:"storageBackend"`
+	SlackWebhook    string `yaml:"slackWebhook"`
+	ReverseDelete   bool   `yaml:"reverseDelete"`
+	BearerToken     bool   `yaml:"bearerToken"`
+	BearerTokenPath string `yaml:"bearerTokenPath"`
 }
 
 // state type represents the desired state of applications on a k8s cluster.
@@ -36,30 +38,30 @@ type state struct {
 func (s state) validate() (bool, string) {
 
 	// settings
-	if s.Settings == (config{}) {
-		return false, "ERROR: settings validation failed -- no settings table provided in state file."
-	} else if s.Settings.KubeContext == "" && !getKubeContext() {
-		return false, "ERROR: settings validation failed -- you have not provided a " +
-			"kubeContext to use. Can't work without it. Sorry!"
+	if (s.Settings == (config{}) || s.Settings.KubeContext == "") && !getKubeContext() {
+		return false, "ERROR: settings validation failed -- you have not defined a " +
+			"kubeContext to use. Either define it in the desired state file or pass a kubeconfig with --kubeconfig to use an existing context."
 	} else if s.Settings.ClusterURI != "" {
 
 		if _, err := url.ParseRequestURI(s.Settings.ClusterURI); err != nil {
 			return false, "ERROR: settings validation failed -- clusterURI must have a valid URL set in an env variable or passed directly. Either the env var is missing/empty or the URL is invalid."
 		}
-
 		if s.Settings.KubeContext == "" {
-			return false, "ERROR: settings validation failed -- KubeContext must be provided if clusterURI is defined."
+			return false, "ERROR: settings validation failed -- KubeContext needs to be provided in the settings stanza."
 		}
-		if s.Settings.Username == "" {
-			return false, "ERROR: settings validation failed -- username must be provided if clusterURI is defined."
+		if !s.Settings.BearerToken && s.Settings.Username == "" {
+			return false, "ERROR: settings validation failed -- username needs to be provided in the settings stanza."
 		}
-		if s.Settings.Password == "" {
-			return false, "ERROR: settings validation failed -- password must be provided if clusterURI is defined."
+		if !s.Settings.BearerToken && s.Settings.Password == "" {
+			return false, "ERROR: settings validation failed -- password needs to be provided (directly or from env var) in the settings stanza."
 		}
-
-		if s.Settings.Password == "" {
-			return false, "ERROR: settings validation failed -- password should be set as an env variable. It is currently missing or empty. "
+		if s.Settings.BearerToken && s.Settings.BearerTokenPath != "" {
+			if _, err := os.Stat(s.Settings.BearerTokenPath); err != nil {
+				return false, "ERROR: settings validation failed -- bearer token path " + s.Settings.BearerTokenPath + " is not found. The path has to be relative to the desired state file."
+			}
 		}
+	} else if s.Settings.BearerToken && s.Settings.ClusterURI == "" {
+		return false, "ERROR: settings validation failed -- bearer token is enabled but no cluster URI provided."
 	}
 
 	// slack webhook validation (if provided)
@@ -71,31 +73,34 @@ func (s state) validate() (bool, string) {
 
 	// certificates
 	if s.Certificates != nil && len(s.Certificates) != 0 {
-		ok1 := false
-		if s.Settings.ClusterURI != "" {
-			ok1 = true
-		}
-		_, ok2 := s.Certificates["caCrt"]
-		_, ok3 := s.Certificates["caKey"]
-		if ok1 && (!ok2 || !ok3) {
-			return false, "ERROR: certifications validation failed -- You want me to connect to your cluster for you " +
-				"but have not given me the cert/key to do so. Please add [caCrt] and [caKey] under Certifications. You might also need to provide [clientCrt]."
-		} else if ok1 {
-			for key, value := range s.Certificates {
-				r, path := isValidCert(value)
-				if !r {
-					return false, "ERROR: certifications validation failed -- [ " + key + " ] must be a valid S3 or GCS bucket URL or a valid relative file path."
-				}
-				s.Certificates[key] = path
+
+		for key, value := range s.Certificates {
+			r, path := isValidCert(value)
+			if !r {
+				return false, "ERROR: certifications validation failed -- [ " + key + " ] must be a valid S3 or GCS bucket URL or a valid relative file path."
 			}
-		} else {
-			log.Println("INFO: certificates provided but not needed. Skipping certificates validation.")
+			s.Certificates[key] = path
+		}
+
+		_, caCrt := s.Certificates["caCrt"]
+		_, caKey := s.Certificates["caKey"]
+
+		if s.Settings.ClusterURI != "" && !s.Settings.BearerToken {
+			if !caCrt || !caKey {
+				return false, "ERROR: certificates validation failed -- You want me to connect to your cluster for you " +
+					"but have not given me the cert/key to do so. Please add [caCrt] and [caKey] under Certifications. You might also need to provide [clientCrt]."
+			}
+
+		} else if s.Settings.ClusterURI != "" && s.Settings.BearerToken {
+			if !caCrt {
+				return false, "ERROR: certificates validation failed -- cluster connection with bearer token is enabled but " +
+					"[caCrt] is missing. Please provide [caCrt] in the Certifications stanza."
+			}
 		}
 
 	} else {
 		if s.Settings.ClusterURI != "" {
-			return false, "ERROR: certifications validation failed -- You want me to connect to your cluster for you " +
-				"but have not given me the cert/key to do so. Please add [caCrt] and [caKey] under Certifications. You might also need to provide [clientCrt]."
+			return false, "ERROR: certificates validation failed -- kube context setup is required but no certificates stanza provided."
 		}
 	}
 
