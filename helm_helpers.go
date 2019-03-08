@@ -90,6 +90,9 @@ func getTillerReleases(tillerNS string) tillerReleases {
 	exitCode, result := cmd.exec(debug, verbose)
 	if exitCode != 0 {
 		if !apply {
+			if strings.Contains(result, "incompatible versions") {
+				logError(result)
+			}
 			log.Println("INFO: " + strings.Replace(result, "Error: ", "", 1))
 			return tillerReleases{}
 		}
@@ -377,13 +380,28 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 	}
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm init --upgrade " + sa + tillerNameSpace + tls + storageBackend},
+		Args:        []string{"-c", "helm init --force-upgrade " + sa + tillerNameSpace + tls + storageBackend},
 		Description: "initializing helm on the current context and upgrading Tiller on namespace [ " + namespace + " ].",
 	}
 
 	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "ERROR: while deploying Helm Tiller in namespace [" + namespace + "]: " + err
 	}
+	return true, ""
+}
+
+// initHelmClientOnly initializes the helm client only (without deploying Tiller)
+func initHelmClientOnly() (bool, string) {
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm init --client-only "},
+		Description: "initializing helm on the client only.",
+	}
+
+	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
+		return false, "ERROR: initializing helm on the client : " + err
+	}
+
 	return true, ""
 }
 

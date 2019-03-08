@@ -71,6 +71,8 @@ func main() {
 		if _, ok := s.Namespaces["kube-system"]; !ok {
 			waitForTiller("kube-system")
 		}
+	} else {
+		initHelmClientOnly()
 	}
 
 	// add repos -- fails if they are not valid
