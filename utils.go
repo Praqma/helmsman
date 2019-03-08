@@ -142,6 +142,15 @@ func toFile(file string, s *state) {
 	}
 }
 
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
 func resolvePaths(relativeToFile string, s *state) {
 	dir := filepath.Dir(relativeToFile)
 
@@ -162,6 +171,7 @@ func resolvePaths(relativeToFile string, s *state) {
 		if v.Chart != "" {
 			var repoOrDir = filepath.Dir(v.Chart)
 			_, isRepo := s.HelmRepos[repoOrDir]
+			isRepo = isRepo || stringInSlice(repoOrDir, s.PreconfiguredHelmRepos)
 			if !isRepo {
 				// if there is no repo for the chart, we assume it's intended to be a local path
 

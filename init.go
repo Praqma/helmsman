@@ -87,13 +87,13 @@ func init() {
 		logVersions()
 	}
 
-	if len(files) == 0 {
-		log.Println("INFO: No desired state files provided.")
+	if v {
+		fmt.Println("Helmsman version: " + appVersion)
 		os.Exit(0)
 	}
 
-	if v {
-		fmt.Println("Helmsman version: " + appVersion)
+	if len(files) == 0 {
+		log.Println("INFO: No desired state files provided.")
 		os.Exit(0)
 	}
 
