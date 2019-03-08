@@ -211,6 +211,7 @@ func createContext() (bool, string) {
 
 	// CA key
 	if caKey != "" {
+
 		caKey = downloadFile(caKey, "ca.key")
 
 	}
@@ -232,8 +233,10 @@ func createContext() (bool, string) {
 	setCredentialsCmd := ""
 	if s.Settings.BearerToken {
 		token := readFile(tokenPath)
-		setCredentialsCmd = "kubectl config set-credentials " + s.Settings.Username + " --username=" + s.Settings.Username +
-			" --token=" + token
+		if s.Settings.Username == "" {
+			s.Settings.Username = "helmsman"
+		}
+		setCredentialsCmd = "kubectl config set-credentials " + s.Settings.Username + " --token=" + token
 	} else {
 		setCredentialsCmd = "kubectl config set-credentials " + s.Settings.Username + " --username=" + s.Settings.Username +
 			" --password=" + s.Settings.Password + " --client-key=" + caKey
