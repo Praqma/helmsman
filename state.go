@@ -46,19 +46,21 @@ func (s state) validate() (bool, string) {
 			return false, "ERROR: settings validation failed -- clusterURI must have a valid URL set in an env variable or passed directly. Either the env var is missing/empty or the URL is invalid."
 		}
 		if s.Settings.KubeContext == "" {
-			return false, "ERROR: settings validation failed -- KubeContext must be provided if clusterURI is defined."
+			return false, "ERROR: settings validation failed -- KubeContext needs to be provided in the settings stanza."
 		}
-		if s.Settings.Username == "" {
-			return false, "ERROR: settings validation failed -- username must be provided if clusterURI is defined."
+		if !s.Settings.BearerToken && s.Settings.Username == "" {
+			return false, "ERROR: settings validation failed -- username needs to be provided in the settings stanza."
 		}
-		if s.Settings.Password == "" {
-			return false, "ERROR: settings validation failed -- password must be provided (directly or from env var) if clusterURI is defined."
+		if !s.Settings.BearerToken && s.Settings.Password == "" {
+			return false, "ERROR: settings validation failed -- password needs to be provided (directly or from env var) in the settings stanza."
 		}
 		if s.Settings.BearerToken && s.Settings.BearerTokenPath != "" {
 			if _, err := os.Stat(s.Settings.BearerTokenPath); err != nil {
-				return false, "ERROR: settings validation failed -- Bearer Token path " + s.Settings.BearerTokenPath + " is not found. The path has to be relative to the desired state file."
+				return false, "ERROR: settings validation failed -- bearer token path " + s.Settings.BearerTokenPath + " is not found. The path has to be relative to the desired state file."
 			}
 		}
+	} else if s.Settings.BearerToken && s.Settings.ClusterURI == "" {
+		return false, "ERROR: settings validation failed -- bearer token is enabled but no cluster URI provided."
 	}
 
 	// slack webhook validation (if provided)
@@ -90,15 +92,14 @@ func (s state) validate() (bool, string) {
 
 		} else if s.Settings.ClusterURI != "" && s.Settings.BearerToken {
 			if !caCrt {
-				return false, "ERROR: certificates validation failed -- You want me to connect to your cluster with a bearer token " +
-					"but have not provided [caCrt] in the certificates section of your desired state."
+				return false, "ERROR: certificates validation failed -- cluster connection with bearer token is enabled but " +
+					"[caCrt] is missing. Please provide [caCrt] in the Certifications stanza."
 			}
 		}
 
 	} else {
 		if s.Settings.ClusterURI != "" {
-			return false, "ERROR: certificates validation failed -- You want me to connect to your cluster for you " +
-				"but have not given me the cert/key to do so. Please add [caCrt] and/or [caKey] under Certifications. You might also need to provide [clientCrt]."
+			return false, "ERROR: certificates validation failed -- kube context setup is required but no certificates stanza provided."
 		}
 	}
 
