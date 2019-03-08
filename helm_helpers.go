@@ -297,6 +297,7 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 		if strings.HasPrefix(url, "gs://") {
 			gcs.Auth()
 		}
+
 		cmd := command{
 			Cmd:         "bash",
 			Args:        []string{"-c", "helm repo add " + repoName + " " + strconv.Quote(url)},

@@ -24,12 +24,13 @@ type config struct {
 
 // state type represents the desired state of applications on a k8s cluster.
 type state struct {
-	Metadata     map[string]string    `yaml:"metadata"`
-	Certificates map[string]string    `yaml:"certificates"`
-	Settings     config               `yaml:"settings"`
-	Namespaces   map[string]namespace `yaml:"namespaces"`
-	HelmRepos    map[string]string    `yaml:"helmRepos"`
-	Apps         map[string]*release  `yaml:"apps"`
+	Metadata               map[string]string    `yaml:"metadata"`
+	Certificates           map[string]string    `yaml:"certificates"`
+	Settings               config               `yaml:"settings"`
+	Namespaces             map[string]namespace `yaml:"namespaces"`
+	HelmRepos              map[string]string    `yaml:"helmRepos"`
+	PreconfiguredHelmRepos []string             `yaml:"preconfiguredHelmRepos"`
+	Apps                   map[string]*release  `yaml:"apps"`
 }
 
 // validate validates that the values specified in the desired state are valid according to the desired state spec.
