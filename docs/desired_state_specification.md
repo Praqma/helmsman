@@ -78,7 +78,7 @@ Optional : No.
 Synopsis: provides settings for connecting to your k8s cluster and configuring Helm's Tiller in the cluster.
 
 Options:
-- kubeContext : this is always required and defines what context to use in kubectl. Helmsman will try connect to this context first, if it does not exist, it will try to create it (i.e. connect to a k8s cluster) using the options below.
+- **kubeContext** : this is always required and defines what context to use in kubectl. Helmsman will try connect to this context first, if it does not exist, it will try to create it (i.e. connect to a k8s cluster) using the options below.
 
 The following options can be skipped if your kubectl context is already created and you don't want Helmsman to connect kubectl to your cluster for you. When using Helmsman in CI pipeline, these details are required to connect to your cluster every time the pipeline is executed.
 
@@ -132,8 +132,8 @@ Options:
 > For the definition of what a protected namespace means, check the [protection guide](how_to/protect_namespaces_and_releases.md)
 - **installTiller**: defines if Tiller should be deployed in this namespace or not. Default is false. Any chart desired to be deployed into a namespace with a Tiller deployed, will be deployed using that Tiller and not the one in kube-system unless you use the `TillerNamespace` option (see the [Apps](#apps) section below) to use another Tiller.
 > By default Tiller will be deployed into `kube-system` even if you don't define kube-system in the namespaces section. To prevent deploying Tiller into `kube-system, add kube-system in your namespaces section and set its installTiller to false.
--**tillerRole**: specify the role to use.  If 'cluster-admin' a clusterrolebinding will be used else a role with a single namespace scope will be created and bound with a rolebinding.
--**useTiller**: defines that you would like to use an existing Tiller from that namespace. Can't be set together with `installTiller`
+- **tillerRole**: specify the role to use.  If 'cluster-admin' a clusterrolebinding will be used else a role with a single namespace scope will be created and bound with a rolebinding.
+- **useTiller**: defines that you would like to use an existing Tiller from that namespace. Can't be set together with `installTiller`
 - **labels** : defines labels to be added to the namespace, doesn't remove existing labels but updates them if the label key exists with any other different value. You can define any key/value pairs. Default is empty.
 - **annotations** : defines annotations to be added to the namespace. It behaves the same way as the labels option.
 - **limits** : defines a [LimitRange](https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/memory-default-namespace/) to be configured on the namespace
@@ -250,6 +250,28 @@ helmRepos:
   myS3repo: "s3://my-S3-private-repo/charts"
   myGCSrepo: "gs://my-GCS-private-repo/charts"
 ```
+
+## Preconfigured Helm Repos
+
+Optional : Yes.
+
+Synopsis: defines the list of helm repositories that the helmsman will consider already preconfigured and thus will not try to overwrite it's configuration.
+
+The primary use-case is if you have some helm repositories that require HTTP basic authentication and you don't want to store the password into the helmsman.yaml. In this case you can execute the following sequence to have those repositories configured:
+
+Set up the helmsman configuration:
+
+```toml
+preconfiguredHelmRepos = [ "myrepo1", "myrepo2" ]
+```
+
+```yaml
+preconfiguredHelmRepos:
+- myrepo1
+- myrepo2
+```
+
+> In this case you will manually need to execute `helm repo add myrepo1 <URL> --username= --password=`
 
 ## Apps
 
