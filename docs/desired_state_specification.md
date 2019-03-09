@@ -46,12 +46,12 @@ Optional : Yes, only needed if you want Helmsman to connect kubectl to your clus
 Synopsis: defines where to find the certificates needed for connecting kubectl to a k8s cluster. If connection settings (username/password/clusterAPI) are provided in the Settings section below, then you need AT LEAST to provide caCrt and caKey. You can optionally provide a client certificate (caClient) depending on your cluster connection setup.
 
 Options:
-- **caCrt** : a valid S3/GCS bucket or local relative file path to a certificate file.
-- **caKey** : a valid S3/GCS bucket or local relative file path to a client key file.
-- **caClient**: a valid S3/GCS bucket or local relative file path to a client certificate file.
+- **caCrt** : a valid S3/GCS/Azure bucket or local relative file path to a certificate file.
+- **caKey** : a valid S3/GCS/Azure bucket or local relative file path to a client key file.
+- **caClient**: a valid S3/GCS/Azure bucket or local relative file path to a client certificate file.
 
 
-> bucket format is: <s3 or gs>://bucket-name/dir1/dir2/.../file.extension
+> bucket format is: <s3 or gs or az>://bucket-name/dir1/dir2/.../file.extension
 
 Example:
 
@@ -59,6 +59,7 @@ Example:
 [certificates]
 caCrt = "s3://myS3bucket/mydir/ca.crt"
 caKey = "gs://myGCSbucket/ca.key"
+#caKey = "az://myAzureContainer/ca.key
 caClient ="../path/to/my/local/client-certificate.crt"
 #caClient = "$CA_CLIENT"
 ```
@@ -67,6 +68,7 @@ caClient ="../path/to/my/local/client-certificate.crt"
 certificates:
   caCrt: "s3://myS3bucket/mydir/ca.crt"
   caKey: "gs://myGCSbucket/ca.key"
+  #caKey:  "az://myAzureContainer/ca.key
   caClient: "../path/to/my/local/client-certificate.crt"
   #caClient: "$CA_CLIENT"
 ```
@@ -145,7 +147,7 @@ Options:
 
   > If `installTiller` is not defined or set to false, this flag is ignored.
 
-- The following options are `ALL` needed for deploying Tiller with TLS enabled. If they are not all defined, they will be ignored and Tiller will be deployed without TLS. All of these options can be provided as either: a valid local file path, a valid GCS or S3 bucket URI or an environment variable containing a file path or bucket URI.
+- The following options are `ALL` needed for deploying Tiller with TLS enabled. If they are not all defined, they will be ignored and Tiller will be deployed without TLS. All of these options can be provided as either: a valid local file path, a valid GCS or S3 or Azure bucket URI or an environment variable containing a file path or bucket URI.
     - **caCert**: the CA certificate.
     - **tillerCert**: the SSL certificate for Tiller.
     - **tillerKey**: the SSL certificate private key for Tiller.
