@@ -38,7 +38,8 @@
 
 [[constraint]]
   name = "github.com/Praqma/helmsman"
-  version = "1.7.2"
+  #version = "1.7.4"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"

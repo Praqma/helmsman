@@ -42,6 +42,7 @@
   version = "v0.3.1"
 
 [[projects]]
+  branch = "master"
   digest = "1:a3634c13a25998109db4c6298c5b36b79012eafa7fe23cb6d5ab2a552a4f07cb"
   name = "github.com/Praqma/helmsman"
   packages = [
@@ -49,8 +50,7 @@
     "gcs",
   ]
   pruneopts = "UT"
-  revision = "cf49770b6512bc718855133097f55a2f444600a5"
-  version = "v1.7.2"
+  revision = "11f6f3acdf268328ff7d1469e032d351875b1f81"
 
 [[projects]]
   digest = "1:c78f02a2c6a138255ce52eefe18b62fe4e89815e4289819582c643ce51cdbf84"
