@@ -364,7 +364,7 @@ func Test_state_validate(t *testing.T) {
 				HelmRepos: nil,
 				Apps:      make(map[string]*release),
 			},
-			want: false,
+			want: true,
 		}, {
 			name: "test case 18 -- helmRepos/empty",
 			fields: fields{
@@ -379,7 +379,7 @@ func Test_state_validate(t *testing.T) {
 				HelmRepos: map[string]string{},
 				Apps:      make(map[string]*release),
 			},
-			want: false,
+			want: true,
 		}, {
 			name: "test case 19 -- helmRepos/empty_repo_value",
 			fields: fields{
