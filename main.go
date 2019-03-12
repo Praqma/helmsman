@@ -42,6 +42,9 @@ var destroy bool
 var showDiff bool
 var suppressDiffSecrets bool
 
+const stableHelmRepo = "https://kubernetes-charts.storage.googleapis.com"
+const incubatorHelmRepo = "http://storage.googleapis.com/kubernetes-charts-incubator"
+
 func main() {
 	// set the kubecontext to be used Or create it if it does not exist
 	if !setKubeContext(s.Settings.KubeContext) {

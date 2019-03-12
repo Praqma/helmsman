@@ -63,6 +63,7 @@
   incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
 #  myS3repo = "s3://my-S3-private-repo/charts"
 #  myGCSrepo = "gs://my-GCS-private-repo/charts"
+#  custom = "https://user:pass@mycustomrepo.org"
 
 
 # define the desired state of your applications helm charts
