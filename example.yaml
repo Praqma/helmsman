@@ -23,6 +23,9 @@ settings:
   storageBackend: "secret" # default is configMap
   #slackWebhook:  "$slack" # or your slack webhook url
   #reverseDelete: false # reverse the priorities on delete
+  #### to use bearer token:
+  #  bearerToken: true
+  #  clusterURI: "https://kubernetes.default"
 
 # define your environments and their k8s namespaces
 namespaces:
