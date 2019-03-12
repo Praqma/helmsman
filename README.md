@@ -1,5 +1,5 @@
 ---
-version: v1.7.4
+version: v1.8.0
 ---
 
 ![helmsman-logo](docs/images/helmsman.png)
@@ -52,15 +52,15 @@ Please make sure the following are installed prior to using `helmsman` as a bina
 - [helm](https://github.com/helm/helm) (for `helmsman` >= 1.6.0, use helm >= 2.10.0. this is due to a dependency bug #87 )
 - [helm-diff](https://github.com/databus23/helm-diff) (`helmsman` >= 1.6.0)
 
-If you use private helm repos, you will need either `helm-gcs` or `helm-s3` plugin. See the [docs](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_private_helm_charts.md) for details.
+If you use private helm repos, you will need either `helm-gcs` or `helm-s3` plugin or you can use basic auth to authenticate to your repos. See the [docs](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_private_helm_charts.md) for details.
 
 
 Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the different versions.
 ```
 # on Linux
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.7.4/helmsman_1.7.4_linux_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.8.0/helmsman_1.8.0_linux_amd64.tar.gz | tar zx
 # on MacOS
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.7.4/helmsman_1.7.4_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v1.8.0/helmsman_1.8.0_darwin_amd64.tar.gz | tar zx
 
 mv helmsman /usr/local/bin/helmsman
 ```
@@ -73,38 +73,20 @@ Helmsman has been packaged in Archlinux under `helmsman-bin` for the latest bina
 
 # Documentation
 
-- [Documentation and How-Tos](https://github.com/Praqma/helmsman/blob/master/docs/).
+- [How-Tos](https://github.com/Praqma/helmsman/blob/master/docs/how_to/).
 
 - [Desired state specification](https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md).
 
 - [CMD reference](https://github.com/Praqma/helmsman/blob/master/docs/cmd_reference.md)
 
 
-
-Helmsman lets you:
-
-- [Install/delete/upgrade/rollback your helm charts from code](https://github.com/Praqma/helmsman/blob/master/docs/how_to/manipulate_apps.md).
-- [Work safely in a multitenant cluster](https://github.com/Praqma/helmsman/blob/master/docs/how_to/multitenant_clusters_guide.md).
-- [Pass secrets/user input to helm charts from environment variables](https://github.com/Praqma/helmsman/blob/master/docs/how_to/pass_secrets_from_env_variables.md).
-- [Send Slack notifications from Helmsman](https://github.com/Praqma/helmsman/blob/master/docs/how_to/send_slack_notifications_from_helmsman.md).
-- [Test releases when they are first installed](https://github.com/Praqma/helmsman/blob/master/docs/how_to/test_charts.md).
-- [Use public and private helm charts](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_private_helm_charts.md).
-- [Use locally developed helm charts (the tar archives)](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_local_charts.md).
-- [Define namespaces to be used in your cluster](https://github.com/Praqma/helmsman/blob/master/docs/how_to/define_namespaces.md).
-- [Define resource limits per namespace](https://github.com/Praqma/helmsman/blob/master/docs/how_to/define_namespaces.md).
-- [Move charts across namespaces](https://github.com/Praqma/helmsman/blob/master/docs/how_to/move_charts_across_namespaces.md).
-- [Protect namespaces/releases against accidental changes](https://github.com/Praqma/helmsman/blob/master/docs/how_to/protect_namespaces_and_releases.md)
-- [Define priorities at which releases are deployed/managed](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_the_priority_key.md)
-- [Override the defined namespaces to deploy all releases in a specific namespace](https://github.com/Praqma/helmsman/blob/master/docs/how_to/override_defined_namespaces.md)
-
-
 ## Usage
 
 Helmsman can be used in three different settings:
 
-- [As a binary with Minikube](https://github.com/Praqma/helmsman/blob/master/docs/how_to/run_helmsman_with_minikube.md).
-- [As a binary with a hosted cluster](https://github.com/Praqma/helmsman/blob/master/docs/how_to/run_helmsman_with_hosted_cluster.md).
-- [As a docker image in a CI system or local machine](https://github.com/Praqma/helmsman/blob/master/docs/how_to/run_helmsman_in_ci.md) Always use a tagged docker image from [dockerhub](https://hub.docker.com/r/praqma/helmsman/) as the `latest` image can (at times) be unstable.
+- [As a binary with a hosted cluster](https://github.com/Praqma/helmsman/blob/master/docs/how_to/settings).
+- [As a docker image in a CI system or local machine](https://github.com/Praqma/helmsman/blob/master/docs/how_to/deployments/ci.md) Always use a tagged docker image from [dockerhub](https://hub.docker.com/r/praqma/helmsman/) as the `latest` image can (at times) be unstable.
+- [As a docker image inside a k8s cluster](https://github.com/Praqma/helmsman/blob/master/docs/how_to/deployments/inside_k8s.md) 
 
 
 # Contributing
