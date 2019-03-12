@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"net/url"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -291,16 +292,30 @@ func waitForTiller(namespace string) {
 // Helm does not mind if a repo with the same name exists. It treats it as an update.
 func addHelmRepos(repos map[string]string) (bool, string) {
 
-	for repoName, url := range repos {
+	for repoName, repoLink := range repos {
+		basicAuth := ""
 		// check if repo is in GCS, then perform GCS auth -- needed for private GCS helm repos
 		// failed auth would not throw an error here, as it is possible that the repo is public and does not need authentication
-		if strings.HasPrefix(url, "gs://") {
+		if strings.HasPrefix(repoLink, "gs://") {
 			gcs.Auth()
+		}
+
+		u, err := url.Parse(repoLink)
+		if err != nil {
+			logError("ERROR: failed to add helm repo:  " + err.Error())
+		}
+		if u.User != nil {
+			p, ok := u.User.Password()
+			if !ok {
+				logError("ERROR: helm repo " + repoName + " has incomplete basic auth info. Missing the password!")
+			}
+			basicAuth = " --username " + u.User.Username() + " --password " + p
+
 		}
 
 		cmd := command{
 			Cmd:         "bash",
-			Args:        []string{"-c", "helm repo add " + repoName + " " + strconv.Quote(url)},
+			Args:        []string{"-c", "helm repo add " + basicAuth + " " + repoName + " " + strconv.Quote(repoLink)},
 			Description: "adding repo " + repoName,
 		}
 

@@ -151,10 +151,6 @@ func (s state) validate() (bool, string) {
 	}
 
 	// repos
-	if s.HelmRepos == nil || len(s.HelmRepos) == 0 {
-		return false, "ERROR: repos validation failed -- I need at least one helm repo " +
-			"to work with!"
-	}
 	for k, v := range s.HelmRepos {
 		_, err := url.ParseRequestURI(v)
 		if err != nil {
