@@ -6,8 +6,6 @@ version: v1.3.0-rc
 
 Since helmsman is used with version controlled code and is often configured to be triggered as part of a CI pipeline, accidental mistakes could happen by the user (e.g, disabling a production application and taking out of service as a result of a mistaken change in the desired state file).
 
-Helmsman provides the `plan` flag which helps you see the actions that it will take based on your desired state file before actually doing them. We recommend to use a `plan-hold-approve` pipeline when using helmsman with production clusters.
-
 As of version v1.0.0, helmsman provides a fine-grained mechanism to protect releases/namespaces from accidental desired state file changes.
 
 ## Protection definition
@@ -42,15 +40,10 @@ Protection is supported in two forms:
 [apps]
 
     [apps.jenkins]
-    name = "jenkins"
-    description = "jenkins"
     namespace = "staging"
     enabled = true
     chart = "stable/jenkins"
     version = "0.9.1"
-    valuesFile = ""
-    purge = false
-    test = false
     protected = true # defining this release to be protected.
 ```
 
@@ -58,15 +51,10 @@ Protection is supported in two forms:
 apps:
 
   jenkins:
-    name: "jenkins"
-    description: "jenkins"
     namespace: "staging"
     enabled: true
     chart: "stable/jenkins"
     version: "0.9.1"
-    valuesFile: ""
-    purge: false
-    test: false
     protected: true # defining this release to be protected.
 ```
 

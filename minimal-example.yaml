@@ -1,0 +1,19 @@
+## This is a minimal example. 
+## It will use your current kube context and will deploy Tiller without RBAC service account.
+## For the full config spec and options, check https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md 
+
+namespaces:
+  staging:
+
+apps:
+  jenkins:
+    namespace: staging
+    enabled: true
+    chart: stable/jenkins
+    version: 0.14.3
+  
+  artifactory:
+    namespace: staging
+    enabled: true
+    chart: stable/artifactory
+    version: 7.0.6

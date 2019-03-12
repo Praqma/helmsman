@@ -13,7 +13,7 @@ jobs:
 
     deploy-apps:
       docker:
-        - image: praqma/helmsman:v1.5.0
+        - image: praqma/helmsman:v1.8.0
       steps:
         - checkout
         - run:

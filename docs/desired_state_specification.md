@@ -1,5 +1,5 @@
 ---
-version: v1.7.4
+version: v1.8.0
 ---
 
 # Helmsman desired state specification
@@ -8,9 +8,9 @@ This document describes the specification for how to write your Helm charts desi
 
 - [Metadata](#metadata) [Optional] -- metadata for any human reader of the desired state file.
 - [Certificates](#certificates) [Optional] -- only needed when you want Helmsman to connect kubectl to your cluster for you.
-- [Settings](#settings) -- data about your k8s cluster and how to deploy Helm on it if needed.
+- [Settings](#settings) [Optional] -- data about your k8s cluster and how to deploy Helm on it if needed.
 - [Namespaces](#namespaces) -- defines the namespaces where you want your Helm charts to be deployed.
-- [Helm Repos](#helm-repos) -- defines the repos where you want to get Helm charts from.
+- [Helm Repos](#helm-repos) [Optional] -- defines the repos where you want to get Helm charts from.
 - [Apps](#apps) -- defines the applications/charts you want to manage in your cluster.
 
 
@@ -43,7 +43,7 @@ metadata:
 
 Optional : Yes, only needed if you want Helmsman to connect kubectl to your cluster for you.
 
-Synopsis: defines where to find the certificates needed for connecting kubectl to a k8s cluster. If connection settings (username/password/clusterAPI) are provided in the Settings section below, then you need AT LEAST to provide caCrt and caKey. You can optionally provide a client certificate (caClient) depending on your cluster connection setup.
+Synopsis: defines where to find the certificates needed for connecting kubectl to a k8s cluster. If connection settings (username/password/clusterAPI) are provided in the Settings section below, then you need **AT LEAST** to provide caCrt and caKey. You can optionally provide a client certificate (caClient) depending on your cluster connection setup.
 
 Options:
 - **caCrt** : a valid S3/GCS/Azure bucket or local relative file path to a certificate file.
@@ -51,7 +51,7 @@ Options:
 - **caClient**: a valid S3/GCS/Azure bucket or local relative file path to a client certificate file.
 
 
-> bucket format is: <s3 or gs or az>://bucket-name/dir1/dir2/.../file.extension
+> bucket format is: [s3 or gs or az]://bucket-name/dir1/dir2/.../file.extension
 
 Example:
 
@@ -75,19 +75,23 @@ certificates:
 
 ## Settings
 
-Optional : No.
+Optional : Yes. 
 
 Synopsis: provides settings for connecting to your k8s cluster and configuring Helm's Tiller in the cluster.
 
-Options:
-- **kubeContext** : this is always required and defines what context to use in kubectl. Helmsman will try connect to this context first, if it does not exist, it will try to create it (i.e. connect to a k8s cluster) using the options below.
+> If you don't provide the `settings` stanza, helmsman would use your current kube context and will deploy Tiller(s) without RBAC service accounts.
 
-The following options can be skipped if your kubectl context is already created and you don't want Helmsman to connect kubectl to your cluster for you. When using Helmsman in CI pipeline, these details are required to connect to your cluster every time the pipeline is executed.
+Options:
+- **kubeContext** : the kube context you want Helmsman to use or create. Helmsman will try connect to this context first, if it does not exist, it will try to create it (i.e. connect to a k8s cluster) using the options below.
+
+The following options can be skipped if your kubectl context is already created and you don't want Helmsman to connect kubectl to your cluster for you. 
 
 - **username**   : the username to be used for kubectl credentials.
 - **password**   : an environment variable name (starting with `$`) where your password is stored. Get the password from your k8s admin or consult k8s docs on how to get/set it.
 - **clusterURI** : the URI for your cluster API or the name of an environment variable (starting with `$`) containing the URI.
-- **serviceAccount**: the name of the service account to use to initiate helm. This should have enough permissions to allow Helm to work and should exist already in the cluster. More details can be found in [helm's RBAC guide](https://github.com/kubernetes/helm/blob/master/docs/rbac.md)
+- **bearerToken**: whether you want helmsman to connect to the cluster using a bearer token. Default is `false`
+- **bearerTokenPath**: optional. If bearer token is used, you can specify a custom location for the token file.
+- **serviceAccount**: the name of the service account to use to deploy Helm Tiller. This should have enough permissions to allow Helm to work. If the service account does not exist, it will be created. More details can be found in [helm's RBAC guide](https://github.com/kubernetes/helm/blob/master/docs/rbac.md)
 - **storageBackend** : by default Helm stores release information in configMaps, using secrets is for storage is recommended for security. Setting this flag to `secret` will deploy/upgrade Tiller with the `--storage=secret`. Other values will be skipped and configMaps will be used.
 - **slackWebhook** : a [Slack](slack.com) Webhook URL to receive Helmsman notifications. This can be passed directly or in an environment variable.
 - **reverseDelete** : if set to `true` it will reverse the priority order whilst deleting.
@@ -220,11 +224,13 @@ namespaces:
 
 ## Helm Repos
 
-Optional : No.
+Optional : Yes.
 
 Synopsis: defines the Helm repos where your charts can be found. You can add as many repos as you like. Public repos can be added without any additional setup. Private repos require authentication.
 
-> AS of version v0.2.0, both AWS S3 and Google GCS buckets can be used for private repos (using the [Helm S3](https://github.com/hypnoglow/helm-s3) and [Helm GCS](https://github.com/nouney/helm-gcs) plugins).
+> As of version v0.2.0, both AWS S3 and Google GCS buckets can be used for private repos (using the [Helm S3](https://github.com/hypnoglow/helm-s3) and [Helm GCS](https://github.com/nouney/helm-gcs) plugins).
+
+> As of version v1.8.0, you can use private repos with basic auth and you can use pre-configured helm repos.
 
 Authenticating to private helm repos:
 - **For S3 repos**: you need to have valid AWS access keys in your environment variables. See [here](https://github.com/hypnoglow/helm-s3#note-on-aws-authentication) for more details.
@@ -233,7 +239,7 @@ Authenticating to private helm repos:
     - Or, set `GCLOUD_CREDENTIALS` environment variable to contain the content of the credentials.json file.
 
 Options:
-- you can define any key/value pairs where key is the repo name and value is a valid URI for the repo.
+- you can define any key/value pairs where key is the repo name and value is a valid URI for the repo. Basic auth info can be added in the repo URL as in the example below. 
 
 Example:
 
@@ -243,6 +249,7 @@ stable = "https://kubernetes-charts.storage.googleapis.com"
 incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
 myS3repo = "s3://my-S3-private-repo/charts"
 myGCSrepo = "gs://my-GCS-private-repo/charts"
+myPrivateRepo = "https://user:$TOP_SECRET_PASSWORD@mycustomprivaterepo.org"
 ```
 
 ```yaml
@@ -251,6 +258,7 @@ helmRepos:
   incubator: "http://storage.googleapis.com/kubernetes-charts-incubator"
   myS3repo: "s3://my-S3-private-repo/charts"
   myGCSrepo: "gs://my-GCS-private-repo/charts"
+  myPrivateRepo: "https://user:$TOP_SECRET_PASSWORD@mycustomprivaterepo.org"
 ```
 
 ## Preconfigured Helm Repos
@@ -259,7 +267,7 @@ Optional : Yes.
 
 Synopsis: defines the list of helm repositories that the helmsman will consider already preconfigured and thus will not try to overwrite it's configuration.
 
-The primary use-case is if you have some helm repositories that require HTTP basic authentication and you don't want to store the password into the helmsman.yaml. In this case you can execute the following sequence to have those repositories configured:
+The primary use-case is if you have some helm repositories that require HTTP basic authentication and you don't want to store the password in the desired state file or as an environment variable. In this case you can execute the following sequence to have those repositories configured:
 
 Set up the helmsman configuration:
 
