@@ -134,18 +134,18 @@ func annotateNamespace(ns string, labels map[string]string) {
 // setLimits creates a LimitRange resource in the provided Namespace
 func setLimits(ns string, lims limits) {
 
-	if lims == (limits{}) {
+	if len(lims) == 0 {
 		return
 	}
 
-	definition := `---
+	definition := `
+---
 apiVersion: v1
 kind: LimitRange
 metadata:
   name: limit-range
 spec:
   limits:
-  - type: Container
 `
 	d, err := yaml.Marshal(&lims)
 	if err != nil {
