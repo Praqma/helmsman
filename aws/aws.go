@@ -36,7 +36,7 @@ func ReadFile(bucketName string, filename string, outFile string, noColors bool)
 	style = aurora.NewAurora(!noColors)
 	// Checking env vars are set to configure AWS
 	if !checkCredentialsEnvVar() {
-		log.Fatal(style.Bold(style.Red("ERROR: Failed to find the AWS env vars needed to configure AWS. Please make sure they are set in the environment.")))
+		log.Println("WARN: Failed to find the AWS env vars needed to configure AWS. Please make sure they are set in the environment.")
 	}
 
 	// Create Session -- use config (credentials + region) from env vars or aws profile
