@@ -422,7 +422,7 @@ func initHelmClientOnly() (bool, string) {
 
 // initHelm initializes helm on a k8s cluster and deploys Tiller in one or more namespaces
 func initHelm() (bool, string) {
-
+	initHelmClientOnly()
 	defaultSA := s.Settings.ServiceAccount
 
 	for k, ns := range s.Namespaces {
