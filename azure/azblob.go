@@ -65,7 +65,6 @@ func ReadFile(containerName string, filename string, outFile string, noColors bo
 	if _, err = downloadedData.ReadFrom(bodyStream); err != nil {
 		log.Fatal(style.Bold(style.Red("ERROR: failed to download file " + filename + " with error: " + err.Error())))
 	}
-	fmt.Println("Downloaded the blob: " + downloadedData.String())
 
 	// create output file and write to it
 	var writers []io.Writer
