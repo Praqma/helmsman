@@ -75,7 +75,7 @@ certificates:
 
 ## Settings
 
-Optional : Yes. 
+Optional : Yes.
 
 Synopsis: provides settings for connecting to your k8s cluster and configuring Helm's Tiller in the cluster.
 
@@ -84,7 +84,7 @@ Synopsis: provides settings for connecting to your k8s cluster and configuring H
 Options:
 - **kubeContext** : the kube context you want Helmsman to use or create. Helmsman will try connect to this context first, if it does not exist, it will try to create it (i.e. connect to a k8s cluster) using the options below.
 
-The following options can be skipped if your kubectl context is already created and you don't want Helmsman to connect kubectl to your cluster for you. 
+The following options can be skipped if your kubectl context is already created and you don't want Helmsman to connect kubectl to your cluster for you.
 
 - **username**   : the username to be used for kubectl credentials.
 - **password**   : an environment variable name (starting with `$`) where your password is stored. Get the password from your k8s admin or consult k8s docs on how to get/set it.
@@ -182,13 +182,18 @@ clientKey = "s3://mybucket/mydir/helm.key.pem"
 env = "prod"
 [namespaces.production.annotations]
 iam.amazonaws.com/role = "dynamodb-reader"
-[namespaces.production.limits]
+[[namespaces.production.limits]]
+type = "Container"
 [namespaces.production.limits.default]
 cpu = "300m"
 memory = "200Mi"
 [namespaces.production.limits.defaultRequest]
 cpu = "200m"
 memory = "100Mi"
+[[namespaces.production.limits]]
+type = "Pod"
+[namespaces.production.limits.max]
+memory = "300Mi"
 ```
 
 ```yaml
@@ -210,12 +215,16 @@ namespaces:
     clientCert: "gs://mybucket/mydir/helm.cert.pem"
     clientKey: "s3://mybucket/mydir/helm.key.pem"
     limits:
-      default:
-        cpu: "300m"
-        memory: "200Mi"
-      defaultRequest:
-        cpu: "200m"
-        memory: "100Mi"
+      - type: Container
+        default:
+          cpu: "300m"
+          memory: "200Mi"
+        defaultRequest:
+          cpu: "200m"
+          memory: "100Mi"
+      - type: Pod
+        max:
+          memory: "300Mi"
     labels:
       env: "prod"
     annotations:
@@ -239,7 +248,7 @@ Authenticating to private helm repos:
     - Or, set `GCLOUD_CREDENTIALS` environment variable to contain the content of the credentials.json file.
 
 Options:
-- you can define any key/value pairs where key is the repo name and value is a valid URI for the repo. Basic auth info can be added in the repo URL as in the example below. 
+- you can define any key/value pairs where key is the repo name and value is a valid URI for the repo. Basic auth info can be added in the repo URL as in the example below.
 
 Example:
 

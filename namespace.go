@@ -6,16 +6,18 @@ import (
 
 // resources type
 type resources struct {
-	Cpu    string `yaml:"cpu,omitempty"`
+	CPU    string `yaml:"cpu,omitempty"`
 	Memory string `yaml:"memory,omitempty"`
 }
 
 // limits type
-type limits struct {
-	Max            resources `yaml:"max,omitempty"`
-	Min            resources `yaml:"min,omitempty"`
-	Default        resources `yaml:"default,omitempty"`
-	DefaultRequest resources `yaml:"defaultRequest,omitempty"`
+type limits []struct {
+	Max                  resources `yaml:"max,omitempty"`
+	Min                  resources `yaml:"min,omitempty"`
+	Default              resources `yaml:"default,omitempty"`
+	DefaultRequest       resources `yaml:"defaultRequest,omitempty"`
+	MaxLimitRequestRatio resources `yaml:"maxLimitRequestRatio,omitempty"`
+	LimitType            string    `yaml:"type"`
 }
 
 // namespace type represents the fields of a namespace
