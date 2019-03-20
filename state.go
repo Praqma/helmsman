@@ -77,7 +77,7 @@ func (s state) validate() (bool, string) {
 		for key, value := range s.Certificates {
 			r, path := isValidCert(value)
 			if !r {
-				return false, "ERROR: certifications validation failed -- [ " + key + " ] must be a valid S3 or GCS bucket URL or a valid relative file path."
+				return false, "ERROR: certifications validation failed -- [ " + key + " ] must be a valid S3, GCS, AZ bucket/container URL or a valid relative file path."
 			}
 			s.Certificates[key] = path
 		}
@@ -184,7 +184,7 @@ func (s state) validate() (bool, string) {
 func isValidCert(value string) (bool, string) {
 	_, err1 := url.ParseRequestURI(value)
 	_, err2 := os.Stat(value)
-	if err2 != nil && (err1 != nil || (!strings.HasPrefix(value, "s3://") && !strings.HasPrefix(value, "gs://"))) {
+	if err2 != nil && (err1 != nil || (!strings.HasPrefix(value, "s3://") && !strings.HasPrefix(value, "gs://") && !strings.HasPrefix(value, "az://"))) {
 		return false, ""
 	}
 	return true, value
