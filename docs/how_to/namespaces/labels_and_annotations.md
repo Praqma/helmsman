@@ -15,7 +15,7 @@ You can define namespaces to be used in your cluster. If they don't exist, Helms
     env = "staging"
 [namespaces.production]
   [namespaces.production.annotations]
-    iam.amazonaws.com/role = "dynamodb-reader"
+    "iam.amazonaws.com/role" = "dynamodb-reader"
   
 
 #...
