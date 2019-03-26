@@ -353,15 +353,17 @@ func createRoleBinding(role string, saName string, namespace string) (bool, stri
 		resource = "clusterrolebinding"
 	}
 
+	bindingName := saName + "-binding"
 	bindingOption := "--role=" + role
 	if clusterRole {
 		bindingOption = "--clusterrole=" + role
+		bindingName = namespace + ":" + saName + "-binding"
 	}
 
 	log.Println("INFO: creating " + resource + " for service account [ " + saName + " ] in namespace [ " + namespace + " ] with role: " + role + ".")
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "kubectl create " + resource + " " + saName + "-binding " + bindingOption + " --serviceaccount " + namespace + ":" + saName + " -n " + namespace},
+		Args:        []string{"-c", "kubectl create " + resource + " " + bindingName + " " + bindingOption + " --serviceaccount " + namespace + ":" + saName + " -n " + namespace},
 		Description: "creating " + resource + " for service account [ " + saName + " ] in namespace [ " + namespace + " ] with role: " + role,
 	}
 
