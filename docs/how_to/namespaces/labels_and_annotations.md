@@ -25,7 +25,7 @@ You can define namespaces to be used in your cluster. If they don't exist, Helms
 
 namespaces:
   staging:
-    lables:
+    labels:
       env: "staging"
   production:
     annotations:
