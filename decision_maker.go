@@ -188,6 +188,7 @@ func inspectUpgradeScenario(r *release, rs releaseState) {
 	if r.Namespace == rs.Namespace {
 		if extractChartName(r.Chart) == getReleaseChartName(rs) && r.Version != getReleaseChartVersion(rs) {
 			// upgrade
+			diffRelease(r)
 			upgradeRelease(r)
 			logDecision("DECISION: release [ "+r.Name+" ] is desired to be upgraded. Planning this for you!", r.Priority, change)
 
