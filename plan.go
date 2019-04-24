@@ -93,7 +93,11 @@ func (p plan) execPlan() {
 
 	for _, cmd := range p.Commands {
 		if exitCode, msg := cmd.Command.exec(debug, verbose); exitCode != 0 {
-			logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + msg)
+			var errorMsg string
+			if errorMsg = msg; !verbose {
+				errorMsg = strings.Split(msg, "---")[0]
+			}
+			logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + errorMsg)
 		} else {
 			log.Println(style.Cyan(msg))
 			if cmd.targetRelease != nil && !dryRun {
