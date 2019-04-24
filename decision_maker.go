@@ -27,6 +27,14 @@ func makePlan(s *state) *plan {
 // decide makes a decision about what commands (actions) need to be executed
 // to make a release section of the desired state come true.
 func decide(r *release, s *state) {
+	// check for presence in defined targets
+	if len(targetMap) > 0 {
+		if _, ok := targetMap[r.Name]; !ok {
+			logDecision("DECISION: release [ "+r.Name+" ] is ignored by target flag. Skipping.", r.Priority, noop)
+			return
+		}
+	}
+
 	if destroy {
 		if ok, rs := helmReleaseExists(r, "DEPLOYED"); ok {
 			deleteRelease(r, rs)
