@@ -26,11 +26,11 @@ const (
 )
 
 func printUsage() {
-	fmt.Println(banner + "\n")
-	fmt.Println("Helmsman version: " + appVersion)
-	fmt.Println("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
-	fmt.Println()
-	fmt.Println("Usage: helmsman [options]")
+	log.Println(banner + "\n")
+	log.Println("Helmsman version: " + appVersion)
+	log.Println("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
+	log.Println()
+	log.Println("Usage: helmsman [options]")
 	flag.PrintDefaults()
 }
 
@@ -57,6 +57,8 @@ func init() {
 	flag.BoolVar(&keepUntrackedReleases, "keep-untracked-releases", false, "keep releases that are managed by Helmsman and are no longer tracked in your desired state.")
 	flag.BoolVar(&showDiff, "show-diff", false, "show helm diff results. Can expose sensitive information.")
 	flag.BoolVar(&suppressDiffSecrets, "suppress-diff-secrets", false, "don't show secrets in helm diff output.")
+
+	log.SetOutput(os.Stdout)
 
 	flag.Usage = printUsage
 	flag.Parse()

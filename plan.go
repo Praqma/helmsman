@@ -93,7 +93,11 @@ func (p plan) execPlan() {
 
 	for _, cmd := range p.Commands {
 		if exitCode, msg := cmd.Command.exec(debug, verbose); exitCode != 0 {
-			logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + msg)
+			var errorMsg string
+			if errorMsg = msg; !verbose {
+				errorMsg = strings.Split(msg, "---")[0]
+			}
+			logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + errorMsg)
 		} else {
 			log.Println(style.Cyan(msg))
 			if cmd.targetRelease != nil && !dryRun {
@@ -116,10 +120,10 @@ func (p plan) printPlanCmds() {
 
 // printPlan prints the decisions made in a plan.
 func (p plan) printPlan() {
-	fmt.Println("----------------------")
+	log.Println("----------------------")
 	log.Println(style.Bold(style.Green("INFO: Plan generated at: " + p.Created.Format("Mon Jan _2 2006 15:04:05"))))
 	for _, decision := range p.Decisions {
-		fmt.Println(style.Colorize(decision.Description+" -- priority: "+strconv.Itoa(decision.Priority), decisionColor[decision.Type]))
+		log.Println(style.Colorize(decision.Description+" -- priority: "+strconv.Itoa(decision.Priority), decisionColor[decision.Type]))
 	}
 }
 

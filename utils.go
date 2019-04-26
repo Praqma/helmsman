@@ -402,6 +402,7 @@ func logError(msg string) {
 	if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err == nil {
 		notifySlack(msg, s.Settings.SlackWebhook, true, apply)
 	}
+	log.SetOutput(os.Stderr)
 	log.Fatal(style.Bold(style.Red(msg)))
 }
 
