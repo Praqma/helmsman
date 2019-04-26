@@ -174,16 +174,16 @@ func resolvePaths(relativeToFile string, s *state) {
 
 	for k, v := range s.Apps {
 		if v.ValuesFile != "" {
-			v.ValuesFile, _ = filepath.Abs(filepath.Join(dir, v.ValuesFile))
+			v.ValuesFile, _ = filepath.Abs(filepath.Join(dir, substituteEnv(v.ValuesFile)))
 		}
 		if v.SecretsFile != "" {
-			v.SecretsFile, _ = filepath.Abs(filepath.Join(dir, v.SecretsFile))
+			v.SecretsFile, _ = filepath.Abs(filepath.Join(dir, substituteEnv(v.SecretsFile)))
 		}
 		for i, f := range v.ValuesFiles {
-			v.ValuesFiles[i], _ = filepath.Abs(filepath.Join(dir, f))
+			v.ValuesFiles[i], _ = filepath.Abs(filepath.Join(dir, substituteEnv(f)))
 		}
 		for i, f := range v.SecretsFiles {
-			v.SecretsFiles[i], _ = filepath.Abs(filepath.Join(dir, f))
+			v.SecretsFiles[i], _ = filepath.Abs(filepath.Join(dir, substituteEnv(f)))
 		}
 
 		if v.Chart != "" {
