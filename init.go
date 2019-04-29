@@ -44,6 +44,7 @@ func init() {
 	flag.BoolVar(&apply, "apply", false, "apply the plan directly")
 	flag.BoolVar(&debug, "debug", false, "show the execution logs")
 	flag.BoolVar(&dryRun, "dry-run", false, "apply the dry-run option for helm commands.")
+	flag.Var(&target, "target", "limit execution to specific app.")
 	flag.BoolVar(&destroy, "destroy", false, "delete all deployed releases. Purge delete is used if the purge option is set to true for the releases.")
 	flag.BoolVar(&v, "v", false, "show the version")
 	flag.BoolVar(&verbose, "verbose", false, "show verbose execution logs")
@@ -181,6 +182,13 @@ func init() {
 	if applyLabels {
 		for _, r := range s.Apps {
 			labelResource(r)
+		}
+	}
+
+	if len(target) > 0 {
+		targetMap = map[string]bool{}
+		for _, v := range target {
+			targetMap[v] = true
 		}
 	}
 
