@@ -38,6 +38,8 @@ var appVersion = "v1.8.1"
 var helmVersion string
 var kubectlVersion string
 var dryRun bool
+var target stringArray
+var targetMap map[string]bool
 var destroy bool
 var showDiff bool
 var suppressDiffSecrets bool

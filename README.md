@@ -27,6 +27,9 @@ To show debugging details:
 To run a dry-run:
 ``` $ helmsman --debug --dry-run -f example.toml ```
 
+To limit execution to specific application:
+``` $ helmsman --debug --dry-run --target artifactory -f example.toml ```
+
 # Features
 
 - **Built for CD**: Helmsman can be used as a docker image or a binary.
