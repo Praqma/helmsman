@@ -30,7 +30,6 @@ var noColors bool
 var noFancy bool
 var noNs bool
 var nsOverride string
-var shouldCleanup bool
 var skipValidation bool
 var applyLabels bool
 var keepUntrackedReleases bool
@@ -42,6 +41,7 @@ var destroy bool
 var showDiff bool
 var suppressDiffSecrets bool
 
+const tempFilesDir = "helmsman-temp-files"
 const stableHelmRepo = "https://kubernetes-charts.storage.googleapis.com"
 const incubatorHelmRepo = "http://storage.googleapis.com/kubernetes-charts-incubator"
 
@@ -51,7 +51,6 @@ func main() {
 		if r, msg := createContext(); !r {
 			logError(msg)
 		}
-		shouldCleanup = true
 	}
 
 	if apply || dryRun || destroy {
@@ -110,9 +109,7 @@ func main() {
 		p.execPlan()
 	}
 
-	if shouldCleanup {
-		cleanup()
-	}
+	cleanup()
 
 	log.Println("INFO: completed successfully!")
 }
@@ -121,6 +118,7 @@ func main() {
 // It also deletes any Tiller TLS certs and keys
 // and secret files
 func cleanup() {
+	log.Println("INFO: cleaning up sensitive and temp files")
 	if _, err := os.Stat("ca.crt"); err == nil {
 		deleteFile("ca.crt")
 	}
@@ -165,4 +163,7 @@ func cleanup() {
 			}
 		}
 	}
+
+	// delete temp files with substituted env vars
+	os.RemoveAll(tempFilesDir)
 }

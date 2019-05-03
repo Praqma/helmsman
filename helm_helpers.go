@@ -381,7 +381,6 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 	tls := ""
 	ns := s.Namespaces[namespace]
 	if tillerTLSEnabled(ns) {
-		shouldCleanup = true // needed to activate cleaning up the certs upon exit
 		tillerCert := namespace + "-tiller.cert"
 		tillerKey := namespace + "-tiller.key"
 		caCert := namespace + "-ca.cert"
