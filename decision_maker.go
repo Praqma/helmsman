@@ -343,7 +343,6 @@ func getValuesFiles(r *release) string {
 			logError("Failed to decrypt secret file" + r.SecretsFile)
 		}
 		fileList = append(fileList, r.SecretsFile+".dec")
-		shouldCleanup = true
 	} else if len(r.SecretsFiles) > 0 {
 		if !helmPluginExists("secrets") {
 			logError("ERROR: helm secrets plugin is not installed/configured correctly. Aborting!")
@@ -359,7 +358,6 @@ func getValuesFiles(r *release) string {
 			}
 		}
 		fileList = append(fileList, r.SecretsFiles...)
-		shouldCleanup = true
 	}
 
 	if len(fileList) > 0 {
