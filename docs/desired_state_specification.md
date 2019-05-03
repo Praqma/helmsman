@@ -146,8 +146,8 @@ Options:
 
 - **tillerServiceAccount**: defines what service account to use when deploying Tiller. If this is not set, the following options are considered:
 
-  1. If the `serviceAccount` defined in the `settings` section exists in the namespace you want to deploy Tiller in, it will be used, else
-  2. Helmsman creates the service account in that namespace and binds it to a (cluster)role. If the namespace is kube-system and `tillerRole` is unset or is set to cluster-admin, the service account is bound to `cluster-admin` clusterrole. Otherwise, if you specified a `tillerRole`, a new role with that name is created and bound to the service account with rolebinding. If `tillerRole` is unset (for namespaces other than kube-system), the role is called `helmsman-tiller` and is created in the specified namespace to only gives access to that namespace. The custom role is created from a [yaml template](../data/role.yaml).
+  1. If the `serviceAccount` defined in the `settings` section exists in the namespace you want to deploy Tiller in, it will be used. 
+  2. If you defined `serviceAccount` in the `settings` section and it does not exist in the namespace you want to deploy Tiller in, Helmsman creates the service account in that namespace and binds it to a (cluster)role. If the namespace is kube-system and `tillerRole` is unset or is set to cluster-admin, the service account is bound to `cluster-admin` clusterrole. Otherwise, if you specified a `tillerRole`, a new role with that name is created and bound to the service account with rolebinding. If `tillerRole` is unset (for namespaces other than kube-system), the role is called `helmsman-tiller` and is created in the specified namespace to only gives access to that namespace. The custom role is created from a [yaml template](../data/role.yaml).
 
   > If `installTiller` is not defined or set to false, this flag is ignored.
 
