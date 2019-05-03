@@ -1,6 +1,3 @@
----
-version: v1.8.0
----
 
 # How To Guides
 
@@ -21,7 +18,7 @@ This page contains a list of guides on how to use Helmsman.
     - [Deploy shared Tiller in kube-system](tiller/shared.md)
     - [Prevent Deploying Tiller in kube-system](tiller/prevent_tiller_in_kube_system.md)
     - [Deploy Multiple Tillers with custom setup for each](tiller/multitenancy.md)
-    - [Deploy apps with specific Tillers](deploy_apps_with_specific_tiller.md)
+    - [Deploy apps with specific Tillers](tiller/deploy_apps_with_specific_tiller.md)
 - Defining Helm repositories
     - [Using default helm repos](helm_repos/default.md)
     - [Using private repos in Google GCS](helm_repos/gcs.md)
@@ -41,10 +38,12 @@ This page contains a list of guides on how to use Helmsman.
     - [Delete all releases (apps)](apps/destroy.md)
 - Running Helmsman in different environments
     - [Running Helmsman in CI](deployment/ci.md)
-    - [Running Helmsman inside your k8s cluster](inside_k8s.md)
+    - [Running Helmsman inside your k8s cluster](deployment/inside_k8s.md)
 - Misc
-    - [Authenticating to cloud storage providers](auth_to_storage_providers.md)
-    - [Send slack notifications from Helmsman](send_slack_notifications_from_helmsman.md)
-    - [Merge multiple desired state files](merge_desired_state_files.md)
-    - [Multitenant clusters guide](multitenant_clusters_guide.md)
-    - [Helmsman on Windows 10](helmsman_on_windows10.md)
+    - [Authenticating to cloud storage providers](misc/auth_to_storage_providers.md)
+    - [Protecting namespaces and releases](misc/protect_namespaces_and_releases.md)
+    - [Send slack notifications from Helmsman](misc/send_slack_notifications_from_helmsman.md)
+    - [Merge multiple desired state files](misc/merge_desired_state_files.md)
+    - [Limit Helmsman deployment to specific apps](misc/limit-deployment-to-specific-apps.md)
+    - [Multitenant clusters guide](misc/multitenant_clusters_guide.md)
+    - [Helmsman on Windows 10](misc/helmsman_on_windows10.md)

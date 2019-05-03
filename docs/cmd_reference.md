@@ -1,5 +1,5 @@
 ---
-version: v1.7.3
+version: v1.9.0
 ---
 
 # CMD reference
@@ -63,3 +63,6 @@ This is the list of the available CMD options in Helmsman:
 
   `--kubeconfig`
         path to the kubeconfig file to use for CLI requests
+
+  `--target` 
+        limit execution to specific app.      
