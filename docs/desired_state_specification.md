@@ -1,5 +1,5 @@
 ---
-version: v1.8.0
+version: v1.9.0
 ---
 
 # Helmsman desired state specification
@@ -15,6 +15,8 @@ This document describes the specification for how to write your Helm charts desi
 
 
 > You can use environment variables in the desired state files. The environment variable name should start with "$", or encapsulated in "${", "}". "$" characters can be escaped like "$$".
+
+> Starting from v1.9.0, you can also use environment variables in your helm values/secrets files.
 
 ## Metadata
 
