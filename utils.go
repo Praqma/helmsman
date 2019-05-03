@@ -49,6 +49,7 @@ func fromTOML(file string, s *state) (bool, string) {
 	}
 	addDefaultHelmRepos(s)
 	resolvePaths(file, s)
+	substituteEnvInValuesFiles(s)
 
 	return true, "INFO: Parsed TOML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
 }
@@ -92,6 +93,7 @@ func fromYAML(file string, s *state) (bool, string) {
 	}
 	addDefaultHelmRepos(s)
 	resolvePaths(file, s)
+	substituteEnvInValuesFiles(s)
 
 	return true, "INFO: Parsed YAML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
 }
@@ -119,6 +121,51 @@ func toYAML(file string, s *state) {
 	}
 	log.Printf("Wrote %d bytes.\n", bytesWritten)
 	newFile.Close()
+}
+
+// substituteEnvInValuesFiles loops through the values/secrets files and substitutes env variables into them
+func substituteEnvInValuesFiles(s *state) {
+	log.Println("INFO: substituting env variables in values and secrets files ...")
+	for _, v := range s.Apps {
+		if v.ValuesFile != "" {
+			v.ValuesFile = substituteEnvInYaml(v.ValuesFile)
+		}
+		if v.SecretsFile != "" {
+			v.SecretsFile = substituteEnvInYaml(v.SecretsFile)
+		}
+		for i := range v.ValuesFiles {
+			v.ValuesFiles[i] = substituteEnvInYaml(v.ValuesFiles[i])
+		}
+		for i := range v.SecretsFiles {
+			v.SecretsFiles[i] = substituteEnvInYaml(v.SecretsFiles[i])
+		}
+	}
+}
+
+// substituteEnvInYaml substitutes env variables in a Yaml file and creates a temp file with these values.
+// Returns the path for the temp file
+func substituteEnvInYaml(file string) string {
+	rawYamlFile, err := ioutil.ReadFile(file)
+	if err != nil {
+		logError(err.Error())
+	}
+	yamlFile := substituteEnv(string(rawYamlFile))
+
+	// create a temp directory
+	if _, err := os.Stat(tempFilesDir); os.IsNotExist(err) {
+		err = os.MkdirAll(tempFilesDir, 0755)
+		if err != nil {
+			logError(err.Error())
+		}
+	}
+
+	// output file contents with env variables substituted into temp files
+	outFile := tempFilesDir + string(os.PathSeparator) + filepath.Base(file)
+	err = ioutil.WriteFile(outFile, []byte(yamlFile), 0644)
+	if err != nil {
+		logError(err.Error())
+	}
+	return outFile
 }
 
 // invokes either yaml or toml parser considering file extension
