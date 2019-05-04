@@ -43,11 +43,15 @@ var destroy bool
 var showDiff bool
 var suppressDiffSecrets bool
 
-const tempFilesDir = "helmsman-temp-files"
+const tempFilesDir = ".helmsman-tmp"
 const stableHelmRepo = "https://kubernetes-charts.storage.googleapis.com"
 const incubatorHelmRepo = "http://storage.googleapis.com/kubernetes-charts-incubator"
 
 func main() {
+	// delete temp files with substituted env vars when the program terminates
+	defer os.RemoveAll(tempFilesDir)
+	defer cleanup()
+
 	// set the kubecontext to be used Or create it if it does not exist
 	if !setKubeContext(s.Settings.KubeContext) {
 		if r, msg := createContext(); !r {
@@ -111,8 +115,6 @@ func main() {
 		p.execPlan()
 	}
 
-	cleanup()
-
 	log.Println("INFO: completed successfully!")
 }
 
@@ -166,6 +168,4 @@ func cleanup() {
 		}
 	}
 
-	// delete temp files with substituted env vars
-	os.RemoveAll(tempFilesDir)
 }

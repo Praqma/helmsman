@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -151,16 +152,13 @@ func substituteEnvInYaml(file string) string {
 	}
 	yamlFile := substituteEnv(string(rawYamlFile))
 
-	// create a temp directory
-	if _, err := os.Stat(tempFilesDir); os.IsNotExist(err) {
-		err = os.MkdirAll(tempFilesDir, 0755)
-		if err != nil {
-			logError(err.Error())
-		}
+	dir, err := ioutil.TempDir(tempFilesDir, "tmp")
+	if err != nil {
+		logError(err.Error())
 	}
 
 	// output file contents with env variables substituted into temp files
-	outFile := tempFilesDir + string(os.PathSeparator) + filepath.Base(file)
+	outFile := path.Join(dir, filepath.Base(file))
 	err = ioutil.WriteFile(outFile, []byte(yamlFile), 0644)
 	if err != nil {
 		logError(err.Error())
