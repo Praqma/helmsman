@@ -133,6 +133,10 @@ func init() {
 		}
 	}
 
+	// wipe & create a temporary directory
+	os.RemoveAll(tempFilesDir)
+	_ = os.MkdirAll(tempFilesDir, 0755)
+
 	// read the TOML/YAML desired state file
 	var fileState state
 	for _, f := range files {
