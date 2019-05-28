@@ -41,16 +41,23 @@ func printNamespacesMap(m map[string]namespace) {
 // It uses the BurntSuchi TOML parser which throws an error if the TOML file is not valid.
 func fromTOML(file string, s *state) (bool, string) {
 	rawTomlFile, err := ioutil.ReadFile(file)
+	var tomlFile string
 	if err != nil {
 		return false, err.Error()
 	}
-	tomlFile := substituteEnv(string(rawTomlFile))
+	if !noEnvSubst {
+		tomlFile = substituteEnv(string(rawTomlFile))
+	} else {
+		tomlFile = string(rawTomlFile)
+	}
 	if _, err := toml.Decode(tomlFile, s); err != nil {
 		return false, err.Error()
 	}
 	addDefaultHelmRepos(s)
 	resolvePaths(file, s)
-	substituteEnvInValuesFiles(s)
+	if !noEnvSubst {
+		substituteEnvInValuesFiles(s)
+	}
 
 	return true, "INFO: Parsed TOML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
 }
@@ -85,16 +92,24 @@ func toTOML(file string, s *state) {
 // parser which throws an error if the YAML file is not valid.
 func fromYAML(file string, s *state) (bool, string) {
 	rawYamlFile, err := ioutil.ReadFile(file)
+	var yamlFile []byte
 	if err != nil {
 		return false, err.Error()
 	}
-	yamlFile := []byte(substituteEnv(string(rawYamlFile)))
+	if !noEnvSubst {
+		yamlFile = []byte(substituteEnv(string(rawYamlFile)))
+	} else {
+		yamlFile = []byte(string(rawYamlFile))
+	}
 	if err = yaml.UnmarshalStrict(yamlFile, s); err != nil {
 		return false, err.Error()
 	}
 	addDefaultHelmRepos(s)
 	resolvePaths(file, s)
-	substituteEnvInValuesFiles(s)
+
+	if !noEnvSubst {
+		substituteEnvInValuesFiles(s)
+	}
 
 	return true, "INFO: Parsed YAML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
 }
@@ -147,10 +162,15 @@ func substituteEnvInValuesFiles(s *state) {
 // Returns the path for the temp file
 func substituteEnvInYaml(file string) string {
 	rawYamlFile, err := ioutil.ReadFile(file)
+	var yamlFile string
 	if err != nil {
 		logError(err.Error())
 	}
-	yamlFile := substituteEnv(string(rawYamlFile))
+	if !noEnvSubst {
+		yamlFile = substituteEnv(string(rawYamlFile))
+	} else {
+		yamlFile = string(rawYamlFile)
+	}
 
 	dir, err := ioutil.TempDir(tempFilesDir, "tmp")
 	if err != nil {
