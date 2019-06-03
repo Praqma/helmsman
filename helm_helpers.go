@@ -472,10 +472,14 @@ func cleanUntrackedReleases() {
 				}
 			}
 			if !tracked {
-				if _, ok := toDelete[ns]; !ok {
-					toDelete[ns] = make(map[string]bool)
+				if _, ok := targetMap[r]; len(targetMap) > 0 && !ok {
+					logDecision("DECISION: untracked release found: [ "+r+" ] but is ignored by target flag. Skipping.", -800, noop)
+				} else {
+					if _, ok := toDelete[ns]; !ok {
+						toDelete[ns] = make(map[string]bool)
+					}
+					toDelete[ns][r] = true
 				}
-				toDelete[ns][r] = true
 			}
 		}
 	}
