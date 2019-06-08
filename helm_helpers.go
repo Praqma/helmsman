@@ -62,12 +62,12 @@ func getAllReleases() tillerReleases {
 
 	// result := make(map[string]interface{})
 	var result tillerReleases
-	if _, ok := s.Namespaces["kube-system"]; !ok {
+	if _, ok := s.Namespaces["kube-system"]; !ok && !s.Settings.Tillerless {
 		result.Releases = append(result.Releases, getTillerReleases("kube-system").Releases...)
 	}
 
 	for ns, v := range s.Namespaces {
-		if v.InstallTiller || v.UseTiller {
+		if (v.InstallTiller || v.UseTiller) || s.Settings.Tillerless {
 			result.Releases = append(result.Releases, getTillerReleases(ns).Releases...)
 		}
 	}
@@ -427,33 +427,36 @@ func initHelmClientOnly() (bool, string) {
 func initHelm() (bool, string) {
 	initHelmClientOnly()
 	defaultSA := s.Settings.ServiceAccount
-
-	for k, ns := range s.Namespaces {
-		if tillerTLSEnabled(ns) {
-			downloadFile(s.Namespaces[k].TillerCert, k+"-tiller.cert")
-			downloadFile(s.Namespaces[k].TillerKey, k+"-tiller.key")
-			downloadFile(s.Namespaces[k].CaCert, k+"-ca.cert")
-			// client cert and key
-			downloadFile(s.Namespaces[k].ClientCert, k+"-client.cert")
-			downloadFile(s.Namespaces[k].ClientKey, k+"-client.key")
-		}
-		if ns.InstallTiller && k != "kube-system" {
-			if ok, err := deployTiller(k, ns.TillerServiceAccount, defaultSA, ns.TillerRole); !ok {
-				return false, err
+	if !s.Settings.Tillerless {
+		for k, ns := range s.Namespaces {
+			if tillerTLSEnabled(ns) {
+				downloadFile(s.Namespaces[k].TillerCert, k+"-tiller.cert")
+				downloadFile(s.Namespaces[k].TillerKey, k+"-tiller.key")
+				downloadFile(s.Namespaces[k].CaCert, k+"-ca.cert")
+				// client cert and key
+				downloadFile(s.Namespaces[k].ClientCert, k+"-client.cert")
+				downloadFile(s.Namespaces[k].ClientKey, k+"-client.key")
+			}
+			if ns.InstallTiller && k != "kube-system" {
+				if ok, err := deployTiller(k, ns.TillerServiceAccount, defaultSA, ns.TillerRole); !ok {
+					return false, err
+				}
 			}
 		}
-	}
 
-	if ns, ok := s.Namespaces["kube-system"]; ok {
-		if ns.InstallTiller {
-			if ok, err := deployTiller("kube-system", ns.TillerServiceAccount, defaultSA, ns.TillerRole); !ok {
+		if ns, ok := s.Namespaces["kube-system"]; ok {
+			if ns.InstallTiller {
+				if ok, err := deployTiller("kube-system", ns.TillerServiceAccount, defaultSA, ns.TillerRole); !ok {
+					return false, err
+				}
+			}
+		} else {
+			if ok, err := deployTiller("kube-system", "", defaultSA, ns.TillerRole); !ok {
 				return false, err
 			}
 		}
 	} else {
-		if ok, err := deployTiller("kube-system", "", defaultSA, ns.TillerRole); !ok {
-			return false, err
-		}
+		log.Println("INFO: skipping Tiller deployments because Tillerless mode is enabled.")
 	}
 
 	return true, ""

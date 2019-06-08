@@ -80,6 +80,8 @@ func main() {
 			if _, ok := s.Namespaces["kube-system"]; !ok {
 				waitForTiller("kube-system")
 			}
+		} else {
+			log.Println("INFO: running in TILLERLESS mode")
 		}
 	} else {
 		initHelmClientOnly()
