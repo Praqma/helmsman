@@ -1,5 +1,5 @@
 ---
-version: v1.9.1
+version: v1.10.0
 ---
 
 # Helmsman desired state specification
@@ -146,6 +146,7 @@ Options:
 - **installTiller**: defines if Tiller should be deployed in this namespace or not. Default is false. Any chart desired to be deployed into a namespace with a Tiller deployed, will be deployed using that Tiller and not the one in kube-system unless you use the `TillerNamespace` option (see the [Apps](#apps) section below) to use another Tiller.
 > By default Tiller will be deployed into `kube-system` even if you don't define kube-system in the namespaces section. To prevent deploying Tiller into `kube-system, add kube-system in your namespaces section and set its installTiller to false.
 - **tillerRole**: specify the role to use.  If 'cluster-admin' a clusterrolebinding will be used else a role with a single namespace scope will be created and bound with a rolebinding.
+- **tillerRoleConfigFile**: relative path to file templating custom Tiller role. If `installTiller` is true and `tillerRole` is not `cluster-admin`, then helmsman will create namespace specific Tiller role based on the template file passed with this parameter.
 - **useTiller**: defines that you would like to use an existing Tiller from that namespace. Can't be set together with `installTiller`
 - **labels** : defines labels to be added to the namespace, doesn't remove existing labels but updates them if the label key exists with any other different value. You can define any key/value pairs. Default is empty.
 - **annotations** : defines annotations to be added to the namespace. It behaves the same way as the labels option.
@@ -154,7 +155,7 @@ Options:
 - **tillerServiceAccount**: defines what service account to use when deploying Tiller. If this is not set, the following options are considered:
 
   1. If the `serviceAccount` defined in the `settings` section exists in the namespace you want to deploy Tiller in, it will be used. 
-  2. If you defined `serviceAccount` in the `settings` section and it does not exist in the namespace you want to deploy Tiller in, Helmsman creates the service account in that namespace and binds it to a (cluster)role. If the namespace is kube-system and `tillerRole` is unset or is set to cluster-admin, the service account is bound to `cluster-admin` clusterrole. Otherwise, if you specified a `tillerRole`, a new role with that name is created and bound to the service account with rolebinding. If `tillerRole` is unset (for namespaces other than kube-system), the role is called `helmsman-tiller` and is created in the specified namespace to only gives access to that namespace. The custom role is created from a [yaml template](../data/role.yaml).
+  2. If you defined `serviceAccount` in the `settings` section and it does not exist in the namespace you want to deploy Tiller in, Helmsman creates the service account in that namespace and binds it to a (cluster)role. If the namespace is kube-system and `tillerRole` is unset or is set to cluster-admin, the service account is bound to `cluster-admin` clusterrole. Otherwise, if you specified a `tillerRole`, a new role with that name is created and bound to the service account with rolebinding. If `tillerRole` is unset (for namespaces other than kube-system), the role is called `helmsman-tiller` and is created in the specified namespace to only gives access to that namespace. The custom role is created from a [yaml template](../data/role.yaml) if no `tillerRoleConfigFile` was set, or will use the template file (of the same structure as [yaml template](../data/role.yaml)) to create Role from.
 
   > If `installTiller` is not defined or set to false, this flag is ignored.
 
@@ -180,6 +181,7 @@ protected = false
 protected = true
 installTiller = true
 tillerServiceAccount = "tiller-production"
+tillerRoleConfigFile = "../roles/helmsman-tiller.yaml"
 caCert = "secrets/ca.cert.pem"
 tillerCert = "secrets/tiller.cert.pem"
 tillerKey = "$TILLER_KEY" # where TILLER_KEY=secrets/tiller.key.pem
@@ -216,6 +218,7 @@ namespaces:
     protected: true
     installTiller: true
     tillerServiceAccount: "tiller-production"
+    tillerRoleConfigFile: "../roles/helmsman-tiller.yaml"
     caCert: "secrets/ca.cert.pem"
     tillerCert: "secrets/tiller.cert.pem"
     tillerKey: "$TILLER_KEY" # where TILLER_KEY=secrets/tiller.key.pem
