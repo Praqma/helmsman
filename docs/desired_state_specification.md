@@ -97,6 +97,7 @@ The following options can be skipped if your kubectl context is already created 
 - **storageBackend** : by default Helm stores release information in configMaps, using secrets is for storage is recommended for security. Setting this flag to `secret` will deploy/upgrade Tiller with the `--storage=secret`. Other values will be skipped and configMaps will be used.
 - **slackWebhook** : a [Slack](slack.com) Webhook URL to receive Helmsman notifications. This can be passed directly or in an environment variable.
 - **reverseDelete** : if set to `true` it will reverse the priority order whilst deleting.
+- **tillerless** : setting it to `true` will use [helm-tiller](https://rimusz.net/tillerless-helm) plugin instead of installing Tillers in namespaces. It disables many of the parameters for sections below.
 
 > If you use `storageBackend` with a Tiller that has been previously deployed with configMaps as storage backend, you need to migrate your release information from the configMap to the new secret on your own. Helm does not support this yet.
 
@@ -113,6 +114,7 @@ kubeContext = "minikube"
 # storageBackend = "secret"
 # slackWebhook = $MY_SLACK_WEBHOOK
 # reverseDelete = false
+# tilerless = true
 ```
 
 ```yaml
@@ -126,6 +128,7 @@ settings:
   #storageBackend: "secret"
   #slackWebhook: "$MY_SLACK_WEBHOOK"
   #reverseDelete: false
+  #tilerless: true
 ```
 
 ## Namespaces
@@ -134,6 +137,8 @@ Optional : No.
 
 Synopsis: defines the namespaces to be used/created in your k8s cluster and whether they are protected or not. It also defines if Tiller should be deployed in these namespaces and with what configurations (TLS and service account). You can add as many namespaces as you like.
 If a namespace does not already exist, Helmsman will create it.
+
+> All Tillers-related params here will be ignored when `tilerless` is set in `settings` section.
 
 Options:
 - **protected** : defines if a namespace is protected (true or false). Default false.
@@ -315,6 +320,7 @@ Options:
    1. If `tillerNamespace`is explicitly defined, it is used.
    2. If `tillerNamespace`is not defined and the namespace in which the release will be deployed has a Tiller installed by Helmsman (i.e. has `installTiller set to true` in the [Namespaces](#namespaces) section), Tiller in that namespace is used.
    3. If none of the above, the shared Tiller in `kube-system` is used.
+> This parameter is ignored when `tilerless` is set in `settings` section and `namespace` of this app is taken for tilerless plugin.
 
 - **name**        : the Helm release name. Releases must have unique names within a Helm Tiller. If not set, the release name will be taken from the app identifier in your desired state file. e.g, for ` apps.jenkins ` the release name will be `jenkins`.
 - **description** : a release metadata for human readers.
