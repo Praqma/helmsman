@@ -237,8 +237,8 @@ func addDefaultHelmRepos(s *state) {
 func resolvePaths(relativeToFile string, s *state) {
 	dir := filepath.Dir(relativeToFile)
 	for ns, v := range s.Namespaces {
-		if v.TillerRoleConfigFile != "" {
-			v.TillerRoleConfigFile, _ = filepath.Abs(filepath.Join(dir, v.TillerRoleConfigFile))
+		if v.TillerRoleTemplateFile != "" {
+			v.TillerRoleTemplateFile, _ = filepath.Abs(filepath.Join(dir, v.TillerRoleTemplateFile))
 		}
 		s.Namespaces[ns] = v
 	}

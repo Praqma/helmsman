@@ -10,7 +10,7 @@ By default, when defining Namespaces in Desired State Specification file, when `
 it creates the Role to bind the Tiller to with default [yaml template](../../../data/role.yaml). 
 
 If there's a need for custom Role (let's say each namespace has its different and specific requirements to permissions),
-you can define `tillerRoleConfigFile`, which is a relative path pointing at a template of a Role (same format as a [yaml template](../../../data/role.yaml)),
+you can define `tillerRoleTemplateFile`, which is a relative path pointing at a template of a Role (same format as a [yaml template](../../../data/role.yaml)),
 so when Helmsman creates Tiller in the namespace with this key, custom Role will be created for Tiller.
 
 ```toml
@@ -20,7 +20,7 @@ useTiller = true
 [namespaces.production]
 installTiller = true
 tillerServiceAccount = "tiller-production"
-tillerRoleConfigFile = "../roles/helmsman-tiller.yaml"
+tillerRoleTemplateFile = "../roles/helmsman-tiller.yaml"
 ```
 
 ```yaml
@@ -30,7 +30,7 @@ namespaces:
   production:
     installTiller: true
     tillerServiceAccount: "tiller-production"
-    tillerRoleConfigFile: "../roles/helmsman-tiller.yaml"
+    tillerRoleTemplateFile: "../roles/helmsman-tiller.yaml"
 ```
 
 The example above will create two namespaces: dev and production, where dev namespace will have its Tiller with default Role,
