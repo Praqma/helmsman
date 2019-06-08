@@ -27,6 +27,7 @@ type namespace struct {
 	UseTiller            bool              `yaml:"useTiller"`
 	TillerServiceAccount string            `yaml:"tillerServiceAccount"`
 	TillerRole           string            `yaml:"tillerRole"`
+	TillerRoleConfigFile string            `yaml:"tillerRoleConfigFile"`
 	CaCert               string            `yaml:"caCert"`
 	TillerCert           string            `yaml:"tillerCert"`
 	TillerKey            string            `yaml:"tillerKey"`
