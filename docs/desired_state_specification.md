@@ -356,6 +356,9 @@ Example:
     protected = false
     wait = true
     priority = -3
+    helmFlags: [
+      "--recreate-pods",
+    ]
   [apps.jenkins.set]
     secret1="$SECRET_ENV_VAR1"
     secret2="SECRET_ENV_VAR2" # works with/without $ at the beginning
@@ -378,6 +381,9 @@ apps:
     protected: false
     wait: true
     priority: -3
+    helmFlags: [
+      "--recreate-pods",
+    ]
     set:
       secret1: "$SECRET_ENV_VAR1"
       secret2: "$SECRET_ENV_VAR2"
