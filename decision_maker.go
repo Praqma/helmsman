@@ -37,10 +37,10 @@ func decide(r *release, s *state) {
 
 	if destroy {
 		if ok, rs := helmReleaseExists(r, "DEPLOYED"); ok {
-			deleteRelease(r, rs, s)
+			deleteRelease(r, rs)
 		}
 		if ok, rs := helmReleaseExists(r, "FAILED"); ok {
-			deleteRelease(r, rs, s)
+			deleteRelease(r, rs)
 		}
 		return
 	}
@@ -456,7 +456,7 @@ func getDesiredTillerNamespaceFlag(r *release) string {
 func getDesiredTillerNamespace(r *release) string {
 	if r.TillerNamespace != "" {
 		return r.TillerNamespace
-	} else if ns, ok := s.Namespaces[r.Namespace]; ok && (ns.InstallTiller || ns.UseTiller) {
+	} else if ns, ok := s.Namespaces[r.Namespace]; ok && (s.Settings.Tillerless || (ns.InstallTiller || ns.UseTiller)) {
 		return r.Namespace
 	}
 
