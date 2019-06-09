@@ -10,7 +10,7 @@ Priority is an optional flag and has a default value of 0 (zero). If set, it can
 
 If you want your apps to be deleted in the reverse order as they where created, you can also use the optional `Settings` flag `reverseDelete`, to achieve this, set it to `true`
 
-## Example
+# Example
 
 ```toml
 [metadata]
