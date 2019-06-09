@@ -2,7 +2,7 @@
 version: v1.3.0-rc
 ---
 
-# multiple value files
+# Multiple value files
 
 You can include multiple yaml value files to separate configuration for different environments.
 
@@ -40,7 +40,7 @@ You can include multiple yaml value files to separate configuration for differen
 ```
 
 ```yaml
-...
+# ...
 apps:
 
   jenkins:
@@ -65,6 +65,6 @@ apps:
     valuesFiles:
       - "../my-jenkins-common-values.yaml"
       - "../my-jenkins-testing-values.yaml"
-...
+# ...
 
 ```

@@ -31,13 +31,13 @@ To deploy Helmsman into a k8s cluster, few steps are needed:
 
 1. Create a k8s service account
 
-```bash
+```shell
 $ kubectl create sa helmsman 
 ```
 
 2. Create a clusterrolebinding 
 
-```bash
+```shell
 $ kubectl create clusterrolebinding helmsman-cluster-admin --clusterrole=cluster-admin --serviceaccount=default:helmsman
 ```
 
@@ -45,7 +45,8 @@ $ kubectl create clusterrolebinding helmsman-cluster-admin --clusterrole=cluster
 
 This command gives an interactive session:
 
-```bash
+```shell
 $ kubectl run helmsman --restart Never --image praqma/helmsman --serviceaccount=helmsman -- helmsman -f -- sleep 3600
 ```
+
 But you can also create a proper kubernetes deployment and mount a volume to it containing your desired state file(s).

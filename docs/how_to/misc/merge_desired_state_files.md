@@ -2,7 +2,7 @@
 version: v1.5.0
 ---
 
-# supply multiple desired state files
+# Supply multiple desired state files
 
 Starting from v1.5.0, Helmsman allows you to pass the `-f` flag multiple times to specify multiple desired state files
 that should be merged. This allows us to do things like specify our non-environment-specific config in a `common.toml` file
@@ -11,7 +11,7 @@ to do the merging, and is subject to the limitations described there.
 
 For example:
 
-* common.toml:
+* `common.toml`:
 ```toml
 [metadata]
 org = "Organization Name"
@@ -24,7 +24,7 @@ storageBackend = "secret"
 ...
 ```
 
-* nonprod.toml:
+* `nonprod.toml`:
 ```toml
 [settings]
 kubeContext = "cluster-nonprod"
@@ -39,6 +39,6 @@ kubeContext = "cluster-nonprod"
 ```
 
 One can then run the following to use the merged config of the above files, with later files override values of earlier ones:
-```bash
+```shell
 $ helmsman -f common.toml -f nonprod.toml ...
 ```

@@ -2,7 +2,7 @@
 version: v1.6.2
 ---
 
-# delete all deployed releases
+# Delete all deployed releases
 
 Helmsman allows you to delete all the helm releases that were deployed by Helmsman from a given desired state.
 
