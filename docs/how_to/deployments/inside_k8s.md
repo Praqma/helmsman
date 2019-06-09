@@ -6,7 +6,7 @@ version: v1.8.0
 
 Helmsman can be deployed inside your k8s cluster and can talk to the k8s API using a `bearer token`.
 
-See [connecting to your cluster with bearer token](../settings/create_kube_context_with_token.md) for more details.
+See [connecting to your cluster with bearer token](../settings/creating_kube_context_with_token.md) for more details.
 
 
 Your desired state will look like: 

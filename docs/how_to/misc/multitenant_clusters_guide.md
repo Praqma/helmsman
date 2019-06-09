@@ -42,7 +42,7 @@ namespaces:
 
 ```
 
-By default Tiller will be deployed into `kube-system` even if you don't define kube-system in the namespaces section. To prevent deploying Tiller into `kube-system, you need to explicitly add `kube-system` in your defined namespaces. See the [namespaces guide](define_namespaces.md#preventing_tiller_deployment_in_kube-system) for an example.
+By default Tiller will be deployed into `kube-system` even if you don't define kube-system in the namespaces section. To prevent deploying Tiller into `kube-system, you need to explicitly add `kube-system` in your defined namespaces. See the [tiller deployment](../tiller/prevent_tiller_in_kube_system.md) for an example.
 
 ## Deploying Tiller with a service account
 
