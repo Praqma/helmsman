@@ -161,6 +161,6 @@ pvc-f791ef92-01ab-11e8-8a7e-02412acf5adc   20Gi       RWO           Retain      
 > NOTE: if there are multiple PVs in the Available state and they match capacity and read access for your application, then your application (in the new namespace) might mount to any of them. In this case, either ensure only the right PV is in the available state or make the PV available to a specific PVC - pre-fill `PV.Spec.ClaimRef` with a pointer to a PVC. Leave the `PV.Spec.ClaimRef,UID` empty, as the PVC does not need to exist at this point and you don't know PVC's UID. This PV can be bound only to the specified PVC
 
 Further details:
-https://github.com/kubernetes/kubernetes/issues/48609
-https://kubernetes.io/docs/tasks/administer-cluster/change-pv-reclaim-policy/
+* https://github.com/kubernetes/kubernetes/issues/48609
+* https://kubernetes.io/docs/tasks/administer-cluster/change-pv-reclaim-policy/
 

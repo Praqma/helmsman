@@ -117,7 +117,7 @@ DECISION: release [ artifactory ] is desired to be upgraded. Planning this for y
 
 # upgrade releases
 
-Every time you run Helmsman, (unless the release is [protected or deployed in a protected namespace](protect_namespaces_and_releases.md)) it will upgrade existing deployed releases to the version you specified in the desired state file. It also applies the `values.yaml` file you specify with each install/upgrade. This means that when you don't change anything for a specific release, Helmsman would upgrade with the `values.yaml` file you provide (just in case it is a new file or you changed something there.)
+Every time you run Helmsman, (unless the release is [protected or deployed in a protected namespace](../misc/protect_namespaces_and_releases.md)) it will upgrade existing deployed releases to the version you specified in the desired state file. It also applies the `values.yaml` file you specify with each install/upgrade. This means that when you don't change anything for a specific release, Helmsman would upgrade with the `values.yaml` file you provide (just in case it is a new file or you changed something there.)
 
 If you change the chart, the existing release will be deleted and a new one with the same name will be created using the new chart.
 
