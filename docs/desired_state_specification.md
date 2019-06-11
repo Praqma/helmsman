@@ -356,7 +356,7 @@ Example:
     protected = false
     wait = true
     priority = -3
-    helmFlags: [
+    helmFlags = [
       "--recreate-pods",
     ]
   [apps.jenkins.set]
