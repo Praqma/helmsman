@@ -14,8 +14,8 @@ preconfiguredHelmRepos = [ "myrepo1", "myrepo2" ]
 
 ```yaml
 preconfiguredHelmRepos:
-- myrepo1
-- myrepo2
+  - myrepo1
+  - myrepo2
 ```
 
 > In this case you will manually need to execute `helm repo add myrepo1 <URL> --username= --password=`

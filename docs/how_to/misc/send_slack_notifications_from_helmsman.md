@@ -14,8 +14,9 @@ slackWebhook = $MY_SLACK_WEBHOOK
 
 ```yaml
 settings:
-  ...
-  #slackWebhook : "$MY_SLACK_WEBHOOK"
+  # ...
+  slackWebhook : "$MY_SLACK_WEBHOOK"
+  # ...
 ```
 
 ## Getting a Slack Webhook URL

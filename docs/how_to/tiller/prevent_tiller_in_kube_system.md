@@ -11,6 +11,7 @@ By default Tiller will be deployed into `kube-system` even if you don't define k
 [namespaces.kube-system]
 # installTiller = false  # this line is not needed since the default is false, but can be added for human readability.
 ```
+
 ```yaml
 namespaces:
   kube-system:

@@ -2,7 +2,7 @@
 version: v1.6.0
 ---
 
-# passing secrets from env variables:
+# Passing secrets from env variables:
 
 Starting from v0.1.3, Helmsman allows you to pass secrets and other user input to helm charts from environment variables as follows:
 
@@ -50,16 +50,16 @@ apps:
 
 These input variables will be passed to the chart when it is deployed/upgraded using helm's `--set <<var_name>>=<<var_value_read_from_env_var>>`
 
-# passing secrets from env files
+# Passing secrets from env files
 You can also keep these environment variables in files, by default Helmsman will load variables from a `.env` file but you can also specify files by using the `-e` option:
 
-```bash
+```shell
 helmsman -e myVars
 ```
 
 Below are some examples of valid env files
 
-```bash
+```shell
 # I am a comment and that is OK
 SOME_VAR=someval
 FOO=BAR # comments at line end are OK too
@@ -72,6 +72,6 @@ FOO: bar
 BAR: baz
 ```
 
-# passing secrets using helm secrets plugin
+# Passing secrets using helm secrets plugin
 
 You can also use the [helm secrets plugin](https://github.com/futuresimple/helm-secrets) to pass your secrets.

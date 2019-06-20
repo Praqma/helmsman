@@ -21,7 +21,7 @@ You can then tell Helmsman to deploy specific releases in a specific namespace:
 ```
 
 ```yaml
-#...
+# ...
 apps:
   jenkins:
     namespace: "production" # pointing to the namespace defined above
@@ -29,7 +29,7 @@ apps:
     chart: "stable/jenkins"
     version: "0.9.1"
 
-#...
+# ...
 
 ```
 
