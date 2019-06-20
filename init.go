@@ -59,6 +59,8 @@ func init() {
 	flag.BoolVar(&showDiff, "show-diff", false, "show helm diff results. Can expose sensitive information.")
 	flag.BoolVar(&suppressDiffSecrets, "suppress-diff-secrets", false, "don't show secrets in helm diff output.")
 	flag.IntVar(&diffContext, "diff-context", -1, "number of lines of context to show around changes in helm diff output")
+	flag.BoolVar(&noEnvSubst, "no-env-subst", false, "turn off environment substitution globally")
+
 
 	log.SetOutput(os.Stdout)
 
