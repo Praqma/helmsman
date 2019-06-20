@@ -49,4 +49,4 @@ namespaces:
 
 ```
 
-The example above will create two namespaces; staging and production with resource limits defined for the staging namespace.
+The example above will create two namespaces - staging and production - with resource limits defined for the staging namespace.

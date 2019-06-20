@@ -2,11 +2,11 @@
 version: v1.5.0
 ---
 
-# install releases
+# Install releases
 
 You can run helmsman with the [example.toml](https://github.com/Praqma/helmsman/blob/master/example.toml) or [example.yaml](https://github.com/Praqma/helmsman/blob/master/example.yaml) file.
 
-```
+```shell
 
 $ helmsman --apply -f example.toml
 2017/11/19 18:17:57 Parsed [[ example.toml ]] successfully and found [ 2 ] apps.
@@ -22,14 +22,14 @@ DECISION: release [ artifactory ] is not present in the current k8s context. Wil
 
 ```
 
-```
+```shell
 $ helm list --namespace staging
 NAME       	REVISION	UPDATED                 	STATUS  	CHART            	NAMESPACE
 artifactory	1       	Sun Nov 19 18:18:06 2017	DEPLOYED	artifactory-6.2.0	staging
 jenkins    	1       	Sun Nov 19 18:18:03 2017	DEPLOYED	jenkins-0.9.1    	staging
 ```
 
-# delete releases
+# Delete releases
 
 You can then change your desire, for example to disable the Jenkins release that was created above by setting `enabled = false` :
 
@@ -37,7 +37,7 @@ Then run Helmsman again and it will detect that you want to delete Jenkins:
 
 > Note: As of v1.4.0-rc, deleting the jenkins app entry in the desired state file WILL result in deleting the jenkins release. To prevent this, use the `--keep-untracked-releases` flag with your Helmsman command.
 
-```
+```shell
 $ helmsman --apply -f example.toml
 2017/11/19 18:28:27 Parsed [[ example.toml ]] successfully and found [ 2 ] apps.
 2017/11/19 18:28:29 WARN: I could not create namespace [staging ]. It already exists. I am skipping this.
@@ -51,7 +51,7 @@ DECISION: release [ artifactory ] is desired to be upgraded. Planning this for y
 2017/11/19 18:29:11 INFO: attempting: --   upgrading release [ artifactory ]
 ```
 
-```
+```shell
 $ helm list --namespace staging
 NAME       	REVISION	UPDATED                 	STATUS  	CHART            	NAMESPACE
 artifactory	2       	Sun Nov 19 18:29:11 2017	DEPLOYED	artifactory-6.2.0	staging
@@ -80,7 +80,7 @@ If you would like the release to be deleted along with its history, you can use 
 ```
 
 ```yaml
-...
+# ...
 apps:
   jenkins:
     name: "jenkins"
@@ -93,15 +93,15 @@ apps:
     purge: true # this means purge delete this release whenever it is required to be deleted
     test: false
 
-...
+# ...
 ```
 
-# rollback releases
+# Rollback releases
 
 > Rollbacks in helm versions 2.8.2 and higher may not work due to a [bug](https://github.com/helm/helm/issues/3722).
 Similarly, if you change `enabled` back to `true`, it will figure out that you would like to roll it back.
 
-```
+```shell
 $ helmsman --apply -f example.toml
 2017/11/19 18:30:41 Parsed [[ example.toml ]] successfully and found [ 2 ] apps.
 2017/11/19 18:30:42 WARN: I could not create namespace [staging ]. It already exists. I am skipping this.
@@ -115,9 +115,9 @@ DECISION: release [ artifactory ] is desired to be upgraded. Planning this for y
 2017/11/19 18:30:50 INFO: attempting: --   upgrading release [ artifactory ]
 ```
 
-# upgrade releases
+# Upgrade releases
 
-Every time you run Helmsman, (unless the release is [protected or deployed in a protected namespace](protect_namespaces_and_releases.md)) it will upgrade existing deployed releases to the version you specified in the desired state file. It also applies the `values.yaml` file you specify with each install/upgrade. This means that when you don't change anything for a specific release, Helmsman would upgrade with the `values.yaml` file you provide (just in case it is a new file or you changed something there.)
+Every time you run Helmsman, (unless the release is [protected or deployed in a protected namespace](../misc/protect_namespaces_and_releases.md)) it will upgrade existing deployed releases to the version you specified in the desired state file. It also applies the `values.yaml` file you specify with each install/upgrade. This means that when you don't change anything for a specific release, Helmsman would upgrade with the `values.yaml` file you provide (just in case it is a new file or you changed something there.)
 
 If you change the chart, the existing release will be deleted and a new one with the same name will be created using the new chart.
 

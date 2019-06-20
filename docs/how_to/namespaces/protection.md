@@ -6,7 +6,7 @@ version: v1.8.0
 
 You can define namespaces to be used in your cluster. If they don't exist, Helmsman will create them for you.
 
-You can also define certain namespaces to be protected using the `protected` field. Please check [this doc](../protect_namespaces_and_releases.md) for details about what protection means and the difference between namespace-level and release-level protection.
+You can also define certain namespaces to be protected using the `protected` field. Please check [this doc](../misc/protect_namespaces_and_releases.md) for details about what protection means and the difference between namespace-level and release-level protection.
 
 
 ```toml
