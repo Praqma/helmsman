@@ -56,7 +56,7 @@ The above example will create two service accounts; `tiller-production` and `til
 
 You have to provide the TLS certificates as below. Certificates can be either located locally or in Google GCS, AWS S3 or Azure blob storage.
 
-> If you use GCS, S3, or Azure blob storage for your certificates, you will need to provide means to authenticate to the respective cloud provider in the environment. See [authenticating to cloud storage providers](../auth_to_storage_providers.md) for details.
+> If you use GCS, S3, or Azure blob storage for your certificates, you will need to provide means to authenticate to the respective cloud provider in the environment. See [authenticating to cloud storage providers](../misc/auth_to_storage_providers.md) for details.
 
 ```toml
 [namespaces]

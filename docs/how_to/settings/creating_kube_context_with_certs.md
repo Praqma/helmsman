@@ -8,7 +8,7 @@ Helmsman can create the kube context for you (i.e. establish connection to your 
 
 Creating the context with certs, requires both the `settings` and `certificates` stanzas.
 
-> If you use GCS, S3, or Azure blob storage for your certificates, you will need to provide means to authenticate to the respective cloud provider in the environment. See [authenticating to cloud storage providers](../auth_to_storage_providers.md) for details.
+> If you use GCS, S3, or Azure blob storage for your certificates, you will need to provide means to authenticate to the respective cloud provider in the environment. See [authenticating to cloud storage providers](../misc/auth_to_storage_providers.md) for details.
 
 ```toml
 [settings]

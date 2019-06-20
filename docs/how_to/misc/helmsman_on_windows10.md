@@ -13,7 +13,7 @@ If you have Windows 10 with Docker installed, you **might** be able to run Helms
 3. Configure your desired state file to use the kubeContext only. i.e. no cluster connection settings.
 2. Run the following command:
 
-```
+```shell
 docker run --rm -it -v <your kubectl config location>:/root/.kube -v <your dsf.toml directory>:/tmp  praqma/helmsman:v1.0.2 helmsman -f dsf.toml --debug --apply
 ```
 
