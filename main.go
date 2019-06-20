@@ -42,6 +42,7 @@ var targetMap map[string]bool
 var destroy bool
 var showDiff bool
 var suppressDiffSecrets bool
+var noEnvSubst bool
 
 const tempFilesDir = ".helmsman-tmp"
 const stableHelmRepo = "https://kubernetes-charts.storage.googleapis.com"

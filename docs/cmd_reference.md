@@ -62,7 +62,10 @@ This is the list of the available CMD options in Helmsman:
         show verbose execution logs.
 
   `--kubeconfig`
-        path to the kubeconfig file to use for CLI requests
+        path to the kubeconfig file to use for CLI requests.
 
-  `--target` 
-        limit execution to specific app.      
+  `--target`
+        limit execution to specific app.
+
+  `--no-env-subst`
+        turn off environment substitution globally.
