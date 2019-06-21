@@ -485,8 +485,14 @@ func cleanUntrackedReleases() {
 	} else {
 		for ns, releases := range toDelete {
 			for r := range releases {
-				logDecision("DECISION: untracked release found: release [ "+r+" ] from Tiller in namespace [ "+ns+" ]. It will be deleted.", -800, delete)
-				deleteUntrackedRelease(r, ns)
+				if len(targetMap) > 0 {
+					if _, ok := targetMap[r]; !ok {
+						logDecision("DECISION: untracked release [ "+r+" ] is ignored by target flag. Skipping.", -800, noop)
+					} else {
+						logDecision("DECISION: untracked release found: release [ "+r+" ] from Tiller in namespace [ "+ns+" ]. It will be deleted.", -800, delete)
+						deleteUntrackedRelease(r, ns)
+					}
+				}
 			}
 		}
 	}
