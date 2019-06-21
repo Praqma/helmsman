@@ -249,9 +249,13 @@ func diffRelease(r *release) string {
 	exitCode := 0
 	msg := ""
 	colorFlag := ""
+	diffContextFlag := ""
 	suppressDiffSecretsFlag := ""
 	if noColors {
 		colorFlag = "--no-color "
+	}
+	if diffContext != -1 {
+		diffContextFlag = "--context " + strconv.Itoa(diffContext)
 	}
 	if suppressDiffSecrets {
 		suppressDiffSecretsFlag = "--suppress-secrets "
@@ -259,7 +263,7 @@ func diffRelease(r *release) string {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " diff " + colorFlag + suppressDiffSecretsFlag + "upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + " " + getSetValues(r) + getSetStringValues(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r)},
+		Args:        []string{"-c", helmCommandFromConfig(r) + " diff " + colorFlag + diffContextFlag + suppressDiffSecretsFlag + "upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + " " + getSetValues(r) + getSetStringValues(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r)},
 		Description: "diffing release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 
