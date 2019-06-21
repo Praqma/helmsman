@@ -26,6 +26,7 @@ settings:
   #### to use bearer token:
   #  bearerToken: true
   #  clusterURI: "https://kubernetes.default"
+  #tillerless: true # runs helm in tillerless mode using
 
 # define your environments and their k8s namespaces
 namespaces:

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -43,6 +44,10 @@ func (c command) exec(debug bool, verbose bool) (int, string) {
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
+
+	// we need to tell the TILLER to be silent. This will only matter in
+	// tillerless mode.
+	cmd.Env = append(os.Environ(), "HELM_TILLER_SILENT=true")
 
 	if err := cmd.Start(); err != nil {
 		logError("ERROR: cmd.Start: " + err.Error())

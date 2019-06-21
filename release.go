@@ -40,7 +40,10 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 	if r.Name == "" {
 		r.Name = appLabel
 	}
-	if r.TillerNamespace != "" {
+
+	if s.Settings.Tillerless {
+		// if we are running in a tillerless environment then lets skip the tiller validation
+	} else if r.TillerNamespace != "" {
 		if ns, ok := s.Namespaces[r.TillerNamespace]; !ok {
 			return false, "tillerNamespace specified, but the namespace specified does not exist!"
 		} else if !ns.InstallTiller && !ns.UseTiller {
