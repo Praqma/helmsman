@@ -59,13 +59,15 @@ func getHelmClientVersion() string {
 
 // getAllReleases fetches a list of all releases in a k8s cluster
 func getAllReleases() tillerReleases {
+
 	// result := make(map[string]interface{})
 	var result tillerReleases
-	if _, ok := s.Namespaces["kube-system"]; !ok {
+	if _, ok := s.Namespaces["kube-system"]; !ok && !s.Settings.Tillerless {
 		result.Releases = append(result.Releases, getTillerReleases("kube-system").Releases...)
 	}
+
 	for ns, v := range s.Namespaces {
-		if v.InstallTiller || v.UseTiller {
+		if (v.InstallTiller || v.UseTiller) || s.Settings.Tillerless {
 			result.Releases = append(result.Releases, getTillerReleases(ns).Releases...)
 		}
 	}
@@ -84,7 +86,7 @@ func getTillerReleases(tillerNS string) tillerReleases {
 
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm list --all --max 0 " + outputFormat + " --tiller-namespace " + tillerNS + getNSTLSFlags(tillerNS)},
+		Args:        []string{"-c", helmCommand(tillerNS) + " list --all --max 0 " + outputFormat + " --tiller-namespace " + tillerNS + getNSTLSFlags(tillerNS)},
 		Description: "listing all existing releases in namespace [ " + tillerNS + " ]...",
 	}
 
@@ -100,6 +102,7 @@ func getTillerReleases(tillerNS string) tillerReleases {
 
 		logError("ERROR: failed to list all releases in namespace [ " + tillerNS + " ]: " + result)
 	}
+
 	var out tillerReleases
 	if jsonConstraint.Check(v1) {
 		json.Unmarshal([]byte(result), &out)
@@ -131,6 +134,7 @@ func getTillerReleases(tillerNS string) tillerReleases {
 // buildState builds the currentState map containing information about all releases existing in a k8s cluster
 func buildState() {
 	log.Println("INFO: mapping the current helm state ...")
+
 	currentState = make(map[string]releaseState)
 	rel := getAllReleases()
 
@@ -423,33 +427,36 @@ func initHelmClientOnly() (bool, string) {
 func initHelm() (bool, string) {
 	initHelmClientOnly()
 	defaultSA := s.Settings.ServiceAccount
-
-	for k, ns := range s.Namespaces {
-		if tillerTLSEnabled(ns) {
-			downloadFile(s.Namespaces[k].TillerCert, k+"-tiller.cert")
-			downloadFile(s.Namespaces[k].TillerKey, k+"-tiller.key")
-			downloadFile(s.Namespaces[k].CaCert, k+"-ca.cert")
-			// client cert and key
-			downloadFile(s.Namespaces[k].ClientCert, k+"-client.cert")
-			downloadFile(s.Namespaces[k].ClientKey, k+"-client.key")
-		}
-		if ns.InstallTiller && k != "kube-system" {
-			if ok, err := deployTiller(k, ns.TillerServiceAccount, defaultSA, ns.TillerRole); !ok {
-				return false, err
+	if !s.Settings.Tillerless {
+		for k, ns := range s.Namespaces {
+			if tillerTLSEnabled(ns) {
+				downloadFile(s.Namespaces[k].TillerCert, k+"-tiller.cert")
+				downloadFile(s.Namespaces[k].TillerKey, k+"-tiller.key")
+				downloadFile(s.Namespaces[k].CaCert, k+"-ca.cert")
+				// client cert and key
+				downloadFile(s.Namespaces[k].ClientCert, k+"-client.cert")
+				downloadFile(s.Namespaces[k].ClientKey, k+"-client.key")
+			}
+			if ns.InstallTiller && k != "kube-system" {
+				if ok, err := deployTiller(k, ns.TillerServiceAccount, defaultSA, ns.TillerRole); !ok {
+					return false, err
+				}
 			}
 		}
-	}
 
-	if ns, ok := s.Namespaces["kube-system"]; ok {
-		if ns.InstallTiller {
-			if ok, err := deployTiller("kube-system", ns.TillerServiceAccount, defaultSA, ns.TillerRole); !ok {
+		if ns, ok := s.Namespaces["kube-system"]; ok {
+			if ns.InstallTiller {
+				if ok, err := deployTiller("kube-system", ns.TillerServiceAccount, defaultSA, ns.TillerRole); !ok {
+					return false, err
+				}
+			}
+		} else {
+			if ok, err := deployTiller("kube-system", "", defaultSA, ns.TillerRole); !ok {
 				return false, err
 			}
 		}
 	} else {
-		if ok, err := deployTiller("kube-system", "", defaultSA, ns.TillerRole); !ok {
-			return false, err
-		}
+		log.Println("INFO: skipping Tiller deployments because Tillerless mode is enabled.")
 	}
 
 	return true, ""
@@ -509,7 +516,7 @@ func deleteUntrackedRelease(release string, tillerNamespace string) {
 	}
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm delete --purge " + release + " --tiller-namespace " + tillerNamespace + tls + getDryRunFlags()},
+		Args:        []string{"-c", helmCommand(tillerNamespace) + " delete --purge " + release + " --tiller-namespace " + tillerNamespace + tls + getDryRunFlags()},
 		Description: "deleting untracked release [ " + release + " ] from Tiller in namespace [[ " + tillerNamespace + " ]]",
 	}
 

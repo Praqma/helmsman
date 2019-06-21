@@ -71,15 +71,19 @@ func main() {
 			logError(msg)
 		}
 
-		// check if helm Tiller is ready
-		for k, ns := range s.Namespaces {
-			if ns.InstallTiller || ns.UseTiller {
-				waitForTiller(k)
+		// check if helm Tiller is ready if we aren't running in tillerless mode.
+		if !s.Settings.Tillerless {
+			for k, ns := range s.Namespaces {
+				if ns.InstallTiller || ns.UseTiller {
+					waitForTiller(k)
+				}
 			}
-		}
 
-		if _, ok := s.Namespaces["kube-system"]; !ok {
-			waitForTiller("kube-system")
+			if _, ok := s.Namespaces["kube-system"]; !ok {
+				waitForTiller("kube-system")
+			}
+		} else {
+			log.Println("INFO: running in TILLERLESS mode")
 		}
 	} else {
 		initHelmClientOnly()
