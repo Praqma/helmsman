@@ -123,7 +123,7 @@ If you use multiple clusters for multiple purposes, you need at least one Helmsm
 
 If you are developing your own applications/services and packaging them in helm charts. It makes sense to automatically deploy these charts to a staging namespace or a dev cluster on every source code commit.
 
-Often, you would have multiple apps developed in separate source code repositories but you would like to test their deployment in the same cluster/namespace. In that case, Helmsman can be used [as part of your CI pipeline](how_to/run_helmsman_in_ci.md) as described in the diagram below:
+Often, you would have multiple apps developed in separate source code repositories but you would like to test their deployment in the same cluster/namespace. In that case, Helmsman can be used [as part of your CI pipeline](how_to/deployments/ci.md) as described in the diagram below:
 
 > as of v1.1.0 , you can use the `ns-override`flag to force helmsman to deploy/move all apps into a given namespace. For example, you could use this flag in a CI job that gets triggered on commits to the dev branch to deploy all apps into the `staging` namespace.
 
@@ -135,7 +135,7 @@ If you need supporting applications (charts) for your application (e.g, reverse 
 
 ## Notes on using multiple Helmsman desired state files with the same cluster
 
-Helmsman works with a single desired state file at a time (starting from v1.5.0, you can pass multiple desired state files which get merged at runtime. See the [docs](how_to/merge_desired_state_files.md)) and does not maintain a state anywhere. i.e. it does not have any context awareness about other desired state files used with the same cluster. For this reason, it is the user's responsibility to make sure that:
+Helmsman works with a single desired state file at a time (starting from v1.5.0, you can pass multiple desired state files which get merged at runtime. See the [docs](how_to/misc/merge_desired_state_files.md)) and does not maintain a state anywhere. i.e. it does not have any context awareness about other desired state files used with the same cluster. For this reason, it is the user's responsibility to make sure that:
 
 - no releases have the same name in different desired state files pointing to the same cluster. If such conflict exists, Helmsman will not raise any errors but that release would be subject to unexpected behavior.
 

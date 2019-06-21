@@ -37,8 +37,8 @@ This page contains a list of guides on how to use Helmsman.
     - [Define the order of apps operations](apps/order.md)
     - [Delete all releases (apps)](apps/destroy.md)
 - Running Helmsman in different environments
-    - [Running Helmsman in CI](deployment/ci.md)
-    - [Running Helmsman inside your k8s cluster](deployment/inside_k8s.md)
+    - [Running Helmsman in CI](deployments/ci.md)
+    - [Running Helmsman inside your k8s cluster](deployments/inside_k8s.md)
 - Misc
     - [Authenticating to cloud storage providers](misc/auth_to_storage_providers.md)
     - [Protecting namespaces and releases](misc/protect_namespaces_and_releases.md)

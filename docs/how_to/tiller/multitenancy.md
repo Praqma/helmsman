@@ -9,10 +9,10 @@ You can deploy multiple Tillers in the cluster (max. one per namespace). In each
 - with/without TLS
 - with cluster-admin clusterrole or with a namespace-limited role or with an pre-configured role.
 
-> If you use GCS, S3, or Azure blob storage for your certificates, you will need to provide means to authenticate to the respective cloud provider in the environment. See [authenticating to cloud storage providers](../auth_to_storage_providers.md) for details.
+> If you use GCS, S3, or Azure blob storage for your certificates, you will need to provide means to authenticate to the respective cloud provider in the environment. See [authenticating to cloud storage providers](../misc/auth_to_storage_providers.md) for details.
 
 
-> More details about using Helmsman in a multitenant cluster can be found [here](../multitenant_clusters_guide.md)
+> More details about using Helmsman in a multitenant cluster can be found [here](../misc/multitenant_clusters_guide.md)
 
 You can also use pre-configured Tillers in specific namespaces. In the example below, the desired state is: to deploy Tiller in the `production` namespace with TLS and RBAC, and to use a pre-configured Tiller in the `dev` namespace. The `staging` namespace does not have any Tiller to be deployed or used. Tiller is not deployed in `kube-system`.
 

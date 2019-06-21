@@ -20,6 +20,9 @@ This is the list of the available CMD options in Helmsman:
   `--destroy`
         delete all deployed releases. Purge delete is used if the purge option is set to true for the releases.
 
+  `--diff-context num`
+        number of lines of context to show around changes in helm diff output.
+
   `--dry-run`
         apply the dry-run option for helm commands.
 
@@ -62,7 +65,10 @@ This is the list of the available CMD options in Helmsman:
         show verbose execution logs.
 
   `--kubeconfig`
-        path to the kubeconfig file to use for CLI requests
+        path to the kubeconfig file to use for CLI requests.
 
-  `--target` 
-        limit execution to specific app.      
+  `--target`
+        limit execution to specific app.
+
+  `--no-env-subst`
+        turn off environment substitution globally.

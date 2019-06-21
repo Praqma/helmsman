@@ -10,7 +10,7 @@ This flag overrides all namespaces defined in your DSF with the single one you p
 
 # Example
 
-dsf.toml
+`dsf.toml`:
 ```toml
 [metadata]
 org = "example.com"
@@ -52,7 +52,7 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     valuesFile = "" # leaving it empty uses the default chart values
 ```
 
-dsf.yaml
+`dsf.yaml`:
 ```yaml
 metadata:
   org: "example.com"
@@ -96,7 +96,7 @@ apps:
 
 In command line, we run :
 
-```
+```shell
 helmsman -f dsf.toml --debug --ns-override testing
 ```
 
