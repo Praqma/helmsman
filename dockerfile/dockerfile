@@ -1,7 +1,7 @@
 #  This is a docker image for helmsman
 
 
-FROM golang:1.10-alpine3.7 as builder
+FROM golang:1.11.11-alpine3.10 as builder
 
 WORKDIR /go/src/
 
@@ -20,14 +20,14 @@ RUN cd helmsman \
 
 
 # The image to keep
-FROM alpine:3.7
+FROM alpine:3.10
 
 ARG KUBE_VERSION
 ARG HELM_VERSION
 
 ENV KUBE_VERSION ${KUBE_VERSION:-v1.11.3}
 ENV HELM_VERSION ${HELM_VERSION:-v2.11.0}
-ENV HELM_DIFF_VERSION ${HELM_DIFF_VERSION:-v2.11.0+3}
+ENV HELM_DIFF_VERSION ${HELM_DIFF_VERSION:-v2.11.0+5}
 
 RUN apk --no-cache update \
     && apk add --update --no-cache ca-certificates git openssh \
@@ -47,6 +47,7 @@ RUN mkdir -p ~/.helm/plugins \
     && helm plugin install https://github.com/nouney/helm-gcs \
     && helm plugin install https://github.com/databus23/helm-diff --version ${HELM_DIFF_VERSION} \
     && helm plugin install https://github.com/futuresimple/helm-secrets \
+    && helm plugin install https://github.com/rimusz/helm-tiller \
     && rm -r /tmp/helm-diff /tmp/helm-diff.tgz
 
 WORKDIR /tmp
