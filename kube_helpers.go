@@ -31,7 +31,7 @@ func validateServiceAccount(sa string, namespace string) (bool, string) {
 // createRBAC creates a k8s service account and bind it to a (Cluster)Role
 // role can be "cluster-admin" or any other custom name
 // It binds it to a new role called "helmsman-tiller"
-func createRBAC(sa string, namespace string, role string) (bool, string) {
+func createRBAC(sa string, namespace string, role string, roleTemplateFile string) (bool, string) {
 	var ok bool
 	var err string
 	if role == "" {
@@ -48,7 +48,7 @@ func createRBAC(sa string, namespace string, role string) (bool, string) {
 			}
 			return false, err
 		}
-		if ok, err = createRole(namespace, role); ok {
+		if ok, err = createRole(namespace, role, roleTemplateFile); ok {
 			if ok, err = createRoleBinding(role, sa, namespace); ok {
 				return true, ""
 			}
@@ -377,10 +377,17 @@ func createRoleBinding(role string, saName string, namespace string) (bool, stri
 }
 
 // createRole creates a k8s Role in a given namespace from a template
-func createRole(namespace string, role string) (bool, string) {
+func createRole(namespace string, role string, roleTemplateFile string) (bool, string) {
+	var resource []byte
+	var e error
 
-	// load static resource
-	resource, e := Asset("data/role.yaml")
+	if roleTemplateFile != "" {
+		// load file from path of TillerRoleTemplateFile
+		resource, e = ioutil.ReadFile(roleTemplateFile)
+	} else {
+		// load static resource
+		resource, e = Asset("data/role.yaml")
+	}
 	if e != nil {
 		logError(e.Error())
 	}

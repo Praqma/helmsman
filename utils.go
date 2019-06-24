@@ -236,7 +236,12 @@ func addDefaultHelmRepos(s *state) {
 // resolvePaths resolves relative paths of certs/keys/chart and replace them with a absolute paths
 func resolvePaths(relativeToFile string, s *state) {
 	dir := filepath.Dir(relativeToFile)
-
+	for ns, v := range s.Namespaces {
+		if v.TillerRoleTemplateFile != "" {
+			v.TillerRoleTemplateFile, _ = filepath.Abs(filepath.Join(dir, v.TillerRoleTemplateFile))
+		}
+		s.Namespaces[ns] = v
+	}
 	for k, v := range s.Apps {
 		if v.ValuesFile != "" {
 			v.ValuesFile, _ = filepath.Abs(filepath.Join(dir, v.ValuesFile))
@@ -266,7 +271,6 @@ func resolvePaths(relativeToFile string, s *state) {
 				}
 			}
 		}
-
 		s.Apps[k] = v
 	}
 	// resolving paths for Bearer Token path in settings

@@ -19,6 +19,7 @@ This page contains a list of guides on how to use Helmsman.
     - [Prevent Deploying Tiller in kube-system](tiller/prevent_tiller_in_kube_system.md)
     - [Deploy Multiple Tillers with custom setup for each](tiller/multitenancy.md)
     - [Deploy apps with specific Tillers](tiller/deploy_apps_with_specific_tiller.md)
+    - [Custom Tiller Role](tiller/custom_tiller_role.md)
 - Defining Helm repositories
     - [Using default helm repos](helm_repos/default.md)
     - [Using private repos in Google GCS](helm_repos/gcs.md)
