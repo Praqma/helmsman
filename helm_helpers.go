@@ -346,7 +346,7 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 // If serviceAccount is not provided (empty string), the defaultServiceAccount is used.
 // If no defaultServiceAccount is provided, A service account is created and Tiller is deployed with the new service account
 // If no namespace is provided, Tiller is deployed to kube-system
-func deployTiller(namespace string, serviceAccount string, defaultServiceAccount string, role string) (bool, string) {
+func deployTiller(namespace string, serviceAccount string, defaultServiceAccount string, role string, roleTemplateFile string) (bool, string) {
 	log.Println("INFO: deploying Tiller in namespace [ " + namespace + " ].")
 	sa := ""
 	if serviceAccount != "" {
@@ -354,7 +354,7 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 			if strings.Contains(err, "NotFound") || strings.Contains(err, "not found") {
 
 				log.Println("INFO: service account [ " + serviceAccount + " ] does not exist in namespace [ " + namespace + " ] .. attempting to create it ... ")
-				if _, rbacErr := createRBAC(serviceAccount, namespace, role); rbacErr != "" {
+				if _, rbacErr := createRBAC(serviceAccount, namespace, role, roleTemplateFile); rbacErr != "" {
 					return false, rbacErr
 				}
 			} else {
@@ -362,21 +362,30 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 			}
 		}
 		sa = "--service-account " + serviceAccount
-	} else if defaultServiceAccount != "" {
-		if ok, err := validateServiceAccount(defaultServiceAccount, namespace); !ok {
+	} else {
+		roleName := "helmsman-tiller"
+		defaultServiceAccountName := "helmsman"
+
+		if defaultServiceAccount != "" {
+			defaultServiceAccountName = defaultServiceAccount
+		}
+		if role != "" {
+			roleName = role
+		}
+
+		if ok, err := validateServiceAccount(defaultServiceAccountName, namespace); !ok {
 			if strings.Contains(err, "NotFound") || strings.Contains(err, "not found") {
 
-				log.Println("INFO: service account [ " + defaultServiceAccount + " ] does not exist in namespace [ " + namespace + " ] .. attempting to create it ... ")
-				if _, rbacErr := createRBAC(defaultServiceAccount, namespace, role); rbacErr != "" {
+				log.Println("INFO: service account [ " + defaultServiceAccountName + " ] does not exist in namespace [ " + namespace + " ] .. attempting to create it ... ")
+				if _, rbacErr := createRBAC(defaultServiceAccountName, namespace, roleName, roleTemplateFile); rbacErr != "" {
 					return false, rbacErr
 				}
 			} else {
-				return false, "ERROR: while validating/creating service account [ " + defaultServiceAccount + " ] in namespace [ " + namespace + "]: " + err
+				return false, "ERROR: while validating/creating service account [ " + defaultServiceAccountName + " ] in namespace [" + namespace + "]: " + err
 			}
 		}
-		sa = "--service-account " + defaultServiceAccount
+		sa = "--service-account " + defaultServiceAccountName
 	}
-
 	if namespace == "" {
 		namespace = "kube-system"
 	}
@@ -438,7 +447,7 @@ func initHelm() (bool, string) {
 				downloadFile(s.Namespaces[k].ClientKey, k+"-client.key")
 			}
 			if ns.InstallTiller && k != "kube-system" {
-				if ok, err := deployTiller(k, ns.TillerServiceAccount, defaultSA, ns.TillerRole); !ok {
+				if ok, err := deployTiller(k, ns.TillerServiceAccount, defaultSA, ns.TillerRole, ns.TillerRoleTemplateFile); !ok {
 					return false, err
 				}
 			}
@@ -446,12 +455,12 @@ func initHelm() (bool, string) {
 
 		if ns, ok := s.Namespaces["kube-system"]; ok {
 			if ns.InstallTiller {
-				if ok, err := deployTiller("kube-system", ns.TillerServiceAccount, defaultSA, ns.TillerRole); !ok {
+				if ok, err := deployTiller("kube-system", ns.TillerServiceAccount, defaultSA, ns.TillerRole, ns.TillerRoleTemplateFile); !ok {
 					return false, err
 				}
 			}
 		} else {
-			if ok, err := deployTiller("kube-system", "", defaultSA, ns.TillerRole); !ok {
+			if ok, err := deployTiller("kube-system", "", defaultSA, ns.TillerRole, ns.TillerRoleTemplateFile); !ok {
 				return false, err
 			}
 		}

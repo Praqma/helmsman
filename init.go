@@ -149,7 +149,6 @@ func init() {
 		} else {
 			logError(msg)
 		}
-
 		// Merge Apps that already existed in the state
 		for appName, app := range fileState.Apps {
 			if _, ok := s.Apps[appName]; ok {
