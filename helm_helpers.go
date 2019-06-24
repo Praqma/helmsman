@@ -362,12 +362,17 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 			}
 		}
 		sa = "--service-account " + serviceAccount
-	} else if serviceAccount == "" && roleTemplateFile != "" {
+	} else {
 		roleName := "helmsman-tiller"
 		defaultServiceAccountName := "helmsman"
+
+		if defaultServiceAccount != "" {
+			defaultServiceAccountName = defaultServiceAccount
+		}
 		if role != "" {
 			roleName = role
 		}
+
 		if ok, err := validateServiceAccount(defaultServiceAccountName, namespace); !ok {
 			if strings.Contains(err, "NotFound") || strings.Contains(err, "not found") {
 
@@ -380,21 +385,7 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 			}
 		}
 		sa = "--service-account " + defaultServiceAccountName
-	} else if defaultServiceAccount != "" {
-		if ok, err := validateServiceAccount(defaultServiceAccount, namespace); !ok {
-			if strings.Contains(err, "NotFound") || strings.Contains(err, "not found") {
-
-				log.Println("INFO: service account [ " + defaultServiceAccount + " ] does not exist in namespace [ " + namespace + " ] .. attempting to create it ... ")
-				if _, rbacErr := createRBAC(defaultServiceAccount, namespace, role, roleTemplateFile); rbacErr != "" {
-					return false, rbacErr
-				}
-			} else {
-				return false, "ERROR: while validating/creating service account [ " + defaultServiceAccount + " ] in namespace [ " + namespace + "]: " + err
-			}
-		}
-		sa = "--service-account " + defaultServiceAccount
 	}
-
 	if namespace == "" {
 		namespace = "kube-system"
 	}
