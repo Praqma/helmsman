@@ -229,7 +229,7 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 		if isLocal {
 			cmd := command{
 				Cmd:         "bash",
-				Args:        []string{"-c", "helm inspect chart " + r.Chart},
+				Args:        []string{"-c", "helm inspect chart '" + r.Chart + "'"},
 				Description: "validating if chart at " + r.Chart + " is available.",
 			}
 
