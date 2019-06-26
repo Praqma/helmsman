@@ -81,6 +81,7 @@ check: $(SRCDIR)
 
 test: dep ## Run unit tests
 	@cd $(SRCDIR)helmsman && \
+	  helm init --client-only && \
 	  go test -v -cover -p=1 -args -f example.toml
 .PHONY: test
 
