@@ -1,9 +1,172 @@
 package main
 
 import (
+	"os"
 	"testing"
 	"time"
 )
+
+func setupTestCase(t *testing.T) func(t *testing.T) {
+	t.Log("setup test case")
+	os.MkdirAll("/tmp/helmsman-tests/myapp", os.ModePerm)
+	os.MkdirAll("/tmp/helmsman-tests/dir-with space/myapp", os.ModePerm)
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm create  '/tmp/helmsman-tests/dir-with space/myapp'"},
+		Description: "creating an empty local chart directory",
+	}
+	if exitCode, msg := cmd.exec(debug, verbose); exitCode != 0 {
+		logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + msg)
+	}
+
+	return func(t *testing.T) {
+		t.Log("teardown test case")
+		//os.RemoveAll("/tmp/helmsman-tests/")
+	}
+}
+func Test_validateReleaseCharts(t *testing.T) {
+	type args struct {
+		apps map[string]*release
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "test case 1: valid local path with no chart",
+			args: args{
+				apps: map[string]*release{
+					"app": &release{
+						Name:            "",
+						Description:     "",
+						Namespace:       "",
+						Enabled:         true,
+						Chart:           "/tmp/helmsman-tests/myapp",
+						Version:         "",
+						ValuesFile:      "",
+						ValuesFiles:     []string{},
+						SecretsFile:     "",
+						SecretsFiles:    []string{},
+						Purge:           false,
+						Test:            false,
+						Protected:       false,
+						Wait:            false,
+						Priority:        0,
+						TillerNamespace: "",
+						Set:             make(map[string]string),
+						SetString:       make(map[string]string),
+						HelmFlags:       []string{},
+						NoHooks:         false,
+						Timeout:         0,
+					},
+				},
+			},
+			want: false,
+		}, {
+			name: "test case 2: invalid local path",
+			args: args{
+				apps: map[string]*release{
+					"app": &release{
+						Name:            "",
+						Description:     "",
+						Namespace:       "",
+						Enabled:         true,
+						Chart:           "/tmp/does-not-exist/myapp",
+						Version:         "",
+						ValuesFile:      "",
+						ValuesFiles:     []string{},
+						SecretsFile:     "",
+						SecretsFiles:    []string{},
+						Purge:           false,
+						Test:            false,
+						Protected:       false,
+						Wait:            false,
+						Priority:        0,
+						TillerNamespace: "",
+						Set:             make(map[string]string),
+						SetString:       make(map[string]string),
+						HelmFlags:       []string{},
+						NoHooks:         false,
+						Timeout:         0,
+					},
+				},
+			},
+			want: false,
+		}, {
+			name: "test case 3: valid chart local path with whitespace",
+			args: args{
+				apps: map[string]*release{
+					"app": &release{
+						Name:            "",
+						Description:     "",
+						Namespace:       "",
+						Enabled:         true,
+						Chart:           "/tmp/helmsman-tests/dir-with space/myapp",
+						Version:         "0.1.0",
+						ValuesFile:      "",
+						ValuesFiles:     []string{},
+						SecretsFile:     "",
+						SecretsFiles:    []string{},
+						Purge:           false,
+						Test:            false,
+						Protected:       false,
+						Wait:            false,
+						Priority:        0,
+						TillerNamespace: "",
+						Set:             make(map[string]string),
+						SetString:       make(map[string]string),
+						HelmFlags:       []string{},
+						NoHooks:         false,
+						Timeout:         0,
+					},
+				},
+			},
+			want: true,
+		}, {
+			name: "test case 4: valid chart from repo",
+			args: args{
+				apps: map[string]*release{
+					"app": &release{
+						Name:            "",
+						Description:     "",
+						Namespace:       "",
+						Enabled:         true,
+						Chart:           "stable/prometheus",
+						Version:         "",
+						ValuesFile:      "",
+						ValuesFiles:     []string{},
+						SecretsFile:     "",
+						SecretsFiles:    []string{},
+						Purge:           false,
+						Test:            false,
+						Protected:       false,
+						Wait:            false,
+						Priority:        0,
+						TillerNamespace: "",
+						Set:             make(map[string]string),
+						SetString:       make(map[string]string),
+						HelmFlags:       []string{},
+						NoHooks:         false,
+						Timeout:         0,
+					},
+				},
+			},
+			want: true,
+		},
+	}
+
+	teardownTestCase := setupTestCase(t)
+	defer teardownTestCase(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			if got, msg := validateReleaseCharts(tt.args.apps); got != tt.want {
+				t.Errorf("getReleaseChartName() = %v, want %v , msg: %v", got, tt.want, msg)
+			}
+		})
+	}
+}
 
 func Test_getReleaseChartVersion(t *testing.T) {
 	// version string = the first semver-valid string after the last hypen in the chart string.
