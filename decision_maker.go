@@ -255,7 +255,7 @@ func diffRelease(r *release) string {
 		colorFlag = "--no-color "
 	}
 	if diffContext != -1 {
-		diffContextFlag = "--context " + strconv.Itoa(diffContext)
+		diffContextFlag = "--context " + strconv.Itoa(diffContext) + " "
 	}
 	if suppressDiffSecrets {
 		suppressDiffSecretsFlag = "--suppress-secrets "
