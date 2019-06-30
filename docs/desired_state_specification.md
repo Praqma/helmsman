@@ -1,5 +1,5 @@
 ---
-version: v1.10.0
+version: v1.10.1
 ---
 
 # Helmsman desired state specification
