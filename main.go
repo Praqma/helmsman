@@ -121,7 +121,7 @@ func main() {
 		p.execPlan()
 	}
 
-	log.Println("INFO: completed successfully!")
+	log.Println("INFO: completed applying plan successfully!")
 }
 
 // cleanup deletes the k8s certificates and keys files
