@@ -30,11 +30,13 @@ func Test_validateReleaseCharts(t *testing.T) {
 	}
 	tests := []struct {
 		name string
+		targetFlag []string
 		args args
 		want bool
 	}{
 		{
 			name: "test case 1: valid local path with no chart",
+			targetFlag: []string{},
 			args: args{
 				apps: map[string]*release{
 					"app": &release{
@@ -65,6 +67,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			want: false,
 		}, {
 			name: "test case 2: invalid local path",
+			targetFlag: []string{},
 			args: args{
 				apps: map[string]*release{
 					"app": &release{
@@ -95,6 +98,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			want: false,
 		}, {
 			name: "test case 3: valid chart local path with whitespace",
+			targetFlag: []string{},
 			args: args{
 				apps: map[string]*release{
 					"app": &release{
@@ -125,6 +129,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			want: true,
 		}, {
 			name: "test case 4: valid chart from repo",
+			targetFlag: []string{},
 			args: args{
 				apps: map[string]*release{
 					"app": &release{
@@ -153,6 +158,68 @@ func Test_validateReleaseCharts(t *testing.T) {
 				},
 			},
 			want: true,
+		}, {
+			name: "test case 5: invalid local path for chart ignored with -target flag, while other app was targeted",
+			targetFlag: []string{"notThisOne"},
+			args: args{
+				apps: map[string]*release{
+					"app": &release{
+						Name:            "app",
+						Description:     "",
+						Namespace:       "",
+						Enabled:         true,
+						Chart:           "/tmp/does-not-exist/myapp",
+						Version:         "",
+						ValuesFile:      "",
+						ValuesFiles:     []string{},
+						SecretsFile:     "",
+						SecretsFiles:    []string{},
+						Purge:           false,
+						Test:            false,
+						Protected:       false,
+						Wait:            false,
+						Priority:        0,
+						TillerNamespace: "",
+						Set:             make(map[string]string),
+						SetString:       make(map[string]string),
+						HelmFlags:       []string{},
+						NoHooks:         false,
+						Timeout:         0,
+					},
+				},
+			},
+			want: true,
+		}, {
+			name: "test case 6: invalid local path for chart included with -target flag",
+			targetFlag: []string{"app"},
+			args: args{
+				apps: map[string]*release{
+					"app": &release{
+						Name:            "app",
+						Description:     "",
+						Namespace:       "",
+						Enabled:         true,
+						Chart:           "/tmp/does-not-exist/myapp",
+						Version:         "",
+						ValuesFile:      "",
+						ValuesFiles:     []string{},
+						SecretsFile:     "",
+						SecretsFiles:    []string{},
+						Purge:           false,
+						Test:            false,
+						Protected:       false,
+						Wait:            false,
+						Priority:        0,
+						TillerNamespace: "",
+						Set:             make(map[string]string),
+						SetString:       make(map[string]string),
+						HelmFlags:       []string{},
+						NoHooks:         false,
+						Timeout:         0,
+					},
+				},
+			},
+			want: false,
 		},
 	}
 
@@ -160,7 +227,11 @@ func Test_validateReleaseCharts(t *testing.T) {
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			targetMap = make(map[string]bool)
 
+			for _, target := range tt.targetFlag {
+				targetMap[target] = true
+			}
 			if got, msg := validateReleaseCharts(tt.args.apps); got != tt.want {
 				t.Errorf("getReleaseChartName() = %v, want %v , msg: %v", got, tt.want, msg)
 			}
