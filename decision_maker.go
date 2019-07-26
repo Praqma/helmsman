@@ -280,9 +280,13 @@ func diffRelease(r *release) string {
 
 // upgradeRelease upgrades an existing release with the specified values.yaml
 func upgradeRelease(r *release) {
+	var force string
+	if forceUpgrades {
+		force = " --force "
+	}
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + " --force " + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r)},
+		Args:        []string{"-c", helmCommandFromConfig(r) + " upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + force + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r)},
 		Description: "upgrading release [ " + r.Name + " ] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 
