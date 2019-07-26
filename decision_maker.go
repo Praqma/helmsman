@@ -18,6 +18,7 @@ func makePlan(s *state) *plan {
 	buildState()
 
 	for _, r := range s.Apps {
+		checkChartDepUpdate(r)
 		decide(r, s)
 	}
 
@@ -134,8 +135,6 @@ func testRelease(r *release) {
 
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
 func installRelease(r *release) {
-	checkChartDepUpdate(r)
-
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", helmCommandFromConfig(r) + " install " + r.Chart + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + " --version " + r.Version + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r)},
@@ -281,8 +280,6 @@ func diffRelease(r *release) string {
 
 // upgradeRelease upgrades an existing release with the specified values.yaml
 func upgradeRelease(r *release) {
-	checkChartDepUpdate(r)
-
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", helmCommandFromConfig(r) + " upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + " --force " + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r)},
@@ -302,8 +299,6 @@ func reInstallRelease(r *release, rs releaseState) {
 		Description: "deleting release [ " + r.Name + " ] from namespace [[ " + r.Namespace + " ]] using Tiller in [ " + getDesiredTillerNamespace(r) + " ]",
 	}
 	outcome.addCommand(delCmd, r.Priority, r)
-
-	checkChartDepUpdate(r)
 
 	installCmd := command{
 		Cmd:         "bash",
