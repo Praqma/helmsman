@@ -60,7 +60,7 @@ func init() {
 	flag.BoolVar(&suppressDiffSecrets, "suppress-diff-secrets", false, "don't show secrets in helm diff output.")
 	flag.IntVar(&diffContext, "diff-context", -1, "number of lines of context to show around changes in helm diff output")
 	flag.BoolVar(&noEnvSubst, "no-env-subst", false, "turn off environment substitution globally")
-
+	flag.BoolVar(&updateDeps, "update-deps", false, "run 'helm dep up' for local chart")
 
 	log.SetOutput(os.Stdout)
 

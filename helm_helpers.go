@@ -231,8 +231,7 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 			}
 		}
 		if validateCurrentChart {
-			isLocal := filepath.IsAbs(r.Chart)
-			if isLocal {
+			if isLocalChart(r.Chart) {
 				cmd := command{
 					Cmd:         "bash",
 					Args:        []string{"-c", "helm inspect chart '" + r.Chart + "'"},
@@ -554,4 +553,20 @@ func decryptSecret(name string) bool {
 	}
 
 	return true
+}
+
+// updateChartDep updates dependencies for a local chart
+func updateChartDep(chartPath string) (bool, string) {
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm dependency update " + chartPath},
+		Description: "Updateing dependency for local chart " + chartPath,
+	}
+
+	exitCode, err := cmd.exec(debug, verbose)
+
+	if exitCode != 0 {
+		return false, err
+	}
+	return true, ""
 }

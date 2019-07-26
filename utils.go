@@ -514,3 +514,8 @@ func Indent(s, prefix string) string {
 	}
 	return string(res)
 }
+
+// isLocalChart checks if a chart specified in the DSF is a local directory or not
+func isLocalChart(chart string) bool {
+	return filepath.IsAbs(chart)
+}
