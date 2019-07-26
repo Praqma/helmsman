@@ -239,19 +239,21 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 					Description: "validating if chart at " + r.Chart + " is available.",
 				}
 
-				if exitCode, output := cmd.exec(debug, verbose); exitCode != 0 {
+				var output string
+				var exitCode int
+				if exitCode, output = cmd.exec(debug, verbose); exitCode != 0 {
 					maybeRepo := filepath.Base(filepath.Dir(r.Chart))
 					return false, "ERROR: chart at " + r.Chart + " for app [" + app + "] could not be found. Did you mean to add a repo named '" + maybeRepo + "'?"
-				} else {
-					matches := versionExtractor.FindStringSubmatch(output)
-					if len(matches) == 2 {
-						version := matches[1]
-						if r.Version != version {
-							return false, "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified for " +
-								"app [" + app + "] but the chart found at that path has version " + version + " which does not match."
-						}
+				}
+				matches := versionExtractor.FindStringSubmatch(output)
+				if len(matches) == 2 {
+					version := matches[1]
+					if r.Version != version {
+						return false, "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified for " +
+							"app [" + app + "] but the chart found at that path has version " + version + " which does not match."
 					}
 				}
+
 			} else {
 				cmd := command{
 					Cmd:         "bash",
@@ -441,7 +443,6 @@ func initHelmClientOnly() (bool, string) {
 
 // initHelm initializes helm on a k8s cluster and deploys Tiller in one or more namespaces
 func initHelm() (bool, string) {
-	initHelmClientOnly()
 	defaultSA := s.Settings.ServiceAccount
 	if !s.Settings.Tillerless {
 		for k, ns := range s.Namespaces {
