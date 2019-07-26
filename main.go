@@ -61,6 +61,13 @@ func main() {
 		}
 	}
 
+	// init helm client before adding repos
+	initHelmClientOnly()
+	// add repos -- fails if they are not valid
+	if r, msg := addHelmRepos(s.HelmRepos); !r {
+		logError(msg)
+	}
+
 	if apply || dryRun || destroy {
 		// add/validate namespaces
 		if !noNs {
@@ -85,13 +92,6 @@ func main() {
 		} else {
 			log.Println("INFO: running in TILLERLESS mode")
 		}
-	} else {
-		initHelmClientOnly()
-	}
-
-	// add repos -- fails if they are not valid
-	if r, msg := addHelmRepos(s.HelmRepos); !r {
-		logError(msg)
 	}
 
 	if !skipValidation {
