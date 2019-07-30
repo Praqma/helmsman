@@ -18,6 +18,7 @@ func makePlan(s *state) *plan {
 	buildState()
 
 	for _, r := range s.Apps {
+		checkChartDepUpdate(r)
 		decide(r, s)
 	}
 
@@ -134,7 +135,6 @@ func testRelease(r *release) {
 
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
 func installRelease(r *release) {
-
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", helmCommandFromConfig(r) + " install " + r.Chart + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + " --version " + r.Version + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r)},
@@ -523,4 +523,12 @@ func getHelmFlags(r *release) string {
 		flags = flags + " " + flag
 	}
 	return getNoHooks(r) + getTimeout(r) + getDryRunFlags() + flags
+}
+
+func checkChartDepUpdate(r *release) {
+	if updateDeps && isLocalChart(r.Chart) {
+		if ok, err := updateChartDep(r.Chart); !ok {
+			logError("ERROR: helm dependency update failed: " + err)
+		}
+	}
 }
