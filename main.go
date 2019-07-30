@@ -45,6 +45,7 @@ var suppressDiffSecrets bool
 var diffContext int
 var noEnvSubst bool
 var updateDeps bool
+var forceUpgrades bool
 
 const tempFilesDir = ".helmsman-tmp"
 const stableHelmRepo = "https://kubernetes-charts.storage.googleapis.com"
