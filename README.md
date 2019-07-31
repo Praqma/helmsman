@@ -53,7 +53,7 @@ Please make sure the following are installed prior to using `helmsman` as a bina
 - [helm](https://github.com/helm/helm) (for `helmsman` >= 1.6.0, use helm >= 2.10.0. this is due to a dependency bug #87 )
 - [helm-diff](https://github.com/databus23/helm-diff) (`helmsman` >= 1.6.0)
 
-If you use private helm repos, you will need either `helm-gcs` or `helm-s3` plugin or you can use basic auth to authenticate to your repos. See the [docs](https://github.com/Praqma/helmsman/blob/master/docs/how_to/use_private_helm_charts.md) for details.
+If you use private helm repos, you will need either `helm-gcs` or `helm-s3` plugin or you can use basic auth to authenticate to your repos. See the [docs](https://github.com/Praqma/helmsman/blob/master/docs/how_to/helm_repos) for details.
 
 
 Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the different versions.
