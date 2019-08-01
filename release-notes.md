@@ -1,16 +1,14 @@
-# v1.10.0
+# v1.11.0
 
 > If you are already using an older version of Helmsman than v1.4.0-rc, please read the changes below carefully and follow the upgrade guide [here](docs/migrating_to_v1.4.0-rc.md)
 
 # Fixes and improvements:
-- Allow local chart paths to contain white spaces. PR #262
-- Add helm flags to helm diff. PR #252 (thanks to @xaka)
-- Fix deleting untracked releases if `-target` flag is set. PR #248 (thanks to @fmotrifork)
+- Consider `--target` when validating helm charts. PR#269
+- Fix overriding stable repo with a custom one. PR#271
+- Add start and finish logs when deploying charts. PR#266
 
 # New features:
-- Add global toggle `--no-env-subst` to be able to disable environment substitution. PR #249 (thanks to @hatemosphere)
-- Add `--diff-context` flag to set lines of diff context. PR #251 (thanks to @lachlancooper)
-- Allow deploying Tiller with custom Role. PR #258 (thanks to @mkubaczyk)
-- Support Tillerless mode on Helm 2 using helm-tiller plugin. PR #259 (thanks to @mkubaczyk and @robbert229)
+- adding `--force-upgrades` option [ changes default upgrade behaviour]. PR#273
+- adding `--update-deps` option for local charts dependency update before use. PR#272
 
 

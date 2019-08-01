@@ -1,5 +1,5 @@
 ---
-version: v1.9.0
+version: v1.11.0
 ---
 
 # CMD reference
@@ -72,3 +72,9 @@ This is the list of the available CMD options in Helmsman:
 
   `--no-env-subst`
         turn off environment substitution globally.
+
+  `--update-deps`
+        run 'helm dep up' for local chart     
+
+   `--force-upgrades`
+        use --force when upgrading helm releases. May cause resources to be recreated.      
