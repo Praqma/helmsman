@@ -145,6 +145,8 @@ Options:
 > For the definition of what a protected namespace means, check the [protection guide](how_to/misc/protect_namespaces_and_releases.md)
 - **installTiller**: defines if Tiller should be deployed in this namespace or not. Default is false. Any chart desired to be deployed into a namespace with a Tiller deployed, will be deployed using that Tiller and not the one in kube-system unless you use the `TillerNamespace` option (see the [Apps](#apps) section below) to use another Tiller.
 > By default Tiller will be deployed into `kube-system` even if you don't define kube-system in the namespaces section. To prevent deploying Tiller into `kube-system, add kube-system in your namespaces section and set its installTiller to false.
+- **tillerMaxHistory**: specify int value of the maximum number of revisions saved per release by Tiller.
+> In order to set the kube-system's Tiller's (a default one, main Tiller) max history, define namespace kube-system and set tillerMaxHistory along with installTiller: true
 - **tillerRole**: specify the role to use.  If 'cluster-admin' a clusterrolebinding will be used else a role with a single namespace scope will be created and bound with a rolebinding.
 - **tillerRoleTemplateFile**: relative path to file templating custom Tiller role. If `installTiller` is true and `tillerRole` is not `cluster-admin`, then helmsman will create namespace specific Tiller role based on the template file passed with this parameter. When `tillerRole` is empty string, role name defaults to `helmsman-tiller`.
 
@@ -185,6 +187,7 @@ protected = false
 [namespaces.production]
 protected = true
 installTiller = true
+tillerMaxHistory = 10
 tillerServiceAccount = "tiller-production"
 tillerRoleTemplateFile = "../roles/helmsman-tiller.yaml"
 caCert = "secrets/ca.cert.pem"
@@ -222,6 +225,7 @@ namespaces:
   production:
     protected: true
     installTiller: true
+    tillerMaxHistory: 10
     tillerServiceAccount: "tiller-production"
     tillerRoleTemplateFile: "../roles/helmsman-tiller.yaml"
     caCert: "secrets/ca.cert.pem"
