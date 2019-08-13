@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Praqma/helmsman/gcs"
+	version "github.com/hashicorp/go-version"
 )
 
 var currentState map[string]releaseState
