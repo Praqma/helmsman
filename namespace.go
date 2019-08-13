@@ -28,6 +28,7 @@ type namespace struct {
 	TillerServiceAccount    string            `yaml:"tillerServiceAccount"`
 	TillerRole              string            `yaml:"tillerRole"`
 	TillerRoleTemplateFile  string            `yaml:"tillerRoleTemplateFile"`
+	TillerMaxHistory        int               `yaml:"tillerMaxHistory"`
 	CaCert                  string            `yaml:"caCert"`
 	TillerCert              string            `yaml:"tillerCert"`
 	TillerKey               string            `yaml:"tillerKey"`
