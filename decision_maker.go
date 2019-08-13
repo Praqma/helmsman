@@ -211,6 +211,14 @@ func deleteRelease(r *release, rs releaseState) {
 func inspectUpgradeScenario(r *release, rs releaseState) {
 
 	if r.Namespace == rs.Namespace {
+
+		version, msg := getChartVersion(r)
+		if msg != "" {
+			logError(msg)
+			return
+		}
+		r.Version = version
+
 		if extractChartName(r.Chart) == getReleaseChartName(rs) && r.Version != getReleaseChartVersion(rs) {
 			// upgrade
 			diffRelease(r)
