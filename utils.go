@@ -55,7 +55,7 @@ func fromTOML(file string, s *state) (bool, string) {
 	}
 	addDefaultHelmRepos(s)
 	resolvePaths(file, s)
-	if !noEnvSubst {
+	if !noEnvSubst && !noEnvValuesSubst {
 		substituteEnvInValuesFiles(s)
 	}
 
@@ -107,7 +107,7 @@ func fromYAML(file string, s *state) (bool, string) {
 	addDefaultHelmRepos(s)
 	resolvePaths(file, s)
 
-	if !noEnvSubst {
+	if !noEnvSubst && !noEnvValuesSubst {
 		substituteEnvInValuesFiles(s)
 	}
 

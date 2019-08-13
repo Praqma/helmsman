@@ -44,6 +44,7 @@ var showDiff bool
 var suppressDiffSecrets bool
 var diffContext int
 var noEnvSubst bool
+var noEnvValuesSubst bool
 var updateDeps bool
 var forceUpgrades bool
 
