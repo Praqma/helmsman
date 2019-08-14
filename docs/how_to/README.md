@@ -46,5 +46,5 @@ This page contains a list of guides on how to use Helmsman.
     - [Send slack notifications from Helmsman](misc/send_slack_notifications_from_helmsman.md)
     - [Merge multiple desired state files](misc/merge_desired_state_files.md)
     - [Limit Helmsman deployment to specific apps](misc/limit-deployment-to-specific-apps.md)
-    - [Multitenant clusters guide](misc/multitenant_clusters_guide.md)
+    - [Multi-tenant clusters guide](misc/multitenant_clusters_guide.md)
     - [Helmsman on Windows 10](misc/helmsman_on_windows10.md)
