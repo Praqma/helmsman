@@ -121,7 +121,7 @@ If you use multiple clusters for multiple purposes, you need at least one Helmsm
 
 ## Deploying your dev charts
 
-If you are developing your own applications/services and packaging them in helm charts. It makes sense to automatically deploy these charts to a staging namespace or a dev cluster on every source code commit.
+If you are developing your own applications/services and packaging them in helm charts, it makes sense to automatically deploy these charts to a staging namespace or a dev cluster on every source code commit.
 
 Often, you would have multiple apps developed in separate source code repositories but you would like to test their deployment in the same cluster/namespace. In that case, Helmsman can be used [as part of your CI pipeline](how_to/deployments/ci.md) as described in the diagram below:
 
@@ -129,11 +129,11 @@ Often, you would have multiple apps developed in separate source code repositori
 
 ![multi-DSF](images/multi-DSF.png)
 
-Each repository will have a Helmsman desired state file (DSF). But it is important to consider the notes below on using multiple desired state files with one cluster.
+Each repository will have a Helmsman desired state file (DSF). But it is important to consider the notes below on using multiple desired state files with a single cluster.
 
-If you need supporting applications (charts) for your application (e.g, reverse proxies, DB, k8s dashboard etc.), you can describe the desired state for these in a separate file which can live in another repository. Adding such file in the pipeline where you create your cluster from code makes total "DevOps" sense.
+If you need supporting applications (charts) for your application (e.g, reverse proxies, DB, k8s dashboard, etc.), you can describe the desired state for these in a separate file which can live in another repository. Adding such a file in the pipeline where you create your cluster from code makes total "DevOps" sense.
 
-## Notes on using multiple Helmsman desired state files with the same cluster
+## Notes on using multiple Helmsman desired state files for the same cluster
 
 Helmsman works with a single desired state file at a time (starting from v1.5.0, you can pass multiple desired state files which get merged at runtime. See the [docs](how_to/misc/merge_desired_state_files.md)) and does not maintain a state anywhere. i.e. it does not have any context awareness about other desired state files used with the same cluster. For this reason, it is the user's responsibility to make sure that:
 
