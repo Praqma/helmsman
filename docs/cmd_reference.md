@@ -50,6 +50,9 @@ This lists available CMD options in Helmsman:
   `--no-env-subst`
         turn off environment substitution globally.
 
+  `no-env-values-subst`
+        turn off environment substitution in values files only.      
+
   `--no-fancy`
         don't display the banner and don't use colors.
 
