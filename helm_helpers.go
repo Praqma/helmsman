@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/Praqma/helmsman/gcs"
-	"github.com/hashicorp/go-version"
+	version "github.com/hashicorp/go-version"
 )
 
 var currentState map[string]releaseState
@@ -269,6 +269,29 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 
 	}
 	return true, ""
+}
+
+// getChartVersion fetches the lastest chart version matching the semantic versioning constraints.
+func getChartVersion(r *release) (string, string) {
+	cmd := command{
+		Cmd:         "bash",
+		Args:        []string{"-c", "helm search " + r.Chart + " --version " + strconv.Quote(r.Version)},
+		Description: "getting latest chart version " + r.Chart + "-" + r.Version + "",
+	}
+
+	if exitCode, result := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
+		return "", "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " + "but version is not found in the defined repo."
+	} else {
+		versions := strings.Split(result, "\n")
+		if len(versions) < 2 {
+			return "", "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " + "but version is not found in the defined repo."
+		}
+		fields := strings.Split(versions[1], "\t")
+		if len(fields) != 4 {
+			return "", "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " + "but version is not found in the defined repo."
+		}
+		return strings.TrimSpace(fields[1]), ""
+	}
 }
 
 // waitForTiller keeps checking if the helm Tiller is ready or not by executing helm list and checking its error (if any)
