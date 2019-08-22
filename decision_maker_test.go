@@ -77,6 +77,51 @@ func Test_getValuesFiles(t *testing.T) {
 	}
 }
 
+func Test_inspectUpgradeScenario(t *testing.T){
+	type args struct {
+		r *release
+		s releaseState
+	}
+	tests := []struct {
+		name       string
+		args       args
+		want       decisionType
+	}{
+		{
+			name:       "inspectUpgradeScenario() - local chart with different chart name should change",
+			args: args{
+				r: &release{
+					Name:      "release1",
+					Namespace: "namespace",
+					Version: "1.0.0",
+					Chart: "/local/charts",
+					Enabled:   true,
+				},
+				s: releaseState{
+					Namespace: "namespace",
+					Chart: "chart-1.0.0",
+				},
+			},
+			want: change,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			outcome = plan{}
+
+			// Act
+			inspectUpgradeScenario(tt.args.r, tt.args.s)
+			got := outcome.Decisions[0].Type
+			t.Log(outcome.Decisions[0].Description)
+
+			// Assert
+			if got != tt.want {
+				t.Errorf("decide() = %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_decide(t *testing.T) {
 	type args struct {
 		r *release
