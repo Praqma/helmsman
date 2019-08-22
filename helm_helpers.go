@@ -272,7 +272,11 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 }
 
 // getChartVersion fetches the lastest chart version matching the semantic versioning constraints.
+// If chart is local, returns the given release version
 func getChartVersion(r *release) (string, string) {
+	if isLocalChart(r.Chart) {
+		return r.Version, ""
+	}
 	cmd := command{
 		Cmd:         "bash",
 		Args:        []string{"-c", "helm search " + r.Chart + " --version " + strconv.Quote(r.Version)},
