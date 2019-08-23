@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/logrusorgru/aurora"
 )
 
@@ -66,4 +67,28 @@ func ReadFile(bucketName string, filename string, outFile string, noColors bool)
 
 	log.Println("INFO: Successfully downloaded " + filename + " from S3 as " + outFile)
 
+}
+
+
+// ReadSSMParam reads a value from an SSM Parameter
+func ReadSSMParam(keyname string, withDecryption bool) string  {
+	// Checking env vars are set to configure AWS
+	if !checkCredentialsEnvVar() {
+		log.Println("WARN: Failed to find the AWS env vars needed to configure AWS. Please make sure they are set in the environment.")
+	}
+
+	// Create Session -- use config (credentials + region) from env vars or aws profile
+	sess, err := session.NewSession()
+
+	if err != nil {
+		log.Fatal(style.Bold(style.Red("ERROR: Can't create AWS session: " + err.Error())))
+	}
+
+	ssmsvc := ssm.New(sess, aws.NewConfig())
+	param, err := ssmsvc.GetParameter(&ssm.GetParameterInput{
+		Name:           &keyname,
+		WithDecryption: &withDecryption,
+	})
+	value := *param.Parameter.Value
+	return value
 }
