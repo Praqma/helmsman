@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -18,7 +19,8 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/BurntSushi/toml"
-	"github.com/Praqma/helmsman/aws"
+	//"github.com/Praqma/helmsman/aws"
+	"helmsman/aws"
 	"github.com/Praqma/helmsman/azure"
 	"github.com/Praqma/helmsman/gcs"
 )
@@ -162,15 +164,17 @@ func substituteEnvInValuesFiles(s *state) {
 // Returns the path for the temp file
 func substituteEnvInYaml(file string) string {
 	rawYamlFile, err := ioutil.ReadFile(file)
-	var yamlFile string
+	yamlFile := string(rawYamlFile)
 	if err != nil {
 		logError(err.Error())
 	}
 	if !noEnvSubst {
-		yamlFile = substituteEnv(string(rawYamlFile))
-	} else {
-		yamlFile = string(rawYamlFile)
+		yamlFile = substituteEnv(yamlFile)
 	}
+	if !noSSMSubst {
+		yamlFile = substituteSSM(yamlFile)
+	}
+	log.Println("INFO: \n" + yamlFile)
 
 	dir, err := ioutil.TempDir(tempFilesDir, "tmp")
 	if err != nil {
@@ -345,6 +349,31 @@ func substituteEnv(name string) string {
 		// add $$ escaping for $ strings
 		os.Setenv("HELMSMAN_DOLLAR", "$")
 		return os.ExpandEnv(strings.Replace(name, "$$", "${HELMSMAN_DOLLAR}", -1))
+	}
+	return name
+}
+
+// substituteSSM checks if a string has an SSM param variable (contains '{{ssm: '), then it returns its value
+// if the env variable is empty or unset, an empty string is returned
+// if the string does not contain '$', it is returned as is.
+func substituteSSM(name string) string {
+	//log.Println("INFO: Checking for ssm params in: " + name)
+	if strings.Contains(name, "{{ssm: ") {
+		//log.Println("INFO: Contains ssm params!")
+		re := regexp.MustCompile(`{{ssm: ([^~}]+)(~(true))?}}`)
+		matches := re.FindAllSubmatch([]byte(name), -1)
+		//log.Println("INFO: Found " + fmt.Sprintf("%q\n", matches))
+		for _, match := range matches {
+			placeholder := string(match[0])
+			paramPath := string(match[1])
+			withDecryption, err := strconv.ParseBool(string(match[3]))
+			if err != nil {
+				fmt.Printf("Invalid decryption argument %T \n", string(match[3]))
+			}
+			//log.Println(i, paramPath)
+			value := aws.ReadSSMParam(paramPath, withDecryption)
+			name = strings.ReplaceAll(name, placeholder, value)
+		}
 	}
 	return name
 }
