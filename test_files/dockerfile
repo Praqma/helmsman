@@ -4,11 +4,11 @@
 ARG KUBE_VERSION
 ARG HELM_VERSION
 
-FROM golang:1.10-alpine3.7 
+FROM golang:1.12.9-alpine3.10 
 
 ENV KUBE_VERSION ${KUBE_VERSION:-v1.11.3}
-ENV HELM_VERSION ${HELM_VERSION:-v2.11.0}
-
+ENV HELM_VERSION ${HELM_VERSION:-v2.14.3}
+ENV GORELEASER_VERSION ${GORELEASER_VERSION:-v0.117.1}
 RUN apk --no-cache update \
     && apk add --update --no-cache ca-certificates git \
     && apk add --update -t deps curl tar gzip make bash \
@@ -29,5 +29,9 @@ RUN mkdir -p ~/.helm/plugins \
     && helm plugin install https://github.com/futuresimple/helm-secrets \
     && rm -r /tmp/helm-diff /tmp/helm-diff.tgz
 
-RUN go get github.com/goreleaser/goreleaser && \
-    go get github.com/golang/dep/cmd/dep
+RUN  mkdir /tmp/goreleaser \
+     && curl -L https://github.com/goreleaser/goreleaser/releases/download/${GORELEASER_VERSION}/goreleaser_Linux_arm64.tar.gz | tar zxv -C /tmp/goreleaser \
+     && mv /tmp/goreleaser/goreleaser /usr/local/bin/goreleaser \
+     && rm -r /tmp/goreleaser \
+     && chmod +x /usr/local/bin/goreleaser \
+     && go get github.com/golang/dep/cmd/dep
