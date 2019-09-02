@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
 	"net/url"
 	"path/filepath"
@@ -84,9 +86,79 @@ func getTillerReleases(tillerNS string) tillerReleases {
 		outputFormat = "--output json"
 	}
 
+	output, err := helmList(tillerNS, outputFormat, "")
+	if err != nil {
+		logError(err.Error())
+	}
+
+	var allReleases tillerReleases
+	if output == "" {
+		return allReleases
+	}
+
+	if jsonConstraint.Check(v1) {
+		allReleases, err = parseJSONListAndFollow(output, tillerNS)
+		if err != nil {
+			logError(err.Error())
+		}
+	} else {
+		allReleases = parseTextList(output)
+	}
+
+	// appending tiller-namespace to each release found
+	for i := 0; i < len(allReleases.Releases); i++ {
+		allReleases.Releases[i].TillerNamespace = tillerNS
+	}
+
+	return allReleases
+}
+
+func parseJSONListAndFollow(input, tillerNS string) (tillerReleases, error) {
+	var allReleases tillerReleases
+	var releases tillerReleases
+
+	for {
+		output, err := helmList(tillerNS, "--output json", releases.Next)
+		if err != nil {
+			return allReleases, err
+		}
+		if err := json.Unmarshal([]byte(output), &releases); err != nil {
+			return allReleases, fmt.Errorf("ERROR: failed to unmarshal Helm CLI output: %s", err)
+		}
+		for _, releaseInfo := range releases.Releases {
+			allReleases.Releases = append(allReleases.Releases, releaseInfo)
+		}
+		if releases.Next == "" {
+			break
+		}
+	}
+
+	return allReleases, nil
+}
+
+func parseTextList(input string) tillerReleases {
+	var out tillerReleases
+	lines := strings.Split(input, "\n")
+	for i, l := range lines {
+		if l == "" || (strings.HasPrefix(strings.TrimSpace(l), "NAME") && strings.HasSuffix(strings.TrimSpace(l), "NAMESPACE")) {
+			continue
+		} else {
+			r, _ := strconv.Atoi(strings.Fields(lines[i])[1])
+			t := strings.Fields(lines[i])[2] + " " + strings.Fields(lines[i])[3] + " " + strings.Fields(lines[i])[4] + " " +
+				strings.Fields(lines[i])[5] + " " + strings.Fields(lines[i])[6]
+			out.Releases = append(out.Releases, releaseInfo{Name: strings.Fields(lines[i])[0], Revision: r, Updated: t, Status: strings.Fields(lines[i])[7], Chart: strings.Fields(lines[i])[8], Namespace: strings.Fields(lines[i])[9], AppVersion: "", TillerNamespace: ""})
+		}
+	}
+	return out
+}
+
+func helmList(tillerNS, outputFormat, offset string) (string, error) {
+	arg := fmt.Sprintf("%s list --all --max 0 --offset \"%s\" %s --tiller-namespace %s %s",
+		helmCommand(tillerNS), offset, outputFormat, tillerNS, getNSTLSFlags(tillerNS),
+	)
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", helmCommand(tillerNS) + " list --all --max 0 " + outputFormat + " --tiller-namespace " + tillerNS + getNSTLSFlags(tillerNS)},
+		Args:        []string{"-c", arg},
 		Description: "listing all existing releases in namespace [ " + tillerNS + " ]...",
 	}
 
@@ -94,41 +166,16 @@ func getTillerReleases(tillerNS string) tillerReleases {
 	if exitCode != 0 {
 		if !apply {
 			if strings.Contains(result, "incompatible versions") {
-				logError(result)
+				return "", errors.New(result)
 			}
 			log.Println("INFO: " + strings.Replace(result, "Error: ", "", 1))
-			return tillerReleases{}
+			return "", nil
 		}
 
-		logError("ERROR: failed to list all releases in namespace [ " + tillerNS + " ]: " + result)
+		return "", fmt.Errorf("ERROR: failed to list all releases in namespace [ %s ]: %s", tillerNS, result)
 	}
 
-	var out tillerReleases
-	if jsonConstraint.Check(v1) {
-		json.Unmarshal([]byte(result), &out)
-	} else {
-		lines := strings.Split(result, "\n")
-		for i, l := range lines {
-			if l == "" || (strings.HasPrefix(strings.TrimSpace(l), "NAME") && strings.HasSuffix(strings.TrimSpace(l), "NAMESPACE")) {
-				continue
-			} else {
-
-				r, _ := strconv.Atoi(strings.Fields(lines[i])[1])
-				t := strings.Fields(lines[i])[2] + " " + strings.Fields(lines[i])[3] + " " + strings.Fields(lines[i])[4] + " " +
-					strings.Fields(lines[i])[5] + " " + strings.Fields(lines[i])[6]
-
-				out.Releases = append(out.Releases, releaseInfo{Name: strings.Fields(lines[i])[0], Revision: r, Updated: t, Status: strings.Fields(lines[i])[7], Chart: strings.Fields(lines[i])[8], Namespace: strings.Fields(lines[i])[9], AppVersion: "", TillerNamespace: ""})
-			}
-		}
-
-	}
-
-	// appending tiller-namespace to each release found
-	for i := 0; i < len(out.Releases); i++ {
-		out.Releases[i].TillerNamespace = tillerNS
-	}
-
-	return out
+	return result, nil
 }
 
 // buildState builds the currentState map containing information about all releases existing in a k8s cluster
