@@ -382,6 +382,7 @@ Example:
     secret2="SECRET_ENV_VAR2" # works with/without $ at the beginning
   [apps.jenkins.setString]
     longInt = "1234567890"
+    "image.tag" = "1.0.0"
 ```
 
 ```yaml
@@ -407,4 +408,6 @@ apps:
       secret2: "$SECRET_ENV_VAR2"
     setString:
       longInt: "1234567890"
+      image:
+        tag: "1.0.0"
 ```
