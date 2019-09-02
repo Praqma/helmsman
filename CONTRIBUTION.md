@@ -19,7 +19,7 @@ Please make sure you state the purpose of the pull request and that the code you
 
 Contribution to the documentation can be done via pull requests or by opening an issue.
 
-## Reporting issues/featuer requests
+## Reporting issues/feature requests
 
 Please provide details of the issue, versions of helmsman, helm and kubernetes and all possible logs.
 
