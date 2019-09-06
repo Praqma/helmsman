@@ -71,7 +71,9 @@ func ReadFile(bucketName string, filename string, outFile string, noColors bool)
 
 
 // ReadSSMParam reads a value from an SSM Parameter
-func ReadSSMParam(keyname string, withDecryption bool) string  {
+func ReadSSMParam(keyname string, withDecryption bool, noColors bool) string  {
+	style = aurora.NewAurora(!noColors)
+
 	// Checking env vars are set to configure AWS
 	if !checkCredentialsEnvVar() {
 		log.Println("WARN: Failed to find the AWS env vars needed to configure AWS. Please make sure they are set in the environment.")
@@ -89,6 +91,11 @@ func ReadSSMParam(keyname string, withDecryption bool) string  {
 		Name:           &keyname,
 		WithDecryption: &withDecryption,
 	})
+
+	if err != nil {
+		log.Fatal(style.Bold(style.Red("ERROR: Can't find the SSM Parameter " + keyname + " : " + err.Error())))
+	}
+
 	value := *param.Parameter.Value
 	return value
 }

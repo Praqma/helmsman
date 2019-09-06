@@ -46,6 +46,7 @@ var diffContext int
 var noEnvSubst bool
 var noEnvValuesSubst bool
 var noSSMSubst bool
+var noSSMValuesSubst bool
 var updateDeps bool
 var forceUpgrades bool
 
