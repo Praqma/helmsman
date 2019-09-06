@@ -62,6 +62,7 @@ func init() {
 	flag.BoolVar(&noEnvSubst, "no-env-subst", false, "turn off environment substitution globally")
 	flag.BoolVar(&noEnvValuesSubst, "no-env-values-subst", false, "turn off environment substitution in values files only")
 	flag.BoolVar(&noSSMSubst, "no-ssm-subst", false, "turn off SSM parameter substitution globally")
+	flag.BoolVar(&noSSMValuesSubst, "no-ssm-values-subst", false, "turn off SSM parameter substitution in values files only")
 	flag.BoolVar(&updateDeps, "update-deps", false, "run 'helm dep up' for local chart")
 	flag.BoolVar(&forceUpgrades, "force-upgrades", false, "use --force when upgrading helm releases. May cause resources to be recreated.")
 

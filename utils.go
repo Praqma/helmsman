@@ -19,10 +19,9 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/BurntSushi/toml"
-	//"github.com/Praqma/helmsman/aws"
 	"helmsman/aws"
-	"github.com/Praqma/helmsman/azure"
-	"github.com/Praqma/helmsman/gcs"
+	"helmsman/azure"
+	"helmsman/gcs"
 )
 
 // printMap prints to the console any map of string keys and values.
@@ -43,23 +42,26 @@ func printNamespacesMap(m map[string]namespace) {
 // It uses the BurntSuchi TOML parser which throws an error if the TOML file is not valid.
 func fromTOML(file string, s *state) (bool, string) {
 	rawTomlFile, err := ioutil.ReadFile(file)
-	var tomlFile string
 	if err != nil {
 		return false, err.Error()
 	}
+
+	tomlFile := string(rawTomlFile)
 	if !noEnvSubst {
-		tomlFile = substituteEnv(string(rawTomlFile))
-	} else {
-		tomlFile = string(rawTomlFile)
+		log.Println("INFO: substituting env variables in file: ", file)
+		tomlFile = substituteEnv(tomlFile)
 	}
+	if !noSSMSubst {
+		log.Println("INFO: substituting SSM variables in file: ", file)
+		tomlFile = substituteSSM(tomlFile)
+	}
+
 	if _, err := toml.Decode(tomlFile, s); err != nil {
 		return false, err.Error()
 	}
 	addDefaultHelmRepos(s)
 	resolvePaths(file, s)
-	if !noEnvSubst && !noEnvValuesSubst {
-		substituteEnvInValuesFiles(s)
-	}
+	substituteVarsInValuesFiles(s)
 
 	return true, "INFO: Parsed TOML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
 }
@@ -94,24 +96,26 @@ func toTOML(file string, s *state) {
 // parser which throws an error if the YAML file is not valid.
 func fromYAML(file string, s *state) (bool, string) {
 	rawYamlFile, err := ioutil.ReadFile(file)
-	var yamlFile []byte
 	if err != nil {
 		return false, err.Error()
 	}
+
+	yamlFile := string(rawYamlFile)
 	if !noEnvSubst {
-		yamlFile = []byte(substituteEnv(string(rawYamlFile)))
-	} else {
-		yamlFile = []byte(string(rawYamlFile))
+		log.Println("INFO: substituting env variables in file: ", file)
+		yamlFile = substituteEnv(yamlFile)
 	}
-	if err = yaml.UnmarshalStrict(yamlFile, s); err != nil {
+	if !noSSMSubst {
+		log.Println("INFO: substituting SSM variables in file: ", file)
+		yamlFile = substituteSSM(yamlFile)
+	}
+
+	if err = yaml.UnmarshalStrict([]byte(yamlFile), s); err != nil {
 		return false, err.Error()
 	}
 	addDefaultHelmRepos(s)
 	resolvePaths(file, s)
-
-	if !noEnvSubst && !noEnvValuesSubst {
-		substituteEnvInValuesFiles(s)
-	}
+	substituteVarsInValuesFiles(s)
 
 	return true, "INFO: Parsed YAML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
 }
@@ -141,40 +145,41 @@ func toYAML(file string, s *state) {
 	newFile.Close()
 }
 
-// substituteEnvInValuesFiles loops through the values/secrets files and substitutes env variables into them
-func substituteEnvInValuesFiles(s *state) {
-	log.Println("INFO: substituting env variables in values and secrets files ...")
+// substituteVarsInValuesFiles loops through the values/secrets files and substitutes variables into them.
+func substituteVarsInValuesFiles(s *state) {
 	for _, v := range s.Apps {
 		if v.ValuesFile != "" {
-			v.ValuesFile = substituteEnvInYaml(v.ValuesFile)
+			v.ValuesFile = substituteVarsInYaml(v.ValuesFile)
 		}
 		if v.SecretsFile != "" {
-			v.SecretsFile = substituteEnvInYaml(v.SecretsFile)
+			v.SecretsFile = substituteVarsInYaml(v.SecretsFile)
 		}
 		for i := range v.ValuesFiles {
-			v.ValuesFiles[i] = substituteEnvInYaml(v.ValuesFiles[i])
+			v.ValuesFiles[i] = substituteVarsInYaml(v.ValuesFiles[i])
 		}
 		for i := range v.SecretsFiles {
-			v.SecretsFiles[i] = substituteEnvInYaml(v.SecretsFiles[i])
+			v.SecretsFiles[i] = substituteVarsInYaml(v.SecretsFiles[i])
 		}
 	}
 }
 
-// substituteEnvInYaml substitutes env variables in a Yaml file and creates a temp file with these values.
+// substituteVarsInYaml substitutes variables in a Yaml file and creates a temp file with these values.
 // Returns the path for the temp file
-func substituteEnvInYaml(file string) string {
+func substituteVarsInYaml(file string) string {
 	rawYamlFile, err := ioutil.ReadFile(file)
-	yamlFile := string(rawYamlFile)
 	if err != nil {
 		logError(err.Error())
 	}
-	if !noEnvSubst {
+
+	yamlFile := string(rawYamlFile)
+	if !noEnvSubst && !noEnvValuesSubst {
+		log.Println("INFO: substituting env variables in file: ", file)
 		yamlFile = substituteEnv(yamlFile)
 	}
-	if !noSSMSubst {
+	if !noSSMSubst && !noSSMValuesSubst {
+		log.Println("INFO: substituting SSM variables in file: ", file)
 		yamlFile = substituteSSM(yamlFile)
 	}
-	log.Println("INFO: \n" + yamlFile)
 
 	dir, err := ioutil.TempDir(tempFilesDir, "tmp")
 	if err != nil {
@@ -353,16 +358,13 @@ func substituteEnv(name string) string {
 	return name
 }
 
-// substituteSSM checks if a string has an SSM param variable (contains '{{ssm: '), then it returns its value
+// substituteSSM checks if a string has an SSM parameter variable (contains '{{ssm: '), then it returns its value
 // if the env variable is empty or unset, an empty string is returned
 // if the string does not contain '$', it is returned as is.
 func substituteSSM(name string) string {
-	//log.Println("INFO: Checking for ssm params in: " + name)
 	if strings.Contains(name, "{{ssm: ") {
-		//log.Println("INFO: Contains ssm params!")
 		re := regexp.MustCompile(`{{ssm: ([^~}]+)(~(true))?}}`)
 		matches := re.FindAllSubmatch([]byte(name), -1)
-		//log.Println("INFO: Found " + fmt.Sprintf("%q\n", matches))
 		for _, match := range matches {
 			placeholder := string(match[0])
 			paramPath := string(match[1])
@@ -370,8 +372,7 @@ func substituteSSM(name string) string {
 			if err != nil {
 				fmt.Printf("Invalid decryption argument %T \n", string(match[3]))
 			}
-			//log.Println(i, paramPath)
-			value := aws.ReadSSMParam(paramPath, withDecryption)
+			value := aws.ReadSSMParam(paramPath, withDecryption, noColors)
 			name = strings.ReplaceAll(name, placeholder, value)
 		}
 	}
