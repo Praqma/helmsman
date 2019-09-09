@@ -443,7 +443,7 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 				return false, "ERROR: while validating/creating service account [ " + serviceAccount + " ] in namespace [" + namespace + "]: " + err
 			}
 		}
-		sa = "--service-account " + serviceAccount
+		sa = " --service-account " + serviceAccount
 	} else {
 		roleName := "helmsman-tiller"
 		defaultServiceAccountName := "helmsman"
