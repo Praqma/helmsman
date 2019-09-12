@@ -13,6 +13,7 @@ jobs:
           name: Build helmsman
           command: |
             echo "building ..."
+            export GOOS=linux
             make build
 
   test:
@@ -25,6 +26,7 @@ jobs:
           name: Unit test helmsman
           command: |
             echo "running tests ..."
+            export GOOS=linux
             make test
   release:
     working_directory: "/go/src/helmsman"
