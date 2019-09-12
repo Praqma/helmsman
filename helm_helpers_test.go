@@ -339,3 +339,53 @@ func Test_getReleaseChartVersion(t *testing.T) {
 		})
 	}
 }
+
+
+func Test_getChartVersion(t *testing.T) {
+	// version string = the first semver-valid string after the last hypen in the chart string.
+
+	type args struct {
+		r *release
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "getChartVersion - local chart should return given release version",
+			args: args{
+				r: &release{
+					Name:      "release1",
+					Namespace: "namespace",
+					Version: "1.0.0",
+					Chart: "/local/charts",
+					Enabled:   true,
+				},
+			},
+			want: "1.0.0",
+		},
+		{
+			name: "getChartVersion - unknown chart should error",
+			args: args{
+				r: &release{
+					Name:      "release1",
+					Namespace: "namespace",
+					Version: "1.0.0",
+					Chart: "random-chart-name-1f8147",
+					Enabled:   true,
+				},
+			},
+			want: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Log(tt.want)
+			got, _ := getChartVersion(tt.args.r);
+			if  got != tt.want {
+				t.Errorf("getChartVersion() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
