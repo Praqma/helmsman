@@ -67,7 +67,7 @@ dep-update: $(SRCDIR) ## Ensure vendors with dep
 
 build: dep ## Build the package
 	@cd $(SRCDIR)helmsman && \
-	  go build -ldflags '-X main.version="${TAG}-${DATE}" -extldflags "-static"'
+	  CGO_ENABLED=0 go build -ldflags '-X main.version="${TAG}-${DATE}" -extldflags "-static"'
 
 generate:
 	@go generate #${PKGS}
@@ -82,7 +82,7 @@ check: $(SRCDIR)
 test: dep ## Run unit tests
 	@cd $(SRCDIR)helmsman && \
 	  helm init --client-only && \
-	  go test -v -cover -p=1 -args -f example.toml
+	  CGO_ENABLED=0 go test -v -cover -p=1 -args -f example.toml
 .PHONY: test
 
 cross: dep ## Create binaries for all OSs
