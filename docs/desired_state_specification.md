@@ -311,6 +311,52 @@ preconfiguredHelmRepos:
 
 > In this case you will manually need to execute `helm repo add myrepo1 <URL> --username= --password=`
 
+## AppsTemplates
+
+Optional : Yes.
+
+Synopsis: allows for YAML (TOML has no variable reference support) object creation, that is ignored by state file importer, but can be used as a reference with YAML anchors to not repeat yourself. Read [this](https://blog.daemonl.com/2016/02/yaml.html) example about YAML anchors.
+
+Examples:
+
+```yaml
+appsTemplates:
+
+  default: &template
+    valuesFile: ""
+    purge: false
+    test: true
+    protected: false
+    wait: true
+    enabled: true
+
+  custom: &template_custom
+    valuesFile: ""
+    purge: true
+    test: true
+    protected: false
+    wait: false
+    enabled: true
+
+apps:
+  jenkins:
+    <<: *template
+    name: "jenkins-stage"
+    namespace: "staging"
+    chart: "stable/jenkins"
+    version: "0.9.2"
+    priority: -3
+
+  jenkins2:
+    <<: *template_custom
+    name: "jenkins-prod"
+    namespace: "production"
+    chart: "stable/jenkins"
+    version: "0.9.0"
+    priority: -2
+
+```
+
 ## Apps
 
 Optional : Yes.
