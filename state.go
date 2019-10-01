@@ -32,6 +32,7 @@ type state struct {
 	HelmRepos              map[string]string    `yaml:"helmRepos"`
 	PreconfiguredHelmRepos []string             `yaml:"preconfiguredHelmRepos"`
 	Apps                   map[string]*release  `yaml:"apps"`
+	AppsTemplates          map[string]*release  `yaml:"appsTemplates,omitempty"`
 }
 
 // validate validates that the values specified in the desired state are valid according to the desired state spec.
