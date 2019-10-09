@@ -47,6 +47,7 @@ var noEnvSubst bool
 var noEnvValuesSubst bool
 var updateDeps bool
 var forceUpgrades bool
+var noDefaultRepos bool
 
 const tempFilesDir = ".helmsman-tmp"
 const stableHelmRepo = "https://kubernetes-charts.storage.googleapis.com"
