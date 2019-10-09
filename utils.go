@@ -218,6 +218,10 @@ func stringInSlice(a string, list []string) bool {
 
 // addDefaultHelmRepos adds stable and incubator helm repos to the state if they are not already defined
 func addDefaultHelmRepos(s *state) {
+	if noDefaultRepos {
+		log.Println("INFO: default helm repo set disabled, 'stable' and 'incubator' repos unset.")
+		return
+	}
 	if s.HelmRepos == nil || len(s.HelmRepos) == 0 {
 		s.HelmRepos = map[string]string{
 			"stable":    stableHelmRepo,

@@ -1,5 +1,5 @@
 ---
-version: v1.11.0
+version: v1.11.1
 ---
 
 # CMD reference
@@ -47,6 +47,9 @@ This lists available CMD options in Helmsman:
   `--no-color`
         don't use colors.
 
+  `--no-default-repos`
+        don't set default Helm repos from Google for 'stable' and 'incubator'.
+                
   `--no-env-subst`
         turn off environment substitution globally.
 
