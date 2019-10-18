@@ -92,8 +92,7 @@ func (p plan) execPlan() {
 	}
 
 	for _, cmd := range p.Commands {
-		log.Println("INFO: start applying [ " + cmd.targetRelease.Name + " ] " +
-			"in namespace [ " + cmd.targetRelease.Namespace + " ] ")
+		log.Println("INFO: " + cmd.Command.Description)
 		if exitCode, msg := cmd.Command.exec(debug, verbose); exitCode != 0 {
 			var errorMsg string
 			if errorMsg = msg; !verbose {
@@ -105,8 +104,7 @@ func (p plan) execPlan() {
 			if cmd.targetRelease != nil && !dryRun {
 				labelResource(cmd.targetRelease)
 			}
-			log.Println("INFO: finished applying [ " + cmd.targetRelease.Name + " ] " +
-				"in namespace [ " + cmd.targetRelease.Namespace + " ] ")
+			log.Println("INFO: finished " + cmd.Command.Description)
 			if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err == nil {
 				notifySlack(cmd.Command.Description+" ... SUCCESS!", s.Settings.SlackWebhook, false, true)
 			}
