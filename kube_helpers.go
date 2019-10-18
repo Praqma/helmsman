@@ -451,7 +451,7 @@ func getHelmsmanReleases() map[string]map[*release]bool {
 	namespaces := make([]string, len(s.Namespaces))
 	i := 0
 	for s, v := range s.Namespaces {
-		if v.InstallTiller || v.UseTiller {
+		if v.InstallTiller || v.UseTiller || settings.Tillerless {
 			namespaces[i] = s
 			i++
 		}
