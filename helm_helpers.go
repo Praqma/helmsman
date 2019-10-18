@@ -592,7 +592,7 @@ func cleanUntrackedReleases() {
 					}
 				} else {
 					logDecision(generateDecisionMessage(r, "untracked release found: release [ "+r.Name+" ]. It will be deleted", true), -800, delete)
-					deleteUntrackedRelease(r.Name, ns)
+					deleteUntrackedRelease(r, ns)
 				}
 			}
 		}
@@ -600,7 +600,7 @@ func cleanUntrackedReleases() {
 }
 
 // deleteUntrackedRelease creates the helm command to purge delete an untracked release
-func deleteUntrackedRelease(release string, tillerNamespace string) {
+func deleteUntrackedRelease(release *release, tillerNamespace string) {
 
 	tls := ""
 	ns := s.Namespaces[tillerNamespace]
@@ -610,9 +610,8 @@ func deleteUntrackedRelease(release string, tillerNamespace string) {
 	}
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", helmCommand(tillerNamespace) + " delete --purge " + release + " --tiller-namespace " + tillerNamespace + tls + getDryRunFlags()},
-		//Description: generateCmdDescription(release, "deleting untracked"),
-		Description: "x",
+		Args:        []string{"-c", helmCommand(tillerNamespace) + " delete --purge " + release.Name + " --tiller-namespace " + tillerNamespace + tls + getDryRunFlags()},
+		Description: generateCmdDescription(release, "deleting untracked"),
 	}
 
 	outcome.addCommand(cmd, -800, nil)
