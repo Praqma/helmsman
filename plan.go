@@ -20,13 +20,15 @@ const (
 	change
 	delete
 	noop
+	ignored
 )
 
 var decisionColor = map[decisionType]aurora.Color{
-	create: aurora.BlueFg,
-	change: aurora.BrownFg,
-	delete: aurora.RedFg,
-	noop:   aurora.GreenFg,
+	create:  aurora.BlueFg,
+	change:  aurora.BrownFg,
+	delete:  aurora.RedFg,
+	noop:    aurora.GreenFg,
+	ignored: aurora.GrayFg,
 }
 
 // orderedDecision type representing a Decision and it's priority weight
