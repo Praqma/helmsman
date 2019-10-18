@@ -1,7 +1,7 @@
 #  This is a docker image for helmsman
 
 
-FROM golang:1.12.9-alpine3.10 as builder
+FROM golang:1.13.3-alpine3.10 as builder
 
 WORKDIR /go/src/
 
@@ -52,4 +52,3 @@ RUN mkdir -p ~/.helm/plugins \
 
 WORKDIR /tmp
 # ENTRYPOINT ["/bin/helmsman"]
-
