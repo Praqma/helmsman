@@ -144,7 +144,7 @@ func Test_decide(t *testing.T) {
 				},
 				s: &state{},
 			},
-			want: noop,
+			want: ignored,
 		},
 		{
 			name:       "decide() - targetMap does not contain this service - skip",
@@ -157,7 +157,7 @@ func Test_decide(t *testing.T) {
 				},
 				s: &state{},
 			},
-			want: noop,
+			want: ignored,
 		},
 		{
 			name:       "decide() - targetMap is empty - will install",
