@@ -31,7 +31,7 @@ func decide(r *release, s *state) {
 	// check for presence in defined targets
 	if len(targetMap) > 0 {
 		if _, ok := targetMap[r.Name]; !ok {
-			logDecision(generateDecisionMessage(r, "release [ "+r.Name+" ] is ignored by target flag. Skipping.", false), r.Priority, noop)
+			logDecision(generateDecisionMessage(r, "release [ "+r.Name+" ] is ignored by target flag. Skipping.", false), r.Priority, ignored)
 			return
 		}
 	}

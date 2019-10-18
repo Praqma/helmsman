@@ -586,9 +586,10 @@ func cleanUntrackedReleases() {
 	} else {
 		for ns, releases := range toDelete {
 			for r := range releases {
-				_, inTarget := targetMap[r.Name]
-				if len(targetMap) > 0 && inTarget {
-					logDecision(generateDecisionMessage(r, "untracked release [ "+r.Name+" ] is ignored by target flag. Skipping.", false), -800, noop)
+				if len(targetMap) > 0 {
+					if _, inTarget := targetMap[r.Name]; !inTarget {
+						logDecision(generateDecisionMessage(r, "untracked release [ "+r.Name+" ] is ignored by target flag. Skipping.", false), -800, ignored)
+					}
 				} else {
 					logDecision(generateDecisionMessage(r, "untracked release found: release [ "+r.Name+" ]. It will be deleted", true), -800, delete)
 					deleteUntrackedRelease(r.Name, ns)
