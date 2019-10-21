@@ -562,19 +562,19 @@ func initHelm() (bool, string) {
 // NOTE: Untracked releases don't benefit from either namespace or application protection.
 // NOTE: Removing/Commenting out an app from the desired state makes it untracked.
 func cleanUntrackedReleases() {
-	toDelete := make(map[string]map[string]bool)
+	toDelete := make(map[string]map[*release]bool)
 	log.Println("INFO: checking if any Helmsman managed releases are no longer tracked by your desired state ...")
 	for ns, releases := range getHelmsmanReleases() {
 		for r := range releases {
 			tracked := false
 			for _, app := range s.Apps {
-				if app.Name == r && getDesiredTillerNamespace(app) == ns {
+				if app.Name == r.Name && getDesiredTillerNamespace(app) == ns {
 					tracked = true
 				}
 			}
 			if !tracked {
 				if _, ok := toDelete[ns]; !ok {
-					toDelete[ns] = make(map[string]bool)
+					toDelete[ns] = make(map[*release]bool)
 				}
 				toDelete[ns][r] = true
 			}
@@ -587,12 +587,12 @@ func cleanUntrackedReleases() {
 		for ns, releases := range toDelete {
 			for r := range releases {
 				if len(targetMap) > 0 {
-					if _, ok := targetMap[r]; !ok {
-						logDecision("DECISION: untracked release [ "+r+" ] is ignored by target flag. Skipping.", -800, noop)
-					} else {
-						logDecision("DECISION: untracked release found: release [ "+r+" ] from Tiller in namespace [ "+ns+" ]. It will be deleted.", -800, delete)
-						deleteUntrackedRelease(r, ns)
+					if _, inTarget := targetMap[r.Name]; !inTarget {
+						logDecision(generateDecisionMessage(r, "untracked release [ "+r.Name+" ] is ignored by target flag. Skipping.", false), -800, ignored)
 					}
+				} else {
+					logDecision(generateDecisionMessage(r, "untracked release found: release [ "+r.Name+" ]. It will be deleted", true), -800, delete)
+					deleteUntrackedRelease(r, ns)
 				}
 			}
 		}
@@ -600,7 +600,7 @@ func cleanUntrackedReleases() {
 }
 
 // deleteUntrackedRelease creates the helm command to purge delete an untracked release
-func deleteUntrackedRelease(release string, tillerNamespace string) {
+func deleteUntrackedRelease(release *release, tillerNamespace string) {
 
 	tls := ""
 	ns := s.Namespaces[tillerNamespace]
@@ -610,8 +610,8 @@ func deleteUntrackedRelease(release string, tillerNamespace string) {
 	}
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", helmCommand(tillerNamespace) + " delete --purge " + release + " --tiller-namespace " + tillerNamespace + tls + getDryRunFlags()},
-		Description: "deleting untracked release [ " + release + " ] from Tiller in namespace [[ " + tillerNamespace + " ]]",
+		Args:        []string{"-c", helmCommand(tillerNamespace) + " delete --purge " + release.Name + " --tiller-namespace " + tillerNamespace + tls + getDryRunFlags()},
+		Description: generateCmdDescription(release, "deleting untracked"),
 	}
 
 	outcome.addCommand(cmd, -800, nil)
