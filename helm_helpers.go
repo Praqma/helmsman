@@ -621,7 +621,7 @@ func deleteUntrackedRelease(release *release, tillerNamespace string) {
 func decryptSecret(name string) bool {
 	cmd := command{
 		Cmd:         "bash",
-		Args:        []string{"-c", "helm secrets dec " + name},
+		Args:        []string{"-c", helmCommand("") + " secrets dec " + name},
 		Description: "Decrypting " + name,
 	}
 
