@@ -8,7 +8,7 @@ FROM golang:1.13.3-alpine3.10
 
 ENV KUBE_VERSION ${KUBE_VERSION:-v1.16.2}
 ENV HELM_VERSION ${HELM_VERSION:-v2.15.0}
-ENV GORELEASER_VERSION ${GORELEASER_VERSION:-v0.119.0}
+ENV GORELEASER_VERSION ${GORELEASER_VERSION:-v0.120.2}
 RUN apk --no-cache update \
     && apk add --update --no-cache ca-certificates git \
     && apk add --update -t deps curl tar gzip make bash gcc \
