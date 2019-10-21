@@ -109,7 +109,11 @@ func decide(r *release, s *state) {
 // If not configured to run without a tiller will just return `helm`.
 func helmCommand(namespace string) string {
 	if settings.Tillerless {
-		return "helm tiller run " + namespace + " -- helm"
+		if namespace != "" {
+			return "helm tiller run " + namespace + " -- helm"
+		} else {
+			return "helm tiller run helm"
+		}
 	}
 
 	return "helm"
