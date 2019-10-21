@@ -304,11 +304,11 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 				cmd := command{
 					Cmd:         "bash",
 					Args:        []string{"-c", "helm search " + r.Chart + " --version " + strconv.Quote(r.Version) + " -l"},
-					Description: "validating if chart " + r.Chart + "-" + r.Version + " is available in the defined repos.",
+					Description: "validating if chart " + r.Chart + " with version " + r.Version + " is available in the defined repos.",
 				}
 
 				if exitCode, result := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
-					return false, "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " +
+					return false, "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified for " +
 						"app [" + app + "] but is not found in the defined repos."
 				}
 			}
@@ -331,15 +331,15 @@ func getChartVersion(r *release) (string, string) {
 	}
 
 	if exitCode, result := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
-		return "", "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " + "but version is not found in the defined repo."
+		return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified for " + "but version is not found in the defined repo."
 	} else {
 		versions := strings.Split(result, "\n")
 		if len(versions) < 2 {
-			return "", "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " + "but version is not found in the defined repo."
+			return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified for " + "but version is not found in the defined repo."
 		}
 		fields := strings.Split(versions[1], "\t")
 		if len(fields) != 4 {
-			return "", "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " + "but version is not found in the defined repo."
+			return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified for " + "but version is not found in the defined repo."
 		}
 		return strings.TrimSpace(fields[1]), ""
 	}
