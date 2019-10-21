@@ -92,8 +92,8 @@ func createNamespace(ns string) {
 		Args:        []string{"-c", "kubectl create namespace " + ns},
 		Description: "creating namespace  " + ns,
 	}
-
-	if exitCode, _ := cmd.exec(debug, verbose); exitCode != 0 {
+	exitCode, _ := cmd.exec(debug, verbose)
+	if exitCode != 0 && verbose {
 		log.Println("WARN: I could not create namespace [ " +
 			ns + " ]. It already exists. I am skipping this.")
 	}
@@ -108,7 +108,8 @@ func labelNamespace(ns string, labels map[string]string) {
 			Description: "labeling namespace  " + ns,
 		}
 
-		if exitCode, _ := cmd.exec(debug, verbose); exitCode != 0 {
+		exitCode, _ := cmd.exec(debug, verbose)
+		if exitCode != 0 && verbose {
 			log.Println("WARN: I could not label namespace [ " + ns + " with " + k + "=" + v +
 				" ]. It already exists. I am skipping this.")
 		}
@@ -124,7 +125,8 @@ func annotateNamespace(ns string, labels map[string]string) {
 			Description: "annotating namespace  " + ns,
 		}
 
-		if exitCode, _ := cmd.exec(debug, verbose); exitCode != 0 {
+		exitCode, _ := cmd.exec(debug, verbose)
+		if exitCode != 0 && verbose {
 			log.Println("WARN: I could not annotate namespace [ " + ns + " with " + k + "=" + v +
 				" ]. It already exists. I am skipping this.")
 		}
@@ -437,9 +439,9 @@ func labelResource(r *release) {
 // getHelmsmanReleases returns a map of all releases that are labeled with "MANAGED-BY=HELMSMAN"
 // The releases are categorized by the namespaces in which their Tiller is running
 // The returned map format is: map[<Tiller namespace>:map[<releases managed by Helmsman and deployed using this Tiller>:true]]
-func getHelmsmanReleases() map[string]map[string]bool {
+func getHelmsmanReleases() map[string]map[*release]bool {
 	var lines []string
-	releases := make(map[string]map[string]bool)
+	releases := make(map[string]map[*release]bool)
 	storageBackend := "configmap"
 
 	if s.Settings.StorageBackend == "secret" {
@@ -449,7 +451,7 @@ func getHelmsmanReleases() map[string]map[string]bool {
 	namespaces := make([]string, len(s.Namespaces))
 	i := 0
 	for s, v := range s.Namespaces {
-		if v.InstallTiller || v.UseTiller {
+		if v.InstallTiller || v.UseTiller || settings.Tillerless {
 			namespaces[i] = s
 			i++
 		}
@@ -481,9 +483,13 @@ func getHelmsmanReleases() map[string]map[string]bool {
 			} else {
 				fields := strings.Fields(lines[i])
 				if _, ok := releases[ns]; !ok {
-					releases[ns] = make(map[string]bool)
+					releases[ns] = make(map[*release]bool)
 				}
-				releases[ns][fields[0][0:strings.LastIndex(fields[0], ".v")]] = true
+				for _, r := range s.Apps {
+					if r.Name == fields[0][0:strings.LastIndex(fields[0], ".v")] {
+						releases[ns][r] = true
+					}
+				}
 			}
 		}
 	}
