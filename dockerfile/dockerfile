@@ -5,7 +5,7 @@ FROM golang:1.12.9-alpine3.10 as builder
 
 WORKDIR /go/src/
 
-RUN apk --no-cache add make git
+RUN apk --no-cache add make git dep
 RUN git clone https://github.com/Praqma/helmsman.git
 
 #  build a statically linked binary so that it works on stripped linux images such as alpine/busybox.
@@ -15,7 +15,7 @@ RUN cd helmsman \
     && LT_SHA=$(git rev-parse ${LastTag}^{}) \
     && LC_SHA=$(git rev-parse HEAD) \
     && if [ ${LT_SHA} != ${LC_SHA} ]; then TAG=latest-$(date +"%d%m%y"); fi \
-    && make dependencies \
+    && dep ensure \
     && CGO_ENABLED=0 GOOS=linux go install -a -ldflags '-X main.version='$TAG' -extldflags "-static"' .
 
 
