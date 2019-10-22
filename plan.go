@@ -100,7 +100,7 @@ func (p plan) execPlan() {
 			if errorMsg = msg; !verbose {
 				errorMsg = strings.Split(msg, "---")[0]
 			}
-			logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + errorMsg)
+			logError(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", exitCode, errorMsg))
 		} else {
 			log.Println(style.Cyan(msg))
 			if cmd.targetRelease != nil && !dryRun {
