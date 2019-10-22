@@ -331,15 +331,15 @@ func getChartVersion(r *release) (string, string) {
 	}
 
 	if exitCode, result := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
-		return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified for " + "but version is not found in the defined repo."
+		return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos."
 	} else {
 		versions := strings.Split(result, "\n")
 		if len(versions) < 2 {
-			return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified for " + "but version is not found in the defined repo."
+			return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos (unrecognized helm output?)."
 		}
 		fields := strings.Split(versions[1], "\t")
 		if len(fields) != 4 {
-			return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified for " + "but version is not found in the defined repo."
+			return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos (unrecognized helm output?)."
 		}
 		return strings.TrimSpace(fields[1]), ""
 	}

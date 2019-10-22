@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -16,7 +17,7 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 		Description: "creating an empty local chart directory",
 	}
 	if exitCode, msg := cmd.exec(debug, verbose); exitCode != 0 {
-		logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + msg)
+		logError(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", exitCode, msg))
 	}
 
 	return func(t *testing.T) {
@@ -359,7 +360,7 @@ func Test_getChartVersion(t *testing.T) {
 					Name:      "release1",
 					Namespace: "namespace",
 					Version: "1.0.0",
-					Chart: "/local/charts",
+					Chart: "./test_files/chart-test",
 					Enabled:   true,
 				},
 			},
