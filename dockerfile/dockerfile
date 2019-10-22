@@ -1,7 +1,7 @@
 #  This is a docker image for helmsman
 
 
-FROM golang:1.12.9-alpine3.10 as builder
+FROM golang:1.13.3-alpine3.10 as builder
 
 WORKDIR /go/src/
 
@@ -26,8 +26,8 @@ FROM alpine:3.10
 ARG KUBE_VERSION
 ARG HELM_VERSION
 
-ENV KUBE_VERSION ${KUBE_VERSION:-v1.11.3}
-ENV HELM_VERSION ${HELM_VERSION:-v2.11.0}
+ENV KUBE_VERSION ${KUBE_VERSION:-v1.14.8}
+ENV HELM_VERSION ${HELM_VERSION:-v2.15.0}
 ENV HELM_DIFF_VERSION ${HELM_DIFF_VERSION:-v2.11.0+5}
 
 RUN apk --no-cache update \
@@ -53,4 +53,3 @@ RUN mkdir -p ~/.helm/plugins \
 
 WORKDIR /tmp
 # ENTRYPOINT ["/bin/helmsman"]
-
