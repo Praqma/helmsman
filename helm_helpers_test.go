@@ -12,8 +12,8 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 	os.MkdirAll("/tmp/helmsman-tests/myapp", os.ModePerm)
 	os.MkdirAll("/tmp/helmsman-tests/dir-with space/myapp", os.ModePerm)
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm create  '/tmp/helmsman-tests/dir-with space/myapp'"},
+		Cmd:         "helm",
+		Args:        "create '/tmp/helmsman-tests/dir-with space/myapp'",
 		Description: "creating an empty local chart directory",
 	}
 	if exitCode, msg := cmd.exec(debug, verbose); exitCode != 0 {

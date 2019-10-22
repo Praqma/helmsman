@@ -110,13 +110,13 @@ func decide(r *release, s *state) {
 func helmCommand(namespace string) string {
 	if settings.Tillerless {
 		if namespace != "" {
-			return "helm tiller run " + namespace + " -- helm"
+			return "tiller run " + namespace + " -- helm"
 		} else {
-			return "helm tiller run helm"
+			return "tiller run helm"
 		}
 	}
 
-	return "helm"
+	return ""
 }
 
 // helmCommandFromConfig calls helmCommand returning the correct way to invoke
@@ -128,8 +128,8 @@ func helmCommandFromConfig(r *release) string {
 // testRelease creates a Helm command to test a particular release.
 func testRelease(r *release) {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " test " + r.Name + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r)},
+		Cmd:         "helm",
+		Args:        helmCommandFromConfig(r) + " test " + r.Name + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r),
 		Description: generateCmdDescription(r, "running tests for"),
 	}
 	outcome.addCommand(cmd, r.Priority, r)
@@ -139,8 +139,8 @@ func testRelease(r *release) {
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
 func installRelease(r *release) {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " install " + r.Chart + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r)},
+		Cmd:         "helm",
+		Args:        helmCommandFromConfig(r) + " install " + r.Chart + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r),
 		Description: generateCmdDescription(r, "installing"),
 	}
 	outcome.addCommand(cmd, r.Priority, r)
@@ -159,8 +159,8 @@ func rollbackRelease(r *release, rs releaseState) {
 	if r.Namespace == rs.Namespace {
 
 		cmd := command{
-			Cmd:         "bash",
-			Args:        []string{"-c", helmCommandFromConfig(r) + " rollback " + r.Name + " " + getReleaseRevision(rs) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
+			Cmd:         "helm",
+			Args:        helmCommandFromConfig(r) + " rollback " + r.Name + " " + getReleaseRevision(rs) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags(),
 			Description: generateCmdDescription(r, "rolling back"),
 		}
 		outcome.addCommand(cmd, r.Priority, r)
@@ -193,8 +193,8 @@ func deleteRelease(r *release, rs releaseState) {
 	}
 
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " delete " + p + " " + r.Name + getCurrentTillerNamespaceFlag(rs) + getTLSFlags(r) + getDryRunFlags()},
+		Cmd:         "helm",
+		Args:        helmCommandFromConfig(r) + " delete " + p + " " + r.Name + getCurrentTillerNamespaceFlag(rs) + getTLSFlags(r) + getDryRunFlags(),
 		Description: generateCmdDescription(r, "deleting"),
 	}
 	outcome.addCommand(cmd, priority, r)
@@ -269,8 +269,8 @@ func diffRelease(r *release) string {
 	}
 
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " diff " + colorFlag + diffContextFlag + suppressDiffSecretsFlag + "upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + " " + getSetValues(r) + getSetStringValues(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r)},
+		Cmd:         "helm",
+		Args:        helmCommandFromConfig(r) + " diff " + colorFlag + diffContextFlag + suppressDiffSecretsFlag + "upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + " " + getSetValues(r) + getSetStringValues(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r),
 		Description: generateCmdDescription(r, "diffing"),
 	}
 
@@ -292,8 +292,8 @@ func upgradeRelease(r *release) {
 		force = " --force "
 	}
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + force + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r)},
+		Cmd:         "helm",
+		Args:        helmCommandFromConfig(r) + " upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + force + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r),
 		Description: generateCmdDescription(r, "upgrading"),
 	}
 
@@ -305,15 +305,15 @@ func upgradeRelease(r *release) {
 func reInstallRelease(r *release, rs releaseState) {
 
 	delCmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " delete --purge " + r.Name + getCurrentTillerNamespaceFlag(rs) + getTLSFlags(r) + getDryRunFlags()},
+		Cmd:         "helm",
+		Args:        helmCommandFromConfig(r) + " delete --purge " + r.Name + getCurrentTillerNamespaceFlag(rs) + getTLSFlags(r) + getDryRunFlags(),
 		Description: generateCmdDescription(r, "deleting"),
 	}
 	outcome.addCommand(delCmd, r.Priority, r)
 
 	installCmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " install " + r.Chart + " --version " + r.Version + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r)},
+		Cmd:         "helm",
+		Args:        helmCommandFromConfig(r) + " install " + r.Chart + " --version " + r.Version + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r),
 		Description: generateCmdDescription(r, "installing"),
 	}
 	outcome.addCommand(installCmd, r.Priority, r)

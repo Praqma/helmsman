@@ -23,12 +23,6 @@ func Test_toolExists(t *testing.T) {
 				tool: "kubectl",
 			},
 			want: true,
-		}, {
-			name: "test case 3 -- checking ipconfig exists.",
-			args: args{
-				tool: "ipconfig",
-			},
-			want: false,
 		},
 	}
 	for _, tt := range tests {

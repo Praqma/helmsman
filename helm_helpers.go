@@ -47,8 +47,8 @@ type tillerReleases struct {
 // getHelmClientVersion returns Helm client Version
 func getHelmClientVersion() string {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm version --client --short"},
+		Cmd:         "helm",
+		Args:        "version --client --short",
 		Description: "checking Helm version ",
 	}
 
@@ -157,8 +157,8 @@ func helmList(tillerNS, outputFormat, offset string) (string, error) {
 		helmCommand(tillerNS), offset, outputFormat, tillerNS, getNSTLSFlags(tillerNS),
 	)
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", arg},
+		Cmd:         "helm",
+		Args:        arg,
 		Description: "listing all existing releases in namespace [ " + tillerNS + " ]...",
 	}
 
@@ -280,8 +280,8 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 		if validateCurrentChart {
 			if isLocalChart(r.Chart) {
 				cmd := command{
-					Cmd:         "bash",
-					Args:        []string{"-c", "helm inspect chart '" + r.Chart + "'"},
+					Cmd:         "helm",
+					Args:        "inspect chart '" + r.Chart + "'",
 					Description: "validating if chart at " + r.Chart + " is available.",
 				}
 
@@ -301,10 +301,14 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 				}
 
 			} else {
+                version_check := ""
+                if len(r.Version) > 0 {
+                    version_check = " --version '" + r.Version + "'"
+                }
 				cmd := command{
-					Cmd:         "bash",
-					Args:        []string{"-c", "helm search " + r.Chart + " --version " + strconv.Quote(r.Version) + " -l"},
-					Description: "validating if chart " + r.Chart + " with version " + r.Version + " is available in the defined repos.",
+					Cmd:         "helm",
+					Args:        "search " + r.Chart + " -l" + version_check,
+					Description: "validating if chart " + r.Chart + " with version '" + r.Version + "' is available in the defined repos.",
 				}
 
 				if exitCode, result := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
@@ -324,9 +328,13 @@ func getChartVersion(r *release) (string, string) {
 	if isLocalChart(r.Chart) {
 		return r.Version, ""
 	}
+    version_check := ""
+    if len(r.Version) > 0 {
+        version_check = " --version '" + r.Version + "'"
+    }
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm search " + r.Chart + " --version " + strconv.Quote(r.Version)},
+		Cmd:         "helm",
+		Args:        "search " + r.Chart + version_check,
 		Description: "getting latest chart version " + r.Chart + "-" + r.Version + "",
 	}
 
@@ -352,8 +360,8 @@ func waitForTiller(namespace string) {
 	attempt := 0
 
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm list --tiller-namespace " + namespace + getNSTLSFlags(namespace)},
+		Cmd:         "helm",
+		Args:        "list --tiller-namespace " + namespace + getNSTLSFlags(namespace),
 		Description: "checking if helm Tiller is ready in namespace [ " + namespace + " ].",
 	}
 
@@ -400,8 +408,8 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 		}
 
 		cmd := command{
-			Cmd:         "bash",
-			Args:        []string{"-c", "helm repo add " + basicAuth + " " + repoName + " " + strconv.Quote(repoLink)},
+			Cmd:         "helm",
+			Args:        "repo add " + basicAuth + " " + repoName + " '" + repoLink + "'",
 			Description: "adding repo " + repoName,
 		}
 
@@ -412,8 +420,8 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 	}
 
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm repo update "},
+		Cmd:         "helm",
+		Args:        "repo update ",
 		Description: "updating helm repos",
 	}
 
@@ -492,8 +500,8 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 		storageBackend = " --override 'spec.template.spec.containers[0].command'='{/tiller,--storage=secret}'"
 	}
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm init --force-upgrade " + maxHistory + sa + tillerNameSpace + tls + storageBackend},
+		Cmd:         "helm",
+		Args:        "init --force-upgrade " + maxHistory + sa + tillerNameSpace + tls + storageBackend,
 		Description: "initializing helm on the current context and upgrading Tiller on namespace [ " + namespace + " ].",
 	}
 
@@ -506,8 +514,8 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 // initHelmClientOnly initializes the helm client only (without deploying Tiller)
 func initHelmClientOnly() (bool, string) {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm init --client-only "},
+		Cmd:         "helm",
+		Args:        "init --client-only ",
 		Description: "initializing helm on the client only.",
 	}
 
@@ -609,8 +617,8 @@ func deleteUntrackedRelease(release *release, tillerNamespace string) {
 		tls = " --tls --tls-ca-cert " + tillerNamespace + "-ca.cert --tls-cert " + tillerNamespace + "-client.cert --tls-key " + tillerNamespace + "-client.key "
 	}
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommand(tillerNamespace) + " delete --purge " + release.Name + " --tiller-namespace " + tillerNamespace + tls + getDryRunFlags()},
+		Cmd:         "helm",
+		Args:        helmCommand(tillerNamespace) + " delete --purge " + release.Name + " --tiller-namespace " + tillerNamespace + tls + getDryRunFlags(),
 		Description: generateCmdDescription(release, "deleting untracked"),
 	}
 
@@ -620,8 +628,8 @@ func deleteUntrackedRelease(release *release, tillerNamespace string) {
 // decrypt a helm secret file
 func decryptSecret(name string) bool {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommand("") + " secrets dec " + name},
+		Cmd:         "helm",
+		Args:        helmCommand("") + " secrets dec " + name,
 		Description: "Decrypting " + name,
 	}
 
@@ -637,8 +645,8 @@ func decryptSecret(name string) bool {
 // updateChartDep updates dependencies for a local chart
 func updateChartDep(chartPath string) (bool, string) {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm dependency update " + chartPath},
+		Cmd:         "helm",
+		Args:        "dependency update " + chartPath,
 		Description: "Updateing dependency for local chart " + chartPath,
 	}
 

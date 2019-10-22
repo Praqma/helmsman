@@ -11,7 +11,7 @@
     "internal/optional",
     "internal/trace",
     "internal/version",
-    "storage",
+    "storage"
   ]
   pruneopts = "UT"
   revision = "97efc2c9ffd9fe8ef47f7f3203dc60bbca547374"
@@ -48,7 +48,7 @@
   packages = [
     "aws",
     "azure",
-    "gcs",
+    "gcs"
   ]
   pruneopts = "UT"
   revision = "ed3dc3cc70ccc4bef59acf19d4f4fb79f38529e9"
@@ -92,7 +92,7 @@
     "service/s3",
     "service/s3/s3iface",
     "service/s3/s3manager",
-    "service/sts",
+    "service/sts"
   ]
   pruneopts = "UT"
   revision = "c1afd6c3340feedd0a2c1cd929dcb291d4bd09ba"
@@ -107,7 +107,7 @@
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
-    "ptypes/timestamp",
+    "ptypes/timestamp"
   ]
   pruneopts = "UT"
   revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
@@ -118,7 +118,7 @@
   name = "github.com/googleapis/gax-go"
   packages = [
     ".",
-    "v2",
+    "v2"
   ]
   pruneopts = "UT"
   revision = "c8a15bac9b9fe955bd9f900272f9a306465d28cf"
@@ -164,6 +164,14 @@
   revision = "a7b3b318ed4e1ae5b80602b08627267303c68572"
 
 [[projects]]
+  digest = "1:b90909aa4b7f812a3edd47632c78dbd4d151df1ab82374a7e0a955c00504f40a"
+  name = "github.com/mattn/go-shellwords"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "36a9b3c57cb5caa559ff63fb7e9b585f1c00df75"
+  version = "v1.0.6"
+
+[[projects]]
   digest = "1:3b5a3bc35810830ded5e26ef9516e933083a2380d8e57371fdfde3c70d7c6952"
   name = "go.opencensus.io"
   packages = [
@@ -180,7 +188,7 @@
     "trace",
     "trace/internal",
     "trace/propagation",
-    "trace/tracestate",
+    "trace/tracestate"
   ]
   pruneopts = "UT"
   revision = "b7bf3cdb64150a8c8c53b769fdeb2ba581bd4d4b"
@@ -198,7 +206,7 @@
     "http2/hpack",
     "idna",
     "internal/timeseries",
-    "trace",
+    "trace"
   ]
   pruneopts = "UT"
   revision = "ed066c81e75eba56dd9bd2139ade88125b855585"
@@ -212,7 +220,7 @@
     "google",
     "internal",
     "jws",
-    "jwt",
+    "jwt"
   ]
   pruneopts = "UT"
   revision = "5dab4167f31cbd76b407f1486c86b40748bc5073"
@@ -242,7 +250,7 @@
     "unicode/bidi",
     "unicode/cldr",
     "unicode/norm",
-    "unicode/rangetable",
+    "unicode/rangetable"
   ]
   pruneopts = "UT"
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
@@ -261,7 +269,7 @@
     "option",
     "storage/v1",
     "transport/http",
-    "transport/http/internal/propagation",
+    "transport/http/internal/propagation"
   ]
   pruneopts = "UT"
   revision = "19e022d8cf43ce81f046bae8cc18c5397cc7732f"
@@ -280,7 +288,7 @@
     "internal/modules",
     "internal/remote_api",
     "internal/urlfetch",
-    "urlfetch",
+    "urlfetch"
   ]
   pruneopts = "UT"
   revision = "e9657d882bb81064595ca3b56cbe2546bbabf7b1"
@@ -294,7 +302,7 @@
     "googleapis/api/annotations",
     "googleapis/iam/v1",
     "googleapis/rpc/code",
-    "googleapis/rpc/status",
+    "googleapis/rpc/status"
   ]
   pruneopts = "UT"
   revision = "db91494dd46c1fdcbbde05e5ff5eb56df8f7d79a"
@@ -333,7 +341,7 @@
     "resolver/passthrough",
     "stats",
     "status",
-    "tap",
+    "tap"
   ]
   pruneopts = "UT"
   revision = "a02b0774206b209466313a0b525d2c738fe407eb"
@@ -366,8 +374,9 @@
     "github.com/imdario/mergo",
     "github.com/joho/godotenv",
     "github.com/logrusorgru/aurora",
+    "github.com/mattn/go-shellwords",
     "golang.org/x/net/context",
-    "gopkg.in/yaml.v2",
+    "gopkg.in/yaml.v2"
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

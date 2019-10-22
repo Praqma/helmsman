@@ -48,9 +48,9 @@ func Test_plan_addCommand(t *testing.T) {
 			},
 			args: args{
 				c: command{
-					Cmd:         "bash",
-					Args:        []string{"-c", "echo this is fun"},
-					Description: "A bash command execution test with echo.",
+					Cmd:         "echo",
+					Args:        "this is fun",
+					Description: "A command execution test with echo.",
 				},
 			},
 		},

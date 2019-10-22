@@ -6,15 +6,16 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strings"
 	"syscall"
+
+	"github.com/mattn/go-shellwords"
 )
 
 // command type representing all executable commands Helmsman needs
 // to execute in order to inspect the environment/ releases/ charts etc.
 type command struct {
 	Cmd         string
-	Args        []string
+	Args        string
 	Description string
 }
 
@@ -33,14 +34,16 @@ func (c command) printFullCommand() {
 // exec executes the executable command and returns the exit code and execution result
 func (c command) exec(debug bool, verbose bool) (int, string) {
 
+	args, _ := shellwords.Parse(c.Args)
+
 	if debug {
 		log.Println("INFO: " + c.Description)
 	}
 	if verbose {
-		log.Println("VERBOSE: " + strings.Join(c.Args[1:], " "))
+        log.Println(fmt.Sprintf("VERBOSE: Cmd: %s Args: %+q", c.Cmd, args))
 	}
 
-	cmd := exec.Command(c.Cmd, c.Args...)
+	cmd := exec.Command(c.Cmd, args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

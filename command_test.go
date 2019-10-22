@@ -56,7 +56,7 @@ import (
 func Test_command_exec(t *testing.T) {
 	type fields struct {
 		Cmd         string
-		Args        []string
+		Args        string
 		Description string
 	}
 	type args struct {
@@ -73,9 +73,9 @@ func Test_command_exec(t *testing.T) {
 		{
 			name: "echo",
 			fields: fields{
-				Cmd:         "bash",
-				Args:        []string{"-c", "echo this is fun"},
-				Description: "A bash command execution test with echo.",
+				Cmd:         "echo",
+				Args:        "this is fun",
+				Description: "A command execution test with echo.",
 			},
 			args:  args{debug: false, verbose: false},
 			want:  0,
@@ -83,14 +83,14 @@ func Test_command_exec(t *testing.T) {
 		}, {
 			name: "exitCode",
 			fields: fields{
-				Cmd:         "bash",
-				Args:        []string{"-c", "echo $?"},
-				Description: "A bash command execution test with exitCode.",
+				Cmd:         "sh",
+				Args:        "-c 'echo $?'",
+				Description: "A sh command execution test with exitCode.",
 			},
 			args:  args{debug: false},
 			want:  0,
 			want1: "0",
-		},
+        },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
