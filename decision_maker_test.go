@@ -94,7 +94,7 @@ func Test_inspectUpgradeScenario(t *testing.T){
 					Name:      "release1",
 					Namespace: "namespace",
 					Version: "1.0.0",
-					Chart: "/local/charts",
+					Chart: "./test_files/chart-test",
 					Enabled:   true,
 				},
 				s: releaseState{
