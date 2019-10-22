@@ -23,3 +23,16 @@ Contribution to the documentation can be done via pull requests or by opening an
 
 Please provide details of the issue, versions of helmsman, helm and kubernetes and all possible logs.
 
+## Releasing Helmsman
+
+Release is automated from CicrcleCI based on Git tags. [Goreleaser](goreleaser.com) is used to release the binaries and update the release notes on Github while the circleci pipeline builds a set of docker images and pushes them to dockerhub.
+
+The following steps are needed to cut a release (They assume that you are on master and the code is up to date):
+1. Change the version variable in [main.go](main.go)
+2. Update the [release-notes.md](release-notes.md) file with new version and changelog.
+3. (Optional), if new helm versions are required, update the [circleci config](.circleci/config.yml) and add more docker commands.
+4. Commit your changes locally. 
+5. Create a git tag with the following command: `git tag -a <semantic version number> -m "<semantic version number>" <your-last-commit-sha>`
+6. Push your commit and tag with `git push --follow-tags`
+7. This should trigger the [pipeline on circleci](https://circleci.com/gh/Praqma/workflows/helmsman) which eventually releases to Github and dockerhub. 
+ 
