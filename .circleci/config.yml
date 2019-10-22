@@ -29,51 +29,52 @@ jobs:
             export GOOS=linux
             make test
   release:
-    working_directory: "/go/src/helmsman"
-    docker:
-      - image: praqma/helmsman-test
+    working_directory: "/tmp/go/src/helmsman"
+    machine: true
     steps:
       - checkout
       - run:
           name: Release helmsman
           command: |
-            TAG_SHA=$(git rev-parse $(git describe --abbrev=0 --tags))
-            LAST_COMMIT=$(git rev-parse HEAD)
-            if [ "${TAG_SHA}" == "${LAST_COMMIT}" ]; then
-              echo "releasing ..."
-              make release
-            else
-              echo "No release is needed yet."
-              exit 0
-            fi
+            echo "releasing ..."
+            make release
 
-      # - setup_remote_docker
-      # - run:
-      #     name: build docker images and push them to dockerhub
-      #     command: |
-      #       TAG=$(git describe --abbrev=0 --tags)
-      #       docker login -u $DOCKER_USER -p $DOCKERHUB
-      #       docker build -t praqma/helmsman:$TAG-helm-v2.8.1 --build-arg HELM_VERSION=v2.8.1 dockerfile/.
-      #       docker push praqma/helmsman:$TAG-helm-v2.8.1
-      #       docker build -t praqma/helmsman:$TAG-helm-v2.8.0 --build-arg HELM_VERSION=v2.8.0 dockerfile/.
-      #       docker push praqma/helmsman:$TAG-helm-v2.8.0
-      #       docker build -t praqma/helmsman:$TAG-helm-v2.7.2 --build-arg HELM_VERSION=v2.7.2 dockerfile/.
-      #       docker push praqma/helmsman:$TAG-helm-v2.7.2
+      - run:
+          name: build docker images and push them to dockerhub
+          command: |
+            TAG=$(git describe --abbrev=0 --tags)
+            docker login -u $DOCKER_USER -p $DOCKERHUB
+            docker build -t praqma/helmsman:$TAG-helm-v2.14.3 --build-arg HELM_VERSION=v2.14.3 --build-arg HELM_DIFF_VERSION=master dockerfile/. --no-cache
+            docker push praqma/helmsman:$TAG-helm-v2.14.3
+            docker build -t praqma/helmsman:$TAG-helm-v2.13.1 --build-arg HELM_VERSION=v2.13.1 --build-arg HELM_DIFF_VERSION=master dockerfile/. --no-cache
+            docker push praqma/helmsman:$TAG-helm-v2.13.1
+            docker build -t praqma/helmsman:$TAG-helm-v2.12.3 --build-arg HELM_VERSION=v2.12.3 --build-arg HELM_DIFF_VERSION=master dockerfile/. --no-cache
+            docker push praqma/helmsman:$TAG-helm-v2.12.3
+            docker build -t praqma/helmsman:$TAG-helm-v2.11.0 --build-arg HELM_VERSION=v2.11.0 --build-arg HELM_DIFF_VERSION=v2.11.0+5 dockerfile/. --no-cache
+            docker push praqma/helmsman:$TAG-helm-v2.11.0
+            docker build -t praqma/helmsman:$TAG-helm-v2.10.0 --build-arg HELM_VERSION=v2.10.0 --build-arg HELM_DIFF_VERSION=v2.10.0+1 dockerfile/. --no-cache
+            docker push praqma/helmsman:$TAG-helm-v2.10.0
 
 
 workflows:
   version: 2
   build-test-push-release:
     jobs:
-      - build
+      - build:
+          filters:
+            tags:
+              only: /.*/
       - test:
           requires:
             - build
+          filters:
+            tags:
+              only: /.*/  
       - release:
           requires:
             - test
           filters:
             branches:
-              only: master
+              ignore: /.*/
             tags:
-              only: /^v.*/
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/

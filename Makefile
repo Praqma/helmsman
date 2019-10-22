@@ -92,7 +92,7 @@ cross: dep ## Create binaries for all OSs
 
 release: dep ## Generate a new release
 	@cd $(SRCDIR)helmsman && \
-	  goreleaser --release-notes release-notes.md
+	  goreleaser --release-notes release-notes.md --rm-dist
 
 tools: ## Get extra tools used by this makefile
 	@go get -u github.com/golang/dep/cmd/dep
