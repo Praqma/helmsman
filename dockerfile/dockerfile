@@ -16,7 +16,8 @@ RUN cd helmsman \
     && LC_SHA=$(git rev-parse HEAD) \
     && if [ ${LT_SHA} != ${LC_SHA} ]; then TAG=latest-$(date +"%d%m%y"); fi \
     && dep ensure \
-    && CGO_ENABLED=0 GOOS=linux go install -a -ldflags '-X main.version='$TAG' -extldflags "-static"' .
+    && make build
+    # && CGO_ENABLED=0 GOOS=linux go install -a -ldflags '-X main.version='$TAG' -extldflags "-static"' .
 
 
 # The image to keep
