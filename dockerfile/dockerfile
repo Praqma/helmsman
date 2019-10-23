@@ -15,10 +15,7 @@ RUN cd helmsman \
     && LT_SHA=$(git rev-parse ${LastTag}^{}) \
     && LC_SHA=$(git rev-parse HEAD) \
     && if [ ${LT_SHA} != ${LC_SHA} ]; then TAG=latest-$(date +"%d%m%y"); fi \
-    && dep ensure \
     && make build
-    # && CGO_ENABLED=0 GOOS=linux go install -a -ldflags '-X main.version='$TAG' -extldflags "-static"' .
-
 
 # The image to keep
 FROM alpine:3.10
@@ -41,7 +38,7 @@ RUN apk --no-cache update \
     && rm -rf /tmp/linux-amd64 \
     && chmod +x /usr/local/bin/helm
 
-COPY --from=builder /go/bin/helmsman   /bin/helmsman
+COPY --from=builder /go/src/helmsman/helmsman   /bin/helmsman
 
 RUN mkdir -p ~/.helm/plugins \
     && helm plugin install https://github.com/hypnoglow/helm-s3.git \
