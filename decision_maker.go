@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -107,29 +108,33 @@ func decide(r *release, s *state) {
 // operate without a tiller it will return `helm tiller run NAMESPACE -- helm`
 // where NAMESPACE is the namespace that the release is configured to use.
 // If not configured to run without a tiller will just return `helm`.
-func helmCommand(namespace string) string {
+func helmCommand(namespace string) []string {
 	if settings.Tillerless {
+		if runtime.GOOS == "windows" {
+			logError("ERROR: Tillerless Helm plugin is not supported on Windows")
+		}
+		return []string{"tiller", "run", namespace, "--", "helm"}
 		if namespace != "" {
-			return "helm tiller run " + namespace + " -- helm"
+			return []string{"tiller", "run", namespace, "--", "helm"}
 		} else {
-			return "helm tiller run helm"
+			return []string{"tiller", "run", "helm"}
 		}
 	}
 
-	return "helm"
+	return nil
 }
 
 // helmCommandFromConfig calls helmCommand returning the correct way to invoke
 // helm.
-func helmCommandFromConfig(r *release) string {
+func helmCommandFromConfig(r *release) []string {
 	return helmCommand(getDesiredTillerNamespace(r))
 }
 
 // testRelease creates a Helm command to test a particular release.
 func testRelease(r *release) {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " test " + r.Name + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r)},
+		Cmd:         "helm",
+		Args:        concat(helmCommandFromConfig(r), []string{"test", r.Name}, getDesiredTillerNamespaceFlag(r), getTLSFlags(r)),
 		Description: generateCmdDescription(r, "running tests for"),
 	}
 	outcome.addCommand(cmd, r.Priority, r)
@@ -139,8 +144,8 @@ func testRelease(r *release) {
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
 func installRelease(r *release) {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " install " + r.Chart + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r)},
+		Cmd:         "helm",
+		Args:        concat(helmCommandFromConfig(r), []string{"install", r.Chart, "-n", r.Name, "--namespace", r.Namespace}, getValuesFiles(r), []string{"--version", r.Version}, getSetValues(r), getSetStringValues(r), getWait(r), getDesiredTillerNamespaceFlag(r), getTLSFlags(r), getHelmFlags(r)),
 		Description: generateCmdDescription(r, "installing"),
 	}
 	outcome.addCommand(cmd, r.Priority, r)
@@ -159,8 +164,8 @@ func rollbackRelease(r *release, rs releaseState) {
 	if r.Namespace == rs.Namespace {
 
 		cmd := command{
-			Cmd:         "bash",
-			Args:        []string{"-c", helmCommandFromConfig(r) + " rollback " + r.Name + " " + getReleaseRevision(rs) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getTimeout(r) + getNoHooks(r) + getDryRunFlags()},
+			Cmd:         "helm",
+			Args:        concat(helmCommandFromConfig(r), []string{"rollback", r.Name, getReleaseRevision(rs)}, getWait(r), getDesiredTillerNamespaceFlag(r), getTLSFlags(r), getTimeout(r), getNoHooks(r), getDryRunFlags()),
 			Description: generateCmdDescription(r, "rolling back"),
 		}
 		outcome.addCommand(cmd, r.Priority, r)
@@ -193,8 +198,8 @@ func deleteRelease(r *release, rs releaseState) {
 	}
 
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " delete " + p + " " + r.Name + getCurrentTillerNamespaceFlag(rs) + getTLSFlags(r) + getDryRunFlags()},
+		Cmd:         "helm",
+		Args:        concat(helmCommandFromConfig(r), []string{"delete", p, r.Name}, getCurrentTillerNamespaceFlag(rs), getTLSFlags(r), getDryRunFlags()),
 		Description: generateCmdDescription(r, "deleting"),
 	}
 	outcome.addCommand(cmd, priority, r)
@@ -256,21 +261,21 @@ func diffRelease(r *release) string {
 	exitCode := 0
 	msg := ""
 	colorFlag := ""
-	diffContextFlag := ""
+	diffContextFlag := []string{}
 	suppressDiffSecretsFlag := ""
 	if noColors {
-		colorFlag = "--no-color "
+		colorFlag = "--no-color"
 	}
 	if diffContext != -1 {
-		diffContextFlag = "--context " + strconv.Itoa(diffContext) + " "
+		diffContextFlag = []string{"--context", strconv.Itoa(diffContext)}
 	}
 	if suppressDiffSecrets {
-		suppressDiffSecretsFlag = "--suppress-secrets "
+		suppressDiffSecretsFlag = "--suppress-secrets"
 	}
 
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " diff " + colorFlag + diffContextFlag + suppressDiffSecretsFlag + "upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + " " + getSetValues(r) + getSetStringValues(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r)},
+		Cmd:         "helm",
+		Args:        concat(helmCommandFromConfig(r), []string{"diff", colorFlag}, diffContextFlag, []string{suppressDiffSecretsFlag, "upgrade", r.Name, r.Chart}, getValuesFiles(r), []string{"--version", r.Version}, getSetValues(r), getSetStringValues(r), getDesiredTillerNamespaceFlag(r), getTLSFlags(r)),
 		Description: generateCmdDescription(r, "diffing"),
 	}
 
@@ -289,11 +294,11 @@ func diffRelease(r *release) string {
 func upgradeRelease(r *release) {
 	var force string
 	if forceUpgrades {
-		force = " --force "
+		force = "--force"
 	}
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " upgrade " + r.Name + " " + r.Chart + getValuesFiles(r) + " --version " + strconv.Quote(r.Version) + force + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r)},
+		Cmd:         "helm",
+		Args:        concat(helmCommandFromConfig(r), []string{"upgrade", r.Name, r.Chart}, getValuesFiles(r), []string{"--version", r.Version, force}, getSetValues(r), getSetStringValues(r), getWait(r), getDesiredTillerNamespaceFlag(r), getTLSFlags(r), getHelmFlags(r)),
 		Description: generateCmdDescription(r, "upgrading"),
 	}
 
@@ -305,15 +310,15 @@ func upgradeRelease(r *release) {
 func reInstallRelease(r *release, rs releaseState) {
 
 	delCmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " delete --purge " + r.Name + getCurrentTillerNamespaceFlag(rs) + getTLSFlags(r) + getDryRunFlags()},
+		Cmd:         "helm",
+		Args:        concat(helmCommandFromConfig(r), []string{"delete", "--purge", r.Name}, getCurrentTillerNamespaceFlag(rs), getTLSFlags(r), getDryRunFlags()),
 		Description: generateCmdDescription(r, "deleting"),
 	}
 	outcome.addCommand(delCmd, r.Priority, r)
 
 	installCmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommandFromConfig(r) + " install " + r.Chart + " --version " + r.Version + " -n " + r.Name + " --namespace " + r.Namespace + getValuesFiles(r) + getSetValues(r) + getSetStringValues(r) + getWait(r) + getDesiredTillerNamespaceFlag(r) + getTLSFlags(r) + getHelmFlags(r)},
+		Cmd:         "helm",
+		Args:        concat(helmCommandFromConfig(r), []string{"install", r.Chart, "--version", r.Version, "-n", r.Name, "--namespace", r.Namespace}, getValuesFiles(r), getSetValues(r), getSetStringValues(r), getWait(r), getDesiredTillerNamespaceFlag(r), getTLSFlags(r), getHelmFlags(r)),
 		Description: generateCmdDescription(r, "installing"),
 	}
 	outcome.addCommand(installCmd, r.Priority, r)
@@ -342,23 +347,23 @@ func extractChartName(releaseChart string) string {
 var chartNameExtractor = regexp.MustCompile(`[\\/]([^\\/]+)$`)
 
 // getNoHooks returns the no-hooks flag for install/upgrade commands
-func getNoHooks(r *release) string {
+func getNoHooks(r *release) []string {
 	if r.NoHooks {
-		return " --no-hooks "
+		return []string{"--no-hooks"}
 	}
-	return ""
+	return []string{}
 }
 
 // getTimeout returns the timeout flag for install/upgrade commands
-func getTimeout(r *release) string {
+func getTimeout(r *release) []string {
 	if r.Timeout != 0 {
-		return " --timeout " + strconv.Itoa(r.Timeout)
+		return []string{"--timeout", strconv.Itoa(r.Timeout)}
 	}
-	return ""
+	return []string{}
 }
 
 // getValuesFiles return partial install/upgrade release command to substitute the -f flag in Helm.
-func getValuesFiles(r *release) string {
+func getValuesFiles(r *release) []string {
 	var fileList []string
 
 	if r.ValuesFile != "" {
@@ -392,36 +397,37 @@ func getValuesFiles(r *release) string {
 		fileList = append(fileList, r.SecretsFiles...)
 	}
 
-	if len(fileList) > 0 {
-		return " -f " + strings.Join(fileList, " -f ")
+	fileListArgs := []string{}
+	for _, file := range fileList {
+		fileListArgs = append(fileListArgs, "-f", file)
 	}
-	return ""
+	return fileListArgs
 }
 
 // getSetValues returns --set params to be used with helm install/upgrade commands
-func getSetValues(r *release) string {
-	result := ""
+func getSetValues(r *release) []string {
+	result := []string{}
 	for k, v := range r.Set {
-		result = result + " --set " + k + "=\"" + strings.Replace(v, ",", "\\,", -1) + "\""
+		result = append(result, "--set", k+"="+strings.Replace(v, ",", "\\,", -1)+"")
 	}
 	return result
 }
 
 // getSetStringValues returns --set-string params to be used with helm install/upgrade commands
-func getSetStringValues(r *release) string {
-	result := ""
+func getSetStringValues(r *release) []string {
+	result := []string{}
 	for k, v := range r.SetString {
-		result = result + " --set-string " + k + "=\"" + strings.Replace(v, ",", "\\,", -1) + "\""
+		result = append(result, "--set-string", k+"="+strings.Replace(v, ",", "\\,", -1)+"")
 	}
 	return result
 }
 
 // getWait returns a partial helm command containing the helm wait flag (--wait) if the wait flag for the release was set to true
 // Otherwise, retruns an empty string
-func getWait(r *release) string {
-	result := ""
+func getWait(r *release) []string {
+	result := []string{}
 	if r.Wait {
-		result = " --wait"
+		result = append(result, "--wait")
 	}
 	return result
 }
@@ -463,8 +469,8 @@ func isProtected(r *release, rs releaseState) bool {
 }
 
 // getDesiredTillerNamespaceFlag returns a tiller-namespace flag with which a release is desired to be maintained
-func getDesiredTillerNamespaceFlag(r *release) string {
-	return " --tiller-namespace " + getDesiredTillerNamespace(r)
+func getDesiredTillerNamespaceFlag(r *release) []string {
+	return []string{"--tiller-namespace", getDesiredTillerNamespace(r)}
 }
 
 // getDesiredTillerNamespace returns the Tiller namespace with which a release should be managed
@@ -479,35 +485,35 @@ func getDesiredTillerNamespace(r *release) string {
 }
 
 // getCurrentTillerNamespaceFlag returns the tiller-namespace with which a release is currently maintained
-func getCurrentTillerNamespaceFlag(rs releaseState) string {
+func getCurrentTillerNamespaceFlag(rs releaseState) []string {
 	if rs.TillerNamespace != "" {
-		return " --tiller-namespace " + rs.TillerNamespace
+		return []string{"--tiller-namespace", rs.TillerNamespace}
 	}
-	return ""
+	return []string{}
 }
 
 // getTLSFlags returns TLS flags with which a release is maintained
 // If the release where the namespace is to be deployed has Tiller deployed, the TLS flags will use certs/keys for that namespace (if any)
 // otherwise, it will be the certs/keys for the kube-system namespace.
-func getTLSFlags(r *release) string {
-	tls := ""
+func getTLSFlags(r *release) []string {
+	tls := []string{}
 	ns := s.Namespaces[r.TillerNamespace]
 	if r.TillerNamespace != "" {
 		if tillerTLSEnabled(ns) {
 
-			tls = " --tls --tls-ca-cert " + r.TillerNamespace + "-ca.cert --tls-cert " + r.TillerNamespace + "-client.cert --tls-key " + r.TillerNamespace + "-client.key "
+			tls = append(tls, "--tls", "--tls-ca-cert", r.TillerNamespace+"-ca.cert", "--tls-cert", r.TillerNamespace+"-client.cert", "--tls-key", r.TillerNamespace+"-client.key")
 		}
 	} else if s.Namespaces[r.Namespace].InstallTiller {
 		ns := s.Namespaces[r.Namespace]
 		if tillerTLSEnabled(ns) {
 
-			tls = " --tls --tls-ca-cert " + r.Namespace + "-ca.cert --tls-cert " + r.Namespace + "-client.cert --tls-key " + r.Namespace + "-client.key "
+			tls = append(tls, "--tls", "--tls-ca-cert", r.Namespace+"-ca.cert", "--tls-cert", r.Namespace+"-client.cert", "--tls-key", r.Namespace+"-client.key")
 		}
 	} else {
 		ns := s.Namespaces["kube-system"]
 		if tillerTLSEnabled(ns) {
 
-			tls = " --tls --tls-ca-cert kube-system-ca.cert --tls-cert kube-system-client.cert --tls-key kube-system-client.key "
+			tls = append(tls, "--tls", "--tls-ca-cert", "kube-system-ca.cert", "--tls-cert", "kube-system-client.cert", "--tls-key", "kube-system-client.key")
 		}
 	}
 
@@ -515,21 +521,21 @@ func getTLSFlags(r *release) string {
 }
 
 // getDryRunFlags returns dry-run flag
-func getDryRunFlags() string {
+func getDryRunFlags() []string {
 	if dryRun {
-		return " --dry-run --debug "
+		return []string{"--dry-run", "--debug"}
 	}
-	return ""
+	return []string{}
 }
 
 // getHelmFlags returns helm flags
-func getHelmFlags(r *release) string {
-	var flags string
+func getHelmFlags(r *release) []string {
+	var flags []string
 
 	for _, flag := range r.HelmFlags {
-		flags = flags + " " + flag
+		flags = append(flags, flag)
 	}
-	return getNoHooks(r) + getTimeout(r) + getDryRunFlags() + flags
+	return concat(getNoHooks(r), getTimeout(r), getDryRunFlags(), flags)
 }
 
 func checkChartDepUpdate(r *release) {

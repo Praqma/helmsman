@@ -1,6 +1,7 @@
 package main
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -11,7 +12,7 @@ func Test_getValuesFiles(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want string
+		want []string
 	}{
 		{
 			name: "test case 1",
@@ -29,7 +30,7 @@ func Test_getValuesFiles(t *testing.T) {
 				},
 				//s: st,
 			},
-			want: " -f test_files/values.yaml",
+			want: []string{"-f", "test_files/values.yaml"},
 		},
 		{
 			name: "test case 2",
@@ -47,7 +48,7 @@ func Test_getValuesFiles(t *testing.T) {
 				},
 				//s: st,
 			},
-			want: " -f test_files/values.yaml",
+			want: []string{"-f", "test_files/values.yaml"},
 		},
 		{
 			name: "test case 1",
@@ -65,12 +66,12 @@ func Test_getValuesFiles(t *testing.T) {
 				},
 				//s: st,
 			},
-			want: " -f test_files/values.yaml -f test_files/values2.yaml",
+			want: []string{"-f", "test_files/values.yaml", "-f", "test_files/values2.yaml"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getValuesFiles(tt.args.r); got != tt.want {
+			if got := getValuesFiles(tt.args.r); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("getValuesFiles() = %v, want %v", got, tt.want)
 			}
 		})

@@ -548,3 +548,12 @@ func generateDecisionMessage(r *release, message string, isTillerAware bool) str
 	}
 	return baseMessage
 }
+
+// concat appends all slices to a single slice
+func concat(slices ...[]string) []string {
+	slice := []string{}
+	for _, item := range slices {
+		slice = append(slice, item...)
+	}
+	return slice
+}

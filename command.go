@@ -33,14 +33,22 @@ func (c command) printFullCommand() {
 // exec executes the executable command and returns the exit code and execution result
 func (c command) exec(debug bool, verbose bool) (int, string) {
 
+	// Only use non-empty string args
+	args := []string{}
+	for _, str := range c.Args {
+		if str != "" {
+			args = append(args, str)
+		}
+	}
+
 	if debug {
 		log.Println("INFO: " + c.Description)
 	}
 	if verbose {
-		log.Println("VERBOSE: " + strings.Join(c.Args[1:], " "))
+		log.Println("VERBOSE: " + c.Cmd + " " + strings.Join(args, " "))
 	}
 
-	cmd := exec.Command(c.Cmd, c.Args...)
+	cmd := exec.Command(c.Cmd, args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -50,7 +58,8 @@ func (c command) exec(debug bool, verbose bool) (int, string) {
 	cmd.Env = append(os.Environ(), "HELM_TILLER_SILENT=true")
 
 	if err := cmd.Start(); err != nil {
-		logError("ERROR: cmd.Start: " + err.Error())
+		log.Println("ERROR: cmd.Start: " + err.Error())
+		return 1, err.Error()
 	}
 
 	if err := cmd.Wait(); err != nil {
