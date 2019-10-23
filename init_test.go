@@ -24,9 +24,9 @@ func Test_toolExists(t *testing.T) {
 			},
 			want: true,
 		}, {
-			name: "test case 3 -- checking ipconfig exists.",
+			name: "test case 3 -- checking nonExistingTool exists.",
 			args: args{
-				tool: "ipconfig",
+				tool: "nonExistingTool",
 			},
 			want: false,
 		},
