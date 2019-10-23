@@ -272,10 +272,8 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 
 	for app, r := range apps {
 		validateCurrentChart := true
-		if len(targetMap) > 0 {
-			if _, ok := targetMap[r.Name]; !ok {
-				validateCurrentChart = false
-			}
+		if !isReleaseConsideredToRun(r) {
+			validateCurrentChart = false
 		}
 		if validateCurrentChart {
 			if isLocalChart(r.Chart) {
@@ -590,10 +588,8 @@ func cleanUntrackedReleases() {
 	} else {
 		for ns, releases := range toDelete {
 			for r := range releases {
-				if len(targetMap) > 0 {
-					if _, inTarget := targetMap[r.Name]; !inTarget {
-						logDecision(generateDecisionMessage(r, "untracked release [ "+r.Name+" ] is ignored by target flag. Skipping.", false), -800, ignored)
-					}
+				if isReleaseConsideredToRun(r) {
+					logDecision(generateDecisionMessage(r, "untracked release [ "+r.Name+" ] is ignored by target flag. Skipping.", false), -800, ignored)
 				} else {
 					logDecision(generateDecisionMessage(r, "untracked release found: release [ "+r.Name+" ]. It will be deleted", true), -800, delete)
 					deleteUntrackedRelease(r, ns)

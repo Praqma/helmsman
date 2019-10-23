@@ -29,12 +29,10 @@ func makePlan(s *state) *plan {
 // decide makes a decision about what commands (actions) need to be executed
 // to make a release section of the desired state come true.
 func decide(r *release, s *state) {
-	// check for presence in defined targets
-	if len(targetMap) > 0 {
-		if _, ok := targetMap[r.Name]; !ok {
-			logDecision(generateDecisionMessage(r, "release [ "+r.Name+" ] is ignored by target flag. Skipping.", false), r.Priority, ignored)
-			return
-		}
+	// check for presence in defined targets or groups
+	if !isReleaseConsideredToRun(r) {
+		logDecision(generateDecisionMessage(r, "release [ "+r.Name+" ] is ignored due to passed constraints. Skipping.", false), r.Priority, ignored)
+		return
 	}
 
 	if destroy {

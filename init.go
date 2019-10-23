@@ -45,6 +45,7 @@ func init() {
 	flag.BoolVar(&debug, "debug", false, "show the execution logs")
 	flag.BoolVar(&dryRun, "dry-run", false, "apply the dry-run option for helm commands.")
 	flag.Var(&target, "target", "limit execution to specific app.")
+	flag.Var(&group, "group", "limit execution to specific group of apps.")
 	flag.BoolVar(&destroy, "destroy", false, "delete all deployed releases. Purge delete is used if the purge option is set to true for the releases.")
 	flag.BoolVar(&v, "v", false, "show the version")
 	flag.BoolVar(&verbose, "verbose", false, "show verbose execution logs")
@@ -87,6 +88,10 @@ func init() {
 
 	if destroy && apply {
 		logError("ERROR: --destroy and --apply can't be used together.")
+	}
+
+	if len(target) > 0 && len(group) > 0 {
+		logError("ERROR: --target and --group can't be used together.")
 	}
 
 	helmVersion = strings.TrimSpace(strings.SplitN(getHelmClientVersion(), ": ", 2)[1])
@@ -203,6 +208,13 @@ func init() {
 		targetMap = map[string]bool{}
 		for _, v := range target {
 			targetMap[v] = true
+		}
+	}
+
+	if len(group) > 0 {
+		groupMap = map[string]bool{}
+		for _, v := range group {
+			groupMap[v] = true
 		}
 	}
 
