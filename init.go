@@ -212,8 +212,8 @@ func init() {
 // It takes as input the tool's command to check if it is recognizable or not. e.g. helm or kubectl
 func toolExists(tool string) bool {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", tool},
+		Cmd:         tool,
+		Args:        []string{},
 		Description: "validating that " + tool + " is installed.",
 	}
 
@@ -230,8 +230,8 @@ func toolExists(tool string) bool {
 // It takes as input the plugin's name to check if it is recognizable or not. e.g. diff
 func helmPluginExists(plugin string) bool {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm plugin list"},
+		Cmd:         "helm",
+		Args:        []string{"plugin", "list"},
 		Description: "validating that " + plugin + " is installed.",
 	}
 
