@@ -15,6 +15,7 @@ type release struct {
 	Description     string            `yaml:"description"`
 	Namespace       string            `yaml:"namespace"`
 	Enabled         bool              `yaml:"enabled"`
+	Group           string            `yaml:"group"`
 	Chart           string            `yaml:"chart"`
 	Version         string            `yaml:"version"`
 	ValuesFile      string            `yaml:"valuesFile"`

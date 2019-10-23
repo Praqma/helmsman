@@ -557,3 +557,21 @@ func concat(slices ...[]string) []string {
 	}
 	return slice
 }
+
+func isReleaseConsideredToRun(r *release) bool {
+	if len(targetMap) > 0 {
+		if _, ok := targetMap[r.Name]; ok {
+			return true
+		} else {
+			return false
+		}
+	}
+	if len(groupMap) > 0 {
+		if _, ok := groupMap[r.Group]; ok {
+			return true
+		} else {
+			return false
+		}
+	}
+	return true
+}
