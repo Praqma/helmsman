@@ -14,11 +14,11 @@ func validateServiceAccount(sa string, namespace string) (bool, string) {
 	if namespace == "" {
 		namespace = "default"
 	}
-	ns := " -n " + namespace
+	ns := []string{"-n", namespace}
 
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "kubectl get serviceaccount " + sa + ns},
+		Cmd:         "kubectl",
+		Args:        append([]string{"get", "serviceaccount", sa}, ns...),
 		Description: "validating if serviceaccount [ " + sa + " ] exists in namespace [ " + namespace + " ].",
 	}
 
@@ -88,8 +88,8 @@ func overrideAppsNamespace(newNs string) {
 // createNamespace creates a namespace in the k8s cluster
 func createNamespace(ns string) {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "kubectl create namespace " + ns},
+		Cmd:         "kubectl",
+		Args:        []string{"create", "namespace", ns},
 		Description: "creating namespace  " + ns,
 	}
 	exitCode, _ := cmd.exec(debug, verbose)
@@ -103,8 +103,8 @@ func createNamespace(ns string) {
 func labelNamespace(ns string, labels map[string]string) {
 	for k, v := range labels {
 		cmd := command{
-			Cmd:         "bash",
-			Args:        []string{"-c", "kubectl label --overwrite namespace/" + ns + " " + k + "=" + v},
+			Cmd:         "kubectl",
+			Args:        []string{"label", "--overwrite", "namespace/" + ns, k + "=" + v},
 			Description: "labeling namespace  " + ns,
 		}
 
@@ -120,8 +120,8 @@ func labelNamespace(ns string, labels map[string]string) {
 func annotateNamespace(ns string, labels map[string]string) {
 	for k, v := range labels {
 		cmd := command{
-			Cmd:         "bash",
-			Args:        []string{"-c", "kubectl annotate --overwrite namespace/" + ns + " " + k + "=" + v},
+			Cmd:         "kubectl",
+			Args:        []string{"annotate", "--overwrite", "namespace/" + ns, k + "=" + v},
 			Description: "annotating namespace  " + ns,
 		}
 
@@ -161,8 +161,8 @@ spec:
 	}
 
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "kubectl apply -f temp-LimitRange.yaml -n " + ns},
+		Cmd:         "kubectl",
+		Args:        []string{"apply", "-f", "temp-LimitRange.yaml", "-n", ns},
 		Description: "creating LimitRange in namespace [ " + ns + " ]",
 	}
 
@@ -232,23 +232,23 @@ func createContext() (bool, string) {
 	}
 
 	// connecting to the cluster
-	setCredentialsCmd := ""
+	setCredentialsCmdArgs := []string{}
 	if s.Settings.BearerToken {
 		token := readFile(tokenPath)
 		if s.Settings.Username == "" {
 			s.Settings.Username = "helmsman"
 		}
-		setCredentialsCmd = "kubectl config set-credentials " + s.Settings.Username + " --token=" + token
+		setCredentialsCmdArgs = append(setCredentialsCmdArgs, "config", "set-credentials", s.Settings.Username, "--token="+token)
 	} else {
-		setCredentialsCmd = "kubectl config set-credentials " + s.Settings.Username + " --username=" + s.Settings.Username +
-			" --password=" + s.Settings.Password + " --client-key=" + caKey
+		setCredentialsCmdArgs = append(setCredentialsCmdArgs, "config", "set-credentials", s.Settings.Username, "--username="+s.Settings.Username,
+			"--password="+s.Settings.Password, "--client-key="+caKey)
 		if caClient != "" {
-			setCredentialsCmd = setCredentialsCmd + " --client-certificate=" + caClient
+			setCredentialsCmdArgs = append(setCredentialsCmdArgs, "--client-certificate="+caClient)
 		}
 	}
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", setCredentialsCmd},
+		Cmd:         "kubectl",
+		Args:        setCredentialsCmdArgs,
 		Description: "creating kubectl context - setting credentials.",
 	}
 
@@ -257,9 +257,8 @@ func createContext() (bool, string) {
 	}
 
 	cmd = command{
-		Cmd: "bash",
-		Args: []string{"-c", "kubectl config set-cluster " + s.Settings.KubeContext + " --server=" + s.Settings.ClusterURI +
-			" --certificate-authority=" + caCrt},
+		Cmd:         "kubectl",
+		Args:        []string{"config", "set-cluster", s.Settings.KubeContext, "--server=" + s.Settings.ClusterURI, "--certificate-authority=" + caCrt},
 		Description: "creating kubectl context - setting cluster.",
 	}
 
@@ -268,9 +267,8 @@ func createContext() (bool, string) {
 	}
 
 	cmd = command{
-		Cmd: "bash",
-		Args: []string{"-c", "kubectl config set-context " + s.Settings.KubeContext + " --cluster=" + s.Settings.KubeContext +
-			" --user=" + s.Settings.Username},
+		Cmd:         "kubectl",
+		Args:        []string{"config", "set-context", s.Settings.KubeContext, "--cluster=" + s.Settings.KubeContext, "--user=" + s.Settings.Username},
 		Description: "creating kubectl context - setting context.",
 	}
 
@@ -293,8 +291,8 @@ func setKubeContext(context string) bool {
 	}
 
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "kubectl config use-context " + context},
+		Cmd:         "kubectl",
+		Args:        []string{"config", "use-context", context},
 		Description: "setting kubectl context to [ " + context + " ]",
 	}
 
@@ -312,8 +310,8 @@ func setKubeContext(context string) bool {
 // It returns false if no context is set.
 func getKubeContext() bool {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "kubectl config current-context"},
+		Cmd:         "kubectl",
+		Args:        []string{"config", "current-context"},
 		Description: "getting kubectl context",
 	}
 
@@ -330,8 +328,8 @@ func getKubeContext() bool {
 // createServiceAccount creates a service account in a given namespace and associates it with a cluster-admin role
 func createServiceAccount(saName string, namespace string) (bool, string) {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "kubectl create serviceaccount -n " + namespace + " " + saName},
+		Cmd:         "kubectl",
+		Args:        []string{"create", "serviceaccount", "-n", namespace, saName},
 		Description: "creating service account [ " + saName + " ] in namespace [ " + namespace + " ]",
 	}
 
@@ -364,8 +362,8 @@ func createRoleBinding(role string, saName string, namespace string) (bool, stri
 
 	log.Println("INFO: creating " + resource + " for service account [ " + saName + " ] in namespace [ " + namespace + " ] with role: " + role + ".")
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "kubectl create " + resource + " " + bindingName + " " + bindingOption + " --serviceaccount " + namespace + ":" + saName + " -n " + namespace},
+		Cmd:         "kubectl",
+		Args:        []string{"create", resource, bindingName, bindingOption, "--serviceaccount", namespace + ":" + saName, "-n", namespace},
 		Description: "creating " + resource + " for service account [ " + saName + " ] in namespace [ " + namespace + " ] with role: " + role,
 	}
 
@@ -396,8 +394,8 @@ func createRole(namespace string, role string, roleTemplateFile string) (bool, s
 	replaceStringInFile(resource, "temp-modified-role.yaml", map[string]string{"<<namespace>>": namespace, "<<role-name>>": role})
 
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "kubectl apply -f temp-modified-role.yaml "},
+		Cmd:         "kubectl",
+		Args:        []string{"apply", "-f", "temp-modified-role.yaml"},
 		Description: "creating role [" + role + "] in namespace [ " + namespace + " ]",
 	}
 
@@ -423,8 +421,8 @@ func labelResource(r *release) {
 		}
 
 		cmd := command{
-			Cmd:         "bash",
-			Args:        []string{"-c", "kubectl label " + storageBackend + " -n " + getDesiredTillerNamespace(r) + " -l NAME=" + r.Name + " MANAGED-BY=HELMSMAN NAMESPACE=" + r.Namespace + " TILLER_NAMESPACE=" + getDesiredTillerNamespace(r) + "  --overwrite"},
+			Cmd:         "kubectl",
+			Args:        []string{"label", storageBackend, "-n", getDesiredTillerNamespace(r), "-l", "NAME=" + r.Name, "MANAGED-BY=HELMSMAN", "NAMESPACE=" + r.Namespace, "TILLER_NAMESPACE=" + getDesiredTillerNamespace(r), "--overwrite"},
 			Description: "applying labels to Helm state in [ " + getDesiredTillerNamespace(r) + " ] for " + r.Name,
 		}
 
@@ -463,8 +461,8 @@ func getHelmsmanReleases() map[string]map[*release]bool {
 
 	for _, ns := range namespaces {
 		cmd := command{
-			Cmd:         "bash",
-			Args:        []string{"-c", "kubectl get " + storageBackend + " -n " + ns + " -l MANAGED-BY=HELMSMAN"},
+			Cmd:         "kubectl",
+			Args:        []string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN"},
 			Description: "getting helm releases which are managed by Helmsman in namespace [[ " + ns + " ]].",
 		}
 
@@ -500,8 +498,8 @@ func getHelmsmanReleases() map[string]map[*release]bool {
 // getKubectlClientVersion returns kubectl client version
 func getKubectlClientVersion() string {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "kubectl version --client --short"},
+		Cmd:         "kubectl",
+		Args:        []string{"version", "--client", "--short"},
 		Description: "checking kubectl version ",
 	}
 

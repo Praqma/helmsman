@@ -9,11 +9,11 @@ import (
 
 func setupTestCase(t *testing.T) func(t *testing.T) {
 	t.Log("setup test case")
-	os.MkdirAll("/tmp/helmsman-tests/myapp", os.ModePerm)
-	os.MkdirAll("/tmp/helmsman-tests/dir-with space/myapp", os.ModePerm)
+	os.MkdirAll(os.TempDir()+"/helmsman-tests/myapp", os.ModePerm)
+	os.MkdirAll(os.TempDir()+"/helmsman-tests/dir-with space/myapp", os.ModePerm)
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm create  '/tmp/helmsman-tests/dir-with space/myapp'"},
+		Cmd:         "helm",
+		Args:        []string{"create", os.TempDir() + "/helmsman-tests/dir-with space/myapp"},
 		Description: "creating an empty local chart directory",
 	}
 	if exitCode, msg := cmd.exec(debug, verbose); exitCode != 0 {
@@ -30,13 +30,13 @@ func Test_validateReleaseCharts(t *testing.T) {
 		apps map[string]*release
 	}
 	tests := []struct {
-		name string
+		name       string
 		targetFlag []string
-		args args
-		want bool
+		args       args
+		want       bool
 	}{
 		{
-			name: "test case 1: valid local path with no chart",
+			name:       "test case 1: valid local path with no chart",
 			targetFlag: []string{},
 			args: args{
 				apps: map[string]*release{
@@ -45,7 +45,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 						Description:     "",
 						Namespace:       "",
 						Enabled:         true,
-						Chart:           "/tmp/helmsman-tests/myapp",
+						Chart:           os.TempDir() + "/helmsman-tests/myapp",
 						Version:         "",
 						ValuesFile:      "",
 						ValuesFiles:     []string{},
@@ -67,7 +67,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 2: invalid local path",
+			name:       "test case 2: invalid local path",
 			targetFlag: []string{},
 			args: args{
 				apps: map[string]*release{
@@ -76,7 +76,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 						Description:     "",
 						Namespace:       "",
 						Enabled:         true,
-						Chart:           "/tmp/does-not-exist/myapp",
+						Chart:           os.TempDir() + "/does-not-exist/myapp",
 						Version:         "",
 						ValuesFile:      "",
 						ValuesFiles:     []string{},
@@ -98,7 +98,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name: "test case 3: valid chart local path with whitespace",
+			name:       "test case 3: valid chart local path with whitespace",
 			targetFlag: []string{},
 			args: args{
 				apps: map[string]*release{
@@ -107,7 +107,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 						Description:     "",
 						Namespace:       "",
 						Enabled:         true,
-						Chart:           "/tmp/helmsman-tests/dir-with space/myapp",
+						Chart:           os.TempDir() + "/helmsman-tests/dir-with space/myapp",
 						Version:         "0.1.0",
 						ValuesFile:      "",
 						ValuesFiles:     []string{},
@@ -129,7 +129,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			},
 			want: true,
 		}, {
-			name: "test case 4: valid chart from repo",
+			name:       "test case 4: valid chart from repo",
 			targetFlag: []string{},
 			args: args{
 				apps: map[string]*release{
@@ -160,7 +160,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			},
 			want: true,
 		}, {
-			name: "test case 5: invalid local path for chart ignored with -target flag, while other app was targeted",
+			name:       "test case 5: invalid local path for chart ignored with -target flag, while other app was targeted",
 			targetFlag: []string{"notThisOne"},
 			args: args{
 				apps: map[string]*release{
@@ -169,7 +169,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 						Description:     "",
 						Namespace:       "",
 						Enabled:         true,
-						Chart:           "/tmp/does-not-exist/myapp",
+						Chart:           os.TempDir() + "/does-not-exist/myapp",
 						Version:         "",
 						ValuesFile:      "",
 						ValuesFiles:     []string{},
@@ -191,7 +191,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			},
 			want: true,
 		}, {
-			name: "test case 6: invalid local path for chart included with -target flag",
+			name:       "test case 6: invalid local path for chart included with -target flag",
 			targetFlag: []string{"app"},
 			args: args{
 				apps: map[string]*release{
@@ -200,7 +200,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 						Description:     "",
 						Namespace:       "",
 						Enabled:         true,
-						Chart:           "/tmp/does-not-exist/myapp",
+						Chart:           os.TempDir() + "/does-not-exist/myapp",
 						Version:         "",
 						ValuesFile:      "",
 						ValuesFiles:     []string{},
@@ -234,7 +234,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 				targetMap[target] = true
 			}
 			if got, msg := validateReleaseCharts(tt.args.apps); got != tt.want {
-				t.Errorf("getReleaseChartName() = %v, want %v , msg: %v", got, tt.want, msg)
+				t.Errorf("validateReleaseCharts() = %v, want %v , msg: %v", got, tt.want, msg)
 			}
 		})
 	}
@@ -335,7 +335,7 @@ func Test_getReleaseChartVersion(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Log(tt.want)
 			if got := getReleaseChartVersion(tt.args.r); got != tt.want {
-				t.Errorf("getReleaseChartName() = %v, want %v", got, tt.want)
+				t.Errorf("getReleaseChartVersion() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -344,7 +344,6 @@ func Test_getReleaseChartVersion(t *testing.T) {
 
 func Test_getChartVersion(t *testing.T) {
 	// version string = the first semver-valid string after the last hypen in the chart string.
-
 	type args struct {
 		r *release
 	}
