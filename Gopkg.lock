@@ -42,18 +42,6 @@
   version = "v0.3.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:6b0fcd019bd122e25de32a7e4c1f9ab6e5413cb8c6e508d882b211d2e2f6e629"
-  name = "github.com/Praqma/helmsman"
-  packages = [
-    "aws",
-    "azure",
-    "gcs",
-  ]
-  pruneopts = "UT"
-  revision = "ed3dc3cc70ccc4bef59acf19d4f4fb79f38529e9"
-
-[[projects]]
   digest = "1:c78f02a2c6a138255ce52eefe18b62fe4e89815e4289819582c643ce51cdbf84"
   name = "github.com/aws/aws-sdk-go"
   packages = [
@@ -355,9 +343,6 @@
     "github.com/Azure/azure-pipeline-go/pipeline",
     "github.com/Azure/azure-storage-blob-go/azblob",
     "github.com/BurntSushi/toml",
-    "github.com/Praqma/helmsman/aws",
-    "github.com/Praqma/helmsman/azure",
-    "github.com/Praqma/helmsman/gcs",
     "github.com/aws/aws-sdk-go/aws",
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/s3",
