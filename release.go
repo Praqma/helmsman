@@ -15,6 +15,7 @@ type release struct {
 	Description     string            `yaml:"description"`
 	Namespace       string            `yaml:"namespace"`
 	Enabled         bool              `yaml:"enabled"`
+	Group           string            `yaml:"group"`
 	Chart           string            `yaml:"chart"`
 	Version         string            `yaml:"version"`
 	ValuesFile      string            `yaml:"valuesFile"`
@@ -32,6 +33,24 @@ type release struct {
 	HelmFlags       []string          `yaml:"helmFlags"`
 	NoHooks         bool              `yaml:"noHooks"`
 	Timeout         int               `yaml:"timeout"`
+}
+
+func (r *release) isReleaseConsideredToRun() bool {
+	if len(targetMap) > 0 {
+		if _, ok := targetMap[r.Name]; ok {
+			return true
+		} else {
+			return false
+		}
+	}
+	if len(groupMap) > 0 {
+		if _, ok := groupMap[r.Group]; ok {
+			return true
+		} else {
+			return false
+		}
+	}
+	return true
 }
 
 // validateRelease validates if a release inside a desired state meets the specifications or not.

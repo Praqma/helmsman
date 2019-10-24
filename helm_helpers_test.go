@@ -32,6 +32,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 	tests := []struct {
 		name       string
 		targetFlag []string
+		groupFlag  []string
 		args       args
 		want       bool
 	}{
@@ -229,9 +230,12 @@ func Test_validateReleaseCharts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			targetMap = make(map[string]bool)
-
+			groupMap = make(map[string]bool)
 			for _, target := range tt.targetFlag {
 				targetMap[target] = true
+			}
+			for _, group := range tt.groupFlag {
+				groupMap[group] = true
 			}
 			if got, msg := validateReleaseCharts(tt.args.apps); got != tt.want {
 				t.Errorf("validateReleaseCharts() = %v, want %v , msg: %v", got, tt.want, msg)
