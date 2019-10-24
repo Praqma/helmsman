@@ -99,7 +99,7 @@ func Test_command_exec(t *testing.T) {
 				Args:        tt.fields.Args,
 				Description: tt.fields.Description,
 			}
-			got, got1 := c.exec(tt.args.debug, tt.args.verbose)
+			got, got1, _ := c.exec(tt.args.debug, tt.args.verbose)
 			if got != tt.want {
 				t.Errorf("command.exec() got = %v, want %v", got, tt.want)
 			}

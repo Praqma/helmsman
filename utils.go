@@ -587,3 +587,17 @@ func concat(slices ...[]string) []string {
 	}
 	return slice
 }
+
+func writeStringToFile(filename string, data string) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = io.WriteString(file, data)
+	if err != nil {
+		return err
+	}
+	return file.Sync()
+}

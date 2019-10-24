@@ -52,7 +52,7 @@ func getHelmClientVersion() string {
 		Description: "checking Helm version ",
 	}
 
-	exitCode, result := cmd.exec(debug, false)
+	exitCode, result, _ := cmd.exec(debug, false)
 	if exitCode != 0 {
 		logError("ERROR: while checking helm version: " + result)
 	}
@@ -163,7 +163,7 @@ func helmList(tillerNS string, outputFormat []string, offset string) (string, er
 		Description: "listing all existing releases in namespace [ " + tillerNS + " ]...",
 	}
 
-	exitCode, result := cmd.exec(debug, verbose)
+	exitCode, result, _ := cmd.exec(debug, verbose)
 	if exitCode != 0 {
 		if !apply {
 			if strings.Contains(result, "incompatible versions") {
@@ -285,7 +285,7 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 
 				var output string
 				var exitCode int
-				if exitCode, output = cmd.exec(debug, verbose); exitCode != 0 {
+				if exitCode, output, _ = cmd.exec(debug, verbose); exitCode != 0 {
 					maybeRepo := filepath.Base(filepath.Dir(r.Chart))
 					return false, "ERROR: chart at " + r.Chart + " for app [" + app + "] could not be found. Did you mean to add a repo named '" + maybeRepo + "'?"
 				}
@@ -309,7 +309,7 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 					Description: "validating if chart " + r.Chart + " with version " + r.Version + " is available in the defined repos.",
 				}
 
-				if exitCode, result := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
+				if exitCode, result, _ := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
 					return false, "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified for " +
 						"app [" + app + "] but is not found in the defined repos."
 				}
@@ -337,7 +337,7 @@ func getChartVersion(r *release) (string, string) {
 		result   string
 	)
 
-	if exitCode, result = cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
+	if exitCode, result, _ = cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
 		return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos."
 	}
 	versions := strings.Split(result, "\n")
@@ -370,7 +370,7 @@ func waitForTiller(namespace string) {
 		Description: "checking if helm Tiller is ready in namespace [ " + namespace + " ].",
 	}
 
-	exitCode, err := cmd.exec(debug, verbose)
+	exitCode, err, _ := cmd.exec(debug, verbose)
 
 	for attempt < 10 {
 		if exitCode == 0 {
@@ -378,7 +378,7 @@ func waitForTiller(namespace string) {
 		} else if strings.Contains(err, "could not find a ready tiller pod") || strings.Contains(err, "could not find tiller") {
 			log.Println("INFO: waiting for helm Tiller to be ready in namespace [" + namespace + "] ...")
 			time.Sleep(5 * time.Second)
-			exitCode, err = cmd.exec(debug, verbose)
+			exitCode, err, _ = cmd.exec(debug, verbose)
 		} else {
 			logError("ERROR: while waiting for helm Tiller to be ready in namespace [ " + namespace + " ] : " + err)
 		}
@@ -418,7 +418,7 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 			Description: "adding repo " + repoName,
 		}
 
-		if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
+		if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
 			return false, "ERROR: while adding repo [" + repoName + "]: " + err
 		}
 
@@ -430,7 +430,7 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 		Description: "updating helm repos",
 	}
 
-	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
+	if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "ERROR: while updating helm repos : " + err
 	}
 
@@ -510,7 +510,7 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 		Description: "initializing helm on the current context and upgrading Tiller on namespace [ " + namespace + " ].",
 	}
 
-	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
+	if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "ERROR: while deploying Helm Tiller in namespace [" + namespace + "]: " + err
 	}
 	return true, ""
@@ -524,7 +524,7 @@ func initHelmClientOnly() (bool, string) {
 		Description: "initializing helm on the client only.",
 	}
 
-	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
+	if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "ERROR: initializing helm on the client : " + err
 	}
 
@@ -645,18 +645,45 @@ func deleteUntrackedRelease(release *release, tillerNamespace string) {
 
 // decrypt a helm secret file
 func decryptSecret(name string) bool {
-	cmd := command{
-		Cmd:         "helm",
-		Args:        concat(helmCommand(""), []string{"secrets", "dec", name}),
+	cmd := "helm"
+	args := concat(helmCommand(""), []string{"secrets", "dec", name})
+
+	if settings.EyamlEnabled {
+		cmd = "eyaml"
+		args = []string{"decrypt", "-f", name}
+		if settings.EyamlPrivateKeyPath != "" && settings.EyamlPublicKeyPath != "" {
+			args = append(args, []string{"--pkcs7-private-key", settings.EyamlPrivateKeyPath, "--pkcs7-public-key", settings.EyamlPublicKeyPath}...)
+		}
+	}
+
+	command := command{
+		Cmd:         cmd,
+		Args:        args,
 		Description: "Decrypting " + name,
 	}
 
-	exitCode, _ := cmd.exec(debug, false)
+	exitCode, output, stderr := command.exec(debug, false)
 
 	if exitCode != 0 {
+		log.Println("ERROR: " + output)
+		return false
+	} else if stderr != "" {
+		log.Println("ERROR: " + stderr)
 		return false
 	}
 
+	if settings.EyamlEnabled {
+		var outfile string
+		if isOfType(name, []string{".dec"}) {
+			outfile = name
+		} else {
+			outfile = name + ".dec"
+		}
+		err := writeStringToFile(outfile, output)
+		if err != nil {
+			logError("ERROR: could not write [ " + outfile + " ] file")
+		}
+	}
 	return true
 }
 
@@ -668,7 +695,7 @@ func updateChartDep(chartPath string) (bool, string) {
 		Description: "Updateing dependency for local chart " + chartPath,
 	}
 
-	exitCode, err := cmd.exec(debug, verbose)
+	exitCode, err, _ := cmd.exec(debug, verbose)
 
 	if exitCode != 0 {
 		return false, err
