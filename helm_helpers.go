@@ -535,7 +535,7 @@ func initHelmClientOnly() (bool, string) {
 func initHelmTiller() (bool, string) {
 	cmd := command{
 		Cmd:         "helm",
-		Args:        []string{"tiler", "install"},
+		Args:        []string{"tiller", "install"},
 		Description: "initializing helm tiller plugin.",
 	}
 
