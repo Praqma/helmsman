@@ -35,6 +35,24 @@ type release struct {
 	Timeout         int               `yaml:"timeout"`
 }
 
+func (r *release) isReleaseConsideredToRun() bool {
+	if len(targetMap) > 0 {
+		if _, ok := targetMap[r.Name]; ok {
+			return true
+		} else {
+			return false
+		}
+	}
+	if len(groupMap) > 0 {
+		if _, ok := groupMap[r.Group]; ok {
+			return true
+		} else {
+			return false
+		}
+	}
+	return true
+}
+
 // validateRelease validates if a release inside a desired state meets the specifications or not.
 // check the full specification @ https://github.com/Praqma/helmsman/docs/desired_state_spec.md
 func validateRelease(appLabel string, r *release, names map[string]map[string]bool, s state) (bool, string) {
