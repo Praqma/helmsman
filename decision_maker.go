@@ -30,7 +30,7 @@ func makePlan(s *state) *plan {
 // to make a release section of the desired state come true.
 func decide(r *release, s *state) {
 	// check for presence in defined targets or groups
-	if !isReleaseConsideredToRun(r) {
+	if !r.isReleaseConsideredToRun() {
 		logDecision(generateDecisionMessage(r, "release [ "+r.Name+" ] is ignored due to passed constraints. Skipping.", false), r.Priority, ignored)
 		return
 	}
