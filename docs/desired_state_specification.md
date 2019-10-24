@@ -374,6 +374,7 @@ Options:
 - **version**     : the chart version.
 
 **Optional**
+- **group**       : group name this apps belongs to. It has no effect until Helmsman's flag `-group` is passed. Check this [doc](how_to/misc/limit-deployment-to-specific-group-of-apps.md) for more details.
 - **tillerNamespace** : which Tiller to use for deploying this release. This is available starting from v1.4.0-rc The decision on which Tiller to use for deploying a release follows the following criteria:
    1. If `tillerNamespace`is explicitly defined, it is used.
    2. If `tillerNamespace`is not defined and the namespace in which the release will be deployed has a Tiller installed by Helmsman (i.e. has `installTiller set to true` in the [Namespaces](#namespaces) section), Tiller in that namespace is used.
@@ -412,6 +413,7 @@ Example:
     description = "jenkins"
     namespace = "staging"
     enabled = true
+    group = "critical"
     chart = "stable/jenkins"
     version = "0.9.0"
     valuesFile = ""
@@ -438,6 +440,7 @@ apps:
     description: "jenkins"
     namespace: "staging"
     enabled: true
+    group: "critical"
     chart: "stable/jenkins"
     version: "0.9.0"
     valuesFile: ""
