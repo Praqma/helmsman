@@ -15,6 +15,7 @@ type release struct {
 	Description     string            `yaml:"description"`
 	Namespace       string            `yaml:"namespace"`
 	Enabled         bool              `yaml:"enabled"`
+	Group           string            `yaml:"group"`
 	Chart           string            `yaml:"chart"`
 	Version         string            `yaml:"version"`
 	ValuesFile      string            `yaml:"valuesFile"`
@@ -32,6 +33,24 @@ type release struct {
 	HelmFlags       []string          `yaml:"helmFlags"`
 	NoHooks         bool              `yaml:"noHooks"`
 	Timeout         int               `yaml:"timeout"`
+}
+
+func (r *release) isReleaseConsideredToRun() bool {
+	if len(targetMap) > 0 {
+		if _, ok := targetMap[r.Name]; ok {
+			return true
+		} else {
+			return false
+		}
+	}
+	if len(groupMap) > 0 {
+		if _, ok := groupMap[r.Group]; ok {
+			return true
+		} else {
+			return false
+		}
+	}
+	return true
 }
 
 // validateRelease validates if a release inside a desired state meets the specifications or not.
@@ -64,14 +83,15 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 		return false, "release " + r.Name + " is using namespace [ " + r.Namespace + " ] which is not defined in the Namespaces section of your desired state file." +
 			" Release [ " + r.Name + " ] can't be installed in that Namespace until its defined."
 	}
-	if r.Chart == "" || !strings.ContainsAny(r.Chart, "/") {
+	_, err := os.Stat(r.Chart)
+	if r.Chart == "" || os.IsNotExist(err) && !strings.ContainsAny(r.Chart, "/") {
 		return false, "chart can't be empty and must be of the format: repo/chart."
 	}
 	if r.Version == "" {
 		return false, "version can't be empty."
 	}
 
-	_, err := os.Stat(r.ValuesFile)
+	_, err = os.Stat(r.ValuesFile)
 	if r.ValuesFile != "" && (!isOfType(r.ValuesFile, []string{".yaml", ".yml", ".json"}) || err != nil) {
 		return false, fmt.Sprintf("valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to %q).", r.ValuesFile)
 	} else if r.ValuesFile != "" && len(r.ValuesFiles) > 0 {

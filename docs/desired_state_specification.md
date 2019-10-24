@@ -311,6 +311,52 @@ preconfiguredHelmRepos:
 
 > In this case you will manually need to execute `helm repo add myrepo1 <URL> --username= --password=`
 
+## AppsTemplates
+
+Optional : Yes.
+
+Synopsis: allows for YAML (TOML has no variable reference support) object creation, that is ignored by state file importer, but can be used as a reference with YAML anchors to not repeat yourself. Read [this](https://blog.daemonl.com/2016/02/yaml.html) example about YAML anchors.
+
+Examples:
+
+```yaml
+appsTemplates:
+
+  default: &template
+    valuesFile: ""
+    purge: false
+    test: true
+    protected: false
+    wait: true
+    enabled: true
+
+  custom: &template_custom
+    valuesFile: ""
+    purge: true
+    test: true
+    protected: false
+    wait: false
+    enabled: true
+
+apps:
+  jenkins:
+    <<: *template
+    name: "jenkins-stage"
+    namespace: "staging"
+    chart: "stable/jenkins"
+    version: "0.9.2"
+    priority: -3
+
+  jenkins2:
+    <<: *template_custom
+    name: "jenkins-prod"
+    namespace: "production"
+    chart: "stable/jenkins"
+    version: "0.9.0"
+    priority: -2
+
+```
+
 ## Apps
 
 Optional : Yes.
@@ -328,6 +374,7 @@ Options:
 - **version**     : the chart version.
 
 **Optional**
+- **group**       : group name this apps belongs to. It has no effect until Helmsman's flag `-group` is passed. Check this [doc](how_to/misc/limit-deployment-to-specific-group-of-apps.md) for more details.
 - **tillerNamespace** : which Tiller to use for deploying this release. This is available starting from v1.4.0-rc The decision on which Tiller to use for deploying a release follows the following criteria:
    1. If `tillerNamespace`is explicitly defined, it is used.
    2. If `tillerNamespace`is not defined and the namespace in which the release will be deployed has a Tiller installed by Helmsman (i.e. has `installTiller set to true` in the [Namespaces](#namespaces) section), Tiller in that namespace is used.
@@ -366,6 +413,7 @@ Example:
     description = "jenkins"
     namespace = "staging"
     enabled = true
+    group = "critical"
     chart = "stable/jenkins"
     version = "0.9.0"
     valuesFile = ""
@@ -392,6 +440,7 @@ apps:
     description: "jenkins"
     namespace: "staging"
     enabled: true
+    group: "critical"
     chart: "stable/jenkins"
     version: "0.9.0"
     valuesFile: ""

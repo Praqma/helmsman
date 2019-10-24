@@ -38,7 +38,9 @@ var helmVersion string
 var kubectlVersion string
 var dryRun bool
 var target stringArray
+var group stringArray
 var targetMap map[string]bool
+var groupMap map[string]bool
 var destroy bool
 var showDiff bool
 var suppressDiffSecrets bool
@@ -49,6 +51,7 @@ var noSSMSubst bool
 var noSSMValuesSubst bool
 var updateDeps bool
 var forceUpgrades bool
+var noDefaultRepos bool
 
 const tempFilesDir = ".helmsman-tmp"
 const stableHelmRepo = "https://kubernetes-charts.storage.googleapis.com"
@@ -96,6 +99,7 @@ func main() {
 			}
 		} else {
 			log.Println("INFO: running in TILLERLESS mode")
+			initHelmTiller()
 		}
 	}
 

@@ -19,10 +19,12 @@ ifeq ($(strip $(GOPATH)),)
 endif
 
 SRCDIR := $(GOPATH)/src/
+PRJDIR := $(CURDIR)
 
 ifeq ($(filter $(GOPATH)%,$(CURDIR)),)
   GOPATH := $(shell mktemp -d "/tmp/dep.XXXXXXXX")
   SRCDIR := $(GOPATH)/src/
+  PRJDIR := $(SRCDIR)helmsman
 endif
 
 ifneq ($(OS),Windows_NT)
@@ -56,17 +58,17 @@ $(SRCDIR):
 	@ln -s $(CURDIR) $(SRCDIR)
 
 dep: $(SRCDIR) ## Ensure vendors with dep
-	@cd $(SRCDIR)helmsman && \
+	@cd $(PRJDIR) && \
 	  dep ensure
 .PHONY: dep
 
 dep-update: $(SRCDIR) ## Ensure vendors with dep
-	@cd $(SRCDIR)helmsman && \
+	@cd $(PRJDIR) && \
 	  dep ensure --update
 .PHONY: dep-update
 
 build: dep ## Build the package
-	@cd $(SRCDIR)helmsman && \
+	@cd $(PRJDIR) && \
 	  CGO_ENABLED=0 go build -ldflags '-X main.version="${TAG}-${DATE}" -extldflags "-static"'
 
 generate:
@@ -74,25 +76,25 @@ generate:
 .PHONY: generate
 
 check: $(SRCDIR)
-	@cd $(SRCDIR)helmsman && \
+	@cd $(PRJDIR) && \
 	  dep check && \
 	  go vet #${PKGS}
 .PHONY: check
 
 test: dep ## Run unit tests
-	@cd $(SRCDIR)helmsman && \
+	@cd $(PRJDIR) && \
 	  helm init --client-only && \
 	  CGO_ENABLED=0 go test -v -cover -p=1 -args -f example.toml
 .PHONY: test
 
 cross: dep ## Create binaries for all OSs
-	@cd $(SRCDIR)helmsman && \
+	@cd $(PRJDIR) && \
 	  env CGO_ENABLED=0 gox -os '!freebsd !netbsd' -arch '!arm' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}'
 .PHONY: cross
 
 release: dep ## Generate a new release
-	@cd $(SRCDIR)helmsman && \
-	  goreleaser --release-notes release-notes.md
+	@cd $(PRJDIR) && \
+	  goreleaser --release-notes release-notes.md --rm-dist
 
 tools: ## Get extra tools used by this makefile
 	@go get -u github.com/golang/dep/cmd/dep

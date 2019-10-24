@@ -1,11 +1,11 @@
 #  This is a docker image for helmsman
 
 
-FROM golang:1.12.9-alpine3.10 as builder
+FROM golang:1.13.3-alpine3.10 as builder
 
 WORKDIR /go/src/
 
-RUN apk --no-cache add make git
+RUN apk --no-cache add make git dep
 RUN git clone https://github.com/Praqma/helmsman.git
 
 #  build a statically linked binary so that it works on stripped linux images such as alpine/busybox.
@@ -15,9 +15,7 @@ RUN cd helmsman \
     && LT_SHA=$(git rev-parse ${LastTag}^{}) \
     && LC_SHA=$(git rev-parse HEAD) \
     && if [ ${LT_SHA} != ${LC_SHA} ]; then TAG=latest-$(date +"%d%m%y"); fi \
-    && make dependencies \
-    && CGO_ENABLED=0 GOOS=linux go install -a -ldflags '-X main.version='$TAG' -extldflags "-static"' .
-
+    && make build
 
 # The image to keep
 FROM alpine:3.10
@@ -25,8 +23,8 @@ FROM alpine:3.10
 ARG KUBE_VERSION
 ARG HELM_VERSION
 
-ENV KUBE_VERSION ${KUBE_VERSION:-v1.11.3}
-ENV HELM_VERSION ${HELM_VERSION:-v2.11.0}
+ENV KUBE_VERSION ${KUBE_VERSION:-v1.14.8}
+ENV HELM_VERSION ${HELM_VERSION:-v2.15.0}
 ENV HELM_DIFF_VERSION ${HELM_DIFF_VERSION:-v2.11.0+5}
 
 RUN apk --no-cache update \
@@ -40,7 +38,7 @@ RUN apk --no-cache update \
     && rm -rf /tmp/linux-amd64 \
     && chmod +x /usr/local/bin/helm
 
-COPY --from=builder /go/bin/helmsman   /bin/helmsman
+COPY --from=builder /go/src/helmsman/helmsman   /bin/helmsman
 
 RUN mkdir -p ~/.helm/plugins \
     && helm plugin install https://github.com/hypnoglow/helm-s3.git \
@@ -52,4 +50,3 @@ RUN mkdir -p ~/.helm/plugins \
 
 WORKDIR /tmp
 # ENTRYPOINT ["/bin/helmsman"]
-

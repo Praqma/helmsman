@@ -20,13 +20,15 @@ const (
 	change
 	delete
 	noop
+	ignored
 )
 
 var decisionColor = map[decisionType]aurora.Color{
-	create: aurora.BlueFg,
-	change: aurora.BrownFg,
-	delete: aurora.RedFg,
-	noop:   aurora.GreenFg,
+	create:  aurora.BlueFg,
+	change:  aurora.BrownFg,
+	delete:  aurora.RedFg,
+	noop:    aurora.GreenFg,
+	ignored: aurora.GrayFg,
 }
 
 // orderedDecision type representing a Decision and it's priority weight
@@ -92,21 +94,19 @@ func (p plan) execPlan() {
 	}
 
 	for _, cmd := range p.Commands {
-		log.Println("INFO: start applying [ " + cmd.targetRelease.Name + " ] " +
-			"in namespace [ " + cmd.targetRelease.Namespace + " ] ")
+		log.Println("INFO: " + cmd.Command.Description)
 		if exitCode, msg := cmd.Command.exec(debug, verbose); exitCode != 0 {
 			var errorMsg string
 			if errorMsg = msg; !verbose {
 				errorMsg = strings.Split(msg, "---")[0]
 			}
-			logError("Command returned with exit code: " + string(exitCode) + ". And error message: " + errorMsg)
+			logError(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", exitCode, errorMsg))
 		} else {
 			log.Println(style.Cyan(msg))
 			if cmd.targetRelease != nil && !dryRun {
 				labelResource(cmd.targetRelease)
 			}
-			log.Println("INFO: finished applying [ " + cmd.targetRelease.Name + " ] " +
-				"in namespace [ " + cmd.targetRelease.Namespace + " ] ")
+			log.Println("INFO: finished " + cmd.Command.Description)
 			if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err == nil {
 				notifySlack(cmd.Command.Description+" ... SUCCESS!", s.Settings.SlackWebhook, false, true)
 			}

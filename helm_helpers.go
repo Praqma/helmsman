@@ -47,8 +47,8 @@ type tillerReleases struct {
 // getHelmClientVersion returns Helm client Version
 func getHelmClientVersion() string {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm version --client --short"},
+		Cmd:         "helm",
+		Args:        []string{"version", "--client", "--short"},
 		Description: "checking Helm version ",
 	}
 
@@ -81,9 +81,9 @@ func getAllReleases() tillerReleases {
 func getTillerReleases(tillerNS string) tillerReleases {
 	v1, _ := version.NewVersion(helmVersion)
 	jsonConstraint, _ := version.NewConstraint(">=2.10.0-rc.1")
-	var outputFormat string
+	var outputFormat []string
 	if jsonConstraint.Check(v1) {
-		outputFormat = "--output json"
+		outputFormat = append(outputFormat, "--output", "json")
 	}
 
 	output, err := helmList(tillerNS, outputFormat, "")
@@ -118,7 +118,7 @@ func parseJSONListAndFollow(input, tillerNS string) (tillerReleases, error) {
 	var releases tillerReleases
 
 	for {
-		output, err := helmList(tillerNS, "--output json", releases.Next)
+		output, err := helmList(tillerNS, []string{"--output", "json"}, releases.Next)
 		if err != nil {
 			return allReleases, err
 		}
@@ -152,13 +152,14 @@ func parseTextList(input string) tillerReleases {
 	return out
 }
 
-func helmList(tillerNS, outputFormat, offset string) (string, error) {
-	arg := fmt.Sprintf("%s list --all --max 0 --offset \"%s\" %s --tiller-namespace %s %s",
-		helmCommand(tillerNS), offset, outputFormat, tillerNS, getNSTLSFlags(tillerNS),
-	)
+func helmList(tillerNS string, outputFormat []string, offset string) (string, error) {
+	args := []string{"list", "--all", "--max", "0"}
+	if offset != "" {
+		args = append(args, "--offset", offset)
+	}
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", arg},
+		Cmd:         "helm",
+		Args:        concat(helmCommand(tillerNS), args, outputFormat, []string{"--tiller-namespace", tillerNS}, getNSTLSFlags(tillerNS)),
 		Description: "listing all existing releases in namespace [ " + tillerNS + " ]...",
 	}
 
@@ -254,12 +255,11 @@ func getReleaseChartVersion(rs releaseState) string {
 }
 
 // getNSTLSFlags returns TLS flags for a given namespace if it's deployed with TLS
-func getNSTLSFlags(namespace string) string {
-	tls := ""
+func getNSTLSFlags(namespace string) []string {
+	tls := []string{}
 	ns := s.Namespaces[namespace]
 	if tillerTLSEnabled(ns) {
-
-		tls = " --tls --tls-ca-cert " + namespace + "-ca.cert --tls-cert " + namespace + "-client.cert --tls-key " + namespace + "-client.key "
+		tls = append(tls, "--tls", "--tls-ca-cert", namespace+"-ca.cert", "--tls-cert", namespace+"-client.cert", "--tls-key", namespace+"-client.key")
 	}
 	return tls
 }
@@ -272,16 +272,14 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 
 	for app, r := range apps {
 		validateCurrentChart := true
-		if len(targetMap) > 0 {
-			if _, ok := targetMap[r.Name]; !ok {
-				validateCurrentChart = false
-			}
+		if !r.isReleaseConsideredToRun() {
+			validateCurrentChart = false
 		}
 		if validateCurrentChart {
 			if isLocalChart(r.Chart) {
 				cmd := command{
-					Cmd:         "bash",
-					Args:        []string{"-c", "helm inspect chart '" + r.Chart + "'"},
+					Cmd:         "helm",
+					Args:        []string{"inspect", "chart", r.Chart},
 					Description: "validating if chart at " + r.Chart + " is available.",
 				}
 
@@ -301,14 +299,18 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 				}
 
 			} else {
+				version := r.Version
+				if len(version) == 0 {
+					version = "*"
+				}
 				cmd := command{
-					Cmd:         "bash",
-					Args:        []string{"-c", "helm search " + r.Chart + " --version " + strconv.Quote(r.Version) + " -l"},
-					Description: "validating if chart " + r.Chart + "-" + r.Version + " is available in the defined repos.",
+					Cmd:         "helm",
+					Args:        []string{"search", r.Chart, "--version", version, "-l"},
+					Description: "validating if chart " + r.Chart + " with version " + r.Version + " is available in the defined repos.",
 				}
 
 				if exitCode, result := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
-					return false, "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " +
+					return false, "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified for " +
 						"app [" + app + "] but is not found in the defined repos."
 				}
 			}
@@ -325,24 +327,35 @@ func getChartVersion(r *release) (string, string) {
 		return r.Version, ""
 	}
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm search " + r.Chart + " --version " + strconv.Quote(r.Version)},
+		Cmd:         "helm",
+		Args:        []string{"search", r.Chart, "--version", r.Version},
 		Description: "getting latest chart version " + r.Chart + "-" + r.Version + "",
 	}
 
-	if exitCode, result := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
-		return "", "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " + "but version is not found in the defined repo."
-	} else {
-		versions := strings.Split(result, "\n")
-		if len(versions) < 2 {
-			return "", "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " + "but version is not found in the defined repo."
-		}
-		fields := strings.Split(versions[1], "\t")
-		if len(fields) != 4 {
-			return "", "ERROR: chart " + r.Chart + "-" + r.Version + " is specified for " + "but version is not found in the defined repo."
-		}
-		return strings.TrimSpace(fields[1]), ""
+	var (
+		exitCode int
+		result   string
+	)
+
+	if exitCode, result = cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
+		return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos."
 	}
+	versions := strings.Split(result, "\n")
+	if len(versions) < 2 {
+		return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos (unrecognized helm output?)."
+	}
+	for i, l := range versions {
+		if l == "" || (strings.HasPrefix(strings.TrimSpace(l), "WARNING") && strings.HasSuffix(strings.TrimSpace(l), "CHART VERSION")) {
+			continue
+		} else {
+			fields := strings.Split(versions[i], "\t")
+			if len(fields) != 4 {
+				return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos (unrecognized helm output?)."
+			}
+			return strings.TrimSpace(fields[1]), ""
+		}
+	}
+	return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos."
 }
 
 // waitForTiller keeps checking if the helm Tiller is ready or not by executing helm list and checking its error (if any)
@@ -352,8 +365,8 @@ func waitForTiller(namespace string) {
 	attempt := 0
 
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm list --tiller-namespace " + namespace + getNSTLSFlags(namespace)},
+		Cmd:         "helm",
+		Args:        concat([]string{"list", "--tiller-namespace", namespace}, getNSTLSFlags(namespace)),
 		Description: "checking if helm Tiller is ready in namespace [ " + namespace + " ].",
 	}
 
@@ -379,7 +392,7 @@ func waitForTiller(namespace string) {
 func addHelmRepos(repos map[string]string) (bool, string) {
 
 	for repoName, repoLink := range repos {
-		basicAuth := ""
+		basicAuthArgs := []string{}
 		// check if repo is in GCS, then perform GCS auth -- needed for private GCS helm repos
 		// failed auth would not throw an error here, as it is possible that the repo is public and does not need authentication
 		if strings.HasPrefix(repoLink, "gs://") {
@@ -395,13 +408,13 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 			if !ok {
 				logError("ERROR: helm repo " + repoName + " has incomplete basic auth info. Missing the password!")
 			}
-			basicAuth = " --username " + u.User.Username() + " --password " + p
+			basicAuthArgs = append(basicAuthArgs, "--username", u.User.Username(), "--password", p)
 
 		}
 
 		cmd := command{
-			Cmd:         "bash",
-			Args:        []string{"-c", "helm repo add " + basicAuth + " " + repoName + " " + strconv.Quote(repoLink)},
+			Cmd:         "helm",
+			Args:        concat([]string{"repo", "add", repoName, repoLink}, basicAuthArgs),
 			Description: "adding repo " + repoName,
 		}
 
@@ -412,8 +425,8 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 	}
 
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm repo update "},
+		Cmd:         "helm",
+		Args:        []string{"repo", "update"},
 		Description: "updating helm repos",
 	}
 
@@ -430,7 +443,7 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 // If no namespace is provided, Tiller is deployed to kube-system
 func deployTiller(namespace string, serviceAccount string, defaultServiceAccount string, role string, roleTemplateFile string, tillerMaxHistory int) (bool, string) {
 	log.Println("INFO: deploying Tiller in namespace [ " + namespace + " ].")
-	sa := ""
+	sa := []string{}
 	if serviceAccount != "" {
 		if ok, err := validateServiceAccount(serviceAccount, namespace); !ok {
 			if strings.Contains(err, "NotFound") || strings.Contains(err, "not found") {
@@ -443,7 +456,7 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 				return false, "ERROR: while validating/creating service account [ " + serviceAccount + " ] in namespace [" + namespace + "]: " + err
 			}
 		}
-		sa = " --service-account " + serviceAccount
+		sa = []string{"--service-account", serviceAccount}
 	} else {
 		roleName := "helmsman-tiller"
 		defaultServiceAccountName := "helmsman"
@@ -466,34 +479,34 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 				return false, "ERROR: while validating/creating service account [ " + defaultServiceAccountName + " ] in namespace [" + namespace + "]: " + err
 			}
 		}
-		sa = " --service-account " + defaultServiceAccountName
+		sa = []string{"--service-account", defaultServiceAccountName}
 	}
 	if namespace == "" {
 		namespace = "kube-system"
 	}
-	tillerNameSpace := " --tiller-namespace " + namespace
+	tillerNameSpace := []string{"--tiller-namespace", namespace}
 
-	maxHistory := ""
+	maxHistory := []string{}
 	if tillerMaxHistory > 0 {
-		maxHistory = " --history-max " + strconv.Itoa(tillerMaxHistory)
+		maxHistory = []string{"--history-max", strconv.Itoa(tillerMaxHistory)}
 	}
-	tls := ""
+	tls := []string{}
 	ns := s.Namespaces[namespace]
 	if tillerTLSEnabled(ns) {
 		tillerCert := namespace + "-tiller.cert"
 		tillerKey := namespace + "-tiller.key"
 		caCert := namespace + "-ca.cert"
 
-		tls = " --tiller-tls --tiller-tls-cert " + tillerCert + " --tiller-tls-key " + tillerKey + " --tiller-tls-verify --tls-ca-cert " + caCert
+		tls = []string{"--tiller-tls", "--tiller-tls-cert", tillerCert, "--tiller-tls-key", tillerKey, "--tiller-tls-verify", "--tls-ca-cert", caCert}
 	}
 
-	storageBackend := ""
+	storageBackend := []string{}
 	if s.Settings.StorageBackend == "secret" {
-		storageBackend = " --override 'spec.template.spec.containers[0].command'='{/tiller,--storage=secret}'"
+		storageBackend = []string{"--override", "'spec.template.spec.containers[0].command'='{/tiller,--storage=secret}'"}
 	}
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm init --force-upgrade " + maxHistory + sa + tillerNameSpace + tls + storageBackend},
+		Cmd:         "helm",
+		Args:        concat([]string{"init", "--force-upgrade"}, maxHistory, sa, tillerNameSpace, tls, storageBackend),
 		Description: "initializing helm on the current context and upgrading Tiller on namespace [ " + namespace + " ].",
 	}
 
@@ -506,13 +519,28 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 // initHelmClientOnly initializes the helm client only (without deploying Tiller)
 func initHelmClientOnly() (bool, string) {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm init --client-only "},
+		Cmd:         "helm",
+		Args:        []string{"init", "--client-only"},
 		Description: "initializing helm on the client only.",
 	}
 
 	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "ERROR: initializing helm on the client : " + err
+	}
+
+	return true, ""
+}
+
+// initHelmTiller initializes the helm tiller plugin
+func initHelmTiller() (bool, string) {
+	cmd := command{
+		Cmd:         "helm",
+		Args:        []string{"tiller", "install"},
+		Description: "initializing helm tiller plugin.",
+	}
+
+	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
+		return false, "ERROR: initializing helm tiller plugin : " + err
 	}
 
 	return true, ""
@@ -562,19 +590,19 @@ func initHelm() (bool, string) {
 // NOTE: Untracked releases don't benefit from either namespace or application protection.
 // NOTE: Removing/Commenting out an app from the desired state makes it untracked.
 func cleanUntrackedReleases() {
-	toDelete := make(map[string]map[string]bool)
+	toDelete := make(map[string]map[*release]bool)
 	log.Println("INFO: checking if any Helmsman managed releases are no longer tracked by your desired state ...")
 	for ns, releases := range getHelmsmanReleases() {
 		for r := range releases {
 			tracked := false
 			for _, app := range s.Apps {
-				if app.Name == r && getDesiredTillerNamespace(app) == ns {
+				if app.Name == r.Name && getDesiredTillerNamespace(app) == ns {
 					tracked = true
 				}
 			}
 			if !tracked {
 				if _, ok := toDelete[ns]; !ok {
-					toDelete[ns] = make(map[string]bool)
+					toDelete[ns] = make(map[*release]bool)
 				}
 				toDelete[ns][r] = true
 			}
@@ -586,13 +614,11 @@ func cleanUntrackedReleases() {
 	} else {
 		for ns, releases := range toDelete {
 			for r := range releases {
-				if len(targetMap) > 0 {
-					if _, ok := targetMap[r]; !ok {
-						logDecision("DECISION: untracked release [ "+r+" ] is ignored by target flag. Skipping.", -800, noop)
-					} else {
-						logDecision("DECISION: untracked release found: release [ "+r+" ] from Tiller in namespace [ "+ns+" ]. It will be deleted.", -800, delete)
-						deleteUntrackedRelease(r, ns)
-					}
+				if r.isReleaseConsideredToRun() {
+					logDecision(generateDecisionMessage(r, "untracked release [ "+r.Name+" ] is ignored by target flag. Skipping.", false), -800, ignored)
+				} else {
+					logDecision(generateDecisionMessage(r, "untracked release found: release [ "+r.Name+" ]. It will be deleted", true), -800, delete)
+					deleteUntrackedRelease(r, ns)
 				}
 			}
 		}
@@ -600,18 +626,18 @@ func cleanUntrackedReleases() {
 }
 
 // deleteUntrackedRelease creates the helm command to purge delete an untracked release
-func deleteUntrackedRelease(release string, tillerNamespace string) {
+func deleteUntrackedRelease(release *release, tillerNamespace string) {
 
-	tls := ""
+	tls := []string{}
 	ns := s.Namespaces[tillerNamespace]
 	if tillerTLSEnabled(ns) {
 
-		tls = " --tls --tls-ca-cert " + tillerNamespace + "-ca.cert --tls-cert " + tillerNamespace + "-client.cert --tls-key " + tillerNamespace + "-client.key "
+		tls = []string{"--tls", "--tls-ca-cert", tillerNamespace + "-ca.cert", "--tls-cert", tillerNamespace + "-client.cert", "--tls-key", tillerNamespace + "-client.key"}
 	}
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", helmCommand(tillerNamespace) + " delete --purge " + release + " --tiller-namespace " + tillerNamespace + tls + getDryRunFlags()},
-		Description: "deleting untracked release [ " + release + " ] from Tiller in namespace [[ " + tillerNamespace + " ]]",
+		Cmd:         "helm",
+		Args:        concat(helmCommand(tillerNamespace), []string{"delete", "--purge", release.Name, "--tiller-namespace", tillerNamespace}, tls, getDryRunFlags()),
+		Description: generateCmdDescription(release, "deleting untracked"),
 	}
 
 	outcome.addCommand(cmd, -800, nil)
@@ -620,8 +646,8 @@ func deleteUntrackedRelease(release string, tillerNamespace string) {
 // decrypt a helm secret file
 func decryptSecret(name string) bool {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm secrets dec " + name},
+		Cmd:         "helm",
+		Args:        concat(helmCommand(""), []string{"secrets", "dec", name}),
 		Description: "Decrypting " + name,
 	}
 
@@ -637,8 +663,8 @@ func decryptSecret(name string) bool {
 // updateChartDep updates dependencies for a local chart
 func updateChartDep(chartPath string) (bool, string) {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm dependency update " + chartPath},
+		Cmd:         "helm",
+		Args:        []string{"dependency", "update", chartPath},
 		Description: "Updateing dependency for local chart " + chartPath,
 	}
 

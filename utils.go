@@ -227,6 +227,10 @@ func stringInSlice(a string, list []string) bool {
 
 // addDefaultHelmRepos adds stable and incubator helm repos to the state if they are not already defined
 func addDefaultHelmRepos(s *state) {
+	if noDefaultRepos {
+		log.Println("INFO: default helm repo set disabled, 'stable' and 'incubator' repos unset.")
+		return
+	}
 	if s.HelmRepos == nil || len(s.HelmRepos) == 0 {
 		s.HelmRepos = map[string]string{
 			"stable":    stableHelmRepo,
@@ -547,5 +551,39 @@ func Indent(s, prefix string) string {
 
 // isLocalChart checks if a chart specified in the DSF is a local directory or not
 func isLocalChart(chart string) bool {
-	return filepath.IsAbs(chart)
+	_, err := os.Stat(chart)
+	if err == nil {
+		return true
+	}
+	return false
+}
+
+func generateCmdDescription(r *release, action string) string {
+	var tillerNamespaceMsg string
+	if tillerNamespaceMsg = ""; !settings.Tillerless {
+		tillerNamespaceMsg = "using Tiller in [ " + getDesiredTillerNamespace(r) + " ]"
+	}
+	message := fmt.Sprintf("%s release [ " + r.Name + " ] in namespace [[ " + r.Namespace + " ]] %s", action, tillerNamespaceMsg)
+	return message
+}
+
+func generateDecisionMessage(r *release, message string, isTillerAware bool) string {
+	var tillerNamespaceMsg string
+	if tillerNamespaceMsg = ""; !settings.Tillerless {
+		tillerNamespaceMsg = "using Tiller in [ " + getDesiredTillerNamespace(r) + " ]"
+	}
+	baseMessage := "DECISION: " + message
+	if isTillerAware {
+		return fmt.Sprintf(baseMessage + " %s", tillerNamespaceMsg)
+	}
+	return baseMessage
+}
+
+// concat appends all slices to a single slice
+func concat(slices ...[]string) []string {
+	slice := []string{}
+	for _, item := range slices {
+		slice = append(slice, item...)
+	}
+	return slice
 }
