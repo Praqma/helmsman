@@ -97,6 +97,7 @@ func main() {
 			}
 		} else {
 			log.Println("INFO: running in TILLERLESS mode")
+			initHelmTiller()
 		}
 	}
 

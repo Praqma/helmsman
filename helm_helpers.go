@@ -332,19 +332,30 @@ func getChartVersion(r *release) (string, string) {
 		Description: "getting latest chart version " + r.Chart + "-" + r.Version + "",
 	}
 
-	if exitCode, result := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
+	var (
+		exitCode int
+		result   string
+	)
+
+	if exitCode, result = cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
 		return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos."
-	} else {
-		versions := strings.Split(result, "\n")
-		if len(versions) < 2 {
-			return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos (unrecognized helm output?)."
-		}
-		fields := strings.Split(versions[1], "\t")
-		if len(fields) != 4 {
-			return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos (unrecognized helm output?)."
-		}
-		return strings.TrimSpace(fields[1]), ""
 	}
+	versions := strings.Split(result, "\n")
+	if len(versions) < 2 {
+		return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos (unrecognized helm output?)."
+	}
+	for i, l := range versions {
+		if l == "" || (strings.HasPrefix(strings.TrimSpace(l), "WARNING") && strings.HasSuffix(strings.TrimSpace(l), "CHART VERSION")) {
+			continue
+		} else {
+			fields := strings.Split(versions[i], "\t")
+			if len(fields) != 4 {
+				return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos (unrecognized helm output?)."
+			}
+			return strings.TrimSpace(fields[1]), ""
+		}
+	}
+	return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos."
 }
 
 // waitForTiller keeps checking if the helm Tiller is ready or not by executing helm list and checking its error (if any)
@@ -515,6 +526,21 @@ func initHelmClientOnly() (bool, string) {
 
 	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "ERROR: initializing helm on the client : " + err
+	}
+
+	return true, ""
+}
+
+// initHelmTiller initializes the helm tiller plugin
+func initHelmTiller() (bool, string) {
+	cmd := command{
+		Cmd:         "helm",
+		Args:        []string{"tiller", "install"},
+		Description: "initializing helm tiller plugin.",
+	}
+
+	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
+		return false, "ERROR: initializing helm tiller plugin : " + err
 	}
 
 	return true, ""
