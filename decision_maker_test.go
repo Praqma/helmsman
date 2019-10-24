@@ -1,6 +1,7 @@
 package main
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -11,7 +12,7 @@ func Test_getValuesFiles(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want string
+		want []string
 	}{
 		{
 			name: "test case 1",
@@ -29,7 +30,7 @@ func Test_getValuesFiles(t *testing.T) {
 				},
 				//s: st,
 			},
-			want: " -f test_files/values.yaml",
+			want: []string{"-f", "test_files/values.yaml"},
 		},
 		{
 			name: "test case 2",
@@ -47,7 +48,7 @@ func Test_getValuesFiles(t *testing.T) {
 				},
 				//s: st,
 			},
-			want: " -f test_files/values.yaml",
+			want: []string{"-f", "test_files/values.yaml"},
 		},
 		{
 			name: "test case 1",
@@ -65,12 +66,12 @@ func Test_getValuesFiles(t *testing.T) {
 				},
 				//s: st,
 			},
-			want: " -f test_files/values.yaml -f test_files/values2.yaml",
+			want: []string{"-f", "test_files/values.yaml", "-f", "test_files/values2.yaml"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getValuesFiles(tt.args.r); got != tt.want {
+			if got := getValuesFiles(tt.args.r); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("getValuesFiles() = %v, want %v", got, tt.want)
 			}
 		})
@@ -94,7 +95,7 @@ func Test_inspectUpgradeScenario(t *testing.T){
 					Name:      "release1",
 					Namespace: "namespace",
 					Version: "1.0.0",
-					Chart: "/local/charts",
+					Chart: "./test_files/chart-test",
 					Enabled:   true,
 				},
 				s: releaseState{
@@ -144,7 +145,7 @@ func Test_decide(t *testing.T) {
 				},
 				s: &state{},
 			},
-			want: noop,
+			want: ignored,
 		},
 		{
 			name:       "decide() - targetMap does not contain this service - skip",
@@ -157,7 +158,7 @@ func Test_decide(t *testing.T) {
 				},
 				s: &state{},
 			},
-			want: noop,
+			want: ignored,
 		},
 		{
 			name:       "decide() - targetMap is empty - will install",
@@ -206,6 +207,73 @@ func Test_decide(t *testing.T) {
 
 			for _, target := range tt.targetFlag {
 				targetMap[target] = true
+			}
+			outcome = plan{}
+
+			// Act
+			decide(tt.args.r, tt.args.s)
+			got := outcome.Decisions[0].Type
+			t.Log(outcome.Decisions[0].Description)
+
+			// Assert
+			if got != tt.want {
+				t.Errorf("decide() = %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_decide_group(t *testing.T) {
+	type args struct {
+		r *release
+		s *state
+	}
+	tests := []struct {
+		name       string
+		groupFlag  []string
+		targetFlag []string
+		args       args
+		want       decisionType
+	}{
+		{
+			name:       "decide() - groupMap does not contain this service - skip",
+			groupFlag: []string{"some-group"},
+			args: args{
+				r: &release{
+					Name:      "release1",
+					Namespace: "namespace",
+					Enabled:   true,
+				},
+				s: &state{},
+			},
+			want: ignored,
+		},
+		{
+			name:       "decide() - groupMap contains this service - proceed",
+			groupFlag: []string{"run-me"},
+			args: args{
+				r: &release{
+					Name:      "release1",
+					Namespace: "namespace",
+					Enabled:   true,
+					Group:     "run-me",
+				},
+				s: &state{},
+			},
+			want: create,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			groupMap = make(map[string]bool)
+			targetMap = make(map[string]bool)
+
+			for _, target := range tt.targetFlag {
+				groupMap[target] = true
+			}
+			for _, group := range tt.groupFlag {
+				groupMap[group] = true
 			}
 			outcome = plan{}
 

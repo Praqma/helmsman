@@ -45,6 +45,7 @@ func init() {
 	flag.BoolVar(&debug, "debug", false, "show the execution logs")
 	flag.BoolVar(&dryRun, "dry-run", false, "apply the dry-run option for helm commands.")
 	flag.Var(&target, "target", "limit execution to specific app.")
+	flag.Var(&group, "group", "limit execution to specific group of apps.")
 	flag.BoolVar(&destroy, "destroy", false, "delete all deployed releases. Purge delete is used if the purge option is set to true for the releases.")
 	flag.BoolVar(&v, "v", false, "show the version")
 	flag.BoolVar(&verbose, "verbose", false, "show verbose execution logs")
@@ -65,6 +66,7 @@ func init() {
 	flag.BoolVar(&noSSMValuesSubst, "no-ssm-values-subst", false, "turn off SSM parameter substitution in values files only")
 	flag.BoolVar(&updateDeps, "update-deps", false, "run 'helm dep up' for local chart")
 	flag.BoolVar(&forceUpgrades, "force-upgrades", false, "use --force when upgrading helm releases. May cause resources to be recreated.")
+	flag.BoolVar(&noDefaultRepos, "no-default-repos", false, "don't set default Helm repos from Google for 'stable' and 'incubator'")
 
 	log.SetOutput(os.Stdout)
 
@@ -88,6 +90,10 @@ func init() {
 
 	if destroy && apply {
 		logError("ERROR: --destroy and --apply can't be used together.")
+	}
+
+	if len(target) > 0 && len(group) > 0 {
+		logError("ERROR: --target and --group can't be used together.")
 	}
 
 	helmVersion = strings.TrimSpace(strings.SplitN(getHelmClientVersion(), ": ", 2)[1])
@@ -207,14 +213,21 @@ func init() {
 		}
 	}
 
+	if len(group) > 0 {
+		groupMap = map[string]bool{}
+		for _, v := range group {
+			groupMap[v] = true
+		}
+	}
+
 }
 
 // toolExists returns true if the tool is present in the environment and false otherwise.
 // It takes as input the tool's command to check if it is recognizable or not. e.g. helm or kubectl
 func toolExists(tool string) bool {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", tool},
+		Cmd:         tool,
+		Args:        []string{},
 		Description: "validating that " + tool + " is installed.",
 	}
 
@@ -231,8 +244,8 @@ func toolExists(tool string) bool {
 // It takes as input the plugin's name to check if it is recognizable or not. e.g. diff
 func helmPluginExists(plugin string) bool {
 	cmd := command{
-		Cmd:         "bash",
-		Args:        []string{"-c", "helm plugin list"},
+		Cmd:         "helm",
+		Args:        []string{"plugin", "list"},
 		Description: "validating that " + plugin + " is installed.",
 	}
 
