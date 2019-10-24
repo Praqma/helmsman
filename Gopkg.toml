@@ -27,7 +27,7 @@
 [[constraint]]
   version = "0.3.0"
   name = "github.com/Azure/azure-storage-blob-go"
-  
+
 [[constraint]]
   name = "cloud.google.com/go"
   version = "0.28.0"
@@ -35,11 +35,6 @@
 [[constraint]]
   name = "github.com/BurntSushi/toml"
   version = "0.3.1"
-
-[[constraint]]
-  name = "github.com/Praqma/helmsman"
-  #version = "1.7.4"
-  branch = "master"
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
