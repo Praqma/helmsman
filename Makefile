@@ -112,3 +112,4 @@ helmPlugins: ## Install helm plugins used by Helmsman
 	@helm plugin install https://github.com/databus23/helm-diff
 	@helm plugin install https://github.com/futuresimple/helm-secrets
 	@helm plugin install https://github.com/rimusz/helm-tiller
+.PHONY: helmPlugins
