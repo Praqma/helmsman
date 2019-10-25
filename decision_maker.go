@@ -111,7 +111,6 @@ func helmCommand(namespace string) []string {
 		if runtime.GOOS == "windows" {
 			logError("ERROR: Tillerless Helm plugin is not supported on Windows")
 		}
-		return []string{"tiller", "run", namespace, "--", "helm"}
 		if namespace != "" {
 			return []string{"tiller", "run", namespace, "--", "helm"}
 		} else {
@@ -147,7 +146,7 @@ func installRelease(r *release) {
 		Description: generateCmdDescription(r, "installing"),
 	}
 	outcome.addCommand(cmd, r.Priority, r)
-	logDecision(generateDecisionMessage(r, "release [ "+r.Name+" ] is not installed. Will install it in namespace [[ "+ r.Namespace+" ]]", true), r.Priority, create)
+	logDecision(generateDecisionMessage(r, "release [ "+r.Name+" ] is not installed. Will install it in namespace [[ "+r.Namespace+" ]]", true), r.Priority, create)
 
 	if r.Test {
 		testRelease(r)

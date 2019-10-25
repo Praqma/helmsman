@@ -1,7 +1,7 @@
 #  This is a docker image for helmsman
+ARG GO_VERSION=1.13.3
 
-
-FROM golang:1.13.3-alpine3.10 as builder
+FROM golang:${GO_VERSION}-alpine3.10 as builder
 
 WORKDIR /go/src/
 
