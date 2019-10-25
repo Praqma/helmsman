@@ -1,10 +1,11 @@
 .DEFAULT_GOAL := help
 
-PKGS   := $(shell go list ./... | grep -v /vendor/)
-TAG    := $(shell git describe --always --tags --abbrev=0 HEAD)
-LAST   := $(shell git describe --always --tags --abbrev=0 HEAD^)
-BODY   := "`git log ${LAST}..HEAD --oneline --decorate` `printf '\n\#\#\# [Build Info](${BUILD_URL})'`"
-DATE   := $(shell date +'%d%m%y')
+PKGS    := $(shell go list ./... | grep -v /vendor/)
+TAG     := $(shell git describe --always --tags --abbrev=0 HEAD)
+LAST    := $(shell git describe --always --tags --abbrev=0 HEAD^)
+BODY    := "`git log ${LAST}..HEAD --oneline --decorate` `printf '\n\#\#\# [Build Info](${BUILD_URL})'`"
+DATE    := $(shell date +'%d%m%y')
+PRJNAME := $(shell basename "$(PWD)")
 
 # Ensure we have an unambiguous GOPATH.
 GOPATH := $(shell go env GOPATH)
@@ -24,7 +25,7 @@ PRJDIR := $(CURDIR)
 ifeq ($(filter $(GOPATH)%,$(CURDIR)),)
   GOPATH := $(shell mktemp -d "/tmp/dep.XXXXXXXX")
   SRCDIR := $(GOPATH)/src/
-  PRJDIR := $(SRCDIR)helmsman
+  PRJDIR := $(SRCDIR)$(PRJNAME)
 endif
 
 ifneq ($(OS),Windows_NT)
@@ -33,6 +34,8 @@ ifneq ($(OS),Windows_NT)
   OK := $(foreach exec,$(EXECUTABLES),\
     $(if $(shell which $(exec)),some string,$(error "No $(exec) in PATH, please install $(exec)")))
 endif
+
+export CGO_ENABLED=0
 
 help:
 	@echo "Available options:"
@@ -69,27 +72,27 @@ dep-update: $(SRCDIR) ## Ensure vendors with dep
 
 build: dep ## Build the package
 	@cd $(PRJDIR) && \
-	  CGO_ENABLED=0 go build -ldflags '-X main.version="${TAG}-${DATE}" -extldflags "-static"'
+	  go build -ldflags '-X main.version="${TAG}-${DATE}" -extldflags "-static"'
 
 generate:
 	@go generate #${PKGS}
 .PHONY: generate
 
-check: $(SRCDIR)
+check: $(SRCDIR) fmt
 	@cd $(PRJDIR) && \
 	  dep check && \
 	  go vet #${PKGS}
 .PHONY: check
 
-test: dep ## Run unit tests
+test: dep check ## Run unit tests
 	@cd $(PRJDIR) && \
 	  helm init --client-only && \
-	  CGO_ENABLED=0 go test -v -cover -p=1 -args -f example.toml
+	  go test -v -cover -p=1 -args -f example.toml
 .PHONY: test
 
 cross: dep ## Create binaries for all OSs
 	@cd $(PRJDIR) && \
-	  env CGO_ENABLED=0 gox -os '!freebsd !netbsd' -arch '!arm' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}'
+	  gox -os '!freebsd !netbsd' -arch '!arm' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}'
 .PHONY: cross
 
 release: dep ## Generate a new release
@@ -101,3 +104,11 @@ tools: ## Get extra tools used by this makefile
 	@go get -u github.com/mitchellh/gox
 	@go get -u github.com/goreleaser/goreleaser
 .PHONY: tools
+
+helmPlugins: ## Install helm plugins used by Helmsman
+	@mkdir -p ~/.helm/plugins
+	@helm plugin install https://github.com/hypnoglow/helm-s3.git
+	@helm plugin install https://github.com/nouney/helm-gcs
+	@helm plugin install https://github.com/databus23/helm-diff
+	@helm plugin install https://github.com/futuresimple/helm-secrets
+	@helm plugin install https://github.com/rimusz/helm-tiller
