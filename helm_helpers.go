@@ -539,7 +539,7 @@ func initHelmTiller() (bool, string) {
 		Description: "initializing helm tiller plugin.",
 	}
 
-	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
+	if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "ERROR: initializing helm tiller plugin : " + err
 	}
 
