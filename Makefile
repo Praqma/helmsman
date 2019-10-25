@@ -104,3 +104,12 @@ tools: ## Get extra tools used by this makefile
 	@go get -u github.com/mitchellh/gox
 	@go get -u github.com/goreleaser/goreleaser
 .PHONY: tools
+
+helmPlugins: ## Install helm plugins used by Helmsman
+	@mkdir -p ~/.helm/plugins
+	@helm plugin install https://github.com/hypnoglow/helm-s3.git
+	@helm plugin install https://github.com/nouney/helm-gcs
+	@helm plugin install https://github.com/databus23/helm-diff
+	@helm plugin install https://github.com/futuresimple/helm-secrets
+	@helm plugin install https://github.com/rimusz/helm-tiller
+.PHONY: helmPlugins
