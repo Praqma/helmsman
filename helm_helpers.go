@@ -345,7 +345,7 @@ func getChartVersion(r *release) (string, string) {
 		return "", "ERROR: chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos (unrecognized helm output?)."
 	}
 	for i, l := range versions {
-		if l == "" || (strings.HasPrefix(strings.TrimSpace(l), "WARNING") && strings.HasSuffix(strings.TrimSpace(l), "CHART VERSION")) {
+		if l == "" || (strings.HasPrefix(strings.TrimSpace(l), "WARNING") || strings.HasSuffix(strings.TrimSpace(l), "DESCRIPTION")) {
 			continue
 		} else {
 			fields := strings.Split(versions[i], "\t")
