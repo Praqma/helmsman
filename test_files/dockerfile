@@ -1,10 +1,11 @@
 #  This is a docker image for the helmsman test container
 #  It can be pulled from praqma/helmsman-test
 
+ARG GO_VERSION=1.13.3
 ARG KUBE_VERSION
 ARG HELM_VERSION
 
-FROM golang:1.13.3-alpine3.10
+FROM golang:${GO_VERSION}-alpine3.10
 
 ENV KUBE_VERSION ${KUBE_VERSION:-v1.14.8}
 ENV HELM_VERSION ${HELM_VERSION:-v2.15.0}

@@ -533,7 +533,7 @@ func generateCmdDescription(r *release, action string) string {
 	if tillerNamespaceMsg = ""; !settings.Tillerless {
 		tillerNamespaceMsg = "using Tiller in [ " + getDesiredTillerNamespace(r) + " ]"
 	}
-	message := fmt.Sprintf("%s release [ " + r.Name + " ] in namespace [[ " + r.Namespace + " ]] %s", action, tillerNamespaceMsg)
+	message := fmt.Sprintf("%s release [ "+r.Name+" ] in namespace [[ "+r.Namespace+" ]] %s", action, tillerNamespaceMsg)
 	return message
 }
 
@@ -544,7 +544,7 @@ func generateDecisionMessage(r *release, message string, isTillerAware bool) str
 	}
 	baseMessage := "DECISION: " + message
 	if isTillerAware {
-		return fmt.Sprintf(baseMessage + " %s", tillerNamespaceMsg)
+		return fmt.Sprintf(baseMessage+" %s", tillerNamespaceMsg)
 	}
 	return baseMessage
 }

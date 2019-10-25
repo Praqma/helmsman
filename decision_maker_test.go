@@ -78,29 +78,29 @@ func Test_getValuesFiles(t *testing.T) {
 	}
 }
 
-func Test_inspectUpgradeScenario(t *testing.T){
+func Test_inspectUpgradeScenario(t *testing.T) {
 	type args struct {
 		r *release
 		s releaseState
 	}
 	tests := []struct {
-		name       string
-		args       args
-		want       decisionType
+		name string
+		args args
+		want decisionType
 	}{
 		{
-			name:       "inspectUpgradeScenario() - local chart with different chart name should change",
+			name: "inspectUpgradeScenario() - local chart with different chart name should change",
 			args: args{
 				r: &release{
 					Name:      "release1",
 					Namespace: "namespace",
-					Version: "1.0.0",
-					Chart: "./test_files/chart-test",
+					Version:   "1.0.0",
+					Chart:     "./test_files/chart-test",
 					Enabled:   true,
 				},
 				s: releaseState{
 					Namespace: "namespace",
-					Chart: "chart-1.0.0",
+					Chart:     "chart-1.0.0",
 				},
 			},
 			want: change,
@@ -236,7 +236,7 @@ func Test_decide_group(t *testing.T) {
 		want       decisionType
 	}{
 		{
-			name:       "decide() - groupMap does not contain this service - skip",
+			name:      "decide() - groupMap does not contain this service - skip",
 			groupFlag: []string{"some-group"},
 			args: args{
 				r: &release{
@@ -249,7 +249,7 @@ func Test_decide_group(t *testing.T) {
 			want: ignored,
 		},
 		{
-			name:       "decide() - groupMap contains this service - proceed",
+			name:      "decide() - groupMap contains this service - proceed",
 			groupFlag: []string{"run-me"},
 			args: args{
 				r: &release{
