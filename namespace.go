@@ -22,21 +22,21 @@ type limits []struct {
 
 // namespace type represents the fields of a namespace
 type namespace struct {
-	Protected               bool              `yaml:"protected"`
-	InstallTiller           bool              `yaml:"installTiller"`
-	UseTiller               bool              `yaml:"useTiller"`
-	TillerServiceAccount    string            `yaml:"tillerServiceAccount"`
-	TillerRole              string            `yaml:"tillerRole"`
-	TillerRoleTemplateFile  string            `yaml:"tillerRoleTemplateFile"`
-	TillerMaxHistory        int               `yaml:"tillerMaxHistory"`
-	CaCert                  string            `yaml:"caCert"`
-	TillerCert              string            `yaml:"tillerCert"`
-	TillerKey               string            `yaml:"tillerKey"`
-	ClientCert              string            `yaml:"clientCert"`
-	ClientKey               string            `yaml:"clientKey"`
-	Limits                  limits            `yaml:"limits,omitempty"`
-	Labels                  map[string]string `yaml:"labels"`
-	Annotations             map[string]string `yaml:"annotations"`
+	Protected              bool              `yaml:"protected"`
+	InstallTiller          bool              `yaml:"installTiller"`
+	UseTiller              bool              `yaml:"useTiller"`
+	TillerServiceAccount   string            `yaml:"tillerServiceAccount"`
+	TillerRole             string            `yaml:"tillerRole"`
+	TillerRoleTemplateFile string            `yaml:"tillerRoleTemplateFile"`
+	TillerMaxHistory       int               `yaml:"tillerMaxHistory"`
+	CaCert                 string            `yaml:"caCert"`
+	TillerCert             string            `yaml:"tillerCert"`
+	TillerKey              string            `yaml:"tillerKey"`
+	ClientCert             string            `yaml:"clientCert"`
+	ClientKey              string            `yaml:"clientKey"`
+	Limits                 limits            `yaml:"limits,omitempty"`
+	Labels                 map[string]string `yaml:"labels"`
+	Annotations            map[string]string `yaml:"annotations"`
 }
 
 // checkNamespaceDefined checks if a given namespace is defined in the namespaces section of the desired state file
