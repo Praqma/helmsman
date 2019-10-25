@@ -49,3 +49,4 @@ This page contains a list of guides on how to use Helmsman.
     - [Limit Helmsman deployment to specific group of apps](misc/limit-deployment-to-specific-group-of-apps.md)
     - [Multi-tenant clusters guide](misc/multitenant_clusters_guide.md)
     - [Helmsman on Windows 10](misc/helmsman_on_windows10.md)
+    - [Use hiera-eyaml as secrets encryption backend](settings/use-hiera-eyaml-as-secrets-encryption.md)
