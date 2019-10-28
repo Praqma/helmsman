@@ -95,7 +95,7 @@ func (p plan) execPlan() {
 
 	for _, cmd := range p.Commands {
 		log.Println("INFO: " + cmd.Command.Description)
-		if exitCode, msg := cmd.Command.exec(debug, verbose); exitCode != 0 {
+		if exitCode, msg, _ := cmd.Command.exec(debug, verbose); exitCode != 0 {
 			var errorMsg string
 			if errorMsg = msg; !verbose {
 				errorMsg = strings.Split(msg, "---")[0]

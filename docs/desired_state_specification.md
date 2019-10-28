@@ -98,6 +98,9 @@ The following options can be skipped if your kubectl context is already created 
 - **slackWebhook** : a [Slack](http://slack.com) Webhook URL to receive Helmsman notifications. This can be passed directly or in an environment variable.
 - **reverseDelete** : if set to `true` it will reverse the priority order whilst deleting.
 - **tillerless** : setting it to `true` will use [helm-tiller](https://rimusz.net/tillerless-helm) plugin instead of installing Tillers in namespaces. It disables many of the parameters for sections below.
+- **eyamlEnabled** : if set to `true' it will use [hiera-eyaml](https://github.com/voxpupuli/hiera-eyaml) to decrypt secret files instead of using default helm-secrets based on sops
+- **eyamlPrivateKeyPath** : if set with path to the eyaml private key file, it will use it instead of looking for default one in ./keys directory relative to where Helmsman were run. It needs to be defined in conjunction with eyamlPublicKeyPath.
+- **eyamlPublicKeyPath** : if set with path to the eyaml public key file, it will use it instead of looking for default one in ./keys directory relative to where Helmsman were run. It needs to be defined in conjunction with eyamlPrivateKeyPath.
 
 > If you use `storageBackend` with a Tiller that has been previously deployed with configMaps as storage backend, you need to migrate your release information from the configMap to the new secret on your own. Helm does not support this yet.
 
@@ -115,6 +118,9 @@ kubeContext = "minikube"
 # slackWebhook = $MY_SLACK_WEBHOOK
 # reverseDelete = false
 # tilerless = true
+# eyamlEnabled = true
+# eyamlPrivateKeyPath = "../keys/custom-key.pem"
+# eyamlPublicKeyPath = "../keys/custom-key.pub"
 ```
 
 ```yaml
@@ -129,6 +135,9 @@ settings:
   #slackWebhook: "$MY_SLACK_WEBHOOK"
   #reverseDelete: false
   #tilerless: true
+  # eyamlEnabled: true
+  # eyamlPrivateKeyPath: ../keys/custom-key.pem
+  # eyamlPublicKeyPath: ../keys/custom-key.pub
 ```
 
 ## Namespaces

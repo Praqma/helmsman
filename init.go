@@ -96,6 +96,10 @@ func init() {
 		logError("ERROR: --target and --group can't be used together.")
 	}
 
+	if (settings.EyamlPrivateKeyPath != "" && settings.EyamlPublicKeyPath == "") || (settings.EyamlPrivateKeyPath == "" && settings.EyamlPublicKeyPath != "") {
+		logError("ERROR: both EyamlPrivateKeyPath and EyamlPublicKeyPath are required")
+	}
+
 	helmVersion = strings.TrimSpace(strings.SplitN(getHelmClientVersion(), ": ", 2)[1])
 	kubectlVersion = strings.TrimSpace(strings.SplitN(getKubectlClientVersion(), ": ", 2)[1])
 
@@ -231,7 +235,7 @@ func toolExists(tool string) bool {
 		Description: "validating that " + tool + " is installed.",
 	}
 
-	exitCode, _ := cmd.exec(debug, false)
+	exitCode, _, _ := cmd.exec(debug, false)
 
 	if exitCode != 0 {
 		return false
@@ -249,7 +253,7 @@ func helmPluginExists(plugin string) bool {
 		Description: "validating that " + plugin + " is installed.",
 	}
 
-	exitCode, result := cmd.exec(debug, false)
+	exitCode, result, _ := cmd.exec(debug, false)
 
 	if exitCode != 0 {
 		return false
