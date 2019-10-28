@@ -31,7 +31,7 @@ func (c command) printFullCommand() {
 }
 
 // exec executes the executable command and returns the exit code and execution result
-func (c command) exec(debug bool, verbose bool) (int, string) {
+func (c command) exec(debug bool, verbose bool) (int, string, string) {
 
 	// Only use non-empty string args
 	args := []string{}
@@ -59,18 +59,17 @@ func (c command) exec(debug bool, verbose bool) (int, string) {
 
 	if err := cmd.Start(); err != nil {
 		log.Println("ERROR: cmd.Start: " + err.Error())
-		return 1, err.Error()
+		return 1, err.Error(), ""
 	}
 
 	if err := cmd.Wait(); err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				return status.ExitStatus(), stderr.String()
+				return status.ExitStatus(), stderr.String(), ""
 			}
 		} else {
 			logError("ERROR: cmd.Wait: " + err.Error())
 		}
 	}
-
-	return 0, stdout.String()
+	return 0, stdout.String(), stderr.String()
 }

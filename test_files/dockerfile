@@ -11,7 +11,7 @@ ENV KUBE_VERSION ${KUBE_VERSION:-v1.14.8}
 ENV HELM_VERSION ${HELM_VERSION:-v2.15.0}
 ENV GORELEASER_VERSION ${GORELEASER_VERSION:-v0.120.2}
 RUN apk --no-cache update \
-    && apk add --update --no-cache ca-certificates git \
+    && apk add --update --no-cache ca-certificates git ruby \
     && apk add --update -t deps curl tar gzip make bash gcc git openssh \
     && rm -rf /var/cache/apk/* \
     && curl -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl \
@@ -28,7 +28,8 @@ RUN mkdir -p ~/.helm/plugins \
     && helm plugin install https://github.com/nouney/helm-gcs \
     && helm plugin install https://github.com/databus23/helm-diff \
     && helm plugin install https://github.com/futuresimple/helm-secrets \
-    && rm -r /tmp/helm-diff /tmp/helm-diff.tgz
+    && rm -r /tmp/helm-diff /tmp/helm-diff.tgz \
+    && gem install hiera-eyaml --no-doc
 
 RUN  mkdir /tmp/goreleaser \
      && curl -L https://github.com/goreleaser/goreleaser/releases/download/${GORELEASER_VERSION}/goreleaser_Linux_arm64.tar.gz | tar zxv -C /tmp/goreleaser \

@@ -22,7 +22,7 @@ func validateServiceAccount(sa string, namespace string) (bool, string) {
 		Description: "validating if serviceaccount [ " + sa + " ] exists in namespace [ " + namespace + " ].",
 	}
 
-	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
+	if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, err
 	}
 	return true, ""
@@ -92,7 +92,7 @@ func createNamespace(ns string) {
 		Args:        []string{"create", "namespace", ns},
 		Description: "creating namespace  " + ns,
 	}
-	exitCode, _ := cmd.exec(debug, verbose)
+	exitCode, _, _ := cmd.exec(debug, verbose)
 	if exitCode != 0 && verbose {
 		log.Println("WARN: I could not create namespace [ " +
 			ns + " ]. It already exists. I am skipping this.")
@@ -108,7 +108,7 @@ func labelNamespace(ns string, labels map[string]string) {
 			Description: "labeling namespace  " + ns,
 		}
 
-		exitCode, _ := cmd.exec(debug, verbose)
+		exitCode, _, _ := cmd.exec(debug, verbose)
 		if exitCode != 0 && verbose {
 			log.Println("WARN: I could not label namespace [ " + ns + " with " + k + "=" + v +
 				" ]. It already exists. I am skipping this.")
@@ -125,7 +125,7 @@ func annotateNamespace(ns string, labels map[string]string) {
 			Description: "annotating namespace  " + ns,
 		}
 
-		exitCode, _ := cmd.exec(debug, verbose)
+		exitCode, _, _ := cmd.exec(debug, verbose)
 		if exitCode != 0 && verbose {
 			log.Println("WARN: I could not annotate namespace [ " + ns + " with " + k + "=" + v +
 				" ]. It already exists. I am skipping this.")
@@ -166,7 +166,7 @@ spec:
 		Description: "creating LimitRange in namespace [ " + ns + " ]",
 	}
 
-	exitCode, e := cmd.exec(debug, verbose)
+	exitCode, e, _ := cmd.exec(debug, verbose)
 
 	if exitCode != 0 {
 		logError("ERROR: failed to create LimitRange in namespace [ " + ns + " ]: " + e)
@@ -252,7 +252,7 @@ func createContext() (bool, string) {
 		Description: "creating kubectl context - setting credentials.",
 	}
 
-	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
+	if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "ERROR: failed to create context [ " + s.Settings.KubeContext + " ]:  " + err
 	}
 
@@ -262,7 +262,7 @@ func createContext() (bool, string) {
 		Description: "creating kubectl context - setting cluster.",
 	}
 
-	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
+	if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "ERROR: failed to create context [ " + s.Settings.KubeContext + " ]: " + err
 	}
 
@@ -272,7 +272,7 @@ func createContext() (bool, string) {
 		Description: "creating kubectl context - setting context.",
 	}
 
-	if exitCode, err := cmd.exec(debug, verbose); exitCode != 0 {
+	if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "ERROR: failed to create context [ " + s.Settings.KubeContext + " ]: " + err
 	}
 
@@ -296,7 +296,7 @@ func setKubeContext(context string) bool {
 		Description: "setting kubectl context to [ " + context + " ]",
 	}
 
-	exitCode, _ := cmd.exec(debug, verbose)
+	exitCode, _, _ := cmd.exec(debug, verbose)
 
 	if exitCode != 0 {
 		log.Println("INFO: KubeContext: " + context + " does not exist. I will try to create it.")
@@ -315,7 +315,7 @@ func getKubeContext() bool {
 		Description: "getting kubectl context",
 	}
 
-	exitCode, result := cmd.exec(debug, verbose)
+	exitCode, result, _ := cmd.exec(debug, verbose)
 
 	if exitCode != 0 || result == "" {
 		log.Println("INFO: Kubectl context is not set")
@@ -333,7 +333,7 @@ func createServiceAccount(saName string, namespace string) (bool, string) {
 		Description: "creating service account [ " + saName + " ] in namespace [ " + namespace + " ]",
 	}
 
-	exitCode, err := cmd.exec(debug, verbose)
+	exitCode, err, _ := cmd.exec(debug, verbose)
 
 	if exitCode != 0 {
 		//logError("ERROR: failed to create service account " + saName + " in namespace [ " + namespace + " ]: " + err)
@@ -367,7 +367,7 @@ func createRoleBinding(role string, saName string, namespace string) (bool, stri
 		Description: "creating " + resource + " for service account [ " + saName + " ] in namespace [ " + namespace + " ] with role: " + role,
 	}
 
-	exitCode, err := cmd.exec(debug, verbose)
+	exitCode, err, _ := cmd.exec(debug, verbose)
 
 	if exitCode != 0 {
 		return false, err
@@ -399,7 +399,7 @@ func createRole(namespace string, role string, roleTemplateFile string) (bool, s
 		Description: "creating role [" + role + "] in namespace [ " + namespace + " ]",
 	}
 
-	exitCode, err := cmd.exec(debug, verbose)
+	exitCode, err, _ := cmd.exec(debug, verbose)
 
 	if exitCode != 0 {
 		return false, err
@@ -426,7 +426,7 @@ func labelResource(r *release) {
 			Description: "applying labels to Helm state in [ " + getDesiredTillerNamespace(r) + " ] for " + r.Name,
 		}
 
-		exitCode, err := cmd.exec(debug, verbose)
+		exitCode, err, _ := cmd.exec(debug, verbose)
 
 		if exitCode != 0 {
 			logError(err)
@@ -466,7 +466,7 @@ func getHelmsmanReleases() map[string]map[*release]bool {
 			Description: "getting helm releases which are managed by Helmsman in namespace [[ " + ns + " ]].",
 		}
 
-		exitCode, output := cmd.exec(debug, verbose)
+		exitCode, output, _ := cmd.exec(debug, verbose)
 
 		if exitCode != 0 {
 			logError(output)
@@ -503,7 +503,7 @@ func getKubectlClientVersion() string {
 		Description: "checking kubectl version ",
 	}
 
-	exitCode, result := cmd.exec(debug, false)
+	exitCode, result, _ := cmd.exec(debug, false)
 	if exitCode != 0 {
 		logError("ERROR: while checking kubectl version: " + result)
 	}
