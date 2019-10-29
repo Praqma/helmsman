@@ -10,6 +10,10 @@ PRJNAME := $(shell basename "$(PWD)")
 # Ensure we have an unambiguous GOPATH.
 GOPATH := $(shell go env GOPATH)
 
+ifneq ($(strip $(CIRCLE_WORKING_DIRECTORY)),)
+  GOPATH := $(subst "/src/$(PRJNAME)",,$(CIRCLE_WORKING_DIRECTORY))
+endif
+
 ifneq "$(or $(findstring :,$(GOPATH)),$(findstring ;,$(GOPATH)))" ""
   GOPATH := $(lastword $(subst :, ,$(GOPATH)))
   $(info GOPATHs with multiple entries are not supported, defaulting to the last path in GOPATH)
