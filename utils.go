@@ -19,9 +19,9 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/BurntSushi/toml"
-	"helmsman/aws"
-	"helmsman/azure"
-	"helmsman/gcs"
+	"github.com/Praqma/helmsman/aws"
+	"github.com/Praqma/helmsman/azure"
+	"github.com/Praqma/helmsman/gcs"
 )
 
 // printMap prints to the console any map of string keys and values.

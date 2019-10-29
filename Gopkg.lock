@@ -42,7 +42,7 @@
   version = "v0.3.1"
 
 [[projects]]
-  digest = "1:c78f02a2c6a138255ce52eefe18b62fe4e89815e4289819582c643ce51cdbf84"
+  digest = "1:958d2bd9e6e441313d4d4eabe37bc98cdab2f1fc96d20e777627bf8f9163ad96"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -72,6 +72,8 @@
     "private/protocol",
     "private/protocol/eventstream",
     "private/protocol/eventstream/eventstreamapi",
+    "private/protocol/json/jsonutil",
+    "private/protocol/jsonrpc",
     "private/protocol/query",
     "private/protocol/query/queryutil",
     "private/protocol/rest",
@@ -80,6 +82,7 @@
     "service/s3",
     "service/s3/s3iface",
     "service/s3/s3manager",
+    "service/ssm",
     "service/sts",
   ]
   pruneopts = "UT"
@@ -347,6 +350,7 @@
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/s3",
     "github.com/aws/aws-sdk-go/service/s3/s3manager",
+    "github.com/aws/aws-sdk-go/service/ssm",
     "github.com/hashicorp/go-version",
     "github.com/imdario/mergo",
     "github.com/joho/godotenv",
