@@ -11,7 +11,8 @@ PRJNAME := $(shell basename "$(PWD)")
 GOPATH := $(shell go env GOPATH)
 
 ifneq "$(or $(findstring :,$(GOPATH)),$(findstring ;,$(GOPATH)))" ""
-  $(error GOPATHs with multiple entries are not supported)
+  GOPATH := $(lastword $(subst :, ,$(GOPATH)))
+  $(info GOPATHs with multiple entries are not supported, defaulting to the last path in GOPATH)
 endif
 
 GOPATH := $(realpath $(GOPATH))
