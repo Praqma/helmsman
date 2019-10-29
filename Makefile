@@ -11,7 +11,8 @@ PRJNAME := $(shell basename "$(PWD)")
 GOPATH := $(shell go env GOPATH)
 
 ifneq ($(strip $(CIRCLE_WORKING_DIRECTORY)),)
-  GOPATH := $(subst "/src/$(PRJNAME)",,$(CIRCLE_WORKING_DIRECTORY))
+  GOPATH := $(subst /src/$(PRJNAME),,$(CIRCLE_WORKING_DIRECTORY))
+  $(info "Using CIRCLE_WORKING_DIRECTORY for GOPATH")
 endif
 
 ifneq "$(or $(findstring :,$(GOPATH)),$(findstring ;,$(GOPATH)))" ""
