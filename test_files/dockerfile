@@ -8,7 +8,7 @@ ARG HELM_VERSION
 FROM golang:${GO_VERSION}-alpine3.10
 
 ENV KUBE_VERSION ${KUBE_VERSION:-v1.14.8}
-ENV HELM_VERSION ${HELM_VERSION:-v2.15.0}
+ENV HELM_VERSION ${HELM_VERSION:-v3.0.1}
 ENV GORELEASER_VERSION ${GORELEASER_VERSION:-v0.120.2}
 RUN apk --no-cache update \
     && apk add --update --no-cache ca-certificates git ruby \
@@ -16,7 +16,7 @@ RUN apk --no-cache update \
     && rm -rf /var/cache/apk/* \
     && curl -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl \
     && chmod +x /usr/local/bin/kubectl \
-    && curl -L http://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar zxv -C /tmp \
+    && curl -L https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar zxv -C /tmp \
     && mv /tmp/linux-amd64/helm /usr/local/bin/helm \
     && rm -rf /tmp/linux-amd64 \
     && chmod +x /usr/local/bin/helm
@@ -26,7 +26,7 @@ WORKDIR src/helmsman
 RUN mkdir -p ~/.helm/plugins \
     && helm plugin install https://github.com/hypnoglow/helm-s3.git \
     && helm plugin install https://github.com/nouney/helm-gcs \
-    && helm plugin install https://github.com/databus23/helm-diff \
+    && helm plugin install https://github.com/databus23/helm-diff --version v3.0.0-rc.7 \
     && helm plugin install https://github.com/futuresimple/helm-secrets \
     && rm -r /tmp/helm-diff /tmp/helm-diff.tgz \
     && gem install hiera-eyaml --no-doc

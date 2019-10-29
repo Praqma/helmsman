@@ -2,11 +2,8 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
-
-	"github.com/hashicorp/go-version"
 )
 
 // release type representing Helm releases which are described in the desired state
@@ -27,7 +24,6 @@ type release struct {
 	Protected       bool              `yaml:"protected"`
 	Wait            bool              `yaml:"wait"`
 	Priority        int               `yaml:"priority"`
-	TillerNamespace string            `yaml:"tillerNamespace"`
 	Set             map[string]string `yaml:"set"`
 	SetString       map[string]string `yaml:"setString"`
 	HelmFlags       []string          `yaml:"helmFlags"`
@@ -60,20 +56,7 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 		r.Name = appLabel
 	}
 
-	if s.Settings.Tillerless {
-		// if we are running in a tillerless environment then lets skip the tiller validation
-	} else if r.TillerNamespace != "" {
-		if ns, ok := s.Namespaces[r.TillerNamespace]; !ok {
-			return false, "tillerNamespace specified, but the namespace specified does not exist!"
-		} else if !ns.InstallTiller && !ns.UseTiller {
-			return false, "tillerNamespace specified, but that namespace does not have neither installTiller nor useTiller set to true."
-		}
-	} else if getDesiredTillerNamespace(r) == "kube-system" {
-		if ns, ok := s.Namespaces["kube-system"]; ok && !ns.InstallTiller && !ns.UseTiller {
-			return false, "app is desired to be deployed using Tiller from [[ kube-system ]] but kube-system is not desired to have a Tiller installed nor use an existing Tiller. You can use another Tiller with the 'tillerNamespace' option or deploy Tiller in kube-system. "
-		}
-	}
-	if names[r.Name][getDesiredTillerNamespace(r)] {
+	if names[r.Name][r.Namespace] {
 		return false, "release name must be unique within a given Tiller."
 	}
 
@@ -124,21 +107,7 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 	if names[r.Name] == nil {
 		names[r.Name] = make(map[string]bool)
 	}
-	if r.TillerNamespace != "" {
-		names[r.Name][r.TillerNamespace] = true
-	} else if s.Namespaces[r.Namespace].InstallTiller {
-		names[r.Name][r.Namespace] = true
-	} else {
-		names[r.Name]["kube-system"] = true
-	}
-
-	if len(r.SetString) > 0 {
-		v1, _ := version.NewVersion(helmVersion)
-		setStringConstraint, _ := version.NewConstraint(">=2.9.0")
-		if !setStringConstraint.Check(v1) {
-			return false, "you are using setString in your desired state, but your helm client does not support it. You need helm v2.9.0 or above for this feature."
-		}
-	}
+	names[r.Name][r.Namespace] = true
 
 	// add $$ escaping for $ strings
 	os.Setenv("HELMSMAN_DOLLAR", "$")
@@ -155,7 +124,7 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 
 // overrideNamespace overrides a release defined namespace with a new given one
 func overrideNamespace(r *release, newNs string) {
-	log.Println("INFO: overriding namespace for app:  " + r.Name)
+	logs.Info("Overriding namespace for app:  " + r.Name)
 	r.Namespace = newNs
 }
 
@@ -175,7 +144,6 @@ func (r release) print() {
 	fmt.Println("\tprotected : ", r.Protected)
 	fmt.Println("\twait : ", r.Wait)
 	fmt.Println("\tpriority : ", r.Priority)
-	fmt.Println("\ttiller namespace : ", r.TillerNamespace)
 	fmt.Println("\tno-hooks : ", r.NoHooks)
 	fmt.Println("\ttimeout : ", r.Timeout)
 	fmt.Println("\tvalues to override from env:")

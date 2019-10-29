@@ -1,9 +1,9 @@
 package gcs
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 
 	// Imports the Google Cloud Storage client package.
@@ -18,10 +18,9 @@ var style aurora.Aurora
 // Auth checks for GCLOUD_CREDENTIALS in the environment
 // returns true if they exist and creates a json credentials file and sets the GOOGLE_APPLICATION_CREDENTIALS env var
 // returns false if credentials are not found
-func Auth() bool {
+func Auth() (string, error) {
 	if os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") != "" {
-		log.Println("INFO: GOOGLE_APPLICATION_CREDENTIALS is already set in the environment.")
-		return true
+		return "GOOGLE_APPLICATION_CREDENTIALS is already set in the environment", nil
 	}
 
 	if os.Getenv("GCLOUD_CREDENTIALS") != "" {
@@ -31,26 +30,26 @@ func Auth() bool {
 		err := ioutil.WriteFile(credFile, d, 0644)
 
 		if err != nil {
-			log.Fatal(style.Bold(style.Red("ERROR: Cannot create credentials file: " + err.Error())))
+			return fmt.Sprintf("Cannot create credentials file: %s", err), err
 		}
 
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", credFile)
-		return true
+		return "ok", nil
 	}
-	return false
+	return "can't authenticate", fmt.Errorf("can't authenticate")
 }
 
 // ReadFile reads a file from storage bucket and saves it in a desired location.
-func ReadFile(bucketName string, filename string, outFile string, noColors bool) {
+func ReadFile(bucketName string, filename string, outFile string, noColors bool) (string, error) {
 	style = aurora.NewAurora(!noColors)
-	if !Auth() {
-		log.Fatal(style.Bold(style.Red("ERROR: Failed to find the GCLOUD_CREDENTIALS env var. Please make sure it is set in the environment.")))
+	if msg, err := Auth(); err != nil {
+		return msg, nil
 	}
 
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
 	if err != nil {
-		log.Fatal(style.Bold(style.Red("ERROR: Failed to configure Storage bucket: " + err.Error())))
+		return "Failed to configure Storage bucket: ", err
 	}
 	storageBucket := client.Bucket(bucketName)
 
@@ -60,7 +59,7 @@ func ReadFile(bucketName string, filename string, outFile string, noColors bool)
 	// Read the object.
 	r, err := obj.NewReader(ctx)
 	if err != nil {
-		log.Fatal(style.Bold(style.Red("ERROR: Failed to create object reader: " + err.Error())))
+		return fmt.Sprintf("Failed to create object reader: %s", err), err
 	}
 	defer r.Close()
 
@@ -68,14 +67,14 @@ func ReadFile(bucketName string, filename string, outFile string, noColors bool)
 	var writers []io.Writer
 	file, err := os.Create(outFile)
 	if err != nil {
-		log.Fatal(style.Bold(style.Red("ERROR: Failed to create an output file: " + err.Error())))
+		return fmt.Sprintf("Failed to create an output file: %s", err), err
 	}
 	writers = append(writers, file)
 	defer file.Close()
 
 	dest := io.MultiWriter(writers...)
 	if _, err := io.Copy(dest, r); err != nil {
-		log.Fatal(style.Bold(style.Red("ERROR: Failed to read object content: " + err.Error())))
+		return fmt.Sprintf("Failed to read object content: %s", err), err
 	}
-	log.Println("INFO: Successfully downloaded " + filename + " from GCS as " + outFile)
+	return "Successfully downloaded " + filename + " from GCS as " + outFile, nil
 }

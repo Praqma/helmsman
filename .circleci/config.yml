@@ -6,7 +6,7 @@ jobs:
   build:
     working_directory: "/go/src/helmsman"
     docker:
-      - image: praqma/helmsman-test
+      - image: praqma/helmsman-test:helm3
     steps:
       - checkout
       - run:
@@ -19,7 +19,7 @@ jobs:
   test:
     working_directory: "/go/src/helmsman"
     docker:
-      - image: praqma/helmsman-test
+      - image: praqma/helmsman-test:helm3
     steps:
       - checkout
       - run:
