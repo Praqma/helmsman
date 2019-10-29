@@ -3,17 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	"github.com/apsdehal/go-logger"
 	"os"
 	"strings"
 
 	"github.com/imdario/mergo"
 	"github.com/joho/godotenv"
-	"github.com/logrusorgru/aurora"
 )
 
-// colorizer
-var style aurora.Aurora
+var logs *logger.Logger
 
 const (
 	banner = " _          _ \n" +
@@ -26,11 +24,11 @@ const (
 )
 
 func printUsage() {
-	log.Println(banner + "\n")
-	log.Println("Helmsman version: " + appVersion)
-	log.Println("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
-	log.Println()
-	log.Println("Usage: helmsman [options]")
+	logs.Info(banner + "\n")
+	logs.Info("Helmsman version: " + appVersion)
+	logs.Info("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
+	logs.Info("")
+	logs.Info("Usage: helmsman [options]")
 	flag.PrintDefaults()
 }
 
@@ -61,46 +59,54 @@ func init() {
 	flag.BoolVar(&suppressDiffSecrets, "suppress-diff-secrets", false, "don't show secrets in helm diff output.")
 	flag.IntVar(&diffContext, "diff-context", -1, "number of lines of context to show around changes in helm diff output")
 	flag.BoolVar(&noEnvSubst, "no-env-subst", false, "turn off environment substitution globally")
-	flag.BoolVar(&noEnvValuesSubst, "no-env-values-subst", false, "turn off environment substitution in values files only")
+	flag.BoolVar(&noEnvValuesSubst, "no-env-values-subst", true, "turn off environment substitution in values files only")
 	flag.BoolVar(&noSSMSubst, "no-ssm-subst", false, "turn off SSM parameter substitution globally")
-	flag.BoolVar(&noSSMValuesSubst, "no-ssm-values-subst", false, "turn off SSM parameter substitution in values files only")
+	flag.BoolVar(&noSSMValuesSubst, "no-ssm-values-subst", true, "turn off SSM parameter substitution in values files only")
 	flag.BoolVar(&updateDeps, "update-deps", false, "run 'helm dep up' for local chart")
 	flag.BoolVar(&forceUpgrades, "force-upgrades", false, "use --force when upgrading helm releases. May cause resources to be recreated.")
 	flag.BoolVar(&noDefaultRepos, "no-default-repos", false, "don't set default Helm repos from Google for 'stable' and 'incubator'")
 
-	log.SetOutput(os.Stdout)
-
 	flag.Usage = printUsage
 	flag.Parse()
+
+	logger.SetDefaultFormat("%{time:2006-01-02 15:04:05} %{level}: %{message}")
+	var logLevel = logger.InfoLevel
+	if verbose {
+		logLevel = logger.DebugLevel
+	}
 
 	if noFancy {
 		noColors = true
 		noBanner = true
 	}
 
-	style = aurora.NewAurora(!noColors)
+	var logColors = 1
+	if noColors {
+		logColors = 0
+	}
+	logs, _ = logger.New("logger", logColors, os.Stdout, logLevel)
 
 	if !noBanner {
 		fmt.Println(banner + " version: " + appVersion + "\n" + slogan)
 	}
 
 	if dryRun && apply {
-		logError("ERROR: --apply and --dry-run can't be used together.")
+		logError("--apply and --dry-run can't be used together.")
 	}
 
 	if destroy && apply {
-		logError("ERROR: --destroy and --apply can't be used together.")
+		logError("--destroy and --apply can't be used together.")
 	}
 
 	if len(target) > 0 && len(group) > 0 {
-		logError("ERROR: --target and --group can't be used together.")
+		logError("--target and --group can't be used together.")
 	}
 
 	if (settings.EyamlPrivateKeyPath != "" && settings.EyamlPublicKeyPath == "") || (settings.EyamlPrivateKeyPath == "" && settings.EyamlPublicKeyPath != "") {
-		logError("ERROR: both EyamlPrivateKeyPath and EyamlPublicKeyPath are required")
+		logError("both EyamlPrivateKeyPath and EyamlPublicKeyPath are required")
 	}
 
-	helmVersion = strings.TrimSpace(strings.SplitN(getHelmClientVersion(), ": ", 2)[1])
+	helmVersion = strings.TrimSpace(getHelmVersion())
 	kubectlVersion = strings.TrimSpace(strings.SplitN(getKubectlClientVersion(), ": ", 2)[1])
 
 	if verbose {
@@ -113,7 +119,7 @@ func init() {
 	}
 
 	if len(files) == 0 {
-		log.Println("INFO: No desired state files provided.")
+		logs.Info("No desired state files provided.")
 		os.Exit(0)
 	}
 
@@ -122,15 +128,15 @@ func init() {
 	}
 
 	if !toolExists("kubectl") {
-		logError("ERROR: kubectl is not installed/configured correctly. Aborting!")
+		logError("kubectl is not installed/configured correctly. Aborting!")
 	}
 
-	if !toolExists("helm") {
-		logError("ERROR: helm is not installed/configured correctly. Aborting!")
+	if !toolExists(helmBin) {
+		logError("" + helmBin + " is not installed/configured correctly. Aborting!")
 	}
 
 	if !helmPluginExists("diff") {
-		logError("ERROR: helm diff plugin is not installed/configured correctly. Aborting!")
+		logError("helm diff plugin is not installed/configured correctly. Aborting!")
 	}
 
 	// read the env file
@@ -159,7 +165,7 @@ func init() {
 	for _, f := range files {
 		result, msg := fromFile(f, &fileState)
 		if result {
-			log.Printf(msg)
+			logs.Info(msg)
 		} else {
 			logError(msg)
 		}
@@ -188,20 +194,15 @@ func init() {
 		s.print()
 	}
 
-	// validate that if we are running in tillerless mode, and we don't have the tiller plugin installed we should fail.
-	if !helmPluginExists("tiller") && s.Settings.Tillerless {
-		logError("ERROR: tillerless operation is specified and helm tiller plugin is not installed/configured correctly. Aborting!")
-	}
-
 	if !skipValidation {
 		// validate the desired state content
 		if len(files) > 0 {
-			if result, msg := s.validate(); !result { // syntax validation
-				logError(msg)
+			if err := s.validate(); err != nil { // syntax validation
+				logs.Error(err.Error())
 			}
 		}
 	} else {
-		log.Println("INFO: desired state validation is skipped.")
+		logs.Info("Desired state validation is skipped.")
 	}
 
 	if applyLabels {
@@ -248,7 +249,7 @@ func toolExists(tool string) bool {
 // It takes as input the plugin's name to check if it is recognizable or not. e.g. diff
 func helmPluginExists(plugin string) bool {
 	cmd := command{
-		Cmd:         "helm",
+		Cmd:         helmBin,
 		Args:        []string{"plugin", "list"},
 		Description: "validating that " + plugin + " is installed.",
 	}

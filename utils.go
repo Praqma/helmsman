@@ -21,7 +21,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/Praqma/helmsman/aws"
 	"github.com/Praqma/helmsman/azure"
-	"github.com/Praqma/helmsman/gcs"
+	"helmsman/gcs"
 )
 
 // printMap prints to the console any map of string keys and values.
@@ -48,11 +48,11 @@ func fromTOML(file string, s *state) (bool, string) {
 
 	tomlFile := string(rawTomlFile)
 	if !noEnvSubst {
-		log.Println("INFO: substituting env variables in file: ", file)
+		logs.Info("Substituting env variables in file: " + file)
 		tomlFile = substituteEnv(tomlFile)
 	}
 	if !noSSMSubst {
-		log.Println("INFO: substituting SSM variables in file: ", file)
+		logs.Debug("Substituting SSM variables in file: " + file)
 		tomlFile = substituteSSM(tomlFile)
 	}
 
@@ -63,13 +63,13 @@ func fromTOML(file string, s *state) (bool, string) {
 	resolvePaths(file, s)
 	substituteVarsInValuesFiles(s)
 
-	return true, "INFO: Parsed TOML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
+	return true, "Parsed TOML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
 }
 
 // toTOML encodes a state type into a TOML file.
 // It uses the BurntSuchi TOML parser.
 func toTOML(file string, s *state) {
-	log.Println("printing generated toml ... ")
+	logs.Info("Printing generated toml ... ")
 	var buff bytes.Buffer
 	var (
 		newFile *os.File
@@ -102,11 +102,11 @@ func fromYAML(file string, s *state) (bool, string) {
 
 	yamlFile := string(rawYamlFile)
 	if !noEnvSubst {
-		log.Println("INFO: substituting env variables in file: ", file)
+		logs.Debug("Substituting env variables in file: " + file)
 		yamlFile = substituteEnv(yamlFile)
 	}
 	if !noSSMSubst {
-		log.Println("INFO: substituting SSM variables in file: ", file)
+		logs.Debug("Substituting SSM variables in file: " + file)
 		yamlFile = substituteSSM(yamlFile)
 	}
 
@@ -117,12 +117,12 @@ func fromYAML(file string, s *state) (bool, string) {
 	resolvePaths(file, s)
 	substituteVarsInValuesFiles(s)
 
-	return true, "INFO: Parsed YAML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
+	return true, "Parsed YAML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
 }
 
 // toYaml encodes a state type into a YAML file
 func toYAML(file string, s *state) {
-	log.Println("printing generated yaml ... ")
+	logs.Info("Printing generated yaml ... ")
 	var buff bytes.Buffer
 	var (
 		newFile *os.File
@@ -173,11 +173,11 @@ func substituteVarsInYaml(file string) string {
 
 	yamlFile := string(rawYamlFile)
 	if !noEnvSubst && !noEnvValuesSubst {
-		log.Println("INFO: substituting env variables in file: ", file)
+		logs.Debug("Substituting env variables in file: " + file)
 		yamlFile = substituteEnv(yamlFile)
 	}
 	if !noSSMSubst && !noSSMValuesSubst {
-		log.Println("INFO: substituting SSM variables in file: ", file)
+		logs.Debug("Substituting SSM variables in file: " + file)
 		yamlFile = substituteSSM(yamlFile)
 	}
 
@@ -212,7 +212,7 @@ func toFile(file string, s *state) {
 	} else if isOfType(file, []string{".yaml", ".yml"}) {
 		toYAML(file, s)
 	} else {
-		logError("ERROR: State file does not have toml/yaml extension.")
+		logError("State file does not have toml/yaml extension.")
 	}
 }
 
@@ -228,7 +228,7 @@ func stringInSlice(a string, list []string) bool {
 // addDefaultHelmRepos adds stable and incubator helm repos to the state if they are not already defined
 func addDefaultHelmRepos(s *state) {
 	if noDefaultRepos {
-		log.Println("INFO: default helm repo set disabled, 'stable' and 'incubator' repos unset.")
+		logs.Info("Default helm repo set disabled, 'stable' and 'incubator' repos unset.")
 		return
 	}
 	if s.HelmRepos == nil || len(s.HelmRepos) == 0 {
@@ -236,7 +236,7 @@ func addDefaultHelmRepos(s *state) {
 			"stable":    stableHelmRepo,
 			"incubator": incubatorHelmRepo,
 		}
-		log.Println("INFO: no helm repos provided, using the default 'stable' and 'incubator' repos.")
+		logs.Info("No helm repos provided, using the default 'stable' and 'incubator' repos.")
 	}
 	if _, ok := s.HelmRepos["stable"]; !ok {
 		s.HelmRepos["stable"] = stableHelmRepo
@@ -250,9 +250,6 @@ func addDefaultHelmRepos(s *state) {
 func resolvePaths(relativeToFile string, s *state) {
 	dir := filepath.Dir(relativeToFile)
 	for ns, v := range s.Namespaces {
-		if v.TillerRoleTemplateFile != "" {
-			v.TillerRoleTemplateFile, _ = filepath.Abs(filepath.Join(dir, v.TillerRoleTemplateFile))
-		}
 		s.Namespaces[ns] = v
 	}
 	for k, v := range s.Apps {
@@ -299,28 +296,6 @@ func resolvePaths(relativeToFile string, s *state) {
 		}
 		s.Certificates[k] = v
 	}
-	// resolving paths for helm certificate files
-	for k, v := range s.Namespaces {
-		if tillerTLSEnabled(v) {
-			if _, err := url.ParseRequestURI(v.CaCert); err != nil {
-				v.CaCert, _ = filepath.Abs(filepath.Join(dir, v.CaCert))
-			}
-			if _, err := url.ParseRequestURI(v.ClientCert); err != nil {
-				v.ClientCert, _ = filepath.Abs(filepath.Join(dir, v.ClientCert))
-			}
-			if _, err := url.ParseRequestURI(v.ClientKey); err != nil {
-				v.ClientKey, _ = filepath.Abs(filepath.Join(dir, v.ClientKey))
-			}
-			if _, err := url.ParseRequestURI(v.TillerCert); err != nil {
-				v.TillerCert, _ = filepath.Abs(filepath.Join(dir, v.TillerCert))
-			}
-			if _, err := url.ParseRequestURI(v.TillerKey); err != nil {
-				v.TillerKey, _ = filepath.Abs(filepath.Join(dir, v.TillerKey))
-			}
-		}
-		s.Namespaces[k] = v
-	}
-
 }
 
 // isOfType checks if the file extension of a filename/path is the same as "filetype".
@@ -339,15 +314,15 @@ func isOfType(filename string, filetypes []string) bool {
 func readFile(filepath string) string {
 	data, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		logError("ERROR: failed to read [ " + filepath + " ] file content: " + err.Error())
+		logError("failed to read [ " + filepath + " ] file content: " + err.Error())
 	}
 	return string(data)
 }
 
 // logVersions prints the versions of kubectl and helm to the logs
 func logVersions() {
-	log.Println("VERBOSE: kubectl client version: " + kubectlVersion)
-	log.Println("VERBOSE: Helm client version: " + helmVersion)
+	logs.Debug("kubectl client version: " + kubectlVersion)
+	logs.Debug("Helm client version: " + helmVersion)
 }
 
 // substituteEnv checks if a string has an env variable (contains '$'), then it returns its value
@@ -404,7 +379,10 @@ func downloadFile(path string, outfile string) string {
 	} else if strings.HasPrefix(path, "gs") {
 
 		tmp := getBucketElements(path)
-		gcs.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, noColors)
+		msg, err := gcs.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, noColors)
+		if err != nil {
+			logs.Fatal(msg)
+		}
 
 	} else if strings.HasPrefix(path, "az") {
 
@@ -413,7 +391,7 @@ func downloadFile(path string, outfile string) string {
 
 	} else {
 
-		log.Println("INFO: " + outfile + " will be used from local file system.")
+		logs.Info("" + outfile + " will be used from local file system.")
 		copyFile(path, outfile)
 	}
 	return outfile
@@ -423,27 +401,27 @@ func downloadFile(path string, outfile string) string {
 func copyFile(source string, destination string) {
 	from, err := os.Open(source)
 	if err != nil {
-		logError("ERROR: while copying " + source + " to " + destination + " : " + err.Error())
+		logError("while copying " + source + " to " + destination + " : " + err.Error())
 	}
 	defer from.Close()
 
 	to, err := os.OpenFile(destination, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
-		logError("ERROR: while copying " + source + " to " + destination + " : " + err.Error())
+		logError("while copying " + source + " to " + destination + " : " + err.Error())
 	}
 	defer to.Close()
 
 	_, err = io.Copy(to, from)
 	if err != nil {
-		logError("ERROR: while copying " + source + " to " + destination + " : " + err.Error())
+		logError("while copying " + source + " to " + destination + " : " + err.Error())
 	}
 }
 
 // deleteFile deletes a file
 func deleteFile(path string) {
-	log.Println("INFO: cleaning up ... deleting " + path)
+	logs.Info("Cleaning up ... deleting " + path)
 	if err := os.Remove(path); err != nil {
-		logError("ERROR: could not delete file: " + path)
+		logError("Could not delete file: " + path)
 	}
 }
 
@@ -452,7 +430,7 @@ func deleteFile(path string) {
 // and the webhook URL as well as a flag specifying if this is a failure message or not
 // It returns true if the sending of the message is successful, otherwise returns false
 func notifySlack(content string, url string, failure bool, executing bool) bool {
-	log.Println("INFO: posting notifications to slack ... ")
+	logs.Info("Posting notifications to slack ... ")
 
 	color := "#36a64f" // green
 	if failure {
@@ -490,7 +468,7 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		logError("ERROR: while sending notifications to slack" + err.Error())
+		logError("while sending notifications to slack" + err.Error())
 	}
 	defer resp.Body.Close()
 
@@ -505,8 +483,7 @@ func logError(msg string) {
 	if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err == nil {
 		notifySlack(msg, s.Settings.SlackWebhook, true, apply)
 	}
-	log.SetOutput(os.Stderr)
-	log.Fatal(style.Bold(style.Red(msg)))
+	logs.Fatal(msg)
 }
 
 // getBucketElements returns a map containing the bucket name and the file path inside the bucket
@@ -556,27 +533,6 @@ func isLocalChart(chart string) bool {
 		return true
 	}
 	return false
-}
-
-func generateCmdDescription(r *release, action string) string {
-	var tillerNamespaceMsg string
-	if tillerNamespaceMsg = ""; !settings.Tillerless {
-		tillerNamespaceMsg = "using Tiller in [ " + getDesiredTillerNamespace(r) + " ]"
-	}
-	message := fmt.Sprintf("%s release [ "+r.Name+" ] in namespace [[ "+r.Namespace+" ]] %s", action, tillerNamespaceMsg)
-	return message
-}
-
-func generateDecisionMessage(r *release, message string, isTillerAware bool) string {
-	var tillerNamespaceMsg string
-	if tillerNamespaceMsg = ""; !settings.Tillerless {
-		tillerNamespaceMsg = "using Tiller in [ " + getDesiredTillerNamespace(r) + " ]"
-	}
-	baseMessage := "DECISION: " + message
-	if isTillerAware {
-		return fmt.Sprintf(baseMessage+" %s", tillerNamespaceMsg)
-	}
-	return baseMessage
 }
 
 // concat appends all slices to a single slice

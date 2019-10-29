@@ -23,17 +23,6 @@ type limits []struct {
 // namespace type represents the fields of a namespace
 type namespace struct {
 	Protected              bool              `yaml:"protected"`
-	InstallTiller          bool              `yaml:"installTiller"`
-	UseTiller              bool              `yaml:"useTiller"`
-	TillerServiceAccount   string            `yaml:"tillerServiceAccount"`
-	TillerRole             string            `yaml:"tillerRole"`
-	TillerRoleTemplateFile string            `yaml:"tillerRoleTemplateFile"`
-	TillerMaxHistory       int               `yaml:"tillerMaxHistory"`
-	CaCert                 string            `yaml:"caCert"`
-	TillerCert             string            `yaml:"tillerCert"`
-	TillerKey              string            `yaml:"tillerKey"`
-	ClientCert             string            `yaml:"clientCert"`
-	ClientKey              string            `yaml:"clientKey"`
 	Limits                 limits            `yaml:"limits,omitempty"`
 	Labels                 map[string]string `yaml:"labels"`
 	Annotations            map[string]string `yaml:"annotations"`
@@ -52,15 +41,6 @@ func checkNamespaceDefined(ns string, s state) bool {
 func (n namespace) print() {
 	fmt.Println("")
 	fmt.Println("\tprotected : ", n.Protected)
-	fmt.Println("\tinstallTiller : ", n.InstallTiller)
-	fmt.Println("\tuseTiller : ", n.UseTiller)
-	fmt.Println("\ttillerServiceAccount : ", n.TillerServiceAccount)
-	fmt.Println("\ttillerRole: ", n.TillerRole)
-	fmt.Println("\tcaCert : ", n.CaCert)
-	fmt.Println("\ttillerCert : ", n.TillerCert)
-	fmt.Println("\ttillerKey : ", n.TillerKey)
-	fmt.Println("\tclientCert : ", n.ClientCert)
-	fmt.Println("\tclientKey : ", n.ClientKey)
 	fmt.Println("\tlabels : ")
 	printMap(n.Labels, 2)
 	fmt.Println("------------------- ")

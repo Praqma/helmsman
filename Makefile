@@ -90,9 +90,13 @@ check: $(SRCDIR) fmt
 	  go vet #${PKGS}
 .PHONY: check
 
-test: dep check ## Run unit tests
+repo:
 	@cd $(PRJDIR) && \
-	  helm init --client-only && \
+		helm repo add stable https://kubernetes-charts.storage.googleapis.com
+.PHONY: repo
+
+test: dep check repo ## Run unit tests
+	@cd $(PRJDIR) && \
 	  go test -v -cover -p=1 -args -f example.toml
 .PHONY: test
 

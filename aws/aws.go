@@ -65,7 +65,7 @@ func ReadFile(bucketName string, filename string, outFile string, noColors bool)
 		log.Fatal(style.Bold(style.Red("ERROR: Failed to download file  " + filename + " from S3: " + err.Error())))
 	}
 
-	log.Println("INFO: Successfully downloaded " + filename + " from S3 as " + outFile)
+	log.Println("Successfully downloaded " + filename + " from S3 as " + outFile)
 
 }
 

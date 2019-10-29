@@ -19,7 +19,7 @@ func Test_toolExists(t *testing.T) {
 		{
 			name: "test case 1 -- checking helm exists.",
 			args: args{
-				tool: "helm",
+				tool: helmBin,
 			},
 			want: true,
 		}, {

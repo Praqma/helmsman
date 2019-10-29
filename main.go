@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 )
 
@@ -33,7 +32,8 @@ var nsOverride string
 var skipValidation bool
 var applyLabels bool
 var keepUntrackedReleases bool
-var appVersion = "v1.13.1"
+var appVersion = "v3.0.0-beta1"
+var helmBin = "helm"
 var helmVersion string
 var kubectlVersion string
 var dryRun bool
@@ -69,8 +69,6 @@ func main() {
 		}
 	}
 
-	// init helm client before adding repos
-	initHelmClientOnly()
 	// add repos -- fails if they are not valid
 	if r, msg := addHelmRepos(s.HelmRepos); !r {
 		logError(msg)
@@ -81,26 +79,6 @@ func main() {
 		if !noNs {
 			addNamespaces(s.Namespaces)
 		}
-
-		if r, msg := initHelm(); !r {
-			logError(msg)
-		}
-
-		// check if helm Tiller is ready if we aren't running in tillerless mode.
-		if !s.Settings.Tillerless {
-			for k, ns := range s.Namespaces {
-				if ns.InstallTiller || ns.UseTiller {
-					waitForTiller(k)
-				}
-			}
-
-			if _, ok := s.Namespaces["kube-system"]; !ok {
-				waitForTiller("kube-system")
-			}
-		} else {
-			log.Println("INFO: running in TILLERLESS mode")
-			initHelmTiller()
-		}
 	}
 
 	if !skipValidation {
@@ -109,12 +87,12 @@ func main() {
 			logError(msg)
 		}
 	} else {
-		log.Println("INFO: charts validation is skipped.")
+		logs.Info("Skipping charts' validation.")
 	}
 
-	log.Println("INFO: checking what I need to do for your charts ... ")
+	logs.Info("Preparing plan...")
 	if destroy {
-		log.Println("WARN: --destroy is enabled. Your releases will be deleted!")
+		logs.Info("--destroy is enabled. Your releases will be deleted!")
 	}
 
 	p := makePlan(&s)
@@ -129,15 +107,13 @@ func main() {
 	if apply || dryRun || destroy {
 		p.execPlan()
 	}
-
-	log.Println("INFO: completed applying plan successfully!")
 }
 
 // cleanup deletes the k8s certificates and keys files
 // It also deletes any Tiller TLS certs and keys
 // and secret files
 func cleanup() {
-	log.Println("INFO: cleaning up sensitive and temp files")
+	logs.Info("Cleaning up sensitive and temp files.")
 	if _, err := os.Stat("ca.crt"); err == nil {
 		deleteFile("ca.crt")
 	}
@@ -152,24 +128,6 @@ func cleanup() {
 
 	if _, err := os.Stat("bearer.token"); err == nil {
 		deleteFile("bearer.token")
-	}
-
-	for k := range s.Namespaces {
-		if _, err := os.Stat(k + "-tiller.cert"); err == nil {
-			deleteFile(k + "-tiller.cert")
-		}
-		if _, err := os.Stat(k + "-tiller.key"); err == nil {
-			deleteFile(k + "-tiller.key")
-		}
-		if _, err := os.Stat(k + "-ca.cert"); err == nil {
-			deleteFile(k + "-ca.cert")
-		}
-		if _, err := os.Stat(k + "-client.cert"); err == nil {
-			deleteFile(k + "-client.cert")
-		}
-		if _, err := os.Stat(k + "-client.key"); err == nil {
-			deleteFile(k + "-client.key")
-		}
 	}
 
 	for _, app := range s.Apps {

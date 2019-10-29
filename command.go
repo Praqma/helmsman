@@ -3,8 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"log"
-	"os"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -42,10 +40,10 @@ func (c command) exec(debug bool, verbose bool) (int, string, string) {
 	}
 
 	if debug {
-		log.Println("INFO: " + c.Description)
+		logs.Debug("" + c.Description)
 	}
 	if verbose {
-		log.Println("VERBOSE: " + c.Cmd + " " + strings.Join(args, " "))
+		logs.Debug(c.Cmd + " " + strings.Join(args, " "))
 	}
 
 	cmd := exec.Command(c.Cmd, args...)
@@ -53,12 +51,8 @@ func (c command) exec(debug bool, verbose bool) (int, string, string) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	// we need to tell the TILLER to be silent. This will only matter in
-	// tillerless mode.
-	cmd.Env = append(os.Environ(), "HELM_TILLER_SILENT=true")
-
 	if err := cmd.Start(); err != nil {
-		log.Println("ERROR: cmd.Start: " + err.Error())
+		logs.Info("cmd.Start: " + err.Error())
 		return 1, err.Error(), ""
 	}
 
@@ -68,7 +62,7 @@ func (c command) exec(debug bool, verbose bool) (int, string, string) {
 				return status.ExitStatus(), stderr.String(), ""
 			}
 		} else {
-			logError("ERROR: cmd.Wait: " + err.Error())
+			logError("cmd.Wait: " + err.Error())
 		}
 	}
 	return 0, stdout.String(), stderr.String()

@@ -81,7 +81,7 @@ func Test_getValuesFiles(t *testing.T) {
 func Test_inspectUpgradeScenario(t *testing.T) {
 	type args struct {
 		r *release
-		s releaseState
+		s *map[string]releaseState
 	}
 	tests := []struct {
 		name string
@@ -98,9 +98,11 @@ func Test_inspectUpgradeScenario(t *testing.T) {
 					Chart:     "./test_files/chart-test",
 					Enabled:   true,
 				},
-				s: releaseState{
-					Namespace: "namespace",
-					Chart:     "chart-1.0.0",
+				s: &map[string]releaseState{
+					"release1-namespace": {
+						Namespace: "namespace",
+						Chart:     "chart-1.0.0",
+					},
 				},
 			},
 			want: change,
@@ -109,9 +111,10 @@ func Test_inspectUpgradeScenario(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			outcome = plan{}
+			currentState = *tt.args.s
 
 			// Act
-			inspectUpgradeScenario(tt.args.r, tt.args.s)
+			inspectUpgradeScenario(tt.args.r)
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
 
