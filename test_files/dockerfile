@@ -12,7 +12,7 @@ ENV HELM_VERSION ${HELM_VERSION:-v2.15.0}
 ENV GORELEASER_VERSION ${GORELEASER_VERSION:-v0.120.2}
 RUN apk --no-cache update \
     && apk add --update --no-cache ca-certificates git ruby \
-    && apk add --update -t deps curl tar gzip make bash gcc git openssh \
+    && apk add --update -t deps curl tar gzip make bash gcc git dep openssh \
     && rm -rf /var/cache/apk/* \
     && curl -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl \
     && chmod +x /usr/local/bin/kubectl \
