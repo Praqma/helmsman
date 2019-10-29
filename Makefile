@@ -101,7 +101,7 @@ cross: dep ## Create binaries for all OSs
 	  gox -os '!freebsd !netbsd' -arch '!arm' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}'
 .PHONY: cross
 
-release: dep ## Generate a new release
+release: ## Generate a new release
 	@cd $(PRJDIR) && \
 	  goreleaser --release-notes release-notes.md --rm-dist
 
