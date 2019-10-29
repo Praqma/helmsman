@@ -10,20 +10,20 @@ import (
 
 // config type represents the settings fields
 type config struct {
-	KubeContext            string `yaml:"kubeContext"`
-	Username               string `yaml:"username"`
-	Password               string `yaml:"password"`
-	ClusterURI             string `yaml:"clusterURI"`
-	ServiceAccount         string `yaml:"serviceAccount"`
-	StorageBackend         string `yaml:"storageBackend"`
-	SlackWebhook           string `yaml:"slackWebhook"`
-	ReverseDelete          bool   `yaml:"reverseDelete"`
-	BearerToken            bool   `yaml:"bearerToken"`
-	BearerTokenPath        string `yaml:"bearerTokenPath"`
-	Tillerless             bool   `yaml:"tillerless"`
-	EyamlEnabled           bool   `yaml:"eyamlEnabled"`
-	EyamlPrivateKeyPath    string `yaml:"eyamlPrivateKeyPath"`
-	EyamlPublicKeyPath     string `yaml:"eyamlPublicKeyPath"`
+	KubeContext         string `yaml:"kubeContext"`
+	Username            string `yaml:"username"`
+	Password            string `yaml:"password"`
+	ClusterURI          string `yaml:"clusterURI"`
+	ServiceAccount      string `yaml:"serviceAccount"`
+	StorageBackend      string `yaml:"storageBackend"`
+	SlackWebhook        string `yaml:"slackWebhook"`
+	ReverseDelete       bool   `yaml:"reverseDelete"`
+	BearerToken         bool   `yaml:"bearerToken"`
+	BearerTokenPath     string `yaml:"bearerTokenPath"`
+	Tillerless          bool   `yaml:"tillerless"`
+	EyamlEnabled        bool   `yaml:"eyamlEnabled"`
+	EyamlPrivateKeyPath string `yaml:"eyamlPrivateKeyPath"`
+	EyamlPublicKeyPath  string `yaml:"eyamlPublicKeyPath"`
 }
 
 // state type represents the desired state of applications on a k8s cluster.

@@ -406,17 +406,17 @@ func Test_eyamlSecrets(t *testing.T) {
 		{
 			name: "decryptSecrets - valid eyaml-based secrets decryption",
 			args: args{
-				s: &config {
-					EyamlEnabled:  true,
-					EyamlPublicKeyPath: "./test_files/keys/public_key.pkcs7.pem",
+				s: &config{
+					EyamlEnabled:        true,
+					EyamlPublicKeyPath:  "./test_files/keys/public_key.pkcs7.pem",
 					EyamlPrivateKeyPath: "./test_files/keys/private_key.pkcs7.pem",
 				},
 				r: &release{
-					Name:          "release1",
-					Namespace:     "namespace",
-					Version:       "1.0.0",
-					Enabled:       true,
-					SecretsFile:   "./test_files/secrets/valid_eyaml_secrets.yaml",
+					Name:        "release1",
+					Namespace:   "namespace",
+					Version:     "1.0.0",
+					Enabled:     true,
+					SecretsFile: "./test_files/secrets/valid_eyaml_secrets.yaml",
 				},
 			},
 			want: true,
@@ -424,17 +424,17 @@ func Test_eyamlSecrets(t *testing.T) {
 		{
 			name: "decryptSecrets - not existing eyaml-based secrets file",
 			args: args{
-				s: &config {
-					EyamlEnabled:  true,
-					EyamlPublicKeyPath: "./test_files/keys/public_key.pkcs7.pem",
+				s: &config{
+					EyamlEnabled:        true,
+					EyamlPublicKeyPath:  "./test_files/keys/public_key.pkcs7.pem",
 					EyamlPrivateKeyPath: "./test_files/keys/private_key.pkcs7.pem",
 				},
 				r: &release{
-					Name:          "release1",
-					Namespace:     "namespace",
-					Version:       "1.0.0",
-					Enabled:       true,
-					SecretsFile:   "./test_files/secrets/invalid_eyaml_secrets.yaml",
+					Name:        "release1",
+					Namespace:   "namespace",
+					Version:     "1.0.0",
+					Enabled:     true,
+					SecretsFile: "./test_files/secrets/invalid_eyaml_secrets.yaml",
 				},
 			},
 			want: false,
@@ -442,17 +442,17 @@ func Test_eyamlSecrets(t *testing.T) {
 		{
 			name: "decryptSecrets - not existing eyaml key",
 			args: args{
-				s: &config {
-					EyamlEnabled:  true,
-					EyamlPublicKeyPath: "./test_files/keys/public_key.pkcs7.pem2",
+				s: &config{
+					EyamlEnabled:        true,
+					EyamlPublicKeyPath:  "./test_files/keys/public_key.pkcs7.pem2",
 					EyamlPrivateKeyPath: "./test_files/keys/private_key.pkcs7.pem",
 				},
 				r: &release{
-					Name:          "release1",
-					Namespace:     "namespace",
-					Version:       "1.0.0",
-					Enabled:       true,
-					SecretsFile:   "./test_files/secrets/valid_eyaml_secrets.yaml",
+					Name:        "release1",
+					Namespace:   "namespace",
+					Version:     "1.0.0",
+					Enabled:     true,
+					SecretsFile: "./test_files/secrets/valid_eyaml_secrets.yaml",
 				},
 			},
 			want: false,
@@ -467,7 +467,7 @@ func Test_eyamlSecrets(t *testing.T) {
 			settings.EyamlPublicKeyPath = tt.args.s.EyamlPublicKeyPath
 			settings.EyamlPrivateKeyPath = tt.args.s.EyamlPrivateKeyPath
 			got := decryptSecret(tt.args.r.SecretsFile)
-			if  got != tt.want {
+			if got != tt.want {
 				t.Errorf("decryptSecret() = %v, want %v", got, tt.want)
 			}
 			if _, err := os.Stat(tt.args.r.SecretsFile + ".dec"); err == nil {
