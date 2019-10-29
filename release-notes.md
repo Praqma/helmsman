@@ -9,7 +9,7 @@
 - Improved build process and moved to go 1.13.1. PRs #306 #313 #317 #322
 
 # New features:
-- support hiera-eyaml as optional solution for secrets encryption. PR #323
+- Support hiera-eyaml as optional solution for secrets encryption. PR #323
 - New group flag to allow releasing a subset of apps
 - Added support for SSM params in the Helm values file. PR #295
 - Added support for yaml anchors. PR #302
