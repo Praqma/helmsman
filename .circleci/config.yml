@@ -37,7 +37,7 @@ jobs:
           name: Release helmsman
           command: |
             echo "releasing ..."
-            make release
+            curl -sL https://git.io/goreleaser | bash -s -- --release-notes release-notes.md --rm-dist
 
       - run:
           name: build docker images and push them to dockerhub
