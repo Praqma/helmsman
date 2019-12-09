@@ -1,7 +1,7 @@
 #  This is a docker image for the helmsman test container
 #  It can be pulled from praqma/helmsman-test
 
-ARG GO_VERSION=1.13.3
+ARG GO_VERSION=1.13.5
 ARG KUBE_VERSION
 ARG HELM_VERSION
 
