@@ -12,7 +12,7 @@ ARG GLOBAL_HELM_DIFF_VERSION
 ENV KUBE_VERSION=$GLOBAL_KUBE_VERSION
 ENV HELM_VERSION=$GLOBAL_HELM_VERSION
 ENV HELM_DIFF_VERSION=$GLOBAL_HELM_DIFF_VERSION
-WORKDIR /go/src/helmsman
+WORKDIR /go/src/github.com/Praqma/helmsman
 COPY scripts/ /tmp/
 RUN sh /tmp/setup.sh \
     && apk --no-cache add dep
@@ -35,4 +35,4 @@ ENV HELM_VERSION=$GLOBAL_HELM_VERSION
 ENV HELM_DIFF_VERSION=$GLOBAL_HELM_DIFF_VERSION
 COPY scripts/ /tmp/
 RUN sh /tmp/setup.sh
-COPY --from=builder /go/src/helmsman/helmsman /bin/helmsman
+COPY --from=builder /go/src/github.com/Praqma/helmsman/helmsman /bin/helmsman

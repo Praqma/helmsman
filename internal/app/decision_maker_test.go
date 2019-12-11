@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"reflect"
@@ -24,13 +24,13 @@ func Test_getValuesFiles(t *testing.T) {
 					Enabled:     true,
 					Chart:       "repo/chartX",
 					Version:     "1.0",
-					ValuesFile:  "test_files/values.yaml",
+					ValuesFile:  "../../tests/values.yaml",
 					Purge:       true,
 					Test:        true,
 				},
 				//s: st,
 			},
-			want: []string{"-f", "test_files/values.yaml"},
+			want: []string{"-f", "../../tests/values.yaml"},
 		},
 		{
 			name: "test case 2",
@@ -42,13 +42,13 @@ func Test_getValuesFiles(t *testing.T) {
 					Enabled:     true,
 					Chart:       "repo/chartX",
 					Version:     "1.0",
-					ValuesFiles: []string{"test_files/values.yaml"},
+					ValuesFiles: []string{"../../tests/values.yaml"},
 					Purge:       true,
 					Test:        true,
 				},
 				//s: st,
 			},
-			want: []string{"-f", "test_files/values.yaml"},
+			want: []string{"-f", "../../tests/values.yaml"},
 		},
 		{
 			name: "test case 1",
@@ -60,13 +60,13 @@ func Test_getValuesFiles(t *testing.T) {
 					Enabled:     true,
 					Chart:       "repo/chartX",
 					Version:     "1.0",
-					ValuesFiles: []string{"test_files/values.yaml", "test_files/values2.yaml"},
+					ValuesFiles: []string{"../../tests/values.yaml", "../../tests/values2.yaml"},
 					Purge:       true,
 					Test:        true,
 				},
 				//s: st,
 			},
-			want: []string{"-f", "test_files/values.yaml", "-f", "test_files/values2.yaml"},
+			want: []string{"-f", "../../tests/values.yaml", "-f", "../../tests/values2.yaml"},
 		},
 	}
 	for _, tt := range tests {
@@ -95,7 +95,7 @@ func Test_inspectUpgradeScenario(t *testing.T) {
 					Name:      "release1",
 					Namespace: "namespace",
 					Version:   "1.0.0",
-					Chart:     "./test_files/chart-test",
+					Chart:     "./../../tests/chart-test",
 					Enabled:   true,
 				},
 				s: &map[string]releaseState{

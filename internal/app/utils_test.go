@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"os"
@@ -36,14 +36,14 @@ func Test_fromTOML(t *testing.T) {
 		{
 			name: "test case 1 -- invalid TOML",
 			args: args{
-				file: "test_files/invalid_example.toml",
+				file: "../../../tests/invalid_example.toml",
 				s:    new(state),
 			},
 			want: false,
 		}, {
 			name: "test case 2 -- valid TOML",
 			args: args{
-				file: "example.toml",
+				file: "../../examples/example.toml",
 				s:    new(state),
 			},
 			want: true,
@@ -72,7 +72,7 @@ func Test_fromTOML_Expand(t *testing.T) {
 		{
 			name: "test case 1 -- valid TOML expand ClusterURI",
 			args: args{
-				file: "example.toml",
+				file: "../../examples/example.toml",
 				s:    new(state),
 			},
 			section: "Settings",
@@ -82,7 +82,7 @@ func Test_fromTOML_Expand(t *testing.T) {
 		{
 			name: "test case 2 -- valid TOML expand org",
 			args: args{
-				file: "example.toml",
+				file: "../../examples/example.toml",
 				s:    new(state),
 			},
 			section: "Metadata",
@@ -171,14 +171,14 @@ func Test_fromYAML(t *testing.T) {
 		{
 			name: "test case 1 -- invalid YAML",
 			args: args{
-				file: "test_files/invalid_example.yaml",
+				file: "../../tests/invalid_example.yaml",
 				s:    new(state),
 			},
 			want: false,
 		}, {
 			name: "test case 2 -- valid TOML",
 			args: args{
-				file: "example.yaml",
+				file: "../../examples/example.yaml",
 				s:    new(state),
 			},
 			want: true,
@@ -208,7 +208,7 @@ func Test_fromYAML_Expand(t *testing.T) {
 		{
 			name: "test case 1 -- valid YAML expand ClusterURI",
 			args: args{
-				file: "example.yaml",
+				file: "../../examples/example.yaml",
 				s:    new(state),
 			},
 			section: "Settings",
@@ -218,7 +218,7 @@ func Test_fromYAML_Expand(t *testing.T) {
 		{
 			name: "test case 2 -- valid YAML expand org",
 			args: args{
-				file: "example.yaml",
+				file: "../../examples/example.yaml",
 				s:    new(state),
 			},
 			section: "Metadata",
@@ -355,7 +355,7 @@ func Test_readFile(t *testing.T) {
 		{
 			name: "test case 1 -- successful reading.",
 			args: args{
-				filepath: "test_files/values.yaml",
+				filepath: "../../tests/values.yaml",
 			},
 			want: "",
 		},

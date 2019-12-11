@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"fmt"
@@ -29,7 +29,7 @@ func makePlan(s *state) *plan {
 func decide(r *release, s *state) {
 	// check for presence in defined targets or groups
 	if !r.isReleaseConsideredToRun() {
-		logDecision("release [ "+r.Name+" ] is ignored due to passed constraints. Skipping.", r.Priority, ignored)
+		logDecision("Release [ "+r.Name+" ] ignored", r.Priority, ignored)
 		return
 	}
 
@@ -45,14 +45,14 @@ func decide(r *release, s *state) {
 
 			if isProtected(r) {
 
-				logDecision("release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
+				logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 					"protection is removed.", r.Priority, noop)
 				return
 			}
 			deleteRelease(r)
 			return
 		}
-		logDecision("release [ "+r.Name+" ] is disabled. Skipping.", r.Priority, noop)
+		logDecision("Release [ "+r.Name+" ] disabled", r.Priority, noop)
 		return
 
 	} else {
@@ -71,7 +71,7 @@ func decide(r *release, s *state) {
 				rollbackRelease(r) // rollback
 
 			} else {
-				logDecision("release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
+				logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 					"you remove its protection.", r.Priority, noop)
 			}
 
@@ -79,11 +79,11 @@ func decide(r *release, s *state) {
 
 			if !isProtected(r) {
 
-				logDecision("release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in FAILED state. Upgrade is scheduled!", r.Priority, change)
+				logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in FAILED state. Upgrade is scheduled!", r.Priority, change)
 				upgradeRelease(r)
 
 			} else {
-				logDecision("release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
+				logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 					"you remove its protection.", r.Priority, noop)
 			}
 		} else {
@@ -101,10 +101,10 @@ func testRelease(r *release) {
 	cmd := command{
 		Cmd:         helmBin,
 		Args:        []string{"test", "--namespace", r.Namespace, r.Name},
-		Description: "running tests for release [ "+r.Name+" ] in namespace [[ "+r.Namespace+" ]]",
+		Description: "Running tests for release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
 	}
 	outcome.addCommand(cmd, r.Priority, r)
-	logDecision("release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is required to be tested when installed. Got it!",  r.Priority, noop)
+	logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is required to be tested during installation", r.Priority, noop)
 }
 
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
@@ -112,10 +112,10 @@ func installRelease(r *release) {
 	cmd := command{
 		Cmd:         helmBin,
 		Args:        concat([]string{"install", r.Name, r.Chart, "--namespace", r.Namespace}, getValuesFiles(r), []string{"--version", r.Version}, getSetValues(r), getSetStringValues(r), getWait(r), getHelmFlags(r)),
-		Description: "installing release [ "+r.Name+" ] in namespace [[ "+r.Namespace+" ]]",
+		Description: "Installing release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
 	}
 	outcome.addCommand(cmd, r.Priority, r)
-	logDecision("release [ "+r.Name+" ] is not installed. Will install it in namespace [[ "+r.Namespace+" ]]", r.Priority, create)
+	logDecision("Release [ "+r.Name+" ] will be installed in [ "+r.Namespace+" ] namespace", r.Priority, create)
 
 	if r.Test {
 		testRelease(r)
@@ -136,18 +136,18 @@ func rollbackRelease(r *release) {
 		cmd := command{
 			Cmd:         helmBin,
 			Args:        concat([]string{"rollback", r.Name, getReleaseRevision(rs)}, getWait(r), getTimeout(r), getNoHooks(r), getDryRunFlags()),
-			Description: "rolling back release [ "+r.Name+" ] in namespace [[ "+r.Namespace+" ]]",
+			Description: "Rolling back release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
 		}
 		outcome.addCommand(cmd, r.Priority, r)
 		upgradeRelease(r) // this is to reflect any changes in values file(s)
-		logDecision("release [ "+r.Name+" ] is currently deleted and is desired to be rolledback to "+
-			"namespace [[ "+r.Namespace+" ]] . It will also be upgraded in case values have changed.", r.Priority, create)
+		logDecision("Release [ "+r.Name+" ] was deleted and is desired to be rolled back to "+
+			"namespace [ "+r.Namespace+" ]", r.Priority, create)
 	} else {
 		reInstallRelease(r, rs)
-		logDecision("release [ "+r.Name+" ] is deleted BUT from namespace [[ "+rs.Namespace+
-			" ]]. Will purge delete it from there and install it in namespace [[ "+r.Namespace+" ]]", r.Priority, create)
-		logDecision("WARNING: rolling back release [ "+r.Name+" ] from [[ "+rs.Namespace+" ]] to [[ "+r.Namespace+
-			" ]] might not correctly connect to existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/apps/moving_across_namespaces.md"+
+		logDecision("Release [ "+r.Name+" ] is deleted BUT from namespace [ "+rs.Namespace+
+			" ]. Will purge delete it from there and install it in namespace [ "+r.Namespace+" ]", r.Priority, create)
+		logDecision("WARNING: rolling back release [ "+r.Name+" ] from [ "+rs.Namespace+" ] to [ "+r.Namespace+
+			" ] might not correctly connect to existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/apps/moving_across_namespaces.md"+
 			" for details if this release uses PV and PVC.", r.Priority, create)
 
 	}
@@ -162,8 +162,8 @@ func deleteRelease(r *release) {
 
 	cmd := command{
 		Cmd:         helmBin,
-		Args:        concat([]string{"delete", "--namespace", r.Namespace, r.Name}, getDryRunFlags()),
-		Description: "deleting release [ "+r.Name+" ] in namespace [[ "+r.Namespace+" ]]",
+		Args:        concat([]string{"uninstall", "--namespace", r.Namespace, r.Name}, getDryRunFlags()),
+		Description: "Deleting release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
 	}
 	outcome.addCommand(cmd, priority, r)
 	logDecision(fmt.Sprintf("release [ %s ] is desired to be DELETED.", r.Name), r.Priority, delete)
@@ -187,7 +187,7 @@ func inspectUpgradeScenario(r *release) {
 
 		version, msg := getChartVersion(r)
 		if msg != "" {
-			logError(msg)
+			log.Fatal(msg)
 			return
 		}
 		r.Version = version
@@ -196,29 +196,28 @@ func inspectUpgradeScenario(r *release) {
 			// upgrade
 			diffRelease(r)
 			upgradeRelease(r)
-			logDecision("release [ "+r.Name+" ] will be upgraded.", r.Priority, change)
+			logDecision("Release [ "+r.Name+" ] will be updated", r.Priority, change)
 
 		} else if extractChartName(r.Chart) != getReleaseChartName(rs) {
 			reInstallRelease(r, rs)
-			logDecision("release [ "+r.Name+" ] is desired to use a new Chart [ "+r.Chart+
-				" ]. Delete of the current release will be planned and new chart will be installed in namespace [[ "+
-				r.Namespace+" ]]", r.Priority, change)
+			logDecision("Release [ "+r.Name+" ] is desired to use a new chart [ "+r.Chart+
+				" ]. Delete of the current release will be planned and new chart will be installed in namespace [ "+
+				r.Namespace+" ]", r.Priority, change)
 		} else {
 			if diff := diffRelease(r); diff != "" {
 				upgradeRelease(r)
-				logDecision("release [ "+r.Name+" ] is installed and has some changes to apply. "+
-					"I will upgrade it!", r.Priority, change)
+				logDecision("Release [ "+r.Name+" ] will be updated", r.Priority, change)
 			} else {
-				logDecision("release [ "+r.Name+" ] is enabled and has no changes to apply.", r.Priority, noop)
+				logDecision("Release [ "+r.Name+" ] installed and up-to-date", r.Priority, noop)
 			}
 		}
 	} else {
 		reInstallRelease(r, rs)
-		logDecision("release [ "+r.Name+" ] is desired to be enabled in a new namespace [[ "+r.Namespace+
-			" ]]. I am planning a purge delete of the current release from namespace [[ "+rs.Namespace+" ]] "+
-			"and will install it for you in namespace [[ "+r.Namespace+" ]]", r.Priority, change)
-		logDecision("WARNING: moving release [ "+r.Name+" ] from [[ "+rs.Namespace+" ]] to [[ "+r.Namespace+
-			" ]] might not correctly connect to existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/move_charts_across_namespaces.md"+
+		logDecision("Release [ "+r.Name+" ] is desired to be enabled in a new namespace [ "+r.Namespace+
+			" ]. Uninstall of the current release from namespace [ "+rs.Namespace+" ] will be performed "+
+			"and then installation in namespace [ "+r.Namespace+" ] will take place", r.Priority, change)
+		logDecision("WARNING: moving release [ "+r.Name+" ] from [ "+rs.Namespace+" ] to [ "+r.Namespace+
+			" ] might not correctly connect existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/move_charts_across_namespaces.md"+
 			" for details if this release uses PV and PVC.", r.Priority, change)
 	}
 }
@@ -243,11 +242,11 @@ func diffRelease(r *release) string {
 	cmd := command{
 		Cmd:         helmBin,
 		Args:        concat([]string{"diff", colorFlag}, diffContextFlag, []string{suppressDiffSecretsFlag, "--namespace", r.Namespace, "upgrade", r.Name, r.Chart}, getValuesFiles(r), []string{"--version", r.Version}, getSetValues(r), getSetStringValues(r)),
-		Description: "diffing release [ "+r.Name+" ] in namespace [[ "+r.Namespace+" ]]",
+		Description: "Diffing release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
 	}
 
 	if exitCode, msg, _ = cmd.exec(debug, verbose); exitCode != 0 {
-		logError(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", exitCode, msg))
+		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", exitCode, msg))
 	} else {
 		if (verbose || showDiff) && msg != "" {
 			fmt.Println(msg)
@@ -266,7 +265,7 @@ func upgradeRelease(r *release) {
 	cmd := command{
 		Cmd:         helmBin,
 		Args:        concat([]string{"upgrade", "--namespace", r.Namespace, r.Name, r.Chart}, getValuesFiles(r), []string{"--version", r.Version, force}, getSetValues(r), getSetStringValues(r), getWait(r), getHelmFlags(r)),
-		Description: "upgrading release [ "+r.Name+" ] in namespace [[ "+r.Namespace+" ]]",
+		Description: "Upgrading release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
 	}
 
 	outcome.addCommand(cmd, r.Priority, r)
@@ -279,14 +278,14 @@ func reInstallRelease(r *release, rs releaseState) {
 	delCmd := command{
 		Cmd:         helmBin,
 		Args:        concat([]string{"delete", "--purge", r.Name}, getDryRunFlags()),
-		Description: "deleting release [ "+r.Name+" ] in namespace [[ "+r.Namespace+" ]]",
+		Description: "Deleting release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
 	}
 	outcome.addCommand(delCmd, r.Priority, r)
 
 	installCmd := command{
 		Cmd:         helmBin,
 		Args:        concat([]string{"install", r.Chart, "--version", r.Version, "-n", r.Name, "--namespace", r.Namespace}, getValuesFiles(r), getSetValues(r), getSetStringValues(r), getWait(r), getHelmFlags(r)),
-		Description: "installing release [ "+r.Name+" ] in namespace [[ "+r.Namespace+" ]]",
+		Description: "Installing release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
 	}
 	outcome.addCommand(installCmd, r.Priority, r)
 }
@@ -341,19 +340,19 @@ func getValuesFiles(r *release) []string {
 
 	if r.SecretsFile != "" {
 		if !helmPluginExists("secrets") {
-			logError("helm secrets plugin is not installed/configured correctly. Aborting!")
+			log.Fatal("helm secrets plugin is not installed/configured correctly. Aborting!")
 		}
 		if ok := decryptSecret(r.SecretsFile); !ok {
-			logError("Failed to decrypt secret file" + r.SecretsFile)
+			log.Fatal("Failed to decrypt secret file" + r.SecretsFile)
 		}
 		fileList = append(fileList, r.SecretsFile+".dec")
 	} else if len(r.SecretsFiles) > 0 {
 		if !helmPluginExists("secrets") {
-			logError("helm secrets plugin is not installed/configured correctly. Aborting!")
+			log.Fatal("helm secrets plugin is not installed/configured correctly. Aborting!")
 		}
 		for i := 0; i < len(r.SecretsFiles); i++ {
 			if ok := decryptSecret(r.SecretsFiles[i]); !ok {
-				logError("Failed to decrypt secret file" + r.SecretsFiles[i])
+				log.Fatal("Failed to decrypt secret file" + r.SecretsFiles[i])
 			}
 			// if .dec extension is added before to the secret filename, don't add it again.
 			// This happens at upgrade time (where diff and upgrade both call this function)
@@ -452,7 +451,7 @@ func getHelmFlags(r *release) []string {
 func checkChartDepUpdate(r *release) {
 	if updateDeps && isLocalChart(r.Chart) {
 		if ok, err := updateChartDep(r.Chart); !ok {
-			logError("helm dependency update failed: " + err)
+			log.Fatal("helm dependency update failed: " + err)
 		}
 	}
 }

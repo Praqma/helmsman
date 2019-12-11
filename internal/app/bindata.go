@@ -3,7 +3,7 @@
 // data/role.yaml
 // DO NOT EDIT!
 
-package main
+package app
 
 import (
 	"bytes"

@@ -69,9 +69,8 @@ func ReadFile(bucketName string, filename string, outFile string, noColors bool)
 
 }
 
-
 // ReadSSMParam reads a value from an SSM Parameter
-func ReadSSMParam(keyname string, withDecryption bool, noColors bool) string  {
+func ReadSSMParam(keyname string, withDecryption bool, noColors bool) string {
 	style = aurora.NewAurora(!noColors)
 
 	// Checking env vars are set to configure AWS

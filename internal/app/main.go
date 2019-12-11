@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"os"
@@ -57,7 +57,11 @@ const tempFilesDir = ".helmsman-tmp"
 const stableHelmRepo = "https://kubernetes-charts.storage.googleapis.com"
 const incubatorHelmRepo = "http://storage.googleapis.com/kubernetes-charts-incubator"
 
-func main() {
+func init() {
+	Cli()
+}
+
+func Main() {
 	// delete temp files with substituted env vars when the program terminates
 	defer os.RemoveAll(tempFilesDir)
 	defer cleanup()
@@ -65,13 +69,13 @@ func main() {
 	// set the kubecontext to be used Or create it if it does not exist
 	if !setKubeContext(s.Settings.KubeContext) {
 		if r, msg := createContext(); !r {
-			logError(msg)
+			log.Fatal(msg)
 		}
 	}
 
 	// add repos -- fails if they are not valid
 	if r, msg := addHelmRepos(s.HelmRepos); !r {
-		logError(msg)
+		log.Fatal(msg)
 	}
 
 	if apply || dryRun || destroy {
@@ -84,15 +88,15 @@ func main() {
 	if !skipValidation {
 		// validate charts-versions exist in defined repos
 		if r, msg := validateReleaseCharts(s.Apps); !r {
-			logError(msg)
+			log.Fatal(msg)
 		}
 	} else {
-		logs.Info("Skipping charts' validation.")
+		log.Info("Skipping charts' validation.")
 	}
 
-	logs.Info("Preparing plan...")
+	log.Info("Preparing plan...")
 	if destroy {
-		logs.Info("--destroy is enabled. Your releases will be deleted!")
+		log.Info("--destroy is enabled. Your releases will be deleted!")
 	}
 
 	p := makePlan(&s)
@@ -113,7 +117,7 @@ func main() {
 // It also deletes any Tiller TLS certs and keys
 // and secret files
 func cleanup() {
-	logs.Info("Cleaning up sensitive and temp files.")
+	log.Verbose("Cleaning up sensitive and temp files")
 	if _, err := os.Stat("ca.crt"); err == nil {
 		deleteFile("ca.crt")
 	}

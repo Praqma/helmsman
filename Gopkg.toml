@@ -24,6 +24,8 @@
 #   go-tests = true
 #   unused-packages = true
 
+ignored = ["github.com/Praqma/helmsman"]
+
 [[constraint]]
   version = "0.3.0"
   name = "github.com/Azure/azure-storage-blob-go"

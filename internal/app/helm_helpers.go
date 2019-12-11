@@ -1,9 +1,8 @@
-package main
+package app
 
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -12,35 +11,35 @@ import (
 	"strings"
 	"time"
 
-	"helmsman/gcs"
+	"github.com/Praqma/helmsman/internal/gcs"
 )
 
 var currentState map[string]releaseState
 
 // releaseState represents the current state of a release
 type releaseState struct {
-	Revision        int
-	Updated         time.Time
-	Status          string
-	Chart           string
-	Namespace       string
+	Revision  int
+	Updated   time.Time
+	Status    string
+	Chart     string
+	Namespace string
 }
 
 type releaseInfo struct {
-	Name            string `json:"Name"`
-	Namespace       string `json:"Namespace"`
-	Revision        string `json:"Revision"`
-	Updated         string `json:"Updated"`
-	Status          string `json:"Status"`
-	Chart           string `json:"Chart"`
-	AppVersion      string `json:"AppVersion,omitempty"`
+	Name       string `json:"Name"`
+	Namespace  string `json:"Namespace"`
+	Revision   string `json:"Revision"`
+	Updated    string `json:"Updated"`
+	Status     string `json:"Status"`
+	Chart      string `json:"Chart"`
+	AppVersion string `json:"AppVersion,omitempty"`
 }
 
 type chartVersion struct {
-	Name            string `json:"name"`
-	Version         string `json:"version"`
-	AppVersion      string `json:"app_version"`
-	Description     string `json:"description"`
+	Name        string `json:"name"`
+	Version     string `json:"version"`
+	AppVersion  string `json:"app_version"`
+	Description string `json:"description"`
 }
 
 // getHelmClientVersion returns Helm client Version
@@ -48,12 +47,12 @@ func getHelmVersion() string {
 	cmd := command{
 		Cmd:         helmBin,
 		Args:        []string{"version", "--short"},
-		Description: "checking Helm version ",
+		Description: "Checking Helm version",
 	}
 
 	exitCode, result, _ := cmd.exec(debug, false)
 	if exitCode != 0 {
-		logError("while checking helm version: " + result)
+		log.Fatal("While checking helm version: " + result)
 	}
 	return result
 }
@@ -64,21 +63,21 @@ func getHelmReleases() []releaseInfo {
 	cmd := command{
 		Cmd:         helmBin,
 		Args:        []string{"list", "--all", "--max", "0", "--output", "json", "--all-namespaces"},
-		Description: "listing all existing releases...",
+		Description: "Listing all existing releases...",
 	}
 	exitCode, result, _ := cmd.exec(debug, verbose)
 	if exitCode != 0 {
-		logError("failed to list all releases: " + result)
+		log.Fatal("Failed to list all releases: " + result)
 	}
 	if err := json.Unmarshal([]byte(result), &allReleases); err != nil {
-		logError(fmt.Sprintf("failed to unmarshal Helm CLI output: %s", err))
+		log.Fatal(fmt.Sprintf("failed to unmarshal Helm CLI output: %s", err))
 	}
 	return allReleases
 }
 
 // buildState builds the currentState map containing information about all releases existing in a k8s cluster
 func buildState() {
-	logs.Info("Acquiring current Helm state from cluster...")
+	log.Info("Acquiring current Helm state from cluster...")
 
 	currentState = make(map[string]releaseState)
 	rel := getHelmReleases()
@@ -94,15 +93,15 @@ func buildState() {
 		date, err := time.Parse("2006-01-02 15:04:05.000000000 -0700 MST",
 			fmt.Sprintf("%s %s.%s %s %s", updatedFields[0], updatedHour[0], milliseconds, updatedFields[2], updatedFields[3]))
 		if err != nil {
-			logError("while converting release time: " + err.Error())
+			log.Fatal("While converting release time: " + err.Error())
 		}
 		revision, _ := strconv.Atoi(rel[i].Revision)
 		currentState[fmt.Sprintf("%s-%s", rel[i].Name, rel[i].Namespace)] = releaseState{
-			Revision:        revision,
-			Updated:         date,
-			Status:          rel[i].Status,
-			Chart:           rel[i].Chart,
-			Namespace:       rel[i].Namespace,
+			Revision:  revision,
+			Updated:   date,
+			Status:    rel[i].Status,
+			Chart:     rel[i].Chart,
+			Namespace: rel[i].Namespace,
 		}
 	}
 }
@@ -170,21 +169,21 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 				cmd := command{
 					Cmd:         helmBin,
 					Args:        []string{"inspect", "chart", r.Chart},
-					Description: "validating if chart at " + r.Chart + " is available.",
+					Description: "Validating [ " + r.Chart + " ] chart's availability",
 				}
 
 				var output string
 				var exitCode int
 				if exitCode, output, _ = cmd.exec(debug, verbose); exitCode != 0 {
 					maybeRepo := filepath.Base(filepath.Dir(r.Chart))
-					return false, "chart at " + r.Chart + " for app [" + app + "] could not be found. Did you mean to add a repo named '" + maybeRepo + "'?"
+					return false, "Chart [ " + r.Chart + " ] for app [" + app + "] can't be found. Did you mean to add a repo [ " + maybeRepo + " ]?"
 				}
 				matches := versionExtractor.FindStringSubmatch(output)
 				if len(matches) == 2 {
 					version := matches[1]
 					if r.Version != version {
-						return false, "chart " + r.Chart + " with version " + r.Version + " is specified for " +
-							"app [" + app + "] but the chart found at that path has version " + version + " which does not match."
+						return false, "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified for " +
+							"app [" + app + "] but the chart found at that path has version [ " + version + " ] which does not match."
 					}
 				}
 
@@ -196,12 +195,12 @@ func validateReleaseCharts(apps map[string]*release) (bool, string) {
 				cmd := command{
 					Cmd:         helmBin,
 					Args:        []string{"search", "repo", r.Chart, "--version", version, "-l"},
-					Description: "validating if chart " + r.Chart + " with version " + r.Version + " is available in the defined repos.",
+					Description: "Validating [ " + r.Chart + " ] chart's version [ " + r.Version + " ] availability",
 				}
 
 				if exitCode, result, _ := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
-					return false, "chart " + r.Chart + " with version " + r.Version + " is specified for " +
-						"app [" + app + "] but is not found in the defined repos."
+					return false, "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified for " +
+						"app [" + app + "] but was not found"
 				}
 			}
 		}
@@ -218,7 +217,7 @@ func getChartVersion(r *release) (string, string) {
 	cmd := command{
 		Cmd:         helmBin,
 		Args:        []string{"search", "repo", r.Chart, "--version", r.Version, "-o", "json"},
-		Description: "getting latest chart version " + r.Chart + "-" + r.Version + "",
+		Description: "Getting latest chart's version " + r.Chart + "-" + r.Version + "",
 	}
 
 	var (
@@ -227,22 +226,21 @@ func getChartVersion(r *release) (string, string) {
 	)
 
 	if exitCode, result, _ = cmd.exec(debug, verbose); exitCode != 0 {
-		return "", "chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos."
+		return "", "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified but not found in the helm repositories"
 	}
 
 	chartVersions := make([]chartVersion, 0)
 	if err := json.Unmarshal([]byte(result), &chartVersions); err != nil {
-		logs.Fatal(fmt.Sprint(err))
+		log.Fatal(fmt.Sprint(err))
 	}
 
 	if len(chartVersions) < 1 {
-		return "", "chart " + r.Chart + " with version " + r.Version + " is specified but not found in the helm repos."
+		return "", "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified but not found in the helm repositories"
 	} else if len(chartVersions) > 1 {
-		return "", "multiple versions of chart " + r.Chart + " with version " + r.Version + " found in the helm repos."
+		return "", "Multiple versions of chart [ " + r.Chart + " ] with version [ " + r.Version + " ] found in the helm repositories"
 	}
 	return chartVersions[0].Version, ""
 }
-
 
 // addHelmRepos adds repositories to Helm if they don't exist already.
 // Helm does not mind if a repo with the same name exists. It treats it as an update.
@@ -261,12 +259,12 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 
 		u, err := url.Parse(repoLink)
 		if err != nil {
-			logError("failed to add helm repo:  " + err.Error())
+			log.Fatal("failed to add helm repo:  " + err.Error())
 		}
 		if u.User != nil {
 			p, ok := u.User.Password()
 			if !ok {
-				logError("helm repo " + repoName + " has incomplete basic auth info. Missing the password!")
+				log.Fatal("helm repo " + repoName + " has incomplete basic auth info. Missing the password!")
 			}
 			basicAuthArgs = append(basicAuthArgs, "--username", u.User.Username(), "--password", p)
 
@@ -275,11 +273,11 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 		cmd := command{
 			Cmd:         helmBin,
 			Args:        concat([]string{"repo", "add", repoName, repoLink}, basicAuthArgs),
-			Description: "adding repo " + repoName,
+			Description: "Adding helm repository [ " + repoName + " ]",
 		}
 
 		if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
-			return false, "while adding repo [" + repoName + "]: " + err
+			return false, "While adding helm repository [" + repoName + "]: " + err
 		}
 
 	}
@@ -287,16 +285,15 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 	cmd := command{
 		Cmd:         helmBin,
 		Args:        []string{"repo", "update"},
-		Description: "updating helm repos",
+		Description: "Updating helm repositories",
 	}
 
 	if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
-		return false, "while updating helm repos : " + err
+		return false, "While updating helm repos : " + err
 	}
 
 	return true, ""
 }
-
 
 // cleanUntrackedReleases checks for any releases that are managed by Helmsman and are no longer tracked by the desired state
 // It compares the currently deployed releases with "MANAGED-BY=HELMSMAN" labels with Apps defined in the desired state
@@ -305,7 +302,7 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 // NOTE: Removing/Commenting out an app from the desired state makes it untracked.
 func cleanUntrackedReleases() {
 	toDelete := make(map[string]map[*release]bool)
-	logs.Info("Checking if any Helmsman managed releases are no longer tracked by your desired state ...")
+	log.Info("Checking if any Helmsman managed releases are no longer tracked by your desired state ...")
 	for ns, releases := range getHelmsmanReleases() {
 		for r := range releases {
 			tracked := false
@@ -324,14 +321,14 @@ func cleanUntrackedReleases() {
 	}
 
 	if len(toDelete) == 0 {
-		logs.Info("No untracked releases found.")
+		log.Info("No untracked releases found")
 	} else {
 		for _, releases := range toDelete {
 			for r := range releases {
 				if r.isReleaseConsideredToRun() {
-					logDecision("Untracked release [ "+r.Name+" ] is ignored by target flag. Skipping.", -800, ignored)
+					logDecision("Untracked release [ "+r.Name+" ] found but it's ignored by target flag", -800, ignored)
 				} else {
-					logDecision("Untracked release found: release [ "+r.Name+" ]. It will be deleted", -800, delete)
+					logDecision("Untracked release [ "+r.Name+" ] found and it will be deleted", -800, delete)
 					deleteUntrackedRelease(r)
 				}
 			}
@@ -344,7 +341,7 @@ func deleteUntrackedRelease(release *release) {
 	cmd := command{
 		Cmd:         helmBin,
 		Args:        concat([]string{"delete", release.Name, "--namespace", release.Namespace}, getDryRunFlags()),
-		Description: "deleting not tracked release [ "+release.Name+" ] in namespace [[ "+release.Namespace+" ]]",
+		Description: "Deleting untracked release [ " + release.Name + " ] in namespace [ " + release.Namespace + " ]",
 	}
 
 	outcome.addCommand(cmd, -800, nil)
@@ -373,16 +370,16 @@ func decryptSecret(name string) bool {
 	if !settings.EyamlEnabled {
 		_, fileNotFound := os.Stat(name + ".dec")
 		if fileNotFound != nil && !isOfType(name, []string{".dec"}) {
-			logs.Error(output)
+			log.Error(output)
 			return false
 		}
 	}
 
 	if exitCode != 0 {
-		logs.Error(output)
+		log.Error(output)
 		return false
 	} else if stderr != "" {
-		logs.Error(stderr)
+		log.Error(stderr)
 		return false
 	}
 
@@ -395,7 +392,7 @@ func decryptSecret(name string) bool {
 		}
 		err := writeStringToFile(outfile, output)
 		if err != nil {
-			logError("could not write [ " + outfile + " ] file")
+			log.Fatal("Can't write [ " + outfile + " ] file")
 		}
 	}
 	return true
@@ -406,7 +403,7 @@ func updateChartDep(chartPath string) (bool, string) {
 	cmd := command{
 		Cmd:         helmBin,
 		Args:        []string{"dependency", "update", chartPath},
-		Description: "Updating dependency for local chart " + chartPath,
+		Description: "Updating dependency for local chart [ " + chartPath + " ]",
 	}
 
 	exitCode, err, _ := cmd.exec(debug, verbose)
@@ -415,4 +412,22 @@ func updateChartDep(chartPath string) (bool, string) {
 		return false, err
 	}
 	return true, ""
+}
+
+// helmPluginExists returns true if the plugin is present in the environment and false otherwise.
+// It takes as input the plugin's name to check if it is recognizable or not. e.g. diff
+func helmPluginExists(plugin string) bool {
+	cmd := command{
+		Cmd:         helmBin,
+		Args:        []string{"plugin", "list"},
+		Description: "Validating that [ " + plugin + " ] is installed",
+	}
+
+	exitCode, result, _ := cmd.exec(debug, false)
+
+	if exitCode != 0 {
+		return false
+	}
+
+	return strings.Contains(result, plugin)
 }

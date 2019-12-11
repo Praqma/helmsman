@@ -6,6 +6,6 @@ metadata:
   labels:
     CREATED-BY: HELMSMAN
 rules:
-- apiGroups: ["", "batch", "extensions", "apps", "autoscaling", "rbac.authorization.k8s.io"]
-  resources: ["*"]
-  verbs: ["*"]
+  - apiGroups: ["", "batch", "extensions", "apps", "autoscaling", "rbac.authorization.k8s.io"]
+    resources: ["*"]
+    verbs: ["*"]
