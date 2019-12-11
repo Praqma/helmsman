@@ -9,7 +9,7 @@ import (
 	// Imports the Google Cloud Storage client package.
 	"cloud.google.com/go/storage"
 	"github.com/logrusorgru/aurora"
-	"golang.org/x/net/context"
+	netContext "golang.org/x/net/context"
 )
 
 // colorizer
@@ -46,7 +46,7 @@ func ReadFile(bucketName string, filename string, outFile string, noColors bool)
 		return msg, nil
 	}
 
-	ctx := context.Background()
+	ctx := netContext.Background()
 	client, err := storage.NewClient(ctx)
 	if err != nil {
 		return "Failed to configure Storage bucket: ", err

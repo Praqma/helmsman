@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"fmt"
@@ -8,27 +8,27 @@ import (
 
 // release type representing Helm releases which are described in the desired state
 type release struct {
-	Name            string            `yaml:"name"`
-	Description     string            `yaml:"description"`
-	Namespace       string            `yaml:"namespace"`
-	Enabled         bool              `yaml:"enabled"`
-	Group           string            `yaml:"group"`
-	Chart           string            `yaml:"chart"`
-	Version         string            `yaml:"version"`
-	ValuesFile      string            `yaml:"valuesFile"`
-	ValuesFiles     []string          `yaml:"valuesFiles"`
-	SecretsFile     string            `yaml:"secretsFile"`
-	SecretsFiles    []string          `yaml:"secretsFiles"`
-	Purge           bool              `yaml:"purge"`
-	Test            bool              `yaml:"test"`
-	Protected       bool              `yaml:"protected"`
-	Wait            bool              `yaml:"wait"`
-	Priority        int               `yaml:"priority"`
-	Set             map[string]string `yaml:"set"`
-	SetString       map[string]string `yaml:"setString"`
-	HelmFlags       []string          `yaml:"helmFlags"`
-	NoHooks         bool              `yaml:"noHooks"`
-	Timeout         int               `yaml:"timeout"`
+	Name         string            `yaml:"name"`
+	Description  string            `yaml:"description"`
+	Namespace    string            `yaml:"namespace"`
+	Enabled      bool              `yaml:"enabled"`
+	Group        string            `yaml:"group"`
+	Chart        string            `yaml:"chart"`
+	Version      string            `yaml:"version"`
+	ValuesFile   string            `yaml:"valuesFile"`
+	ValuesFiles  []string          `yaml:"valuesFiles"`
+	SecretsFile  string            `yaml:"secretsFile"`
+	SecretsFiles []string          `yaml:"secretsFiles"`
+	Purge        bool              `yaml:"purge"`
+	Test         bool              `yaml:"test"`
+	Protected    bool              `yaml:"protected"`
+	Wait         bool              `yaml:"wait"`
+	Priority     int               `yaml:"priority"`
+	Set          map[string]string `yaml:"set"`
+	SetString    map[string]string `yaml:"setString"`
+	HelmFlags    []string          `yaml:"helmFlags"`
+	NoHooks      bool              `yaml:"noHooks"`
+	Timeout      int               `yaml:"timeout"`
 }
 
 func (r *release) isReleaseConsideredToRun() bool {
@@ -124,7 +124,7 @@ func validateRelease(appLabel string, r *release, names map[string]map[string]bo
 
 // overrideNamespace overrides a release defined namespace with a new given one
 func overrideNamespace(r *release, newNs string) {
-	logs.Info("Overriding namespace for app:  " + r.Name)
+	log.Info("Overriding namespace for app:  " + r.Name)
 	r.Namespace = newNs
 }
 

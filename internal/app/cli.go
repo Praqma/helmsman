@@ -1,20 +1,17 @@
-package main
+package app
 
 import (
 	"flag"
 	"fmt"
-	"github.com/apsdehal/go-logger"
-	"os"
-	"strings"
-
 	"github.com/imdario/mergo"
 	"github.com/joho/godotenv"
+	"os"
+	"strings"
 )
 
-var logs *logger.Logger
-
 const (
-	banner = " _          _ \n" +
+	banner = "\n" +
+		" _          _ \n" +
 		"| |        | | \n" +
 		"| |__   ___| |_ __ ___  ___ _ __ ___   __ _ _ __\n" +
 		"| '_ \\ / _ \\ | '_ ` _ \\/ __| '_ ` _ \\ / _` | '_ \\ \n" +
@@ -24,17 +21,15 @@ const (
 )
 
 func printUsage() {
-	logs.Info(banner + "\n")
-	logs.Info("Helmsman version: " + appVersion)
-	logs.Info("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
-	logs.Info("")
-	logs.Info("Usage: helmsman [options]")
+	log.Info(banner + "\n")
+	log.Info("Helmsman version: " + appVersion)
+	log.Info("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
+	log.Info("")
+	log.Info("Usage: helmsman [options]")
 	flag.PrintDefaults()
 }
 
-// init is executed after all package vars are initialized [before the main() func in this case].
-// It checks if Helm and Kubectl exist and configures: the connection to the k8s cluster, helm repos, namespaces, etc.
-func init() {
+func Cli() {
 	//parsing command line flags
 	flag.Var(&files, "f", "desired state file name(s), may be supplied more than once to merge state files")
 	flag.Var(&envFiles, "e", "file(s) to load environment variables from (default .env), may be supplied more than once")
@@ -65,53 +60,40 @@ func init() {
 	flag.BoolVar(&updateDeps, "update-deps", false, "run 'helm dep up' for local chart")
 	flag.BoolVar(&forceUpgrades, "force-upgrades", false, "use --force when upgrading helm releases. May cause resources to be recreated.")
 	flag.BoolVar(&noDefaultRepos, "no-default-repos", false, "don't set default Helm repos from Google for 'stable' and 'incubator'")
-
 	flag.Usage = printUsage
 	flag.Parse()
-
-	logger.SetDefaultFormat("%{time:2006-01-02 15:04:05} %{level}: %{message}")
-	var logLevel = logger.InfoLevel
-	if verbose {
-		logLevel = logger.DebugLevel
-	}
 
 	if noFancy {
 		noColors = true
 		noBanner = true
 	}
-
-	var logColors = 1
-	if noColors {
-		logColors = 0
-	}
-	logs, _ = logger.New("logger", logColors, os.Stdout, logLevel)
+	initLogs(verbose, noColors)
 
 	if !noBanner {
-		fmt.Println(banner + " version: " + appVersion + "\n" + slogan)
+		log.Info(fmt.Sprintf("%s version: %s\n%s", banner, appVersion, slogan))
 	}
 
 	if dryRun && apply {
-		logError("--apply and --dry-run can't be used together.")
+		log.Fatal("--apply and --dry-run can't be used together.")
 	}
 
 	if destroy && apply {
-		logError("--destroy and --apply can't be used together.")
+		log.Fatal("--destroy and --apply can't be used together.")
 	}
 
 	if len(target) > 0 && len(group) > 0 {
-		logError("--target and --group can't be used together.")
+		log.Fatal("--target and --group can't be used together.")
 	}
 
 	if (settings.EyamlPrivateKeyPath != "" && settings.EyamlPublicKeyPath == "") || (settings.EyamlPrivateKeyPath == "" && settings.EyamlPublicKeyPath != "") {
-		logError("both EyamlPrivateKeyPath and EyamlPublicKeyPath are required")
+		log.Fatal("both EyamlPrivateKeyPath and EyamlPublicKeyPath are required")
 	}
 
 	helmVersion = strings.TrimSpace(getHelmVersion())
-	kubectlVersion = strings.TrimSpace(strings.SplitN(getKubectlClientVersion(), ": ", 2)[1])
+	log.Verbose("Helm client version: " + helmVersion)
 
-	if verbose {
-		logVersions()
-	}
+	kubectlVersion = strings.TrimSpace(strings.SplitN(getKubectlClientVersion(), ": ", 2)[1])
+	log.Verbose("kubectl client version: " + kubectlVersion)
 
 	if v {
 		fmt.Println("Helmsman version: " + appVersion)
@@ -119,7 +101,7 @@ func init() {
 	}
 
 	if len(files) == 0 {
-		logs.Info("No desired state files provided.")
+		log.Info("No desired state files provided.")
 		os.Exit(0)
 	}
 
@@ -128,15 +110,15 @@ func init() {
 	}
 
 	if !toolExists("kubectl") {
-		logError("kubectl is not installed/configured correctly. Aborting!")
+		log.Fatal("kubectl is not installed/configured correctly. Aborting!")
 	}
 
 	if !toolExists(helmBin) {
-		logError("" + helmBin + " is not installed/configured correctly. Aborting!")
+		log.Fatal("" + helmBin + " is not installed/configured correctly. Aborting!")
 	}
 
 	if !helmPluginExists("diff") {
-		logError("helm diff plugin is not installed/configured correctly. Aborting!")
+		log.Fatal("helm diff plugin is not installed/configured correctly. Aborting!")
 	}
 
 	// read the env file
@@ -144,7 +126,7 @@ func init() {
 		if _, err := os.Stat(".env"); err == nil {
 			err = godotenv.Load()
 			if err != nil {
-				logError("Error loading .env file")
+				log.Fatal("Error loading .env file")
 			}
 		}
 	}
@@ -152,7 +134,7 @@ func init() {
 	for _, e := range envFiles {
 		err := godotenv.Load(e)
 		if err != nil {
-			logError("Error loading " + e + " env file")
+			log.Fatal("Error loading " + e + " env file")
 		}
 	}
 
@@ -165,28 +147,28 @@ func init() {
 	for _, f := range files {
 		result, msg := fromFile(f, &fileState)
 		if result {
-			logs.Info(msg)
+			log.Info(msg)
 		} else {
-			logError(msg)
+			log.Fatal(msg)
 		}
 		// Merge Apps that already existed in the state
 		for appName, app := range fileState.Apps {
 			if _, ok := s.Apps[appName]; ok {
 				if err := mergo.Merge(s.Apps[appName], app, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
-					logError("Failed to merge " + appName + " from desired state file" + f)
+					log.Fatal("Failed to merge " + appName + " from desired state file" + f)
 				}
 			}
 		}
 
 		// Merge the remaining Apps
 		if err := mergo.Merge(&s.Apps, &fileState.Apps); err != nil {
-			logError("Failed to merge desired state file" + f)
+			log.Fatal("Failed to merge desired state file" + f)
 		}
 		// All the apps are already merged, make fileState.Apps empty to avoid conflicts in the final merge
 		fileState.Apps = make(map[string]*release)
 
 		if err := mergo.Merge(&s, &fileState, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
-			logError("Failed to merge desired state file" + f)
+			log.Fatal("Failed to merge desired state file" + f)
 		}
 	}
 
@@ -198,11 +180,11 @@ func init() {
 		// validate the desired state content
 		if len(files) > 0 {
 			if err := s.validate(); err != nil { // syntax validation
-				logs.Error(err.Error())
+				log.Error(err.Error())
 			}
 		}
 	} else {
-		logs.Info("Desired state validation is skipped.")
+		log.Info("Desired state validation is skipped.")
 	}
 
 	if applyLabels {
@@ -224,41 +206,4 @@ func init() {
 			groupMap[v] = true
 		}
 	}
-
-}
-
-// toolExists returns true if the tool is present in the environment and false otherwise.
-// It takes as input the tool's command to check if it is recognizable or not. e.g. helm or kubectl
-func toolExists(tool string) bool {
-	cmd := command{
-		Cmd:         tool,
-		Args:        []string{},
-		Description: "validating that " + tool + " is installed.",
-	}
-
-	exitCode, _, _ := cmd.exec(debug, false)
-
-	if exitCode != 0 {
-		return false
-	}
-
-	return true
-}
-
-// helmPluginExists returns true if the plugin is present in the environment and false otherwise.
-// It takes as input the plugin's name to check if it is recognizable or not. e.g. diff
-func helmPluginExists(plugin string) bool {
-	cmd := command{
-		Cmd:         helmBin,
-		Args:        []string{"plugin", "list"},
-		Description: "validating that " + plugin + " is installed.",
-	}
-
-	exitCode, result, _ := cmd.exec(debug, false)
-
-	if exitCode != 0 {
-		return false
-	}
-
-	return strings.Contains(result, plugin)
 }

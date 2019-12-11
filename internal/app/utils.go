@@ -1,11 +1,10 @@
-package main
+package app
 
 import (
 	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,15 +18,15 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/BurntSushi/toml"
-	"github.com/Praqma/helmsman/aws"
-	"github.com/Praqma/helmsman/azure"
-	"helmsman/gcs"
+	"github.com/Praqma/helmsman/internal/aws"
+	"github.com/Praqma/helmsman/internal/azure"
+	"github.com/Praqma/helmsman/internal/gcs"
 )
 
 // printMap prints to the console any map of string keys and values.
 func printMap(m map[string]string, indent int) {
 	for key, value := range m {
-		fmt.Println(strings.Repeat("\t", indent)+key, " : ", value)
+		fmt.Println(strings.Repeat("\t", indent)+key, ": ", value)
 	}
 }
 
@@ -48,11 +47,11 @@ func fromTOML(file string, s *state) (bool, string) {
 
 	tomlFile := string(rawTomlFile)
 	if !noEnvSubst {
-		logs.Info("Substituting env variables in file: " + file)
+		log.Verbose("Substituting env variables in file: " + file)
 		tomlFile = substituteEnv(tomlFile)
 	}
 	if !noSSMSubst {
-		logs.Debug("Substituting SSM variables in file: " + file)
+		log.Verbose("Substituting SSM variables in file: " + file)
 		tomlFile = substituteSSM(tomlFile)
 	}
 
@@ -63,13 +62,13 @@ func fromTOML(file string, s *state) (bool, string) {
 	resolvePaths(file, s)
 	substituteVarsInValuesFiles(s)
 
-	return true, "Parsed TOML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
+	return true, "Parsed TOML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps"
 }
 
 // toTOML encodes a state type into a TOML file.
 // It uses the BurntSuchi TOML parser.
 func toTOML(file string, s *state) {
-	logs.Info("Printing generated toml ... ")
+	log.Info("Printing generated toml ... ")
 	var buff bytes.Buffer
 	var (
 		newFile *os.File
@@ -77,18 +76,18 @@ func toTOML(file string, s *state) {
 	)
 
 	if err := toml.NewEncoder(&buff).Encode(s); err != nil {
-		logError(err.Error())
+		log.Fatal(err.Error())
 		os.Exit(1)
 	}
 	newFile, err = os.Create(file)
 	if err != nil {
-		logError(err.Error())
+		log.Fatal(err.Error())
 	}
 	bytesWritten, err := newFile.Write(buff.Bytes())
 	if err != nil {
-		logError(err.Error())
+		log.Fatal(err.Error())
 	}
-	log.Printf("Wrote %d bytes.\n", bytesWritten)
+	log.Info(fmt.Sprintf("Wrote %d bytes.\n", bytesWritten))
 	newFile.Close()
 }
 
@@ -102,11 +101,11 @@ func fromYAML(file string, s *state) (bool, string) {
 
 	yamlFile := string(rawYamlFile)
 	if !noEnvSubst {
-		logs.Debug("Substituting env variables in file: " + file)
+		log.Verbose("Substituting env variables in file: " + file)
 		yamlFile = substituteEnv(yamlFile)
 	}
 	if !noSSMSubst {
-		logs.Debug("Substituting SSM variables in file: " + file)
+		log.Verbose("Substituting SSM variables in file: " + file)
 		yamlFile = substituteSSM(yamlFile)
 	}
 
@@ -117,12 +116,12 @@ func fromYAML(file string, s *state) (bool, string) {
 	resolvePaths(file, s)
 	substituteVarsInValuesFiles(s)
 
-	return true, "Parsed YAML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps."
+	return true, "Parsed YAML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps"
 }
 
 // toYaml encodes a state type into a YAML file
 func toYAML(file string, s *state) {
-	logs.Info("Printing generated yaml ... ")
+	log.Info("Printing generated yaml ... ")
 	var buff bytes.Buffer
 	var (
 		newFile *os.File
@@ -130,18 +129,18 @@ func toYAML(file string, s *state) {
 	)
 
 	if err := yaml.NewEncoder(&buff).Encode(s); err != nil {
-		logError(err.Error())
+		log.Fatal(err.Error())
 		os.Exit(1)
 	}
 	newFile, err = os.Create(file)
 	if err != nil {
-		logError(err.Error())
+		log.Fatal(err.Error())
 	}
 	bytesWritten, err := newFile.Write(buff.Bytes())
 	if err != nil {
-		logError(err.Error())
+		log.Fatal(err.Error())
 	}
-	log.Printf("Wrote %d bytes.\n", bytesWritten)
+	log.Info(fmt.Sprintf("Wrote %d bytes.\n", bytesWritten))
 	newFile.Close()
 }
 
@@ -168,29 +167,29 @@ func substituteVarsInValuesFiles(s *state) {
 func substituteVarsInYaml(file string) string {
 	rawYamlFile, err := ioutil.ReadFile(file)
 	if err != nil {
-		logError(err.Error())
+		log.Fatal(err.Error())
 	}
 
 	yamlFile := string(rawYamlFile)
 	if !noEnvSubst && !noEnvValuesSubst {
-		logs.Debug("Substituting env variables in file: " + file)
+		log.Verbose("Substituting env variables in file: " + file)
 		yamlFile = substituteEnv(yamlFile)
 	}
 	if !noSSMSubst && !noSSMValuesSubst {
-		logs.Debug("Substituting SSM variables in file: " + file)
+		log.Verbose("Substituting SSM variables in file: " + file)
 		yamlFile = substituteSSM(yamlFile)
 	}
 
 	dir, err := ioutil.TempDir(tempFilesDir, "tmp")
 	if err != nil {
-		logError(err.Error())
+		log.Fatal(err.Error())
 	}
 
 	// output file contents with env variables substituted into temp files
 	outFile := path.Join(dir, filepath.Base(file))
 	err = ioutil.WriteFile(outFile, []byte(yamlFile), 0644)
 	if err != nil {
-		logError(err.Error())
+		log.Fatal(err.Error())
 	}
 	return outFile
 }
@@ -212,7 +211,7 @@ func toFile(file string, s *state) {
 	} else if isOfType(file, []string{".yaml", ".yml"}) {
 		toYAML(file, s)
 	} else {
-		logError("State file does not have toml/yaml extension.")
+		log.Fatal("State file does not have toml/yaml extension.")
 	}
 }
 
@@ -228,7 +227,7 @@ func stringInSlice(a string, list []string) bool {
 // addDefaultHelmRepos adds stable and incubator helm repos to the state if they are not already defined
 func addDefaultHelmRepos(s *state) {
 	if noDefaultRepos {
-		logs.Info("Default helm repo set disabled, 'stable' and 'incubator' repos unset.")
+		log.Info("Default helm repo set disabled, 'stable' and 'incubator' repos unset.")
 		return
 	}
 	if s.HelmRepos == nil || len(s.HelmRepos) == 0 {
@@ -236,7 +235,7 @@ func addDefaultHelmRepos(s *state) {
 			"stable":    stableHelmRepo,
 			"incubator": incubatorHelmRepo,
 		}
-		logs.Info("No helm repos provided, using the default 'stable' and 'incubator' repos.")
+		log.Info("No helm repos provided, using the default 'stable' and 'incubator' repos.")
 	}
 	if _, ok := s.HelmRepos["stable"]; !ok {
 		s.HelmRepos["stable"] = stableHelmRepo
@@ -314,15 +313,9 @@ func isOfType(filename string, filetypes []string) bool {
 func readFile(filepath string) string {
 	data, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		logError("failed to read [ " + filepath + " ] file content: " + err.Error())
+		log.Fatal("failed to read [ " + filepath + " ] file content: " + err.Error())
 	}
 	return string(data)
-}
-
-// logVersions prints the versions of kubectl and helm to the logs
-func logVersions() {
-	logs.Debug("kubectl client version: " + kubectlVersion)
-	logs.Debug("Helm client version: " + helmVersion)
 }
 
 // substituteEnv checks if a string has an env variable (contains '$'), then it returns its value
@@ -381,7 +374,7 @@ func downloadFile(path string, outfile string) string {
 		tmp := getBucketElements(path)
 		msg, err := gcs.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, noColors)
 		if err != nil {
-			logs.Fatal(msg)
+			log.Fatal(msg)
 		}
 
 	} else if strings.HasPrefix(path, "az") {
@@ -391,7 +384,7 @@ func downloadFile(path string, outfile string) string {
 
 	} else {
 
-		logs.Info("" + outfile + " will be used from local file system.")
+		log.Info("" + outfile + " will be used from local file system.")
 		copyFile(path, outfile)
 	}
 	return outfile
@@ -401,27 +394,27 @@ func downloadFile(path string, outfile string) string {
 func copyFile(source string, destination string) {
 	from, err := os.Open(source)
 	if err != nil {
-		logError("while copying " + source + " to " + destination + " : " + err.Error())
+		log.Fatal("while copying " + source + " to " + destination + " : " + err.Error())
 	}
 	defer from.Close()
 
 	to, err := os.OpenFile(destination, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
-		logError("while copying " + source + " to " + destination + " : " + err.Error())
+		log.Fatal("while copying " + source + " to " + destination + " : " + err.Error())
 	}
 	defer to.Close()
 
 	_, err = io.Copy(to, from)
 	if err != nil {
-		logError("while copying " + source + " to " + destination + " : " + err.Error())
+		log.Fatal("while copying " + source + " to " + destination + " : " + err.Error())
 	}
 }
 
 // deleteFile deletes a file
 func deleteFile(path string) {
-	logs.Info("Cleaning up ... deleting " + path)
+	log.Info("Cleaning up... deleting " + path)
 	if err := os.Remove(path); err != nil {
-		logError("Could not delete file: " + path)
+		log.Fatal("Could not delete file: " + path)
 	}
 }
 
@@ -430,7 +423,7 @@ func deleteFile(path string) {
 // and the webhook URL as well as a flag specifying if this is a failure message or not
 // It returns true if the sending of the message is successful, otherwise returns false
 func notifySlack(content string, url string, failure bool, executing bool) bool {
-	logs.Info("Posting notifications to slack ... ")
+	log.Info("Posting notifications to slack ... ")
 
 	color := "#36a64f" // green
 	if failure {
@@ -468,7 +461,7 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		logError("while sending notifications to slack" + err.Error())
+		log.Fatal("while sending notifications to slack" + err.Error())
 	}
 	defer resp.Body.Close()
 
@@ -476,14 +469,6 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 		return true
 	}
 	return false
-}
-
-// logError sends a notification on slack if a webhook URL is provided and logs the error before terminating.
-func logError(msg string) {
-	if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err == nil {
-		notifySlack(msg, s.Settings.SlackWebhook, true, apply)
-	}
-	logs.Fatal(msg)
 }
 
 // getBucketElements returns a map containing the bucket name and the file path inside the bucket
@@ -507,7 +492,7 @@ func replaceStringInFile(input []byte, outfile string, replacements map[string]s
 	}
 
 	if err := ioutil.WriteFile(outfile, output, 0666); err != nil {
-		logError(err.Error())
+		log.Fatal(err.Error())
 	}
 }
 
