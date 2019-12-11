@@ -3,6 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"log"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -437,9 +438,9 @@ func labelResource(r *release) {
 // getHelmsmanReleases returns a map of all releases that are labeled with "MANAGED-BY=HELMSMAN"
 // The releases are categorized by the namespaces in which their Tiller is running
 // The returned map format is: map[<Tiller namespace>:map[<releases managed by Helmsman and deployed using this Tiller>:true]]
-func getHelmsmanReleases() map[string]map[*release]bool {
+func getHelmsmanReleases() map[string]map[string]bool {
 	var lines []string
-	releases := make(map[string]map[*release]bool)
+	releases := make(map[string]map[string]bool)
 	storageBackend := "configmap"
 
 	if s.Settings.StorageBackend == "secret" {
@@ -462,7 +463,7 @@ func getHelmsmanReleases() map[string]map[*release]bool {
 	for _, ns := range namespaces {
 		cmd := command{
 			Cmd:         "kubectl",
-			Args:        []string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN"},
+			Args:        []string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN", "-o", "name"},
 			Description: "getting helm releases which are managed by Helmsman in namespace [[ " + ns + " ]].",
 		}
 
@@ -475,18 +476,18 @@ func getHelmsmanReleases() map[string]map[*release]bool {
 			lines = strings.Split(output, "\n")
 		}
 
-		for i := 0; i < len(lines); i++ {
-			if lines[i] == "" || strings.HasSuffix(strings.TrimSpace(lines[i]), "AGE") {
+		for _, r := range lines {
+			if r == "" {
 				continue
-			} else {
-				fields := strings.Fields(lines[i])
-				if _, ok := releases[ns]; !ok {
-					releases[ns] = make(map[*release]bool)
-				}
-				for _, r := range s.Apps {
-					if r.Name == fields[0][0:strings.LastIndex(fields[0], ".v")] {
-						releases[ns][r] = true
-					}
+			}
+			r = regexp.MustCompile(`(^\w+\/|\.v\d+$)`).ReplaceAllString(r, "")
+			if _, ok := releases[ns]; !ok {
+				releases[ns] = make(map[string]bool)
+			}
+			releases[ns][r] = false
+			for _, app := range s.Apps {
+				if r == app.Name {
+					releases[ns][r] = true
 				}
 			}
 		}

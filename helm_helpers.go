@@ -24,6 +24,7 @@ type releaseState struct {
 	Updated         time.Time
 	Status          string
 	Chart           string
+	Name            string
 	Namespace       string
 	TillerNamespace string
 }
@@ -198,6 +199,7 @@ func buildState() {
 			Updated:         time,
 			Status:          rel.Releases[i].Status,
 			Chart:           rel.Releases[i].Chart,
+			Name:            rel.Releases[i].Name,
 			Namespace:       rel.Releases[i].Namespace,
 			TillerNamespace: rel.Releases[i].TillerNamespace,
 		}
@@ -227,7 +229,6 @@ func helmReleaseExists(r *release, status string) (bool, releaseState) {
 
 // getReleaseRevision returns the revision number for a release
 func getReleaseRevision(rs releaseState) string {
-
 	return strconv.Itoa(rs.Revision)
 }
 
@@ -592,17 +593,21 @@ func initHelm() (bool, string) {
 func cleanUntrackedReleases() {
 	toDelete := make(map[string]map[*release]bool)
 	log.Println("INFO: checking if any Helmsman managed releases are no longer tracked by your desired state ...")
-	for ns, releases := range getHelmsmanReleases() {
-		for r := range releases {
-			tracked := false
-			for _, app := range s.Apps {
-				if app.Name == r.Name && getDesiredTillerNamespace(app) == ns {
-					tracked = true
-				}
-			}
+
+	// List all releases managed my Helmsman
+	for n, hr := range getHelmsmanReleases() {
+		for name, tracked := range hr {
 			if !tracked {
+				rs := currentState[name+"-"+n]
+				ns := rs.TillerNamespace
 				if _, ok := toDelete[ns]; !ok {
 					toDelete[ns] = make(map[*release]bool)
+				}
+				r := &release{
+					Chart:           rs.Chart,
+					Name:            rs.Name,
+					Namespace:       rs.Namespace,
+					TillerNamespace: rs.TillerNamespace,
 				}
 				toDelete[ns][r] = true
 			}
@@ -614,7 +619,7 @@ func cleanUntrackedReleases() {
 	} else {
 		for ns, releases := range toDelete {
 			for r := range releases {
-				if r.isReleaseConsideredToRun() {
+				if !r.isReleaseConsideredToRun() {
 					logDecision(generateDecisionMessage(r, "untracked release [ "+r.Name+" ] is ignored by target flag. Skipping.", false), -800, ignored)
 				} else {
 					logDecision(generateDecisionMessage(r, "untracked release found: release [ "+r.Name+" ]. It will be deleted", true), -800, delete)
