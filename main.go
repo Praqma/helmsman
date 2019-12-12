@@ -33,7 +33,7 @@ var nsOverride string
 var skipValidation bool
 var applyLabels bool
 var keepUntrackedReleases bool
-var appVersion = "v1.13.0"
+var appVersion = "v1.13.1"
 var helmVersion string
 var kubectlVersion string
 var dryRun bool
