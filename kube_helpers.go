@@ -118,18 +118,24 @@ func labelNamespace(ns string, labels map[string]string) {
 
 // annotateNamespace annotates a namespace with provided annotations
 func annotateNamespace(ns string, labels map[string]string) {
-	for k, v := range labels {
-		cmd := command{
-			Cmd:         "kubectl",
-			Args:        []string{"annotate", "--overwrite", "namespace/" + ns, k + "=" + v},
-			Description: "annotating namespace  " + ns,
-		}
+	if len(labels) == 0 {
+		return
+	}
 
-		exitCode, _, _ := cmd.exec(debug, verbose)
-		if exitCode != 0 && verbose {
-			log.Println("WARN: I could not annotate namespace [ " + ns + " with " + k + "=" + v +
-				" ]. It already exists. I am skipping this.")
-		}
+	var annotations string
+	for k, v := range labels {
+		annotations += k + "=" + v + " "
+	}
+	cmd := command{
+		Cmd:         "kubectl",
+		Args:        []string{"annotate", "--overwrite", "namespace/" + ns, annotations},
+		Description: "annotating namespace  " + ns,
+	}
+
+	exitCode, _, _ := cmd.exec(debug, verbose)
+	if exitCode != 0 && verbose {
+		log.Println("WARN: I could not annotate namespace [ " + ns + " with " + annotations +
+			" ]. It already exists. I am skipping this.")
 	}
 }
 
