@@ -68,7 +68,7 @@ $(SRCDIR):
 
 dep: $(SRCDIR) ## Ensure vendors with dep
 	@cd $(PRJDIR) && \
-	  dep ensure
+	  dep ensure -v
 .PHONY: dep
 
 dep-update: $(SRCDIR) ## Ensure vendors with dep
