@@ -93,50 +93,59 @@ func createNamespace(ns string) {
 		Args:        []string{"create", "namespace", ns},
 		Description: "creating namespace  " + ns,
 	}
-	exitCode, _, _ := cmd.exec(debug, verbose)
+	exitCode, errMsg, _ := cmd.exec(debug, verbose)
 	if exitCode != 0 && verbose {
-		log.Println("WARN: I could not create namespace [ " +
-			ns + " ]. It already exists. I am skipping this.")
+		log.Printf("WARN: I could not create namespace [ %s ]. Error message: %s", ns, errMsg)
 	}
 }
 
 // labelNamespace labels a namespace with provided labels
 func labelNamespace(ns string, labels map[string]string) {
-	for k, v := range labels {
-		cmd := command{
-			Cmd:         "kubectl",
-			Args:        []string{"label", "--overwrite", "namespace/" + ns, k + "=" + v},
-			Description: "labeling namespace  " + ns,
-		}
-
-		exitCode, _, _ := cmd.exec(debug, verbose)
-		if exitCode != 0 && verbose {
-			log.Println("WARN: I could not label namespace [ " + ns + " with " + k + "=" + v +
-				" ]. It already exists. I am skipping this.")
-		}
-	}
-}
-
-// annotateNamespace annotates a namespace with provided annotations
-func annotateNamespace(ns string, labels map[string]string) {
 	if len(labels) == 0 {
 		return
 	}
 
-	var annotations string
+	var labelSlice []string
 	for k, v := range labels {
-		annotations += k + "=" + v + " "
+		labelSlice = append(labelSlice, k+"="+v)
 	}
+
+	args := []string{"label", "--overwrite", "namespace/" + ns}
+	args = append(args, labelSlice...)
+
 	cmd := command{
 		Cmd:         "kubectl",
-		Args:        []string{"annotate", "--overwrite", "namespace/" + ns, annotations},
+		Args:        args,
+		Description: "labeling namespace  " + ns,
+	}
+
+	exitCode, errMsg, _ := cmd.exec(debug, verbose)
+	if exitCode != 0 && verbose {
+		log.Printf("WARN: I could not label namespace [ %s with %v ]. Error message: %s", ns, labelSlice, errMsg)
+	}
+}
+
+// annotateNamespace annotates a namespace with provided annotations
+func annotateNamespace(ns string, annotations map[string]string) {
+	if len(annotations) == 0 {
+		return
+	}
+
+	var annotationSlice []string
+	for k, v := range annotations {
+		annotationSlice = append(annotationSlice, k+"="+v)
+	}
+	args := []string{"annotate", "--overwrite", "namespace/" + ns}
+	args = append(args, annotationSlice...)
+	cmd := command{
+		Cmd:         "kubectl",
+		Args:        args,
 		Description: "annotating namespace  " + ns,
 	}
 
-	exitCode, _, _ := cmd.exec(debug, verbose)
+	exitCode, errMsg, _ := cmd.exec(debug, verbose)
 	if exitCode != 0 && verbose {
-		log.Println("WARN: I could not annotate namespace [ " + ns + " with " + annotations +
-			" ]. It already exists. I am skipping this.")
+		log.Printf("WARN: I could not annotate namespace [ %s with %v ]. Error message: %s", ns, annotationSlice, errMsg)
 	}
 }
 
