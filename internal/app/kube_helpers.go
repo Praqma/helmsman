@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strings"
 
@@ -59,41 +60,51 @@ func createNamespace(ns string) {
 
 // labelNamespace labels a namespace with provided labels
 func labelNamespace(ns string, labels map[string]string) {
-	for k, v := range labels {
-		cmd := command{
-			Cmd:         "kubectl",
-			Args:        []string{"label", "--overwrite", "namespace/" + ns, k + "=" + v},
-			Description: "Labeling namespace [ " + ns + " ]",
-		}
-
-		exitCode, _, _ := cmd.exec(debug, verbose)
-		if exitCode != 0 && verbose {
-			log.Warning("Can't label namespace [ " + ns + " with " + k + "=" + v +
-				" ]. It already exists.")
-		}
-	}
-}
-
-// annotateNamespace annotates a namespace with provided annotations
-func annotateNamespace(ns string, labels map[string]string) {
 	if len(labels) == 0 {
 		return
 	}
 
-	var annotations string
+	var labelSlice []string
 	for k, v := range labels {
-		annotations += k + "=" + v + " "
+		labelSlice = append(labelSlice, k+"="+v)
 	}
+
+	args := []string{"label", "--overwrite", "namespace/" + ns}
+	args = append(args, labelSlice...)
+
 	cmd := command{
 		Cmd:         "kubectl",
-		Args:        []string{"annotate", "--overwrite", "namespace/" + ns, annotations},
+		Args:        args,
+		Description: "Labeling namespace [ " + ns + " ]",
+	}
+
+	exitCode, errMsg, _ := cmd.exec(debug, verbose)
+	if exitCode != 0 && verbose {
+		log.Warning(fmt.Sprintf("Could not label namespace [ %s with %v ]. Error message: %s", ns, labelSlice, errMsg))
+	}
+}
+
+// annotateNamespace annotates a namespace with provided annotations
+func annotateNamespace(ns string, annotations map[string]string) {
+	if len(annotations) == 0 {
+		return
+	}
+
+	var annotationSlice []string
+	for k, v := range annotations {
+		annotationSlice = append(annotationSlice, k+"="+v)
+	}
+	args := []string{"annotate", "--overwrite", "namespace/" + ns}
+	args = append(args, annotationSlice...)
+	cmd := command{
+		Cmd:         "kubectl",
+		Args:        args,
 		Description: "Annotating namespace [ " + ns + " ]",
 	}
 
-	exitCode, _, _ := cmd.exec(debug, verbose)
+	exitCode, errMsg, _ := cmd.exec(debug, verbose)
 	if exitCode != 0 && verbose {
-		log.Info("Can't annotate namespace [ " + ns + " with " + annotations +
-			" ]. It already exists.")
+		log.Info(fmt.Sprintf("Could not annotate namespace [ %s with %v ]. Error message: %s", ns, annotationSlice, errMsg))
 	}
 }
 
