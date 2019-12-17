@@ -143,8 +143,21 @@ func Cli() {
 	_ = os.MkdirAll(tempFilesDir, 0755)
 
 	// read the TOML/YAML desired state file
+	if !noEnvSubst {
+		log.Verbose("Substitution of env variables enabled")
+		if !noEnvValuesSubst {
+			log.Verbose("Substitution of env variables in values enabled")
+		}
+	}
+	if !noSSMSubst {
+		log.Verbose("Substitution of SSM variables enabled")
+		if !noSSMValuesSubst {
+			log.Verbose("Substitution of SSM variables in values enabled")
+		}
+	}
 	var fileState state
 	for _, f := range files {
+
 		result, msg := fromFile(f, &fileState)
 		if result {
 			log.Info(msg)

@@ -47,11 +47,9 @@ func fromTOML(file string, s *state) (bool, string) {
 
 	tomlFile := string(rawTomlFile)
 	if !noEnvSubst {
-		log.Verbose("Substituting env variables in file: " + file)
 		tomlFile = substituteEnv(tomlFile)
 	}
 	if !noSSMSubst {
-		log.Verbose("Substituting SSM variables in file: " + file)
 		tomlFile = substituteSSM(tomlFile)
 	}
 
@@ -101,11 +99,9 @@ func fromYAML(file string, s *state) (bool, string) {
 
 	yamlFile := string(rawYamlFile)
 	if !noEnvSubst {
-		log.Verbose("Substituting env variables in file: " + file)
 		yamlFile = substituteEnv(yamlFile)
 	}
 	if !noSSMSubst {
-		log.Verbose("Substituting SSM variables in file: " + file)
 		yamlFile = substituteSSM(yamlFile)
 	}
 
@@ -172,11 +168,9 @@ func substituteVarsInYaml(file string) string {
 
 	yamlFile := string(rawYamlFile)
 	if !noEnvSubst && !noEnvValuesSubst {
-		log.Verbose("Substituting env variables in file: " + file)
 		yamlFile = substituteEnv(yamlFile)
 	}
 	if !noSSMSubst && !noSSMValuesSubst {
-		log.Verbose("Substituting SSM variables in file: " + file)
 		yamlFile = substituteSSM(yamlFile)
 	}
 
