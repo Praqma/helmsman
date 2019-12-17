@@ -101,7 +101,7 @@ test: dep check repo ## Run unit tests
 
 cross: dep ## Create binaries for all OSs
 	@cd $(PRJDIR) && \
-	  gox -os '!freebsd !netbsd' -arch '!arm' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}'
+	  gox -os '!freebsd !netbsd' -arch '!arm' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}' ./...
 .PHONY: cross
 
 release: ## Generate a new release
