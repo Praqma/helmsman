@@ -21,8 +21,8 @@ const (
 )
 
 func printUsage() {
-	fmt.Printf(banner + "\n")
-	fmt.Printf("Helmsman version: " + appVersion)
+	fmt.Printf(banner)
+	fmt.Printf("Helmsman version: " + appVersion + "\n")
 	fmt.Printf("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
 	fmt.Printf("")
 	fmt.Printf("Usage: helmsman [options]")

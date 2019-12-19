@@ -36,8 +36,8 @@ func decide(r *release, s *state) {
 	if destroy {
 		if ok := isReleaseExisting(r, ""); ok {
 			deleteRelease(r)
-			return
 		}
+		return
 	}
 
 	if !r.Enabled {
