@@ -1,40 +1,24 @@
-# Golang CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
 jobs:
   build:
-    working_directory: "/go/src/helmsman"
     docker:
-      - image: praqma/helmsman-test
+      - image: docker:19.03.5-git
     steps:
       - checkout
+      - setup_remote_docker
       - run:
-          name: Build helmsman
+          name: build docker image
           command: |
-            echo "building ..."
-            export GOOS=linux
-            make build
+            docker pull praqma/helmsman:latest
+            docker build --cache-from=praqma/helmsman:latest -t helmsman .
 
-  test:
-    working_directory: "/go/src/helmsman"
-    docker:
-      - image: praqma/helmsman-test
-    steps:
-      - checkout
-      - run:
-          name: Unit test helmsman
-          command: |
-            echo "running tests ..."
-            export GOOS=linux
-            make test
   release:
     working_directory: "/tmp/go/src/helmsman"
     machine: true
     steps:
       - checkout
       - run:
-          name: Release helmsman
+          name: release helmsman
           command: |
             echo "releasing ..."
             curl -sL https://git.io/goreleaser | bash -s -- --release-notes release-notes.md --rm-dist
@@ -44,26 +28,8 @@ jobs:
           command: |
             TAG=$(git describe --abbrev=0 --tags)
             docker login -u $DOCKER_USER -p $DOCKER_PASS
-            docker build -t praqma/helmsman:$TAG-helm-v2.15.1 --build-arg HELM_VERSION=v2.15.1 --build-arg HELM_DIFF_VERSION=master dockerfile/. --no-cache
-            docker push praqma/helmsman:$TAG-helm-v2.15.1
-            docker build -t praqma/helmsman:$TAG-helm-v2.14.3 --build-arg HELM_VERSION=v2.14.3 --build-arg HELM_DIFF_VERSION=master dockerfile/. --no-cache
-            docker push praqma/helmsman:$TAG-helm-v2.14.3
-            docker build -t praqma/helmsman:$TAG-helm-v2.13.1 --build-arg HELM_VERSION=v2.13.1 --build-arg HELM_DIFF_VERSION=master dockerfile/. --no-cache
-            docker push praqma/helmsman:$TAG-helm-v2.13.1
-            docker build -t praqma/helmsman:$TAG-helm-v2.12.3 --build-arg HELM_VERSION=v2.12.3 --build-arg HELM_DIFF_VERSION=master dockerfile/. --no-cache
-            docker push praqma/helmsman:$TAG-helm-v2.12.3
-            docker build -t praqma/helmsman:$TAG-helm-v2.11.0 --build-arg HELM_VERSION=v2.11.0 --build-arg HELM_DIFF_VERSION=v2.11.0+5 dockerfile/. --no-cache
-            docker push praqma/helmsman:$TAG-helm-v2.11.0
-            docker build -t praqma/helmsman:$TAG-helm-v2.10.0 --build-arg HELM_VERSION=v2.10.0 --build-arg HELM_DIFF_VERSION=v2.10.0+1 dockerfile/. --no-cache
-            docker push praqma/helmsman:$TAG-helm-v2.10.0
-
-      - run:
-          name: build docker test images and push them to dockerhub
-          command: |
-            docker login -u $DOCKER_USER -p $DOCKER_PASS
-            docker build -t praqma/helmsman-test:latest test_files/. --no-cache
-            docker push praqma/helmsman-test:latest
-
+            docker build -t praqma/helmsman:$TAG-helm-v3.0.2 --build-arg HELM_VERSION=v3.0.2 . --no-cache
+            docker push praqma/helmsman:$TAG-helm-v3.0.2
 
 workflows:
   version: 2
@@ -73,15 +39,7 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - test:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /.*/
       - release:
-          requires:
-            - test
           filters:
             branches:
               ignore: /.*/

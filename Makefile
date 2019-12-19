@@ -55,7 +55,7 @@ clean: ## Remove build artifacts
 .PHONY: clean
 
 fmt: ## Reformat package sources
-	@go fmt
+	@go fmt ./...
 .PHONY: fmt
 
 dependencies: ## Ensure all the necessary dependencies
@@ -68,17 +68,17 @@ $(SRCDIR):
 
 dep: $(SRCDIR) ## Ensure vendors with dep
 	@cd $(PRJDIR) && \
-	  dep ensure
+	  dep ensure -v
 .PHONY: dep
 
 dep-update: $(SRCDIR) ## Ensure vendors with dep
 	@cd $(PRJDIR) && \
-	  dep ensure --update
+	  dep ensure -v --update
 .PHONY: dep-update
 
 build: dep ## Build the package
 	@cd $(PRJDIR) && \
-	  go build -ldflags '-X main.version="${TAG}-${DATE}" -extldflags "-static"'
+	  go build -o helmsman -ldflags '-X main.version="${TAG}-${DATE}" -extldflags "-static"' cmd/helmsman/main.go
 
 generate:
 	@go generate #${PKGS}
@@ -87,18 +87,21 @@ generate:
 check: $(SRCDIR) fmt
 	@cd $(PRJDIR) && \
 	  dep check && \
-	  go vet #${PKGS}
+	  go vet ./...
 .PHONY: check
 
-test: dep check ## Run unit tests
+repo:
 	@cd $(PRJDIR) && \
-	  helm init --client-only && \
-	  go test -v -cover -p=1 -args -f example.toml
+		helm repo add stable https://kubernetes-charts.storage.googleapis.com
+.PHONY: repo
+
+test: dep check repo ## Run unit tests
+	@go test -v -cover -p=1 ./... -args -f ../../examples/example.toml
 .PHONY: test
 
 cross: dep ## Create binaries for all OSs
 	@cd $(PRJDIR) && \
-	  gox -os '!freebsd !netbsd' -arch '!arm' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}'
+	  gox -os '!freebsd !netbsd' -arch '!arm' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}' ./...
 .PHONY: cross
 
 release: ## Generate a new release
