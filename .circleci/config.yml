@@ -28,18 +28,8 @@ jobs:
           command: |
             TAG=$(git describe --abbrev=0 --tags)
             docker login -u $DOCKER_USER -p $DOCKER_PASS
-            docker build -t praqma/helmsman:$TAG-helm-v2.15.1 --build-arg HELM_VERSION=v2.15.1 --build-arg HELM_DIFF_VERSION=master . --no-cache
-            docker push praqma/helmsman:$TAG-helm-v2.15.1
-            docker build -t praqma/helmsman:$TAG-helm-v2.14.3 --build-arg HELM_VERSION=v2.14.3 --build-arg HELM_DIFF_VERSION=master . --no-cache
-            docker push praqma/helmsman:$TAG-helm-v2.14.3
-            docker build -t praqma/helmsman:$TAG-helm-v2.13.1 --build-arg HELM_VERSION=v2.13.1 --build-arg HELM_DIFF_VERSION=master . --no-cache
-            docker push praqma/helmsman:$TAG-helm-v2.13.1
-            docker build -t praqma/helmsman:$TAG-helm-v2.12.3 --build-arg HELM_VERSION=v2.12.3 --build-arg HELM_DIFF_VERSION=master . --no-cache
-            docker push praqma/helmsman:$TAG-helm-v2.12.3
-            docker build -t praqma/helmsman:$TAG-helm-v2.11.0 --build-arg HELM_VERSION=v2.11.0 --build-arg HELM_DIFF_VERSION=v2.11.0+5 . --no-cache
-            docker push praqma/helmsman:$TAG-helm-v2.11.0
-            docker build -t praqma/helmsman:$TAG-helm-v2.10.0 --build-arg HELM_VERSION=v2.10.0 --build-arg HELM_DIFF_VERSION=v2.10.0+1 . --no-cache
-            docker push praqma/helmsman:$TAG-helm-v2.10.0
+            docker build -t praqma/helmsman:$TAG-helm-v3.0.2 --build-arg HELM_VERSION=v3.0.2 . --no-cache
+            docker push praqma/helmsman:$TAG-helm-v3.0.2
 
 workflows:
   version: 2

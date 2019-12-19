@@ -106,9 +106,9 @@ func buildState() {
 	}
 }
 
-// helmRealseExists checks if a Helm release is/was deployed in a k8s cluster.
+// isReleaseExisting checks if a Helm release is/was deployed in a k8s cluster.
 // It searches the Current State for releases.
-// The key format for releases uniqueness is:  <release name - the Tiller namespace where it should be deployed >
+// The key format for releases uniqueness is:  <release name - release namespace>
 // If status is provided as an input [deployed, deleted, failed], then the search will verify the release status matches the search status.
 func isReleaseExisting(r *release, status string) bool {
 	v, ok := currentState[fmt.Sprintf("%s-%s", r.Name, r.Namespace)]
@@ -329,18 +329,18 @@ func cleanUntrackedReleases() {
 					logDecision("Untracked release [ "+r.Name+" ] found but it's ignored by target flag", -800, ignored)
 				} else {
 					logDecision("Untracked release [ "+r.Name+" ] found and it will be deleted", -800, delete)
-					deleteUntrackedRelease(r)
+					uninstallUntrackedRelease(r)
 				}
 			}
 		}
 	}
 }
 
-// deleteUntrackedRelease creates the helm command to purge delete an untracked release
-func deleteUntrackedRelease(release *release) {
+// uninstallUntrackedRelease creates the helm command to purge delete an untracked release
+func uninstallUntrackedRelease(release *release) {
 	cmd := command{
 		Cmd:         helmBin,
-		Args:        concat([]string{"delete", release.Name, "--namespace", release.Namespace}, getDryRunFlags()),
+		Args:        concat([]string{"uninstall", release.Name, "--namespace", release.Namespace}, getDryRunFlags()),
 		Description: "Deleting untracked release [ " + release.Name + " ] in namespace [ " + release.Namespace + " ]",
 	}
 

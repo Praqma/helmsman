@@ -21,11 +21,11 @@ const (
 )
 
 func printUsage() {
-	log.Info(banner + "\n")
-	log.Info("Helmsman version: " + appVersion)
-	log.Info("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
-	log.Info("")
-	log.Info("Usage: helmsman [options]")
+	fmt.Printf(banner + "\n")
+	fmt.Printf("Helmsman version: " + appVersion)
+	fmt.Printf("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
+	fmt.Printf("")
+	fmt.Printf("Usage: helmsman [options]")
 	flag.PrintDefaults()
 }
 
@@ -48,7 +48,6 @@ func Cli() {
 	flag.BoolVar(&noNs, "no-ns", false, "don't create namespaces")
 	flag.StringVar(&nsOverride, "ns-override", "", "override defined namespaces with this one")
 	flag.BoolVar(&skipValidation, "skip-validation", false, "skip desired state validation")
-	flag.BoolVar(&applyLabels, "apply-labels", false, "apply Helmsman labels to Helm state for all defined apps.")
 	flag.BoolVar(&keepUntrackedReleases, "keep-untracked-releases", false, "keep releases that are managed by Helmsman and are no longer tracked in your desired state.")
 	flag.BoolVar(&showDiff, "show-diff", false, "show helm diff results. Can expose sensitive information.")
 	flag.BoolVar(&suppressDiffSecrets, "suppress-diff-secrets", false, "don't show secrets in helm diff output.")
@@ -63,6 +62,11 @@ func Cli() {
 	flag.Usage = printUsage
 	flag.Parse()
 
+	if v {
+		fmt.Println("Helmsman version: " + appVersion)
+		os.Exit(0)
+	}
+
 	if noFancy {
 		noColors = true
 		noBanner = true
@@ -70,7 +74,7 @@ func Cli() {
 	initLogs(verbose, noColors)
 
 	if !noBanner {
-		log.Info(fmt.Sprintf("%s version: %s\n%s", banner, appVersion, slogan))
+		fmt.Printf("%s version: %s\n%s", banner, appVersion, slogan)
 	}
 
 	if dryRun && apply {
@@ -94,11 +98,6 @@ func Cli() {
 
 	kubectlVersion = strings.TrimSpace(strings.SplitN(getKubectlClientVersion(), ": ", 2)[1])
 	log.Verbose("kubectl client version: " + kubectlVersion)
-
-	if v {
-		fmt.Println("Helmsman version: " + appVersion)
-		os.Exit(0)
-	}
 
 	if len(files) == 0 {
 		log.Info("No desired state files provided.")
@@ -193,17 +192,11 @@ func Cli() {
 		// validate the desired state content
 		if len(files) > 0 {
 			if err := s.validate(); err != nil { // syntax validation
-				log.Error(err.Error())
+				log.Fatal(err.Error())
 			}
 		}
 	} else {
 		log.Info("Desired state validation is skipped.")
-	}
-
-	if applyLabels {
-		for _, r := range s.Apps {
-			labelResource(r)
-		}
 	}
 
 	if len(target) > 0 {

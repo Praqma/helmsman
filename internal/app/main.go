@@ -30,7 +30,6 @@ var noFancy bool
 var noNs bool
 var nsOverride string
 var skipValidation bool
-var applyLabels bool
 var keepUntrackedReleases bool
 var appVersion = "v3.0.0-beta1"
 var helmBin = "helm"
