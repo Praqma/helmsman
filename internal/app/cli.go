@@ -3,10 +3,11 @@ package app
 import (
 	"flag"
 	"fmt"
-	"github.com/imdario/mergo"
-	"github.com/joho/godotenv"
 	"os"
 	"strings"
+
+	"github.com/imdario/mergo"
+	"github.com/joho/godotenv"
 )
 
 const (
@@ -186,6 +187,10 @@ func Cli() {
 
 	if debug {
 		s.print()
+	}
+
+	if s.Settings.StorageBackend != "" {
+		os.Setenv("HELM_DRIVER", s.Settings.StorageBackend)
 	}
 
 	if !skipValidation {
