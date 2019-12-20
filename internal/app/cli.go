@@ -200,6 +200,10 @@ func Cli() {
 		s.print()
 	}
 
+	if s.Settings.StorageBackend != "" {
+		os.Setenv("HELM_DRIVER", s.Settings.StorageBackend)
+	}
+
 	if !skipValidation {
 		// validate the desired state content
 		if len(files) > 0 {
