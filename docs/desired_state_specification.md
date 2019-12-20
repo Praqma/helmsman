@@ -8,6 +8,7 @@ This document describes the specification for how to write your Helm charts' des
 
 - [Metadata](#metadata) [Optional] -- metadata for any human reader of the desired state file.
 - [Certificates](#certificates) [Optional] -- only needed when you want Helmsman to connect kubectl to your cluster for you.
+- [Context](#context) [optional] -- define the context in which a DSF is used.
 - [Settings](#settings) [Optional] -- data about your k8s cluster and how to deploy Helm on it if needed.
 - [Namespaces](#namespaces) -- defines the namespaces where you want your Helm charts to be deployed.
 - [Helm Repos](#helm-repos) [Optional] -- defines the repos where you want to get Helm charts from.
@@ -74,6 +75,16 @@ certificates:
   caClient: "../path/to/my/local/client-certificate.crt"
   #caClient: "$CA_CLIENT"
 ```
+## Context
+
+Optional : Yes.
+
+Synopsis: defines the context in which a DSF is used. This context is used as the ID of that specific DSF and must be unique across the used DSFs. If not defined, `default` is used. Check [here](how_to/misc/merge_desired_state_files.md) for more details on the limitations.
+
+```yaml
+context: prod-apps
+...
+```  
 
 ## Settings
 
