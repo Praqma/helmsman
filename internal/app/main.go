@@ -55,6 +55,7 @@ var noDefaultRepos bool
 const tempFilesDir = ".helmsman-tmp"
 const stableHelmRepo = "https://kubernetes-charts.storage.googleapis.com"
 const incubatorHelmRepo = "http://storage.googleapis.com/kubernetes-charts-incubator"
+const defaultContextName = "default"
 
 func init() {
 	Cli()

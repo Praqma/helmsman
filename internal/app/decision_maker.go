@@ -55,43 +55,47 @@ func decide(r *release, s *state) {
 		logDecision("Release [ "+r.Name+" ] disabled", r.Priority, noop)
 		return
 
-	} else {
-		if ok := isReleaseExisting(r, "deployed"); ok {
-			if !isProtected(r) {
-				inspectUpgradeScenario(r) // upgrade or move
+	}
 
-			} else {
-				logDecision("release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
-					"you remove its protection.", r.Priority, noop)
-			}
+	if ok := isReleaseExisting(r, "deployed"); ok {
+		if !isProtected(r) {
+			inspectUpgradeScenario(r) // upgrade or move
 
-		} else if ok := isReleaseExisting(r, "deleted"); ok {
-			if !isProtected(r) {
-
-				rollbackRelease(r) // rollback
-
-			} else {
-				logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
-					"you remove its protection.", r.Priority, noop)
-			}
-
-		} else if ok := isReleaseExisting(r, "failed"); ok {
-
-			if !isProtected(r) {
-
-				logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in FAILED state. Upgrade is scheduled!", r.Priority, change)
-				upgradeRelease(r)
-
-			} else {
-				logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
-					"you remove its protection.", r.Priority, noop)
-			}
 		} else {
-
-			installRelease(r)
-
+			logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
+				"you remove its protection.", r.Priority, noop)
 		}
 
+	} else if ok := isReleaseExisting(r, "deleted"); ok {
+		if !isProtected(r) {
+
+			rollbackRelease(r) // rollback
+
+		} else {
+			logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
+				"you remove its protection.", r.Priority, noop)
+		}
+
+	} else if ok := isReleaseExisting(r, "failed"); ok {
+
+		if !isProtected(r) {
+
+			logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in FAILED state. Upgrade is scheduled!", r.Priority, change)
+			upgradeRelease(r)
+
+		} else {
+			logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
+				"you remove its protection.", r.Priority, noop)
+		}
+	} else {
+		// If there is no release in the cluster with this name and in this namespace, then install it!
+		if _, ok := currentState[fmt.Sprintf("%s-%s", r.Name, r.Namespace)]; !ok {
+			installRelease(r)
+		} else {
+			// A release with the same name and in the same namespace exists, but it has a different context label (managed by another DSF)
+			log.Fatal("Release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ] already exists but is not managed by the" +
+				" current context: [ " + s.Context + " ]. Applying changes will likely cause conflicts. Change the release name or namespace.")
+		}
 	}
 
 }

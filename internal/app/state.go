@@ -30,6 +30,7 @@ type state struct {
 	Metadata               map[string]string    `yaml:"metadata"`
 	Certificates           map[string]string    `yaml:"certificates"`
 	Settings               config               `yaml:"settings"`
+	Context                string               `yaml:"context"`
 	Namespaces             map[string]namespace `yaml:"namespaces"`
 	HelmRepos              map[string]string    `yaml:"helmRepos"`
 	PreconfiguredHelmRepos []string             `yaml:"preconfiguredHelmRepos"`
@@ -163,6 +164,9 @@ func (s state) print() {
 	fmt.Println("\nMetadata: ")
 	fmt.Println("--------- ")
 	printMap(s.Metadata, 0)
+	fmt.Println("\nContext: ")
+	fmt.Println("--------- ")
+	fmt.Println(s.Context)
 	fmt.Println("\nCertificates: ")
 	fmt.Println("--------- ")
 	printMap(s.Certificates, 0)
