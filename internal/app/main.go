@@ -60,6 +60,7 @@ func init() {
 	Cli()
 }
 
+// Main is the app main function
 func Main() {
 	// delete temp files with substituted env vars when the program terminates
 	defer os.RemoveAll(tempFilesDir)
