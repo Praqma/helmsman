@@ -47,7 +47,7 @@ type chartVersion struct {
 func getHelmVersion() string {
 	cmd := command{
 		Cmd:         helmBin,
-		Args:        []string{"version", "--short"},
+		Args:        []string{"version", "--short", "-c"},
 		Description: "Checking Helm version",
 	}
 
