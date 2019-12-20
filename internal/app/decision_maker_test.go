@@ -228,8 +228,9 @@ func Test_decide(t *testing.T) {
 
 func Test_decide_group(t *testing.T) {
 	type args struct {
-		r *release
-		s *state
+		r            *release
+		s            *state
+		currentState *map[string]releaseState
 	}
 	tests := []struct {
 		name       string
@@ -248,6 +249,12 @@ func Test_decide_group(t *testing.T) {
 					Enabled:   true,
 				},
 				s: &state{},
+				currentState: &map[string]releaseState{
+					"release1-namespace": {
+						Namespace: "namespace",
+						Chart:     "chart-1.0.0",
+					},
+				},
 			},
 			want: ignored,
 		},
@@ -261,7 +268,17 @@ func Test_decide_group(t *testing.T) {
 					Enabled:   true,
 					Group:     "run-me",
 				},
-				s: &state{},
+				s: &state{
+					Context: "default",
+				},
+				currentState: &map[string]releaseState{
+					"release2-namespace": {
+						Name:            "release2",
+						Namespace:       "namespace",
+						Chart:           "chart-1.0.0",
+						HelmsmanContext: "some-other-context",
+					},
+				},
 			},
 			want: create,
 		},
@@ -271,6 +288,7 @@ func Test_decide_group(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			groupMap = make(map[string]bool)
 			targetMap = make(map[string]bool)
+			currentState = *tt.args.currentState
 
 			for _, target := range tt.targetFlag {
 				groupMap[target] = true
