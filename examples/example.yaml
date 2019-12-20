@@ -16,7 +16,7 @@ metadata:
 # context defines the context of this Desired State File. 
 # It is used to allow Helmsman identify which releases are managed by which DSF.
 # Therefore, it is important that each DSF uses a unique context.
-context: test-infra   # defaults to file name if not provided
+context: test-infra   # defaults to "default" if not provided
 
 settings:
   kubeContext: "minikube" # will try connect to this context first, if it does not exist, it will be created using the details below
