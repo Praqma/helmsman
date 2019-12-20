@@ -324,18 +324,18 @@ func labelResource(r *release) {
 }
 
 // getHelmsmanReleases returns a map of all releases that are labeled with "MANAGED-BY=HELMSMAN"
-// The releases are categorized by the namespaces in which their Tiller is running
-// The returned map format is: map[<Tiller namespace>:map[<releases managed by Helmsman and deployed using this Tiller>:true]]
-func getHelmsmanReleases() map[string]map[*release]bool {
+// The releases are categorized by the namespaces in which they are deployed
+// The returned map format is: map[<namespace>:map[<releaseState>:true]]
+func getHelmsmanReleases() map[string]map[releaseState]bool {
 	var lines []string
-	releases := make(map[string]map[*release]bool)
+	releases := make(map[string]map[releaseState]bool)
 	storageBackend := "secret"
 
 	if s.Settings.StorageBackend != "" {
 		storageBackend = s.Settings.StorageBackend
 	}
 
-	for ns, _ := range s.Namespaces {
+	for ns := range s.Namespaces {
 		cmd := command{
 			Cmd:         "kubectl",
 			Args:        []string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN", "-o", "name"},
@@ -356,16 +356,12 @@ func getHelmsmanReleases() map[string]map[*release]bool {
 				continue
 			}
 			if _, ok := releases[ns]; !ok {
-				releases[ns] = make(map[*release]bool)
+				releases[ns] = make(map[releaseState]bool)
 			}
-			for _, app := range s.Apps {
-				if strings.Contains(r, app.Name) {
-					releases[ns][app] = true
-				}
-			}
+			releaseName := strings.Split(strings.Split(r, "/")[1], ".")[4]
+			releases[ns][currentState[releaseName+"-"+ns]] = true
 		}
 	}
-
 	return releases
 }
 

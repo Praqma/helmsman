@@ -18,6 +18,7 @@ var currentState map[string]releaseState
 
 // releaseState represents the current state of a release
 type releaseState struct {
+	Name      string
 	Revision  int
 	Updated   time.Time
 	Status    string
@@ -46,7 +47,7 @@ type chartVersion struct {
 func getHelmVersion() string {
 	cmd := command{
 		Cmd:         helmBin,
-		Args:        []string{"version", "--short"},
+		Args:        []string{"version", "--short", "-c"},
 		Description: "Checking Helm version",
 	}
 
@@ -97,6 +98,7 @@ func buildState() {
 		}
 		revision, _ := strconv.Atoi(rel[i].Revision)
 		currentState[fmt.Sprintf("%s-%s", rel[i].Name, rel[i].Namespace)] = releaseState{
+			Name:      rel[i].Name,
 			Revision:  revision,
 			Updated:   date,
 			Status:    rel[i].Status,
@@ -296,12 +298,12 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 }
 
 // cleanUntrackedReleases checks for any releases that are managed by Helmsman and are no longer tracked by the desired state
-// It compares the currently deployed releases with "MANAGED-BY=HELMSMAN" labels with Apps defined in the desired state
-// For all untracked releases found, a decision is made to delete them and is added to the Helmsman plan
+// It compares the currently deployed releases labeled with "MANAGED-BY=HELMSMAN" with Apps defined in the desired state
+// For all untracked releases found, a decision is made to uninstall them and is added to the Helmsman plan
 // NOTE: Untracked releases don't benefit from either namespace or application protection.
 // NOTE: Removing/Commenting out an app from the desired state makes it untracked.
 func cleanUntrackedReleases() {
-	toDelete := make(map[string]map[*release]bool)
+	toDelete := make(map[string]map[releaseState]bool)
 	log.Info("Checking if any Helmsman managed releases are no longer tracked by your desired state ...")
 	for ns, releases := range getHelmsmanReleases() {
 		for r := range releases {
@@ -313,7 +315,7 @@ func cleanUntrackedReleases() {
 			}
 			if !tracked {
 				if _, ok := toDelete[ns]; !ok {
-					toDelete[ns] = make(map[*release]bool)
+					toDelete[ns] = make(map[releaseState]bool)
 				}
 				toDelete[ns][r] = true
 			}
@@ -325,19 +327,15 @@ func cleanUntrackedReleases() {
 	} else {
 		for _, releases := range toDelete {
 			for r := range releases {
-				if r.isReleaseConsideredToRun() {
-					logDecision("Untracked release [ "+r.Name+" ] found but it's ignored by target flag", -800, ignored)
-				} else {
-					logDecision("Untracked release [ "+r.Name+" ] found and it will be deleted", -800, delete)
-					uninstallUntrackedRelease(r)
-				}
+				logDecision("Untracked release [ "+r.Name+" ] found and it will be deleted", -800, delete)
+				uninstallUntrackedRelease(r)
 			}
 		}
 	}
 }
 
-// uninstallUntrackedRelease creates the helm command to purge delete an untracked release
-func uninstallUntrackedRelease(release *release) {
+// uninstallUntrackedRelease creates the helm command to uninstall an untracked release
+func uninstallUntrackedRelease(release releaseState) {
 	cmd := command{
 		Cmd:         helmBin,
 		Args:        concat([]string{"uninstall", release.Name, "--namespace", release.Namespace}, getDryRunFlags()),

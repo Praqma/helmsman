@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	version "github.com/hashicorp/go-version"
 	"github.com/imdario/mergo"
 	"github.com/joho/godotenv"
 )
@@ -30,6 +31,7 @@ func printUsage() {
 	flag.PrintDefaults()
 }
 
+// Cli parses cmd flags, validates them and performs some initializations
 func Cli() {
 	//parsing command line flags
 	flag.Var(&files, "f", "desired state file name(s), may be supplied more than once to merge state files")
@@ -95,7 +97,16 @@ func Cli() {
 	}
 
 	helmVersion = strings.TrimSpace(getHelmVersion())
-	log.Verbose("Helm client version: " + helmVersion)
+	extractedHelmVersion := helmVersion
+	if !strings.HasPrefix(helmVersion, "v") {
+		extractedHelmVersion = strings.TrimSpace(strings.Split(helmVersion, ":")[1])
+	}
+	log.Verbose("Helm client version: " + extractedHelmVersion)
+	v1, _ := version.NewVersion(extractedHelmVersion)
+	jsonConstraint, _ := version.NewConstraint(">=3.0.0")
+	if !jsonConstraint.Check(v1) {
+		log.Fatal("this version of Helmsman does not work with helm releases older than 3.0.0")
+	}
 
 	kubectlVersion = strings.TrimSpace(strings.SplitN(getKubectlClientVersion(), ": ", 2)[1])
 	log.Verbose("kubectl client version: " + kubectlVersion)
