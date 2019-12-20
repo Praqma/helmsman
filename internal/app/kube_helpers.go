@@ -303,15 +303,11 @@ func getKubeContext() bool {
 // labelResource applies Helmsman specific labels to Helm's state resources (secrets/configmaps)
 func labelResource(r *release) {
 	if r.Enabled {
-		storageBackend := "secret"
-
-		if s.Settings.StorageBackend != "" {
-			storageBackend = s.Settings.StorageBackend
-		}
+		storageBackend := s.Settings.StorageBackend
 
 		cmd := command{
 			Cmd:         "kubectl",
-			Args:        []string{"label", storageBackend, "-n", r.Namespace, "-l", "owner=helm,name=" + r.Name, "MANAGED-BY=HELMSMAN", "NAMESPACE=" + r.Namespace, "--overwrite"},
+			Args:        []string{"label", storageBackend, "-n", r.Namespace, "-l", "owner=helm,name=" + r.Name, "MANAGED-BY=HELMSMAN", "NAMESPACE=" + r.Namespace, "HELMSMAN_CONTEXT=" + s.Context, "--overwrite"},
 			Description: "Applying Helmsman labels to [ " + r.Name + " ] release",
 		}
 
@@ -323,22 +319,37 @@ func labelResource(r *release) {
 	}
 }
 
+// getReleaseContext extracts the Helmsman release context from the helm storage driver objects (secret or configmap) labels
+func getReleaseContext(releaseName string, namespace string) string {
+	storageBackend := s.Settings.StorageBackend
+	// kubectl get secrets -n test1 -l MANAGED-BY=HELMSMAN -o=jsonpath='{.items[0].metadata.labels.HELMSMAN_CONTEXT}'
+	// kubectl get secret sh.helm.release.v1.argo.v1  -n test1  -o=jsonpath='{.metadata.labels.HELMSMAN_CONTEXT}'
+	cmd := command{
+		Cmd:         "kubectl",
+		Args:        []string{"get", storageBackend, "-n", namespace, "sh.helm.release.v1." + releaseName + ".v1", "-o=jsonpath={.metadata.labels.HELMSMAN_CONTEXT}"},
+		Description: "Getting Helmsman context for [ " + releaseName + " ] release",
+	}
+
+	exitCode, out, _ := cmd.exec(debug, verbose)
+
+	if exitCode != 0 {
+		log.Fatal(out)
+	}
+	return strings.TrimSpace(out)
+}
+
 // getHelmsmanReleases returns a map of all releases that are labeled with "MANAGED-BY=HELMSMAN"
 // The releases are categorized by the namespaces in which they are deployed
 // The returned map format is: map[<namespace>:map[<releaseState>:true]]
 func getHelmsmanReleases() map[string]map[releaseState]bool {
 	var lines []string
 	releases := make(map[string]map[releaseState]bool)
-	storageBackend := "secret"
-
-	if s.Settings.StorageBackend != "" {
-		storageBackend = s.Settings.StorageBackend
-	}
+	storageBackend := s.Settings.StorageBackend
 
 	for ns := range s.Namespaces {
 		cmd := command{
 			Cmd:         "kubectl",
-			Args:        []string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN", "-o", "name"},
+			Args:        []string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN", "-l", "HELMSMAN_CONTEXT=" + s.Context, "-o", "name"},
 			Description: "Getting Helmsman-managed releases in namespace [ " + ns + " ]",
 		}
 
