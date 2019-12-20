@@ -3,10 +3,11 @@ package app
 import (
 	"flag"
 	"fmt"
-	"github.com/imdario/mergo"
-	"github.com/joho/godotenv"
 	"os"
 	"strings"
+
+	"github.com/imdario/mergo"
+	"github.com/joho/godotenv"
 )
 
 const (
@@ -29,6 +30,7 @@ func printUsage() {
 	flag.PrintDefaults()
 }
 
+// Cli parses cmd flags, validates them and performs some initializations
 func Cli() {
 	//parsing command line flags
 	flag.Var(&files, "f", "desired state file name(s), may be supplied more than once to merge state files")

@@ -31,20 +31,19 @@ type release struct {
 	Timeout      int               `yaml:"timeout"`
 }
 
+// isReleaseConsideredToRun checks if a release is being targeted for operations as specified by user cmd flags (--group or --target)
 func (r *release) isReleaseConsideredToRun() bool {
 	if len(targetMap) > 0 {
 		if _, ok := targetMap[r.Name]; ok {
 			return true
-		} else {
-			return false
 		}
+		return false
 	}
 	if len(groupMap) > 0 {
 		if _, ok := groupMap[r.Group]; ok {
 			return true
-		} else {
-			return false
 		}
+		return false
 	}
 	return true
 }
