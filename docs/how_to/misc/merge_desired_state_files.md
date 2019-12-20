@@ -51,19 +51,6 @@ Starting from Helmsman v3.0.0-beta1, `context` is introduced to define the conte
 
 Here is how it is used: 
 
-* `prod.yaml`:
-```yaml
-settings:
-  kubeContext: "cluster"
-  storageBackend: "secret"
-
-namespaces: 
-  infra:
-    protected: true
-
-...
-```
-
 * `infra.yaml`:
 ```yaml
 context: infra-apps
@@ -112,3 +99,5 @@ apps:
 - If no context is provided in DSF (or merged DSFs), `default` is applied as a default context. This means any set of DSFs that don't define custom contexts can still operate on each other's releases (same behavior as in Helmsman 1.x).
 
 - When merging multiple DSFs, context from the firs DSF in the list gets overridden by the context in the last DSF.
+
+- If multiple DSFs use the same context name, they will mess up each other's releases.
