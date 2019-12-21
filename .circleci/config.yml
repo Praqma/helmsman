@@ -20,7 +20,7 @@ jobs:
     steps:
       - run:
           name: install git 
-          command: apk update && apk add --no-cache git 
+          command: apk update && apk add --no-cache git openssh
       - checkout
       - run:
           name: release
