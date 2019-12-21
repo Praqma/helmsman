@@ -42,6 +42,19 @@
   version = "v0.3.1"
 
 [[projects]]
+  digest = "1:c3fabcdfd716824af4b7b60fd85c15df57c7bbed220a0703212e347b42e7a803"
+  name = "github.com/Praqma/helmsman"
+  packages = [
+    "internal/app",
+    "internal/aws",
+    "internal/azure",
+    "internal/gcs",
+  ]
+  pruneopts = "UT"
+  revision = "16473a838593436cbb46748fa37d0c89a73d369e"
+  version = "v3.0.0-beta1"
+
+[[projects]]
   digest = "1:efe5038e25001cc88547d8ecc9ed76bbb97c15826b9bb91b931ec30dacb4e3f1"
   name = "github.com/apsdehal/go-logger"
   packages = ["."]
@@ -141,6 +154,14 @@
   version = "v2.0.5"
 
 [[projects]]
+  digest = "1:88e0b0baeb9072f0a4afbcf12dda615fc8be001d1802357538591155998da21b"
+  name = "github.com/hashicorp/go-version"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ac23dc3fea5d1a983c43f6a0f6e2c13f0195d8bd"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:78d28d5b84a26159c67ea51996a230da4bc07cac648adaae1dfb5fc0ec8e40d3"
   name = "github.com/imdario/mergo"
   packages = ["."]
@@ -220,13 +241,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:17be6a1681d96acc66795d9618ae4a44405e4a1d5964193cdc5282f2ae151602"
+  digest = "1:676f320d34ccfa88bfa6d04bdf388ed7062af175355c805ef57ccda1a3f13432"
   name = "golang.org/x/net"
   packages = [
     "context",
     "context/ctxhttp",
     "http/httpguts",
-    "http/httpproxy",
     "http2",
     "http2/hpack",
     "idna",
@@ -252,13 +272,9 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:9cb08334ba1fb31cca05f3703d21189db6f6ba40d2d28c9884bf31707b91d16b"
+  digest = "1:634414cd43ed62a728aaf9b3e61fde85f012880f9b32b7d00678b6fd887ff9c1"
   name = "golang.org/x/sys"
-  packages = [
-    "unix",
-    "windows",
-    "windows/registry",
-  ]
+  packages = ["unix"]
   pruneopts = "UT"
   revision = "ac6580df4449443a05718fd7858c1f91ad5f8d20"
 
@@ -459,12 +475,17 @@
     "github.com/Azure/azure-pipeline-go/pipeline",
     "github.com/Azure/azure-storage-blob-go/azblob",
     "github.com/BurntSushi/toml",
+    "github.com/Praqma/helmsman/internal/app",
+    "github.com/Praqma/helmsman/internal/aws",
+    "github.com/Praqma/helmsman/internal/azure",
+    "github.com/Praqma/helmsman/internal/gcs",
     "github.com/apsdehal/go-logger",
     "github.com/aws/aws-sdk-go/aws",
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/s3",
     "github.com/aws/aws-sdk-go/service/s3/s3manager",
     "github.com/aws/aws-sdk-go/service/ssm",
+    "github.com/hashicorp/go-version",
     "github.com/imdario/mergo",
     "github.com/joho/godotenv",
     "github.com/logrusorgru/aurora",
