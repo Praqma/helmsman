@@ -1,5 +1,5 @@
 ---
-version: v1.11.1
+version: v3.0.0-beta1
 ---
 
 # CMD reference
@@ -11,14 +11,11 @@ This lists available CMD options in Helmsman:
   `--apply`
         apply the plan directly.
 
-  `--apply-labels`
-        apply Helmsman labels to Helm state for all defined apps.
-
   `--debug`
         show execution logs.
 
   `--destroy`
-        delete all deployed releases. Purge delete is used if the purge option is set to true for the releases.
+        delete all deployed releases.
 
   `--diff-context num`
         number of lines of context to show around changes in helm diff output.
@@ -36,7 +33,7 @@ This lists available CMD options in Helmsman:
         use --force when upgrading helm releases. May cause resources to be recreated.  
 
   `--keep-untracked-releases`
-        keep releases that are managed by Helmsman and are no longer tracked in your desired state.
+        keep releases that are managed by Helmsman from the used DSFs in the command, and are no longer tracked in your desired state.
 
   `--kubeconfig`
         path to the kubeconfig file to use for CLI requests.
@@ -53,14 +50,20 @@ This lists available CMD options in Helmsman:
   `--no-env-subst`
         turn off environment substitution globally.
 
-  `no-env-values-subst`
-        turn off environment substitution in values files only.      
+  `--no-env-values-subst`
+        turn off environment substitution in values files only. (default true).      
 
   `--no-fancy`
         don't display the banner and don't use colors.
 
   `--no-ns`
         don't create namespaces.
+
+  `-no-ssm-subst`
+        turn off SSM parameter substitution globally.
+  
+  `-no-ssm-values-subst`
+        turn off SSM parameter substitution in values files only (default true).        
 
   `--ns-override string`
         override defined namespaces with this one.
@@ -72,7 +75,7 @@ This lists available CMD options in Helmsman:
         skip desired state validation.
 
   `--suppress-diff-secrets`
-        don't show secrets in helm diff output.
+        don't show secrets in helm diff output. (default true).
 
   `--target`
         limit execution to specific app.
@@ -83,7 +86,7 @@ This lists available CMD options in Helmsman:
   `--update-deps`
         run 'helm dep up' for local chart     
 
-  `-v`    show the version.
+  `--v`    show the version.
 
   `--verbose`
         show verbose execution logs.

@@ -1,5 +1,5 @@
 ---
-version: v1.12.0
+version: v3.0.0-beta1
 ---
 
 # Helmsman desired state specification
@@ -90,9 +90,9 @@ context: prod-apps
 
 Optional : Yes.
 
-Synopsis: provides settings for connecting to your k8s cluster and configuring Helm's Tiller in the cluster.
+Synopsis: provides settings for connecting to your k8s cluster.
 
-> If you don't provide the `settings` stanza, helmsman would use your current kube context and will deploy Tiller(s) without RBAC service accounts.
+> If you don't provide the `settings` stanza, helmsman would use your current kube context.
 
 Options:
 - **kubeContext** : the kube context you want Helmsman to use or create. Helmsman will try connect to this context first, if it does not exist, it will try to create it (i.e. connect to a k8s cluster) using the options below.
@@ -104,16 +104,13 @@ The following options can be skipped if your kubectl context is already created 
 - **clusterURI** : the URI for your cluster API or the name of an environment variable (starting with `$`) containing the URI.
 - **bearerToken**: whether you want helmsman to connect to the cluster using a bearer token. Default is `false`
 - **bearerTokenPath**: optional. If bearer token is used, you can specify a custom location for the token file.
-- **serviceAccount**: the name of the service account to use to deploy Helm Tiller. This should have enough permissions to allow Helm to work. If the service account does not exist, it will be created. More details can be found in [helm's RBAC guide](https://github.com/kubernetes/helm/blob/master/docs/rbac.md)
-- **storageBackend** : by default Helm stores release information in configMaps, using secrets is for storage is recommended for security. Setting this flag to `secret` will deploy/upgrade Tiller with the `--storage=secret`. Other values will be skipped and configMaps will be used.
+- **storageBackend** : by default Helm v3 stores release information in secrets, using secrets for storage is recommended for security. 
 - **slackWebhook** : a [Slack](http://slack.com) Webhook URL to receive Helmsman notifications. This can be passed directly or in an environment variable.
 - **reverseDelete** : if set to `true` it will reverse the priority order whilst deleting.
-- **tillerless** : setting it to `true` will use [helm-tiller](https://rimusz.net/tillerless-helm) plugin instead of installing Tillers in namespaces. It disables many of the parameters for sections below.
 - **eyamlEnabled** : if set to `true' it will use [hiera-eyaml](https://github.com/voxpupuli/hiera-eyaml) to decrypt secret files instead of using default helm-secrets based on sops
 - **eyamlPrivateKeyPath** : if set with path to the eyaml private key file, it will use it instead of looking for default one in ./keys directory relative to where Helmsman were run. It needs to be defined in conjunction with eyamlPublicKeyPath.
 - **eyamlPublicKeyPath** : if set with path to the eyaml public key file, it will use it instead of looking for default one in ./keys directory relative to where Helmsman were run. It needs to be defined in conjunction with eyamlPrivateKeyPath.
 
-> If you use `storageBackend` with a Tiller that has been previously deployed with configMaps as storage backend, you need to migrate your release information from the configMap to the new secret on your own. Helm does not support this yet.
 
 Example:
 
@@ -155,66 +152,29 @@ settings:
 
 Optional : No.
 
-Synopsis: defines the namespaces to be used/created in your k8s cluster and whether they are protected or not. It also defines if Tiller should be deployed in these namespaces and with what configurations (TLS and service account). You can add as many namespaces as you like.
+Synopsis: defines the namespaces to be used/created in your k8s cluster and whether they are protected or not.  You can add as many namespaces as you need.
 If a namespace does not already exist, Helmsman will create it.
-
-> All Tillers-related params here will be ignored when `tilerless` is set in `settings` section.
 
 Options:
 - **protected** : defines if a namespace is protected (true or false). Default false.
 > For the definition of what a protected namespace means, check the [protection guide](how_to/misc/protect_namespaces_and_releases.md)
-- **installTiller**: defines if Tiller should be deployed in this namespace or not. Default is false. Any chart desired to be deployed into a namespace with a Tiller deployed, will be deployed using that Tiller and not the one in kube-system unless you use the `TillerNamespace` option (see the [Apps](#apps) section below) to use another Tiller.
-> By default Tiller will be deployed into `kube-system` even if you don't define kube-system in the namespaces section. To prevent deploying Tiller into `kube-system, add kube-system in your namespaces section and set its installTiller to false.
-- **tillerMaxHistory**: specifies an int value of the maximum number of revisions saved per release by Tiller.
-> In order to set the kube-system's Tiller's (a default one, main Tiller) max history, define namespace kube-system and set tillerMaxHistory along with installTiller: true
-- **tillerRole**: specifies the role to use.  If 'cluster-admin' a clusterrolebinding will be used else a role with a single namespace scope will be created and bound with a rolebinding.
-- **tillerRoleTemplateFile**: relative path to file templating custom Tiller role. If `installTiller` is true and `tillerRole` is not `cluster-admin`, then helmsman will create namespace specific Tiller role based on the template file passed with this parameter. When `tillerRole` is empty string, role name defaults to `helmsman-tiller`.
 
-  If `tillerRoleTemplateFile` is set, it will always try to create namespace-scoped Tiller with conditions like below:
-    - if `tillerRole` was not set, default name of `helmsman-tiller` will be used to createa new Role
-    - if `tillerServiceAccount` was not set, it will create Service Account with default name of `helmsman`
-
-- **useTiller**: defines that you would like to use an existing Tiller from that namespace. Can't be set together with `installTiller`
 - **labels** : defines labels to be added to the namespace, doesn't remove existing labels but updates them if the label key exists with any other different value. You can define any key/value pairs. Default is empty.
+
 - **annotations** : defines annotations to be added to the namespace. It behaves the same way as the labels option.
+
 - **limits** : defines a [LimitRange](https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/memory-default-namespace/) to be configured on the namespace
 
-- **tillerServiceAccount**: defines what service account to use when deploying Tiller. If this is not set, the following options are considered:
-
-  1. If the `serviceAccount` defined in the `settings` section exists in the namespace you want to deploy Tiller in, it will be used. 
-  2. If you defined `serviceAccount` in the `settings` section and it does not exist in the namespace you want to deploy Tiller in, Helmsman creates the service account in that namespace and binds it to a (cluster)role. If the namespace is kube-system and `tillerRole` is unset or is set to cluster-admin, the service account is bound to `cluster-admin` clusterrole. Otherwise, if you specified a `tillerRole`, a new role with that name is created and bound to the service account with rolebinding. If `tillerRole` is unset (for namespaces other than kube-system), the role is called `helmsman-tiller` and is created in the specified namespace to only gives access to that namespace. The custom role is created from a [yaml template](../data/role.yaml) if no `tillerRoleTemplateFile` was set, or it will use the `tillerRoleTemplateFile` (of the same structure as [yaml template](../data/role.yaml)) to create Role from.
-
-  > If `installTiller` is not defined or set to false, this flag is ignored.
-
-- The following options are `ALL` needed for deploying Tiller with TLS enabled. If they are not all defined, they will be ignored and Tiller will be deployed without TLS. All of these options can be provided as either: a valid local file path, a valid GCS or S3 or Azure bucket URI or an environment variable containing a file path or bucket URI.
-    - **caCert**: the CA certificate.
-    - **tillerCert**: the SSL certificate for Tiller.
-    - **tillerKey**: the SSL certificate private key for Tiller.
-    - **clientCert**: the SSL certificate for the Helm client.
-    - **clientKey**: the SSL certificate private key for the Helm client.
 
 Example:
 
 ```toml
 [namespaces]
-# to prevent deploying Tiller into kube-system, use the two lines below
-# [namespaces.kube-system]
-# installTiller = false # this line can be omitted since installTiller defaults to false
 [namespaces.staging]
 [namespaces.dev]
-useTiller = true # use a Tiller which has been deployed in dev namespace
 protected = false
 [namespaces.production]
 protected = true
-installTiller = true
-tillerMaxHistory = 10
-tillerServiceAccount = "tiller-production"
-tillerRoleTemplateFile = "../roles/helmsman-tiller.yaml"
-caCert = "secrets/ca.cert.pem"
-tillerCert = "secrets/tiller.cert.pem"
-tillerKey = "$TILLER_KEY" # where TILLER_KEY=secrets/tiller.key.pem
-clientCert = "gs://mybucket/mydir/helm.cert.pem"
-clientKey = "s3://mybucket/mydir/helm.key.pem"
 [namespaces.production.labels]
 env = "prod"
 [namespaces.production.annotations]
@@ -235,24 +195,11 @@ memory = "300Mi"
 
 ```yaml
 namespaces:
-  # to prevent deploying Tiller into kube-system, use the two lines below
-  # kube-system:
-  #  installTiller: false # this line can be omitted since installTiller defaults to false
   staging:
   dev:
     protected: false
-    useTiller: true # use a Tiller which has been deployed in dev namespace
   production:
     protected: true
-    installTiller: true
-    tillerMaxHistory: 10
-    tillerServiceAccount: "tiller-production"
-    tillerRoleTemplateFile: "../roles/helmsman-tiller.yaml"
-    caCert: "secrets/ca.cert.pem"
-    tillerCert: "secrets/tiller.cert.pem"
-    tillerKey: "$TILLER_KEY" # where TILLER_KEY=secrets/tiller.key.pem
-    clientCert: "gs://mybucket/mydir/helm.cert.pem"
-    clientKey: "s3://mybucket/mydir/helm.key.pem"
     limits:
       - type: Container
         default:
@@ -274,17 +221,19 @@ namespaces:
 
 Optional : Yes.
 
-Synopsis: defines the Helm repos where your charts can be found. You can add as many repos as you like. Public repos can be added without any additional setup. Private repos require authentication.
+Synopsis: defines the Helm repos where your charts can be found. You can add as many repos as you need. Public repos can be added without any additional setup. Private repos require authentication.
 
 > As of version v0.2.0, both AWS S3 and Google GCS buckets can be used for private repos (using the [Helm S3](https://github.com/hypnoglow/helm-s3) and [Helm GCS](https://github.com/nouney/helm-gcs) plugins).
 
 > As of version v1.8.0, you can use private repos with basic auth and you can use pre-configured helm repos.
 
-Authenticating to private helm repos:
+Authenticating to private cloud helm repos:
 - **For S3 repos**: you need to have valid AWS access keys in your environment variables. See [here](https://github.com/hypnoglow/helm-s3#note-on-aws-authentication) for more details.
 - **For GCS repos**: check [here](https://www.terraform.io/docs/providers/google/index.html#authentication-json-file) for getting the required authentication file. Once you have the file, you have two options, either:
     - set `GOOGLE_APPLICATION_CREDENTIALS` environment variable to contain the absolute path to your Google cloud credentials.json file.
     - Or, set `GCLOUD_CREDENTIALS` environment variable to contain the content of the credentials.json file.
+
+> You can also provide basic auth to access private repos that support basic auth. See the example below.    
 
 Options:
 - you can define any key/value pair where the key is the repo name and value is a valid URI for the repo. Basic auth info can be added in the repo URL as in the example below.
@@ -317,6 +266,8 @@ Synopsis: defines the list of helm repositories that the helmsman will consider 
 
 The primary use-case is if you have some helm repositories that require HTTP basic authentication and you don't want to store the password in the desired state file or as an environment variable. In this case you can execute the following sequence to have those repositories configured:
 
+> In this case you will need to execute `helm repo add myrepo1 <URL> --username= --password=` manually first.
+
 Set up the helmsman configuration:
 
 ```toml
@@ -329,9 +280,9 @@ preconfiguredHelmRepos:
 - myrepo2
 ```
 
-> In this case you will manually need to execute `helm repo add myrepo1 <URL> --username= --password=`
-
 ## AppsTemplates
+
+> This feature is only for YAML.
 
 Optional : Yes.
 
@@ -383,7 +334,7 @@ Optional : Yes.
 
 Synopsis: defines the releases (instances of Helm charts) you would like to manage in your k8s cluster.
 
-Releases must have unique names which are defined under `apps`. Example: in `[apps.jenkins]`, the release name will be `jenkins` and it should be unique within the Tiller which manages it .
+Releases must have unique names which are defined under `apps`. Example: in `[apps.jenkins]`, the release name will be `jenkins` and it should be unique within the DSF.
 
 Options:
 
@@ -395,13 +346,6 @@ Options:
 
 **Optional**
 - **group**       : group name this apps belongs to. It has no effect until Helmsman's flag `-group` is passed. Check this [doc](how_to/misc/limit-deployment-to-specific-group-of-apps.md) for more details.
-- **tillerNamespace** : which Tiller to use for deploying this release. This is available starting from v1.4.0-rc The decision on which Tiller to use for deploying a release follows the following criteria:
-   1. If `tillerNamespace`is explicitly defined, it is used.
-   2. If `tillerNamespace`is not defined and the namespace in which the release will be deployed has a Tiller installed by Helmsman (i.e. has `installTiller set to true` in the [Namespaces](#namespaces) section), Tiller in that namespace is used.
-   3. If none of the above, the shared Tiller in `kube-system` is used.
-> This parameter is ignored when `tilerless` is set in `settings` section and `namespace` of this app is taken for tilerless plugin.
-
-- **name**        : the Helm release name. Releases must have unique names within a Helm Tiller. If not set, the release name will be taken from the app identifier in your desired state file. e.g, for ` apps.jenkins ` the release name will be `jenkins`.
 - **description** : a release metadata for human readers.
 - **valuesFile**  : a valid path to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFiles together. Leaving it empty uses the default chart values.
 - **valuesFiles** : array of valid paths to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFile together. Leaving it empty uses the default chart values.
@@ -410,7 +354,6 @@ Options:
 - **secretsFiles** : array of valid paths to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFile together. Leaving it empty uses the default chart secrets.
 > The secrets file(s) path is resolved when the DSF yaml/toml file is loaded, relative to the path that the dsf was loaded from.
 > To use the secrets files you must have the helm-secrets plugin
-- **purge**       : defines whether to use the Helm purge flag when deleting the release. Default is false.
 - **test**        : defines whether to run the chart tests whenever the release is installed. Default is false.
 - **protected**   : defines if the release should be protected against changes. Namespace-level protection has higher priority than this flag. Check the [protection guide](how_to/misc/protect_namespaces_and_releases.md) for more details. Default is false.
 - **wait**        : defines whether Helmsman should block execution until all k8s resources are in a ready state. Default is false.

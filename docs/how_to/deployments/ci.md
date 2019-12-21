@@ -1,5 +1,5 @@
 ---
-version: v1.3.0-rc
+version: v3.0.0-beta1
 ---
 
 # Run Helmsman in CI
@@ -13,12 +13,12 @@ jobs:
 
     deploy-apps:
       docker:
-        - image: praqma/helmsman:v1.8.0
+        - image: praqma/helmsman:v3.0.0-beta1
       steps:
         - checkout
         - run:
             name: Deploy Helm Packages using helmsman
-            command: helmsman --debug --apply -f helmsman-deployments.toml
+            command: helmsman --apply -f helmsman-deployments.toml
 
 
 workflows:
@@ -28,6 +28,6 @@ workflows:
       - deploy-apps
 ```
 
-> IMPORTANT: If your CI build logs are publicly readable, don't use the `--verbose` flag as logs any secrets being passed from env vars to the helm charts.
+> IMPORTANT: If your CI build logs are publicly readable, don't use the `--verbose` together with `--debug` flags as logs any secrets being passed from env vars to the helm charts.
 
 The `helmsman-deployments.toml` is your desired state file which will version controlled in your git repo.

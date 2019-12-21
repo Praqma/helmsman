@@ -1,5 +1,5 @@
 ---
-version: v1.3.0-rc
+version: v3.0.0-beta1
 ---
 
 # Test charts
@@ -13,14 +13,12 @@ You can specify that you would like a chart to be tested whenever it is installe
 [apps]
 
     [apps.jenkins]
-    name = "jenkins"
     description = "jenkins"
     namespace = "staging"
     enabled = true
     chart = "stable/jenkins"
     version = "0.9.1"
     valuesFile = ""
-    purge = false
     test = true  # setting this to true, means you want the charts tests to be run on this release when it is installed.
 
 ...
@@ -32,14 +30,12 @@ You can specify that you would like a chart to be tested whenever it is installe
 apps:
 
   jenkins:
-    name: "jenkins"
     description: "jenkins"
     namespace: "staging"
     enabled: true
     chart: "stable/jenkins"
     version: "0.9.1"
     valuesFile: ""
-    purge: false
     test: true  # setting this to true, means you want the charts tests to be run on this release when it is installed.
 
 #...

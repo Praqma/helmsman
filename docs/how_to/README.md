@@ -1,7 +1,9 @@
 
 # How To Guides
 
-This page contains a list of guides on how to use Helmsman.
+This page contains a list of guides on how to use Helmsman. 
+
+It is recommended that you also check the [DSF spec](../desired_state_specification.md), [cmd reference](../cmd_reference.md), and the [best practice guide](../best_practice.md).
 
 - Connecting to Kubernetes clusters
     - [Using an existing kube context](settings/existing_kube_context.md)
@@ -13,13 +15,6 @@ This page contains a list of guides on how to use Helmsman.
     - [Label namespaces](namespaces/labels_and_annotations.md)
     - [Set resource limits for namespaces](namespaces/limits.md)
     - [Protecting namespaces](namespaces/protection.md)
-- Deploying Helm Tiller
-    - [Using existing Tillers](tiller/existing.md)
-    - [Deploy shared Tiller in kube-system](tiller/shared.md)
-    - [Prevent Deploying Tiller in kube-system](tiller/prevent_tiller_in_kube_system.md)
-    - [Deploy Multiple Tillers with custom setup for each](tiller/multitenancy.md)
-    - [Deploy apps with specific Tillers](tiller/deploy_apps_with_specific_tiller.md)
-    - [Custom Tiller Role](tiller/custom_tiller_role.md)
 - Defining Helm repositories
     - [Using default helm repos](helm_repos/default.md)
     - [Using private repos in Google GCS](helm_repos/gcs.md)
@@ -29,7 +24,7 @@ This page contains a list of guides on how to use Helmsman.
     - [Using local charts](helm_repos/local.md)
 - Manipulating Apps
     - [Basic operations](apps/basic.md)
-    - [Passing secrets from env vars](apps/secrets.md)
+    - [Passing secrets to releases](apps/secrets.md)
     - [Use multiple values files for apps](apps/multiple_values_files.md)
     - [Protect releases (apps)](apps/protection.md)
     - [Moving releases (apps) across namespaces](apps/moving_across_namespaces.md)
@@ -47,6 +42,4 @@ This page contains a list of guides on how to use Helmsman.
     - [Merge multiple desired state files](misc/merge_desired_state_files.md)
     - [Limit Helmsman deployment to specific apps](misc/limit-deployment-to-specific-apps.md)
     - [Limit Helmsman deployment to specific group of apps](misc/limit-deployment-to-specific-group-of-apps.md)
-    - [Multi-tenant clusters guide](misc/multitenant_clusters_guide.md)
-    - [Helmsman on Windows 10](misc/helmsman_on_windows10.md)
     - [Use hiera-eyaml as secrets encryption backend](settings/use-hiera-eyaml-as-secrets-encryption.md)

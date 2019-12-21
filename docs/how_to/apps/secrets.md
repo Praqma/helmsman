@@ -1,5 +1,5 @@
 ---
-version: v1.6.0
+version: v3.0.0-beta1
 ---
 
 # Passing secrets from env variables:
@@ -11,14 +11,12 @@ Starting from v0.1.3, Helmsman allows you to pass secrets and other user input t
 [apps]
 
    [apps.jira]
-    name = "jira"
     description = "jira"
     namespace = "staging"
     enabled = true
     chart = "myrepo/jira"
     version = "0.1.5"
     valuesFile = "applications/jira-values.yaml"
-    purge = false
     test = true
     [apps.jira.set] # the format is [apps.<<release_name (as defined above)>>.set]
     db_username= "$JIRA_DB_USERNAME" # pass any number of key/value pairs where the key is the input expected by the helm charts and the value is an env variable name starting with $
@@ -32,14 +30,12 @@ Starting from v0.1.3, Helmsman allows you to pass secrets and other user input t
 apps:
 
   jira:
-    name: "jira"
     description: "jira"
     namespace: "staging"
     enabled: true
     chart: "myrepo/jira"
     version: "0.1.5"
     valuesFile: "applications/jira-values.yaml"
-    purge: false
     test: true
     set:
       db_username: "$JIRA_DB_USERNAME" # pass any number of key/value pairs where the key is the input expected by the helm charts and the value is an env variable name starting with $
@@ -75,3 +71,7 @@ BAR: baz
 # Passing secrets using helm secrets plugin
 
 You can also use the [helm secrets plugin](https://github.com/futuresimple/helm-secrets) to pass your secrets.
+
+# Passing secrets using hiera eyaml
+
+An alternative method is to use heira eyaml as described in [this guide](../settings/use-hiera-eyaml-as-secrets-encryption.md).
