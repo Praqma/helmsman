@@ -19,7 +19,6 @@ type release struct {
 	ValuesFiles  []string          `yaml:"valuesFiles"`
 	SecretsFile  string            `yaml:"secretsFile"`
 	SecretsFiles []string          `yaml:"secretsFiles"`
-	Purge        bool              `yaml:"purge"`
 	Test         bool              `yaml:"test"`
 	Protected    bool              `yaml:"protected"`
 	Wait         bool              `yaml:"wait"`
@@ -138,7 +137,6 @@ func (r release) print() {
 	fmt.Println("\tversion : ", r.Version)
 	fmt.Println("\tvaluesFile : ", r.ValuesFile)
 	fmt.Println("\tvaluesFiles : ", strings.Join(r.ValuesFiles, ","))
-	fmt.Println("\tpurge : ", r.Purge)
 	fmt.Println("\ttest : ", r.Test)
 	fmt.Println("\tprotected : ", r.Protected)
 	fmt.Println("\twait : ", r.Wait)
