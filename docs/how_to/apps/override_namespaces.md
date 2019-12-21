@@ -1,5 +1,5 @@
 ---
-version: v1.3.0-rc
+version: v3.0.0-beta1
 ---
 
 # Override defined namespaces from command line
@@ -34,7 +34,6 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
 [apps]
 
     [apps.jenkins]
-    name = "jenkins" # should be unique across all apps
     description = "jenkins"
     namespace = "production" # maps to the namespace as defined in environments above
     enabled = true # change to false if you want to delete this app release [empty = false]
@@ -43,7 +42,6 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     valuesFile = "" # leaving it empty uses the default chart values
 
     [apps.artifactory]
-    name = "artifactory" # should be unique across all apps
     description = "artifactory"
     namespace = "staging" # maps to the namespace as defined in environments above
     enabled = true # change to false if you want to delete this app release [empty = false]
@@ -76,7 +74,6 @@ helmRepos:
 apps:
 
   jenkins:
-    name: "jenkins" # should be unique across all apps
     description: "jenkins"
     namespace: "production" # maps to the namespace as defined in environments above
     enabled: true # change to false if you want to delete this app release [empty: false]
@@ -85,7 +82,6 @@ apps:
     valuesFile: "" # leaving it empty uses the default chart values
 
   artifactory:
-    name: "artifactory" # should be unique across all apps
     description: "artifactory"
     namespace: "staging" # maps to the namespace as defined in environments above
     enabled: true # change to false if you want to delete this app release [empty: false]
