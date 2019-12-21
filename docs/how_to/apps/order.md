@@ -1,5 +1,5 @@
 ---
-version: v1.3.0-rc
+version: v3.0.0-beta1
 ---
 
 # Using the priority key for Apps
@@ -33,7 +33,6 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
 
 [apps]
   [apps.jenkins]
-    name = "jenkins" # should be unique across all apps
     description = "jenkins"
     namespace = "staging" # maps to the namespace as defined in environments above
     enabled = true # change to false if you want to delete this app release [empty = false]
@@ -43,7 +42,6 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     priority= -2
 
   [apps.jenkins1]
-    name = "jenkins1" # should be unique across all apps
     description = "jenkins"
     namespace = "staging" # maps to the namespace as defined in environments above
     enabled = true # change to false if you want to delete this app release [empty = false]
@@ -53,7 +51,6 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
 
 
   [apps.jenkins2]
-    name = "jenkins2" # should be unique across all apps
     description = "jenkins"
     namespace = "production" # maps to the namespace as defined in environments above
     enabled = true # change to false if you want to delete this app release [empty = false]
@@ -63,7 +60,6 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     priority= -3
 
   [apps.artifactory]
-    name = "artifactory" # should be unique across all apps
     description = "artifactory"
     namespace = "staging" # maps to the namespace as defined in environments above
     enabled = true # change to false if you want to delete this app release [empty = false]

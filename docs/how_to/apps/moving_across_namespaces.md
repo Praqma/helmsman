@@ -1,5 +1,5 @@
 ---
-version: v1.3.0-rc
+version: v3.0.0-beta1
 ---
 
 # Move charts across namespaces
@@ -19,14 +19,12 @@ If you have a workflow for testing a release first in the `staging` namespace th
 [apps]
 
     [apps.jenkins]
-    name = "jenkins"
     description = "jenkins"
     namespace = "staging" # this is where it is deployed
     enabled = true
     chart = "stable/jenkins"
     version = "0.9.1"
     valuesFile = ""
-    purge = false
     test = true
 
 ...
@@ -42,14 +40,12 @@ namespaces:
 
 apps:
   jenkins:
-    name: "jenkins"
     description: "jenkins"
     namespace: "staging" # this is where it is deployed
     enabled: true
     chart: "stable/jenkins"
     version: "0.9.1"
     valuesFile: ""
-    purge: false
     test: true
 
 # ...
@@ -68,14 +64,12 @@ Then if you change the namespace key for jenkins:
 [apps]
 
     [apps.jenkins]
-    name = "jenkins"
     description = "jenkins"
     namespace = "production" # we want to move it to production
     enabled = true
     chart = "stable/jenkins"
     version = "0.9.1"
     valuesFile = ""
-    purge = false
     test = true
 
 ...
@@ -91,14 +85,12 @@ namespaces:
 
 apps:
   jenkins:
-    name: "jenkins"
     description: "jenkins"
     namespace: "production" # we want to move it to production
     enabled: true
     chart: "stable/jenkins"
     version: "0.9.1"
     valuesFile: ""
-    purge: false
     test: true
 
 # ...

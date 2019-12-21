@@ -1,5 +1,5 @@
 ---
-version: v1.5.0
+version: v3.0.0-beta1
 ---
 
 # Install releases
@@ -57,40 +57,17 @@ NAME       	REVISION	UPDATED                 	STATUS  	CHART            	NAMESPA
 artifactory	2       	Sun Nov 19 18:29:11 2017	DEPLOYED	artifactory-6.2.0	staging
 ```
 
-If you would like the release to be deleted along with its history, you can use the `purge` flag in your desired state file as follows:
-
-> NOTE: purge deleting a release means you can't roll it back.
-
-```toml
-...
-[apps]
-
-    [apps.jenkins]
-    name = "jenkins"
-    description = "jenkins"
-    namespace = "staging"
-    enabled = false # this tells helmsman to delete it
-    chart = "stable/jenkins"
-    version = "0.9.1"
-    valuesFile = ""
-    purge = true # this means purge delete this release whenever it is required to be deleted
-    test = false
-
-...
-```
 
 ```yaml
 # ...
 apps:
   jenkins:
-    name: "jenkins"
     description: "jenkins"
     namespace: "staging"
     enabled: false # this tells helmsman to delete it
     chart: "stable/jenkins"
     version: "0.9.1"
     valuesFile: ""
-    purge: true # this means purge delete this release whenever it is required to be deleted
     test: false
 
 # ...
@@ -117,7 +94,7 @@ DECISION: release [ artifactory ] is desired to be upgraded. Planning this for y
 
 # Upgrade releases
 
-Every time you run Helmsman, (unless the release is [protected or deployed in a protected namespace](../misc/protect_namespaces_and_releases.md)) it will upgrade existing deployed releases to the version you specified in the desired state file. It also applies the `values.yaml` file you specify with each install/upgrade. This means that when you don't change anything for a specific release, Helmsman would upgrade with the `values.yaml` file you provide (just in case it is a new file or you changed something there.)
+Every time you run Helmsman, (unless the release is [protected or deployed in a protected namespace](../misc/protect_namespaces_and_releases.md)) it will check if upgrade is necessary (using the helm-diff plugin) and only upgrade if there are changes.
 
 If you change the chart, the existing release will be deleted and a new one with the same name will be created using the new chart.
 

@@ -26,8 +26,7 @@ context= "test-infra"   # defaults to "default" if not provided
 #  password = "$K8S_PASSWORD" # the name of an environment variable containing the k8s password
   clusterURI = "${SET_URI}" # the name of an environment variable containing the cluster API
 #  #clusterURI = "https://192.168.99.100:8443" # equivalent to the above
-  # serviceAccount = "tiller" # k8s serviceaccount. If it does not exist, it will be created.
-  # storageBackend = "secret" # default is configMap
+#  storageBackend = "secret" # default is secret
 #  slackWebhook = "$slack" # or "your slack webhook url"
 #  reverseDelete = false # reverse the priorities on delete
 #### to use bearer token:
@@ -65,8 +64,8 @@ context= "test-infra"   # defaults to "default" if not provided
 # syntax: repo_name = "repo_url"
 # only private repos hosted in s3 buckets are now supported
 [helmRepos]
-  stable = "https://kubernetes-charts.storage.googleapis.com"
-  incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
+  argo = "https://argoproj.github.io/argo-helm"
+  jfrog = "https://charts.jfrog.io"
 #  myS3repo = "s3://my-S3-private-repo/charts"
 #  myGCSrepo = "gs://my-GCS-private-repo/charts"
 #  custom = "https://user:pass@mycustomrepo.org"
@@ -76,38 +75,35 @@ context= "test-infra"   # defaults to "default" if not provided
 # each contains the following:
 [apps]
 
-  # jenkins will be deployed using the Tiller in the staging namespace
-  [apps.jenkins]
+  [apps.argo]
     namespace = "staging" # maps to the namespace as defined in namespaces above
     enabled = true # change to false if you want to delete this app release [default = false]
-    chart = "stable/jenkins" # changing the chart name means delete and recreate this release
-    version = "0.14.3" # chart version
+    chart = "argo/argo" # changing the chart name means delete and recreate this release
+    version = "0.6.4" # chart version
     ### Optional values below
-    name = "jenkins" # should be unique across all apps which are managed by the same Tiller
     valuesFile = "" # leaving it empty uses the default chart values
-    purge = false # will only be considered when there is a delete operation
     test = false # run the tests when this release is installed for the first time only
     protected = true
     priority= -3
     wait = true
-  # [apps.jenkins.setString] # values to override values from values.yaml with values from env vars or directly entered-- useful for passing secrets to charts
-  #   AdminPassword="$JENKINS_PASSWORD" # $JENKINS_PASSWORD must exist in the environment
+  # [apps.argo.setString] # values to override values from values.yaml with values from env vars or directly entered-- useful for passing secrets to charts
+  #   AdminPassword="$SOME_PASSWORD" # $JENKINS_PASSWORD must exist in the environment
   #   MyLongIntVar="1234567890"
-  [apps.jenkins.set]
-    AdminUser="admin"
+  # [apps.argo.set]
+  #   installCRD="true"
 
 
-  # artifactory will be deployed using the Tiller in the kube-system namespace
   [apps.artifactory]
     namespace = "production" # maps to the namespace as defined in namespaces above
     enabled = true # change to false if you want to delete this app release [default = false]
-    chart = "stable/artifactory" # changing the chart name means delete and recreate this release
-    version = "7.0.6" # chart version
+    chart = "jfrog/artifactory" # changing the chart name means delete and recreate this release
+    version = "8.3.2" # chart version
     ### Optional values below
-    name = "artifactory" # should be unique across all apps which are managed by the same Tiller
     valuesFile = "" # leaving it empty uses the default chart values
-    purge = false # will only be considered when there is a delete operation
     test = false # run the tests when this release is installed for the first time only
     priority= -2
+    noHooks= false
+    timeout= 300
+    helmFlags= [] # additional helm flags for this release
 
 # See https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md#apps for more apps options

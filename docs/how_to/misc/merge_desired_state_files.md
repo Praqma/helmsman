@@ -1,5 +1,5 @@
 ---
-version: v1.5.0
+version: v3.0.0-beta1
 ---
 
 # Supply multiple desired state files
