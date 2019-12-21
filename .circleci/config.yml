@@ -11,17 +11,21 @@ jobs:
           command: |
             docker pull praqma/helmsman:latest
             docker build --cache-from=praqma/helmsman:latest -t helmsman .
-            
+
   release:
     docker:
       - image: goreleaser/goreleaser
+        entrypoint: /bin/bash
     working_directory: "/go/src/github.com/Praqma/helmsman"  
     steps:
+      - run:
+          name: install git 
+          command: apk update && apk add --no-cache git 
       - checkout
       - run:
           name: release
           command: |
-            release --release-notes release-notes.md
+            goreleaser release --release-notes release-notes.md
 
   docker-release:
     working_directory: "/tmp/go/src/helmsman"
