@@ -21,6 +21,7 @@ jobs:
           name: release helmsman
           command: |
             echo "releasing ..."
+            mkdir /home/circleci/.go_workspace/bin
             curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
             make build
             curl -sL https://git.io/goreleaser | bash -s -- --release-notes release-notes.md --rm-dist
