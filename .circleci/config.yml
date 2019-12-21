@@ -13,7 +13,7 @@ jobs:
             docker build --cache-from=praqma/helmsman:latest -t helmsman .
 
   release:
-    working_directory: "/go/src/github.com/Praqma/helmsman"
+    working_directory: "/tmp/go/src/helmsman"
     machine: true
     steps:
       - checkout
