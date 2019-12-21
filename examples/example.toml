@@ -1,4 +1,10 @@
-# version: v1.6.2
+# version: v3.0.0-beta1
+
+# context defines the context of this Desired State File. 
+# It is used to allow Helmsman identify which releases are managed by which DSF.
+# Therefore, it is important that each DSF uses a unique context.
+context= "test-infra"   # defaults to "default" if not provided
+
 # metadata -- add as many key/value pairs as you want
 [metadata]
   org = "example.com/${ORG_PATH}/"
@@ -13,7 +19,6 @@
 #  caClient = "gs://mybucket/client.crt" # GCS bucket path
 #  caCrt = "s3://mybucket/ca.crt" # S3 bucket path
 #  caKey = "../ca.key" # valid local file relative path
-
 
 [settings]
   kubeContext = "minikube" # will try connect to this context first, if it does not exist, it will be created using the details below
