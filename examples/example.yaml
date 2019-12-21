@@ -91,6 +91,6 @@ apps:
       priority: -2
       noHooks: false
       timeout: 300
-      helmsFlags: {} # additional helm flags for this release
+      helmFlags: {} # additional helm flags for this release
 
 # See https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md#apps for more apps options
