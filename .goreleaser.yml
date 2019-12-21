@@ -11,3 +11,4 @@ builds:
       - windows
     goarch:
       - amd64
+    main: ./cmd/helmsman/main.go  
