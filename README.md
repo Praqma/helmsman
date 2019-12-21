@@ -1,6 +1,8 @@
-[![GitHub version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=gh&type=6&v=v1.12.0&x2=0)](https://github.com/Praqma/helmsman/releases) [![CircleCI](https://circleci.com/gh/Praqma/helmsman/tree/master.svg?style=svg)](https://circleci.com/gh/Praqma/helmsman/tree/master)
+[![GitHub version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=gh&type=6&v=v3.0.0-beta1&x2=0)](https://github.com/Praqma/helmsman/releases) [![CircleCI](https://circleci.com/gh/Praqma/helmsman/tree/master.svg?style=svg)](https://circleci.com/gh/Praqma/helmsman/tree/master)
 
 ![helmsman-logo](docs/images/helmsman.png)
+
+> Helmsman v3.0.0 works only with Helm versions >=3.0.0. For older Helm versions, use Helmsman v1.x
 
 # What is Helmsman?
 
@@ -50,7 +52,7 @@ To limit execution to specific application:
 Please make sure the following are installed prior to using `helmsman` as a binary (the docker image contains all of them):
 
 - [kubectl](https://github.com/kubernetes/kubectl)
-- [helm](https://github.com/helm/helm) (for `helmsman` >= 1.6.0, use helm >= 2.10.0. this is due to a dependency bug #87 )
+- [helm](https://github.com/helm/helm) (for `helmsman` >= 1.6.0)
 - [helm-diff](https://github.com/databus23/helm-diff) (`helmsman` >= 1.6.0)
 
 If you use private helm repos, you will need either `helm-gcs` or `helm-s3` plugin or you can use basic auth to authenticate to your repos. See the [docs](https://github.com/Praqma/helmsman/blob/master/docs/how_to/helm_repos) for details.
@@ -59,9 +61,9 @@ If you use private helm repos, you will need either `helm-gcs` or `helm-s3` plug
 Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the different versions.
 ```
 # on Linux
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.12.0/helmsman_1.12.0_linux_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v3.0.0-beta1/helmsman_3.0.0-beta1_linux_amd64.tar.gz | tar zx
 # on MacOS
-curl -L https://github.com/Praqma/helmsman/releases/download/v1.12.0/helmsman_1.12.0_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v3.0.0-beta1/helmsman_3.0.0-beta1_darwin_amd64.tar.gz | tar zx
 
 mv helmsman /usr/local/bin/helmsman
 ```
@@ -73,6 +75,8 @@ Check the images on [dockerhub](https://hub.docker.com/r/praqma/helmsman/tags/)
 Helmsman has been packaged in Archlinux under `helmsman-bin` for the latest binary release, and `helmsman-git` for master.
 
 # Documentation
+
+> Documentation for Helmsman v1.x can be found at: https://github.com/Praqma/helmsman/tree/1.x/docs
 
 - [How-Tos](https://github.com/Praqma/helmsman/blob/master/docs/how_to/).
 
