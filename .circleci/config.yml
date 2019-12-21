@@ -21,6 +21,7 @@ jobs:
           name: release helmsman
           command: |
             echo "releasing ..."
+            make build
             curl -sL https://git.io/goreleaser | bash -s -- --release-notes release-notes.md --rm-dist
 
       - run:
@@ -40,6 +41,8 @@ workflows:
             tags:
               only: /.*/
       - release:
+          requires:
+            - build
           filters:
             branches:
               ignore: /.*/
