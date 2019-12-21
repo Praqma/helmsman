@@ -11,20 +11,31 @@ jobs:
           command: |
             docker pull praqma/helmsman:latest
             docker build --cache-from=praqma/helmsman:latest -t helmsman .
-
+            
   release:
+    docker:
+      - image: goreleaser/goreleaser
+    working_directory: "/go/src/github.com/Praqma/helmsman"  
+    steps:
+      - checkout
+      - run:
+          name: release
+          command: |
+            release --release-notes release-notes.md
+
+  docker-release:
     working_directory: "/tmp/go/src/helmsman"
     machine: true
     steps:
       - checkout
-      - run:
-          name: release helmsman
-          command: |
-            echo "releasing ..."
-            mkdir /home/circleci/.go_workspace/bin
-            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-            make build
-            curl -sL https://git.io/goreleaser | bash -s -- --release-notes release-notes.md --rm-dist
+      # - run:
+      #     name: release helmsman
+      #     command: |
+      #       echo "releasing ..."
+      #       mkdir /home/circleci/.go_workspace/bin
+      #       curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+      #       make build
+      #       curl -sL https://git.io/goreleaser | bash -s -- --release-notes release-notes.md --rm-dist
 
       - run:
           name: build docker images and push them to dockerhub
@@ -48,3 +59,11 @@ workflows:
               ignore: /.*/
             tags:
               only: /v[0-9]+(\.[0-9]+)*(-.*)*/
+      - docker-release:
+          requires:
+            - release
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/        
