@@ -24,7 +24,6 @@ settings:
   #password: "$K8S_PASSWORD" # the name of an environment variable containing the k8s password
   #clusterURI: "$SET_URI" # the name of an environment variable containing the cluster API
   #clusterURI: "https://192.168.99.100:8443" # equivalent to the above
-  #serviceAccount: "foo" # k8s serviceaccount must be already defined, validation error will be thrown otherwise
   storageBackend: "secret" 
   #slackWebhook:  "$slack" # or your slack webhook url
   #reverseDelete: false # reverse the priorities on delete
@@ -34,7 +33,7 @@ settings:
 
 # define your environments and their k8s namespaces
 namespaces:
-  test1:
+  production:
     protected: true
     limits:
       - type: Container
@@ -68,23 +67,30 @@ helmRepos:
 
 apps:
 
-    # jenkins will be deployed using the Tiller in the staging namespace
     argo:
-      namespace: "test1" # maps to the namespace as defined in namespaces above
+      namespace: "staging" # maps to the namespace as defined in namespaces above
       enabled: true # change to false if you want to delete this app release empty: false:
       chart: "argo/argo" # changing the chart name means delete and recreate this chart
       version: "0.6.4" # chart version
+      ### Optional values below
+      valuesFile: "" # leaving it empty uses the default chart values
+      test: false
       protected: true
       priority: -3
       wait: true
 
 
-    # artifactory will be deployed using the Tiller in the kube-system namespace
     artifactory:
-      namespace: "test1" # maps to the namespace as defined in namespaces above
+      namespace: "production" # maps to the namespace as defined in namespaces above
       enabled: true # change to false if you want to delete this app release empty: false:
       chart: "jfrog/artifactory" # changing the chart name means delete and recreate this chart
       version: "8.3.2" # chart version
+      ### Optional values below
+      valuesFile: ""
+      test: false
       priority: -2
+      noHooks: false
+      timeout: 300
+      helmFlags: [] # additional helm flags for this release
 
 # See https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md#apps for more apps options

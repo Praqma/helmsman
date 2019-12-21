@@ -1,20 +1,27 @@
 ---
-version: v1.0.0
+version: v3.0.0-beta1
 ---
 
 # Best Practice
 
 When using Helmsman, we recommend the following best practices:
 
-- Add useful metadata in your desired state files (DSFs) so that others (who have access to them) can make understandable what your DSF is for. We recommend the following metadata: organization, maintainer (name and email), and description/purpose.
+- Add useful metadata in your desired state files (DSFs) so that others (who have access to them) can understand what your DSF is for. We recommend the following metadata: organization, maintainer (name and email), and description/purpose.
 
-- Use environment variables to pass K8S connection secrets (password, certificates paths on the local system or AWS/GCS bucket urls and the API URI). This keeps all sensitive information out of your version controlled source code.
+- Define `context` (see [the DSF spec](desired_state_specification.md#context)) for each DSF. This helps prevent different DSFs from operating on each other's releases.
 
-- Define certain namespaces (e.g, production) as protected namespaces (supported in v1.0.0+) and deploy your production-ready releases there.
+- Store your DSFs in git (or any other VCS) so that you have an audit trail of your deployments. You can also rollback to a previous state by going back to previous commits. 
+> Rollback can be more complex regarding application data.
+
+- Do not store secrets in your DSFs! Use one of [the supported ways to pass secrets to your releases](how_to/apps/secrets.md).
+
+- To protect against accidental operations, define certain namespaces (e.g, production) as protected namespaces (supported in v1.0.0+) and deploy your production-ready releases there.
 
 - If you use multiple desired state files (DSFs) with the same cluster, make sure your namespace protection definitions are identical across all DSFs.
 
+- When using multiple DSFs, make sure that apps managed in the same namespace are in one DSF. This avoids the need for defining the same namespace (with its settings) across multiple DSFs
+
 - Don't maintain the same release in multiple DSFs.
 
-- While the decision on how many DSFs to use and what each can contain is up to you and depends on your case, we recommend coming up with your own rules for how to split them.
+- While the decision on how many DSFs to use and what each can contain is up to you and depends on your case, we recommend coming up with your own rules for how to split them. For example, you can have one for infra (3rd party tools), one for staging, and one for production apps. 
 

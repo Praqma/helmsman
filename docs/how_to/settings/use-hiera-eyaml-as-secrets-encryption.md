@@ -5,9 +5,9 @@ version: v1.13.0
 # Using hiera-eyaml as backend for secrets' encryption
 
 Helmsman uses helm-secrets as a default solution for secrets' encryption. 
-And while it is a good off-the-shelve solution it may quickly start causing problems when few developers starts working on the secrets files simultaneously.
+And while it is a good off-the-shelve solution it may quickly start causing problems when few developers start working on the secrets files simultaneously.
 SOPS-based secrets can not be easily merged or rebased in case of conflicts etc.
-That is why another solution for secrets organised in YAMLs were proposed in form of [hiera-eyaml](https://github.com/voxpupuli/hiera-eyaml).
+That is why another solution for secrets organised in YAMLs was proposed in [hiera-eyaml](https://github.com/voxpupuli/hiera-eyaml).
 
 ## Example
 

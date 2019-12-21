@@ -1,5 +1,5 @@
 ---
-version: v1.3.0-rc
+version: v3.3.0-beta1
 ---
 
 # Multiple value files
@@ -10,8 +10,7 @@ You can include multiple yaml value files to separate configuration for differen
 ...
 [apps]
 
-    [apps.jenkins]
-    name = "jenkins-prod" # should be unique across all apps
+    [apps.jenkins-prod]
     description = "production jenkins"
     namespace = "production"
     enabled = true
@@ -24,7 +23,6 @@ You can include multiple yaml value files to separate configuration for differen
 
     # the jenkins release below is being tested in the staging namespace
     [apps.jenkins-test]
-    name = "jenkins-test" # should be unique across all apps
     description = "test release of jenkins, testing xyz feature"
     namespace = "staging"
     enabled = true
@@ -43,8 +41,7 @@ You can include multiple yaml value files to separate configuration for differen
 # ...
 apps:
 
-  jenkins:
-    name: "jenkins-prod" # should be unique across all apps
+  jenkins-prod:
     description: "production jenkins"
     namespace: "production"
     enabled: true
