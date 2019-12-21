@@ -18,12 +18,13 @@ var currentState map[string]releaseState
 
 // releaseState represents the current state of a release
 type releaseState struct {
-	Name      string
-	Revision  int
-	Updated   time.Time
-	Status    string
-	Chart     string
-	Namespace string
+	Name            string
+	Revision        int
+	Updated         time.Time
+	Status          string
+	Chart           string
+	Namespace       string
+	HelmsmanContext string
 }
 
 type releaseInfo struct {
@@ -98,12 +99,13 @@ func buildState() {
 		}
 		revision, _ := strconv.Atoi(rel[i].Revision)
 		currentState[fmt.Sprintf("%s-%s", rel[i].Name, rel[i].Namespace)] = releaseState{
-			Name:      rel[i].Name,
-			Revision:  revision,
-			Updated:   date,
-			Status:    rel[i].Status,
-			Chart:     rel[i].Chart,
-			Namespace: rel[i].Namespace,
+			Name:            rel[i].Name,
+			Revision:        revision,
+			Updated:         date,
+			Status:          rel[i].Status,
+			Chart:           rel[i].Chart,
+			Namespace:       rel[i].Namespace,
+			HelmsmanContext: getReleaseContext(rel[i].Name, rel[i].Namespace),
 		}
 	}
 }
@@ -114,7 +116,7 @@ func buildState() {
 // If status is provided as an input [deployed, deleted, failed], then the search will verify the release status matches the search status.
 func isReleaseExisting(r *release, status string) bool {
 	v, ok := currentState[fmt.Sprintf("%s-%s", r.Name, r.Namespace)]
-	if !ok {
+	if !ok || v.HelmsmanContext != s.Context {
 		return false
 	}
 

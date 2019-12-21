@@ -200,10 +200,6 @@ func Cli() {
 		s.print()
 	}
 
-	if s.Settings.StorageBackend != "" {
-		os.Setenv("HELM_DRIVER", s.Settings.StorageBackend)
-	}
-
 	if !skipValidation {
 		// validate the desired state content
 		if len(files) > 0 {
@@ -213,6 +209,20 @@ func Cli() {
 		}
 	} else {
 		log.Info("Desired state validation is skipped.")
+	}
+
+	if s.Settings.StorageBackend != "" {
+		os.Setenv("HELM_DRIVER", s.Settings.StorageBackend)
+	}
+
+	// set default storage background to secret if not set by user
+	if s.Settings.StorageBackend == "" {
+		s.Settings.StorageBackend = "secret"
+	}
+
+	// if there is no user-defined context name in the DSF(s), use the default context name
+	if s.Context == "" {
+		s.Context = defaultContextName
 	}
 
 	if len(target) > 0 {
