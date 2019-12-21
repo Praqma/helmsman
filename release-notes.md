@@ -1,10 +1,18 @@
-# v1.13.1
+# v3.0.0-beta1
 
-> If you are already using an older version of Helmsman than v1.4.0-rc, please read the changes below carefully and follow the upgrade guide [here](docs/migrating_to_v1.4.0-rc.md)
+This is a major release to support Helm v3.
+It is recommended you read the [Helm 3 migration guide](https://helm.sh/docs/topics/v2_v3_migration/) before using this release.
 
-# Fixes and improvements:
-- Fixes bug that prevented Helmsman from deleting untracked releases; PR #337
-- Bumped to go v1.13.5; PR #333
+> Starting from this release, support for Helmsman v1.x will be limited to bug fixes.
 
-# New features:
-None, bug fix release
+The following are the most important changes: 
+- A new and improved logger.
+- Restructuring the code.
+- Introducing the `context` stanza to define a context for each DSF. More details [here](docs/misc/merge_desired_state_files). 
+- Deprecating all the DSF stanzas related to Tiller.
+- Deprecating the `purge` option for releases.
+- The default value for `storageBackend` is now `secret`.
+- The `--suppress-diff-secrets` cmd flag is enabled by default.
+- The `--no-env-values-subst` cmd flag is enabled by default.
+- The `--no-ssm-values-subst` cmd flag is enabled by default.
+
