@@ -42,19 +42,6 @@
   version = "v0.3.1"
 
 [[projects]]
-  digest = "1:c3fabcdfd716824af4b7b60fd85c15df57c7bbed220a0703212e347b42e7a803"
-  name = "github.com/Praqma/helmsman"
-  packages = [
-    "internal/app",
-    "internal/aws",
-    "internal/azure",
-    "internal/gcs",
-  ]
-  pruneopts = "UT"
-  revision = "16473a838593436cbb46748fa37d0c89a73d369e"
-  version = "v3.0.0-beta1"
-
-[[projects]]
   digest = "1:efe5038e25001cc88547d8ecc9ed76bbb97c15826b9bb91b931ec30dacb4e3f1"
   name = "github.com/apsdehal/go-logger"
   packages = ["."]
@@ -475,10 +462,6 @@
     "github.com/Azure/azure-pipeline-go/pipeline",
     "github.com/Azure/azure-storage-blob-go/azblob",
     "github.com/BurntSushi/toml",
-    "github.com/Praqma/helmsman/internal/app",
-    "github.com/Praqma/helmsman/internal/aws",
-    "github.com/Praqma/helmsman/internal/azure",
-    "github.com/Praqma/helmsman/internal/gcs",
     "github.com/apsdehal/go-logger",
     "github.com/aws/aws-sdk-go/aws",
     "github.com/aws/aws-sdk-go/aws/session",
