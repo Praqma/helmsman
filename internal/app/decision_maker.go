@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 var outcome plan
@@ -16,17 +17,21 @@ func makePlan(s *state) *plan {
 	outcome = createPlan()
 	buildState()
 
+	wg := sync.WaitGroup{}
 	for _, r := range s.Apps {
 		checkChartDepUpdate(r)
-		decide(r, s)
+		wg.Add(1)
+		go decide(r, s, &wg)
 	}
+	wg.Wait()
 
 	return &outcome
 }
 
 // decide makes a decision about what commands (actions) need to be executed
 // to make a release section of the desired state come true.
-func decide(r *release, s *state) {
+func decide(r *release, s *state, wg *sync.WaitGroup) {
+	defer wg.Done()
 	// check for presence in defined targets or groups
 	if !r.isReleaseConsideredToRun() {
 		logDecision("Release [ "+r.Name+" ] ignored", r.Priority, ignored)
@@ -97,6 +102,7 @@ func decide(r *release, s *state) {
 				" current context: [ " + s.Context + " ]. Applying changes will likely cause conflicts. Change the release name or namespace.")
 		}
 	}
+	return
 
 }
 
@@ -346,8 +352,8 @@ func getValuesFiles(r *release) []string {
 		if !helmPluginExists("secrets") {
 			log.Fatal("helm secrets plugin is not installed/configured correctly. Aborting!")
 		}
-		if ok := decryptSecret(r.SecretsFile); !ok {
-			log.Fatal("Failed to decrypt secret file" + r.SecretsFile)
+		if err := decryptSecret(r.SecretsFile); err != nil {
+			log.Fatal(err.Error())
 		}
 		fileList = append(fileList, r.SecretsFile+".dec")
 	} else if len(r.SecretsFiles) > 0 {
@@ -355,8 +361,8 @@ func getValuesFiles(r *release) []string {
 			log.Fatal("helm secrets plugin is not installed/configured correctly. Aborting!")
 		}
 		for i := 0; i < len(r.SecretsFiles); i++ {
-			if ok := decryptSecret(r.SecretsFiles[i]); !ok {
-				log.Fatal("Failed to decrypt secret file" + r.SecretsFiles[i])
+			if err := decryptSecret(r.SecretsFiles[i]); err != nil {
+				log.Fatal(err.Error())
 			}
 			// if .dec extension is added before to the secret filename, don't add it again.
 			// This happens at upgrade time (where diff and upgrade both call this function)
