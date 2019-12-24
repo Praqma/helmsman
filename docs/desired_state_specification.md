@@ -1,5 +1,5 @@
 ---
-version: v3.0.0-beta1
+version: v3.0.0-beta2
 ---
 
 # Helmsman desired state specification
@@ -84,7 +84,7 @@ Synopsis: defines the context in which a DSF is used. This context is used as th
 ```yaml
 context: prod-apps
 ...
-```  
+```
 
 ## Settings
 
@@ -104,7 +104,7 @@ The following options can be skipped if your kubectl context is already created 
 - **clusterURI** : the URI for your cluster API or the name of an environment variable (starting with `$`) containing the URI.
 - **bearerToken**: whether you want helmsman to connect to the cluster using a bearer token. Default is `false`
 - **bearerTokenPath**: optional. If bearer token is used, you can specify a custom location for the token file.
-- **storageBackend** : by default Helm v3 stores release information in secrets, using secrets for storage is recommended for security. 
+- **storageBackend** : by default Helm v3 stores release information in secrets, using secrets for storage is recommended for security.
 - **slackWebhook** : a [Slack](http://slack.com) Webhook URL to receive Helmsman notifications. This can be passed directly or in an environment variable.
 - **reverseDelete** : if set to `true` it will reverse the priority order whilst deleting.
 - **eyamlEnabled** : if set to `true' it will use [hiera-eyaml](https://github.com/voxpupuli/hiera-eyaml) to decrypt secret files instead of using default helm-secrets based on sops
@@ -233,7 +233,7 @@ Authenticating to private cloud helm repos:
     - set `GOOGLE_APPLICATION_CREDENTIALS` environment variable to contain the absolute path to your Google cloud credentials.json file.
     - Or, set `GCLOUD_CREDENTIALS` environment variable to contain the content of the credentials.json file.
 
-> You can also provide basic auth to access private repos that support basic auth. See the example below.    
+> You can also provide basic auth to access private repos that support basic auth. See the example below.
 
 Options:
 - you can define any key/value pair where the key is the repo name and value is a valid URI for the repo. Basic auth info can be added in the repo URL as in the example below.

@@ -64,9 +64,5 @@ func toolExists(tool string) bool {
 
 	exitCode, _, _ := cmd.exec(debug, false)
 
-	if exitCode != 0 {
-		return false
-	}
-
-	return true
+	return exitCode == 0
 }

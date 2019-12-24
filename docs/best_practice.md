@@ -1,5 +1,5 @@
 ---
-version: v3.0.0-beta1
+version: v3.0.0-beta2
 ---
 
 # Best Practice
@@ -10,7 +10,7 @@ When using Helmsman, we recommend the following best practices:
 
 - Define `context` (see [the DSF spec](desired_state_specification.md#context)) for each DSF. This helps prevent different DSFs from operating on each other's releases.
 
-- Store your DSFs in git (or any other VCS) so that you have an audit trail of your deployments. You can also rollback to a previous state by going back to previous commits. 
+- Store your DSFs in git (or any other VCS) so that you have an audit trail of your deployments. You can also rollback to a previous state by going back to previous commits.
 > Rollback can be more complex regarding application data.
 
 - Do not store secrets in your DSFs! Use one of [the supported ways to pass secrets to your releases](how_to/apps/secrets.md).
@@ -23,5 +23,5 @@ When using Helmsman, we recommend the following best practices:
 
 - Don't maintain the same release in multiple DSFs.
 
-- While the decision on how many DSFs to use and what each can contain is up to you and depends on your case, we recommend coming up with your own rules for how to split them. For example, you can have one for infra (3rd party tools), one for staging, and one for production apps. 
+- While the decision on how many DSFs to use and what each can contain is up to you and depends on your case, we recommend coming up with your own rules for how to split them. For example, you can have one for infra (3rd party tools), one for staging, and one for production apps.
 

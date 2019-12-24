@@ -1,4 +1,4 @@
-# version: v3.0.0-beta1
+# version: v3.0.0-beta2
 # metadata -- add as many key/value pairs as you want
 metadata:
   org: "example.com/$ORG_PATH/"
@@ -13,7 +13,7 @@ metadata:
   #caCrt: "s3://mybucket/ca.crt" # S3 bucket path
   #caKey: "../ca.key" # valid local file relative path
 
-# context defines the context of this Desired State File. 
+# context defines the context of this Desired State File.
 # It is used to allow Helmsman identify which releases are managed by which DSF.
 # Therefore, it is important that each DSF uses a unique context.
 context: test-infra   # defaults to "default" if not provided
@@ -24,7 +24,7 @@ settings:
   #password: "$K8S_PASSWORD" # the name of an environment variable containing the k8s password
   #clusterURI: "$SET_URI" # the name of an environment variable containing the cluster API
   #clusterURI: "https://192.168.99.100:8443" # equivalent to the above
-  storageBackend: "secret" 
+  storageBackend: "secret"
   #slackWebhook:  "$slack" # or your slack webhook url
   #reverseDelete: false # reverse the priorities on delete
   #### to use bearer token:

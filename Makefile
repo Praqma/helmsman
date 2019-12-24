@@ -15,25 +15,6 @@ ifneq ($(strip $(CIRCLE_WORKING_DIRECTORY)),)
   $(info "Using CIRCLE_WORKING_DIRECTORY for GOPATH")
 endif
 
-ifneq "$(or $(findstring :,$(GOPATH)),$(findstring ;,$(GOPATH)))" ""
-  GOPATH := $(lastword $(subst :, ,$(GOPATH)))
-  $(info GOPATHs with multiple entries are not supported, defaulting to the last path in GOPATH)
-endif
-
-GOPATH := $(realpath $(GOPATH))
-ifeq ($(strip $(GOPATH)),)
-  $(error GOPATH is not set and could not be automatically determined)
-endif
-
-SRCDIR := $(GOPATH)/src/
-PRJDIR := $(CURDIR)
-
-ifeq ($(filter $(GOPATH)%,$(CURDIR)),)
-  GOPATH := $(shell mktemp -d "/tmp/dep.XXXXXXXX")
-  SRCDIR := $(GOPATH)/src/
-  PRJDIR := $(SRCDIR)$(PRJNAME)
-endif
-
 ifneq ($(OS),Windows_NT)
   # Before we start test that we have the mandatory executables available
   EXECUTABLES = go
@@ -42,6 +23,8 @@ ifneq ($(OS),Windows_NT)
 endif
 
 export CGO_ENABLED=0
+export GO111MODULE=on
+export GOFLAGS=-mod=vendor
 
 help:
 	@echo "Available options:"
@@ -58,60 +41,48 @@ fmt: ## Reformat package sources
 	@go fmt ./...
 .PHONY: fmt
 
-dependencies: ## Ensure all the necessary dependencies
-	@go get -t -d -v ./...
-.PHONY: dependencies
+vet: fmt
+	@go vet ./...
+.PHONY: vet
 
-$(SRCDIR):
-	@mkdir -p $(SRCDIR)
-	@ln -s $(CURDIR) $(SRCDIR)
+deps: ## Install depdendencies. Runs `go get` internally.
+	@GOFLAGS="" go get -t -d -v ./...
+	@GOFLAGS="" go mod tidy
+	@GOFLAGS="" go mod vendor
 
-dep: $(SRCDIR) ## Ensure vendors with dep
-	@cd $(PRJDIR) && \
-	  dep ensure -v
-.PHONY: dep
 
-dep-update: $(SRCDIR) ## Ensure vendors with dep
-	@cd $(PRJDIR) && \
-	  dep ensure -v --update
-.PHONY: dep-update
+update-deps: ## Update depdendencies. Runs `go get -u` internally.
+	@GOFLAGS="" go get -u
+	@GOFLAGS="" go mod tidy
+	@GOFLAGS="" go mod vendor
 
-build: dep ## Build the package
-	@cd $(PRJDIR) && \
-	  go build -o helmsman -ldflags '-X main.version="${TAG}-${DATE}" -extldflags "-static"' cmd/helmsman/main.go
+build: vet deps ## Build the package
+	@go build -o helmsman -ldflags '-X main.version="${TAG}-${DATE}" -extldflags "-static"' cmd/helmsman/main.go
 
 generate:
 	@go generate #${PKGS}
 .PHONY: generate
 
-check: $(SRCDIR) fmt
-	@cd $(PRJDIR) && \
-	  dep check && \
-	  go vet ./...
-.PHONY: check
-
 repo:
-	@cd $(PRJDIR) && \
-		helm repo add stable https://kubernetes-charts.storage.googleapis.com
+	@helm repo add stable https://kubernetes-charts.storage.googleapis.com
 .PHONY: repo
 
-test: dep check repo ## Run unit tests
+test: deps vet repo ## Run unit tests
 	@go test -v -cover -p=1 ./... -args -f ../../examples/example.toml
 .PHONY: test
 
-cross: dep ## Create binaries for all OSs
-	@cd $(PRJDIR) && \
-	  gox -os '!freebsd !netbsd' -arch '!arm' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}' ./...
+cross: deps ## Create binaries for all OSs
+	@gox -os '!freebsd !netbsd' -arch '!arm' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}' ./...
 .PHONY: cross
 
 release: ## Generate a new release
-	@cd $(PRJDIR) && \
-	  goreleaser --release-notes release-notes.md --rm-dist
+	@goreleaser --release-notes release-notes.md --rm-dist
 
 tools: ## Get extra tools used by this makefile
 	@go get -u github.com/golang/dep/cmd/dep
 	@go get -u github.com/mitchellh/gox
 	@go get -u github.com/goreleaser/goreleaser
+	@gem install hiera-eyaml
 .PHONY: tools
 
 helmPlugins: ## Install helm plugins used by Helmsman
@@ -120,5 +91,4 @@ helmPlugins: ## Install helm plugins used by Helmsman
 	@helm plugin install https://github.com/nouney/helm-gcs
 	@helm plugin install https://github.com/databus23/helm-diff
 	@helm plugin install https://github.com/futuresimple/helm-secrets
-	@helm plugin install https://github.com/rimusz/helm-tiller
 .PHONY: helmPlugins

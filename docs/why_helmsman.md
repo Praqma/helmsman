@@ -9,7 +9,7 @@ This document describes the reasoning and need behind the inception of Helmsman.
 ## Before Helm
 
 Helmsman was created with continuous deployment in mind.
-When we started using Kubernetes (k8s), we deployed applications on our cluster directly from k8s manifest files. Initially, we had a custom <strong>shell script</strong> added to our CI system to deploy the k8s resources on the cluster. 
+When we started using Kubernetes (k8s), we deployed applications on our cluster directly from k8s manifest files. Initially, we had a custom <strong>shell script</strong> added to our CI system to deploy the k8s resources on the cluster.
 
 ![CI-pipeline-before-helm](images/CI-pipeline-before-helm.jpg)
 
@@ -17,8 +17,8 @@ That script could only create the k8s resources from the manifest files. Soon we
 
 ## Helm to the rescue?
 
-While looking for solutions for managing the growing number of k8s manifest files from a CI pipeline, we came to know about Helm and quickly realized its potential. 
-By creating <strong>Helm charts</strong>, we packaged related k8s manifests together into a single entity: "a chart". 
+While looking for solutions for managing the growing number of k8s manifest files from a CI pipeline, we came to know about Helm and quickly realized its potential.
+By creating <strong>Helm charts</strong>, we packaged related k8s manifests together into a single entity: "a chart".
 
 ![CI-pipeline-after-helm](images/CI-pipeline-after-helm.jpg)
 
@@ -39,7 +39,7 @@ In English, a [Helmsman](https://www.merriam-webster.com/dictionary/helmsman) is
 
 > Although knowledge about Helm and K8S is highly beneficial, such knowledge is NOT required to use Helmsman.
 
-As the diagram below shows, we recommend having a <strong>Helmsman _desired state file_</strong> for each k8s cluster you are managing. 
+As the diagram below shows, we recommend having a <strong>Helmsman _desired state file_</strong> for each k8s cluster you are managing.
 
 ![CI-pipeline-helmsman](images/CI-pipeline-helmsman.jpg)
 

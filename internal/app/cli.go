@@ -23,7 +23,7 @@ const (
 )
 
 func printUsage() {
-	fmt.Printf(banner)
+	fmt.Print(banner)
 	fmt.Printf("Helmsman version: " + appVersion + "\n")
 	fmt.Printf("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
 	fmt.Printf("")
@@ -238,4 +238,12 @@ func Cli() {
 			groupMap[v] = true
 		}
 	}
+}
+
+// getDryRunFlags returns dry-run flag
+func getDryRunFlags() []string {
+	if dryRun {
+		return []string{"--dry-run", "--debug"}
+	}
+	return []string{}
 }

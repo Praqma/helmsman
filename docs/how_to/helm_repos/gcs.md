@@ -15,7 +15,7 @@ Helmsman uses the [helm GCS](https://github.com/nouney/helm-gcs) plugin to work 
 
 ```toml
 
- 
+
 [helmRepos]
   gcsRepo = "gs://myrepobucket/charts"
 

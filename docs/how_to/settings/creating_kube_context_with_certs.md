@@ -22,7 +22,7 @@ Creating the context with certs, requires both the `settings` and `certificates`
   caClient = "gs://mybucket/client.crt" # GCS bucket path
   caCrt = "s3://mybucket/ca.crt" # S3 bucket path
   # caCrt = "az://myblobcontainer/ca.crt" # Azure blob object
-  caKey = "../ca.key" # valid local file relative path to the DSF file 
+  caKey = "../ca.key" # valid local file relative path to the DSF file
 ```
 
 ```yaml
@@ -33,10 +33,10 @@ settings:
   clusterURI: "${CLUSTER_URI}" # the name of an environment variable containing the cluster API endpoint
   #clusterURI: "https://192.168.99.100:8443" # equivalent to the above
 
-certificates: 
+certificates:
   caClient: "gs://mybucket/client.crt" # GCS bucket path
   caCrt: "s3://mybucket/ca.crt" # S3 bucket path
   #caCrt: "az://myblobcontainer/ca.crt" # Azure blob object
   caKey: "../ca.key" # valid local file relative path to the DSF file
-  
+
 ```

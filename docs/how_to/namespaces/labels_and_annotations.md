@@ -16,7 +16,7 @@ You can define namespaces to be used in your cluster. If they don't exist, Helms
 [namespaces.production]
   [namespaces.production.annotations]
     "iam.amazonaws.com/role" = "dynamodb-reader"
-  
+
 
 #...
 ```
@@ -30,7 +30,7 @@ namespaces:
   production:
     annotations:
       iam.amazonaws.com/role: "dynamodb-reader"
-    
+
 ```
 
 The above examples create two namespaces; staging and production. The staging namespace has one label `env`= `staging` while the production namespace has one annotation `iam.amazonaws.com/role`=`dynamodb-reader`.

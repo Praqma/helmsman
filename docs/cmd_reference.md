@@ -1,5 +1,5 @@
 ---
-version: v3.0.0-beta1
+version: v3.0.0-beta2
 ---
 
 # CMD reference
@@ -30,7 +30,7 @@ This lists available CMD options in Helmsman:
         desired state file name(s), may be supplied more than once to merge state files.
 
   `--force-upgrades`
-        use --force when upgrading helm releases. May cause resources to be recreated.  
+        use --force when upgrading helm releases. May cause resources to be recreated.
 
   `--keep-untracked-releases`
         keep releases that are managed by Helmsman from the used DSFs in the command, and are no longer tracked in your desired state.
@@ -46,12 +46,12 @@ This lists available CMD options in Helmsman:
 
   `--no-default-repos`
         don't set default Helm repos from Google for 'stable' and 'incubator'.
-                
+
   `--no-env-subst`
         turn off environment substitution globally.
 
   `--no-env-values-subst`
-        turn off environment substitution in values files only. (default true).      
+        turn off environment substitution in values files only. (default true).
 
   `--no-fancy`
         don't display the banner and don't use colors.
@@ -61,9 +61,9 @@ This lists available CMD options in Helmsman:
 
   `-no-ssm-subst`
         turn off SSM parameter substitution globally.
-  
+
   `-no-ssm-values-subst`
-        turn off SSM parameter substitution in values files only (default true).        
+        turn off SSM parameter substitution in values files only (default true).
 
   `--ns-override string`
         override defined namespaces with this one.
@@ -79,12 +79,12 @@ This lists available CMD options in Helmsman:
 
   `--target`
         limit execution to specific app.
-        
+
   `--group`
         limit execution to specific group of apps.
 
   `--update-deps`
-        run 'helm dep up' for local chart     
+        run 'helm dep up' for local chart
 
   `--v`    show the version.
 

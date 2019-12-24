@@ -1,5 +1,5 @@
 ---
-version: v3.0.0-beta1
+version: v3.0.0-beta2
 ---
 
 # Deployment Strategies
@@ -135,12 +135,12 @@ If you need supporting applications (charts) for your application (e.g, reverse 
 
 ## Notes on using multiple Helmsman desired state files for the same cluster
 
-Helmsman v3.0.0-beta1 introduces the `context` stanza.
-When having multiple DSFs operating on different releases, it is essential to use the `context` stanza in each DSF to define what context the DSF covers. The user-provided value for `context` is used by Helmsman to label and distinguish which DSF manages which deployed releases in the cluster. This way, each helmsman operation will only operate on releases within the context defined in the DSF.  
+Helmsman v3.0.0-beta2 introduces the `context` stanza.
+When having multiple DSFs operating on different releases, it is essential to use the `context` stanza in each DSF to define what context the DSF covers. The user-provided value for `context` is used by Helmsman to label and distinguish which DSF manages which deployed releases in the cluster. This way, each helmsman operation will only operate on releases within the context defined in the DSF.
 
 When having multiple DSFs be aware of the following:
 
-- If no context is provided in the DSF (or merged DSFs), `default` is applied as a default context. This means any set of DSFs that don't define custom contexts can still operate on each other's releases (same behavior as in Helmsman 1.x). 
+- If no context is provided in the DSF (or merged DSFs), `default` is applied as a default context. This means any set of DSFs that don't define custom contexts can still operate on each other's releases (same behavior as in Helmsman 1.x).
 
   - If you don't define context in your DSFs, you would need to use the `--keep-untracked-releases` flag to avoid different DSFs deleting each other's releases.
 
@@ -150,6 +150,6 @@ When having multiple DSFs be aware of the following:
 
 - If two releases from two different DSFs (each with its own context) have the same name and namespace, Helmsman will only allow the first one of them to be installed. The second will be blocked by Helmsman.
 
-- If you deploy releases from multiple DSF to one namespace (not recommended!), that namespace's protection config does not automatically cascade between DSFs. You will have to enable the protection in each of the DSFs. 
+- If you deploy releases from multiple DSF to one namespace (not recommended!), that namespace's protection config does not automatically cascade between DSFs. You will have to enable the protection in each of the DSFs.
 
 Also please refer to the [best practice](best_practice.md) document.
