@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Praqma/helmsman/internal/gcs"
@@ -160,56 +162,72 @@ func getReleaseChartVersion(rs releaseState) string {
 // validateReleaseCharts validates if the charts defined in a release are valid.
 // Valid charts are the ones that can be found in the defined repos.
 // This function uses Helm search to verify if the chart can be found or not.
-func validateReleaseCharts(apps map[string]*release) (bool, string) {
+func validateReleaseCharts(apps map[string]*release) error {
 	versionExtractor := regexp.MustCompile(`version:\s?(.*)`)
 
+	wg := sync.WaitGroup{}
+	c := make(chan string, len(apps))
 	for app, r := range apps {
-		validateCurrentChart := true
-		if !r.isReleaseConsideredToRun() {
-			validateCurrentChart = false
-		}
-		if validateCurrentChart {
-			if isLocalChart(r.Chart) {
-				cmd := command{
-					Cmd:         helmBin,
-					Args:        []string{"inspect", "chart", r.Chart},
-					Description: "Validating [ " + r.Chart + " ] chart's availability",
-				}
+		wg.Add(1)
+		go func(app string, r *release, wg *sync.WaitGroup, c chan string) {
+			defer wg.Done()
+			validateCurrentChart := true
+			if !r.isReleaseConsideredToRun() {
+				validateCurrentChart = false
+			}
+			if validateCurrentChart {
+				if isLocalChart(r.Chart) {
+					cmd := command{
+						Cmd:         helmBin,
+						Args:        []string{"inspect", "chart", r.Chart},
+						Description: "Validating [ " + r.Chart + " ] chart's availability",
+					}
 
-				var output string
-				var exitCode int
-				if exitCode, output, _ = cmd.exec(debug, verbose); exitCode != 0 {
-					maybeRepo := filepath.Base(filepath.Dir(r.Chart))
-					return false, "Chart [ " + r.Chart + " ] for app [" + app + "] can't be found. Did you mean to add a repo [ " + maybeRepo + " ]?"
-				}
-				matches := versionExtractor.FindStringSubmatch(output)
-				if len(matches) == 2 {
-					version := matches[1]
-					if r.Version != version {
-						return false, "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified for " +
-							"app [" + app + "] but the chart found at that path has version [ " + version + " ] which does not match."
+					var output string
+					var exitCode int
+					if exitCode, output, _ = cmd.exec(debug, verbose); exitCode != 0 {
+						maybeRepo := filepath.Base(filepath.Dir(r.Chart))
+						c <- "Chart [ " + r.Chart + " ] for app [" + app + "] can't be found. Did you mean to add a repo [ " + maybeRepo + " ]?"
+						return
+					}
+					matches := versionExtractor.FindStringSubmatch(output)
+					if len(matches) == 2 {
+						version := matches[1]
+						if r.Version != version {
+							c <- "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified for " +
+								"app [" + app + "] but the chart found at that path has version [ " + version + " ] which does not match."
+							return
+						}
+					}
+
+				} else {
+					version := r.Version
+					if len(version) == 0 {
+						version = "*"
+					}
+					cmd := command{
+						Cmd:         helmBin,
+						Args:        []string{"search", "repo", r.Chart, "--version", version, "-l"},
+						Description: "Validating [ " + r.Chart + " ] chart's version [ " + r.Version + " ] availability",
+					}
+
+					if exitCode, result, _ := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
+						c <- "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified for " +
+							"app [" + app + "] but was not found"
+						return
 					}
 				}
-
-			} else {
-				version := r.Version
-				if len(version) == 0 {
-					version = "*"
-				}
-				cmd := command{
-					Cmd:         helmBin,
-					Args:        []string{"search", "repo", r.Chart, "--version", version, "-l"},
-					Description: "Validating [ " + r.Chart + " ] chart's version [ " + r.Version + " ] availability",
-				}
-
-				if exitCode, result, _ := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
-					return false, "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified for " +
-						"app [" + app + "] but was not found"
-				}
 			}
+		}(app, r, &wg, c)
+	}
+	wg.Wait()
+	if len(c) > 0 {
+		err := <-c
+		if err != "" {
+			return errors.New(err)
 		}
 	}
-	return true, ""
+	return nil
 }
 
 // getChartVersion fetches the lastest chart version matching the semantic versioning constraints.
@@ -348,7 +366,7 @@ func uninstallUntrackedRelease(release releaseState) {
 }
 
 // decrypt a helm secret file
-func decryptSecret(name string) bool {
+func decryptSecret(name string) error {
 	cmd := helmBin
 	args := []string{"secrets", "dec", name}
 
@@ -370,17 +388,14 @@ func decryptSecret(name string) bool {
 	if !settings.EyamlEnabled {
 		_, fileNotFound := os.Stat(name + ".dec")
 		if fileNotFound != nil && !isOfType(name, []string{".dec"}) {
-			log.Error(output)
-			return false
+			return errors.New(output)
 		}
 	}
 
 	if exitCode != 0 {
-		log.Error(output)
-		return false
+		return errors.New(output)
 	} else if stderr != "" {
-		log.Error(stderr)
-		return false
+		return errors.New(output)
 	}
 
 	if settings.EyamlEnabled {
@@ -395,7 +410,7 @@ func decryptSecret(name string) bool {
 			log.Fatal("Can't write [ " + outfile + " ] file")
 		}
 	}
-	return true
+	return nil
 }
 
 // updateChartDep updates dependencies for a local chart

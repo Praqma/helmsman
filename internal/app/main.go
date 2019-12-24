@@ -88,8 +88,8 @@ func Main() {
 
 	if !skipValidation {
 		// validate charts-versions exist in defined repos
-		if r, msg := validateReleaseCharts(s.Apps); !r {
-			log.Fatal(msg)
+		if err := validateReleaseCharts(s.Apps); err != nil {
+			log.Fatal(err.Error())
 		}
 	} else {
 		log.Info("Skipping charts' validation.")
