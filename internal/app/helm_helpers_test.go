@@ -225,8 +225,16 @@ func Test_validateReleaseCharts(t *testing.T) {
 			for _, group := range tt.groupFlag {
 				groupMap[group] = true
 			}
-			if got, msg := validateReleaseCharts(tt.args.apps); got != tt.want {
-				t.Errorf("validateReleaseCharts() = %v, want %v , msg: %v", got, tt.want, msg)
+			err := validateReleaseCharts(tt.args.apps)
+			switch err.(type) {
+			case nil:
+				if tt.want != true {
+					t.Errorf("validateReleaseCharts() = %v, want error", err)
+				}
+			case error:
+				if tt.want != false {
+					t.Errorf("validateReleaseCharts() = %v, want nil", err)
+				}
 			}
 		})
 	}
@@ -448,9 +456,16 @@ func Test_eyamlSecrets(t *testing.T) {
 			settings.EyamlEnabled = tt.args.s.EyamlEnabled
 			settings.EyamlPublicKeyPath = tt.args.s.EyamlPublicKeyPath
 			settings.EyamlPrivateKeyPath = tt.args.s.EyamlPrivateKeyPath
-			got := decryptSecret(tt.args.r.SecretsFile)
-			if got != tt.want {
-				t.Errorf("decryptSecret() = %v, want %v", got, tt.want)
+			err := decryptSecret(tt.args.r.SecretsFile)
+			switch err.(type) {
+			case nil:
+				if tt.want != true {
+					t.Errorf("decryptSecret() = %v, want error", err)
+				}
+			case error:
+				if tt.want != false {
+					t.Errorf("decryptSecret() = %v, want nil", err)
+				}
 			}
 			if _, err := os.Stat(tt.args.r.SecretsFile + ".dec"); err == nil {
 				defer deleteFile(tt.args.r.SecretsFile + ".dec")
