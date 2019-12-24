@@ -26,4 +26,4 @@ You need to provide ONE of the following env variables:
 You need to provide ALL of the following env variables:
 
 - `AZURE_STORAGE_ACCOUNT`
-- `AZURE_STORAGE_ACCESS_KEY` 
+- `AZURE_STORAGE_ACCESS_KEY`

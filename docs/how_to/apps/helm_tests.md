@@ -1,10 +1,10 @@
 ---
-version: v3.0.0-beta1
+version: v3.0.0-beta2
 ---
 
 # Test charts
 
-Helm allows running [chart tests](https://github.com/helm/helm/blob/master/docs/chart_tests.md). 
+Helm allows running [chart tests](https://github.com/helm/helm/blob/master/docs/chart_tests.md).
 
 You can specify that you would like a chart to be tested whenever it is installed for the first time using the `test` key as follows:
 

@@ -369,6 +369,97 @@ func Test_readFile(t *testing.T) {
 	}
 }
 
+func Test_eyamlSecrets(t *testing.T) {
+	type args struct {
+		r *release
+		s *config
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "decryptSecrets - valid eyaml-based secrets decryption",
+			args: args{
+				s: &config{
+					EyamlEnabled:        true,
+					EyamlPublicKeyPath:  "./../../tests/keys/public_key.pkcs7.pem",
+					EyamlPrivateKeyPath: "./../../tests/keys/private_key.pkcs7.pem",
+				},
+				r: &release{
+					Name:        "release1",
+					Namespace:   "namespace",
+					Version:     "1.0.0",
+					Enabled:     true,
+					SecretsFile: "./../../tests/secrets/valid_eyaml_secrets.yaml",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "decryptSecrets - not existing eyaml-based secrets file",
+			args: args{
+				s: &config{
+					EyamlEnabled:        true,
+					EyamlPublicKeyPath:  "./../../tests/keys/public_key.pkcs7.pem",
+					EyamlPrivateKeyPath: "./../../tests/keys/private_key.pkcs7.pem",
+				},
+				r: &release{
+					Name:        "release1",
+					Namespace:   "namespace",
+					Version:     "1.0.0",
+					Enabled:     true,
+					SecretsFile: "./../../tests/secrets/invalid_eyaml_secrets.yaml",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "decryptSecrets - not existing eyaml key",
+			args: args{
+				s: &config{
+					EyamlEnabled:        true,
+					EyamlPublicKeyPath:  "./../../tests/keys/public_key.pkcs7.pem2",
+					EyamlPrivateKeyPath: "./../../tests/keys/private_key.pkcs7.pem",
+				},
+				r: &release{
+					Name:        "release1",
+					Namespace:   "namespace",
+					Version:     "1.0.0",
+					Enabled:     true,
+					SecretsFile: "./../../tests/secrets/valid_eyaml_secrets.yaml",
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Log(tt.want)
+			defaultSettings := settings
+			defer func() { settings = defaultSettings }()
+			settings.EyamlEnabled = tt.args.s.EyamlEnabled
+			settings.EyamlPublicKeyPath = tt.args.s.EyamlPublicKeyPath
+			settings.EyamlPrivateKeyPath = tt.args.s.EyamlPrivateKeyPath
+			err := decryptSecret(tt.args.r.SecretsFile)
+			switch err.(type) {
+			case nil:
+				if tt.want != true {
+					t.Errorf("decryptSecret() = %v, want error", err)
+				}
+			case error:
+				if tt.want != false {
+					t.Errorf("decryptSecret() = %v, want nil", err)
+				}
+			}
+			if _, err := os.Stat(tt.args.r.SecretsFile + ".dec"); err == nil {
+				defer deleteFile(tt.args.r.SecretsFile + ".dec")
+			}
+		})
+	}
+}
+
 // func Test_printHelp(t *testing.T) {
 // 	tests := []struct {
 // 		name string

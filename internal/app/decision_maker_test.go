@@ -69,7 +69,7 @@ func Test_getValuesFiles(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getValuesFiles(tt.args.r); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.args.r.getValuesFiles(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("getValuesFiles() = %v, want %v", got, tt.want)
 			}
 		})
@@ -79,7 +79,7 @@ func Test_getValuesFiles(t *testing.T) {
 func Test_inspectUpgradeScenario(t *testing.T) {
 	type args struct {
 		r *release
-		s *map[string]releaseState
+		s *map[string]helmRelease
 	}
 	tests := []struct {
 		name string
@@ -96,7 +96,7 @@ func Test_inspectUpgradeScenario(t *testing.T) {
 					Chart:     "./../../tests/chart-test",
 					Enabled:   true,
 				},
-				s: &map[string]releaseState{
+				s: &map[string]helmRelease{
 					"release1-namespace": {
 						Namespace: "namespace",
 						Chart:     "chart-1.0.0",
@@ -109,10 +109,10 @@ func Test_inspectUpgradeScenario(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			outcome = plan{}
-			currentState = *tt.args.s
+			cs := currentState(*tt.args.s)
 
 			// Act
-			inspectUpgradeScenario(tt.args.r)
+			cs.inspectUpgradeScenario(tt.args.r)
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
 
@@ -205,6 +205,7 @@ func Test_decide(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			targetMap = make(map[string]bool)
+			cs := currentState(make(map[string]helmRelease))
 
 			for _, target := range tt.targetFlag {
 				targetMap[target] = true
@@ -213,7 +214,7 @@ func Test_decide(t *testing.T) {
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 			// Act
-			decide(tt.args.r, tt.args.s, &wg)
+			cs.decide(tt.args.r, tt.args.s, &wg)
 			wg.Wait()
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
@@ -230,7 +231,7 @@ func Test_decide_group(t *testing.T) {
 	type args struct {
 		r            *release
 		s            *state
-		currentState *map[string]releaseState
+		currentState *map[string]helmRelease
 	}
 	tests := []struct {
 		name       string
@@ -249,7 +250,7 @@ func Test_decide_group(t *testing.T) {
 					Enabled:   true,
 				},
 				s: &state{},
-				currentState: &map[string]releaseState{
+				currentState: &map[string]helmRelease{
 					"release1-namespace": {
 						Namespace: "namespace",
 						Chart:     "chart-1.0.0",
@@ -271,7 +272,7 @@ func Test_decide_group(t *testing.T) {
 				s: &state{
 					Context: "default",
 				},
-				currentState: &map[string]releaseState{
+				currentState: &map[string]helmRelease{
 					"release2-namespace": {
 						Name:            "release2",
 						Namespace:       "namespace",
@@ -288,7 +289,7 @@ func Test_decide_group(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			groupMap = make(map[string]bool)
 			targetMap = make(map[string]bool)
-			currentState = *tt.args.currentState
+			cs := currentState(*tt.args.currentState)
 
 			for _, target := range tt.targetFlag {
 				groupMap[target] = true
@@ -299,7 +300,7 @@ func Test_decide_group(t *testing.T) {
 			outcome = plan{}
 			wg := sync.WaitGroup{}
 			wg.Add(1)
-			decide(tt.args.r, tt.args.s, &wg)
+			cs.decide(tt.args.r, tt.args.s, &wg)
 			wg.Wait()
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
