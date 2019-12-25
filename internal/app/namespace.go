@@ -31,10 +31,7 @@ type namespace struct {
 // checkNamespaceDefined checks if a given namespace is defined in the namespaces section of the desired state file
 func checkNamespaceDefined(ns string, s state) bool {
 	_, ok := s.Namespaces[ns]
-	if !ok {
-		return false
-	}
-	return true
+	return ok
 }
 
 // print prints the namespace

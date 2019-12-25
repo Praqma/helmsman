@@ -5,7 +5,7 @@ version: v1.13.0
 # Limit execution to explicitly defined group of apps
 
 Starting from v1.13.0, Helmsman allows you to pass the `--group` flag to specify group of apps
-the execution of Helmsman deployment will be limited to. 
+the execution of Helmsman deployment will be limited to.
 Thanks to this one can deploy specific applications among all defined for an environment.
 
 ## Example
@@ -40,7 +40,7 @@ With `--group` flag in command like
 $ helmsman -f example.yaml --group critical ...
 ```
 
-one can execute Helmsman's environment defined with example.yaml limited to only one `jenkins` app, since its group is `critical`. 
+one can execute Helmsman's environment defined with example.yaml limited to only one `jenkins` app, since its group is `critical`.
 Others are ignored until the flag is defined.
 
 Multiple applications can be set with `--group`, like

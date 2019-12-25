@@ -2,6 +2,7 @@ package app
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -450,19 +451,19 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 		]
 	}`)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	if err != nil {
+		log.Errorf("Failed to send slack message: %w", err)
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal("while sending notifications to slack" + err.Error())
+		log.Errorf("Failed to send notification to slack: %w", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == 200 {
-		return true
-	}
-	return false
+	return resp.StatusCode == 200
 }
 
 // getBucketElements returns a map containing the bucket name and the file path inside the bucket
@@ -508,10 +509,7 @@ func Indent(s, prefix string) string {
 // isLocalChart checks if a chart specified in the DSF is a local directory or not
 func isLocalChart(chart string) bool {
 	_, err := os.Stat(chart)
-	if err == nil {
-		return true
-	}
-	return false
+	return err == nil
 }
 
 // concat appends all slices to a single slice
@@ -535,4 +533,52 @@ func writeStringToFile(filename string, data string) error {
 		return err
 	}
 	return file.Sync()
+}
+
+// decrypt a eyaml secret file
+func decryptSecret(name string) error {
+	cmd := helmBin
+	args := []string{"secrets", "dec", name}
+
+	if settings.EyamlEnabled {
+		cmd = "eyaml"
+		args = []string{"decrypt", "-f", name}
+		if settings.EyamlPrivateKeyPath != "" && settings.EyamlPublicKeyPath != "" {
+			args = append(args, []string{"--pkcs7-private-key", settings.EyamlPrivateKeyPath, "--pkcs7-public-key", settings.EyamlPublicKeyPath}...)
+		}
+	}
+
+	command := command{
+		Cmd:         cmd,
+		Args:        args,
+		Description: "Decrypting " + name,
+	}
+
+	exitCode, output, stderr := command.exec(debug, false)
+	if !settings.EyamlEnabled {
+		_, fileNotFound := os.Stat(name + ".dec")
+		if fileNotFound != nil && !isOfType(name, []string{".dec"}) {
+			return errors.New(output)
+		}
+	}
+
+	if exitCode != 0 {
+		return errors.New(output)
+	} else if stderr != "" {
+		return errors.New(output)
+	}
+
+	if settings.EyamlEnabled {
+		var outfile string
+		if isOfType(name, []string{".dec"}) {
+			outfile = name
+		} else {
+			outfile = name + ".dec"
+		}
+		err := writeStringToFile(outfile, output)
+		if err != nil {
+			log.Fatal("Can't write [ " + outfile + " ] file")
+		}
+	}
+	return nil
 }

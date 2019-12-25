@@ -9,7 +9,7 @@ Helmsman can be deployed inside your k8s cluster and can talk to the k8s API usi
 See [connecting to your cluster with bearer token](../settings/creating_kube_context_with_token.md) for more details.
 
 
-Your desired state will look like: 
+Your desired state will look like:
 
 ```toml
 [settings]
@@ -22,7 +22,7 @@ Your desired state will look like:
 settings:
   kubeContext: "test" # the name of the context to be created
   bearerToken: true
-  clusterURI: "https://kubernetes.default" 
+  clusterURI: "https://kubernetes.default"
 ```
 
 To deploy Helmsman into a k8s cluster, few steps are needed:
@@ -32,10 +32,10 @@ To deploy Helmsman into a k8s cluster, few steps are needed:
 1. Create a k8s service account
 
 ```shell
-$ kubectl create sa helmsman 
+$ kubectl create sa helmsman
 ```
 
-2. Create a clusterrolebinding 
+2. Create a clusterrolebinding
 
 ```shell
 $ kubectl create clusterrolebinding helmsman-cluster-admin --clusterrole=cluster-admin --serviceaccount=default:helmsman
