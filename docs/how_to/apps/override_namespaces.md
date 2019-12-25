@@ -1,5 +1,5 @@
 ---
-version: v3.0.0-beta1
+version: v3.0.0-beta2
 ---
 
 # Override defined namespaces from command line

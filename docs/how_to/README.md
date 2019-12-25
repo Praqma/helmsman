@@ -1,7 +1,7 @@
 
 # How To Guides
 
-This page contains a list of guides on how to use Helmsman. 
+This page contains a list of guides on how to use Helmsman.
 
 It is recommended that you also check the [DSF spec](../desired_state_specification.md), [cmd reference](../cmd_reference.md), and the [best practice guide](../best_practice.md).
 

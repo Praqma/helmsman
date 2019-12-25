@@ -29,7 +29,7 @@ func addNamespaces(namespaces map[string]namespace) {
 func overrideAppsNamespace(newNs string) {
 	log.Info("Overriding apps namespaces with [ " + newNs + " ] ...")
 	for _, r := range s.Apps {
-		overrideNamespace(r, newNs)
+		r.overrideNamespace(newNs)
 	}
 }
 
@@ -336,44 +336,6 @@ func getReleaseContext(releaseName string, namespace string) string {
 		log.Fatal(out)
 	}
 	return strings.TrimSpace(out)
-}
-
-// getHelmsmanReleases returns a map of all releases that are labeled with "MANAGED-BY=HELMSMAN"
-// The releases are categorized by the namespaces in which they are deployed
-// The returned map format is: map[<namespace>:map[<releaseState>:true]]
-func getHelmsmanReleases() map[string]map[releaseState]bool {
-	var lines []string
-	releases := make(map[string]map[releaseState]bool)
-	storageBackend := s.Settings.StorageBackend
-
-	for ns := range s.Namespaces {
-		cmd := command{
-			Cmd:         "kubectl",
-			Args:        []string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN", "-l", "HELMSMAN_CONTEXT=" + s.Context, "-o", "name"},
-			Description: "Getting Helmsman-managed releases in namespace [ " + ns + " ]",
-		}
-
-		exitCode, output, _ := cmd.exec(debug, verbose)
-
-		if exitCode != 0 {
-			log.Fatal(output)
-		}
-		if strings.ToUpper("No resources found.") != strings.ToUpper(strings.TrimSpace(output)) {
-			lines = strings.Split(output, "\n")
-		}
-
-		for _, r := range lines {
-			if r == "" {
-				continue
-			}
-			if _, ok := releases[ns]; !ok {
-				releases[ns] = make(map[releaseState]bool)
-			}
-			releaseName := strings.Split(strings.Split(r, "/")[1], ".")[4]
-			releases[ns][currentState[releaseName+"-"+ns]] = true
-		}
-	}
-	return releases
 }
 
 // getKubectlClientVersion returns kubectl client version

@@ -1,5 +1,5 @@
 ---
-version: v3.0.0-beta1
+version: v3.0.0-beta2
 ---
 
 # Supply multiple desired state files
@@ -45,11 +45,11 @@ $ helmsman -f common.toml -f nonprod.toml ...
 
 ## Distinguishing releases deployed from different Desired State Files
 
-When using multiple DSFs -and since Helmsman doesn't maintain any external state-, it has been possible for operations from one DSF to cause problems to releases deployed by other DSFs. A typical example is that releases deployed by other DSFs are considered `untracked` and get scheduled for deleting. Workarounds existed (e.g. using the `--keep-untracked-releases`, `--target` and `--group` flags). 
+When using multiple DSFs -and since Helmsman doesn't maintain any external state-, it has been possible for operations from one DSF to cause problems to releases deployed by other DSFs. A typical example is that releases deployed by other DSFs are considered `untracked` and get scheduled for deleting. Workarounds existed (e.g. using the `--keep-untracked-releases`, `--target` and `--group` flags).
 
-Starting from Helmsman v3.0.0-beta1, `context` is introduced to define the context in which a DSF is used. This context is used as the ID of that specific DSF and must be unique across the used DSFs. The context is then used to label the different releases to link them to the DSF they were first deployed from. These labels are then checked by Helmsman on each run to make sure operations are limited to releases from a specific context.
+Starting from Helmsman v3.0.0-beta2, `context` is introduced to define the context in which a DSF is used. This context is used as the ID of that specific DSF and must be unique across the used DSFs. The context is then used to label the different releases to link them to the DSF they were first deployed from. These labels are then checked by Helmsman on each run to make sure operations are limited to releases from a specific context.
 
-Here is how it is used: 
+Here is how it is used:
 
 * `infra.yaml`:
 ```yaml
@@ -58,7 +58,7 @@ settings:
   kubeContext: "cluster"
   storageBackend: "secret"
 
-namespaces: 
+namespaces:
   infra:
     protected: true
 
@@ -82,7 +82,7 @@ settings:
   kubeContext: "cluster"
   storageBackend: "secret"
 
-namespaces: 
+namespaces:
   prod:
     protected: true
 

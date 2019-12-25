@@ -1,6 +1,6 @@
-# version: v3.0.0-beta1
+# version: v3.0.0-beta2
 
-# context defines the context of this Desired State File. 
+# context defines the context of this Desired State File.
 # It is used to allow Helmsman identify which releases are managed by which DSF.
 # Therefore, it is important that each DSF uses a unique context.
 context= "test-infra"   # defaults to "default" if not provided

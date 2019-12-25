@@ -16,6 +16,12 @@ func (i *stringArray) Set(value string) error {
 	return nil
 }
 
+const appVersion = "v3.0.0-beta2"
+const tempFilesDir = ".helmsman-tmp"
+const stableHelmRepo = "https://kubernetes-charts.storage.googleapis.com"
+const incubatorHelmRepo = "http://storage.googleapis.com/kubernetes-charts-incubator"
+const defaultContextName = "default"
+
 var s state
 var debug bool
 var files stringArray
@@ -31,7 +37,6 @@ var noNs bool
 var nsOverride string
 var skipValidation bool
 var keepUntrackedReleases bool
-var appVersion = "v3.0.0-beta1"
 var helmBin = "helm"
 var helmVersion string
 var kubectlVersion string
@@ -52,10 +57,7 @@ var updateDeps bool
 var forceUpgrades bool
 var noDefaultRepos bool
 
-const tempFilesDir = ".helmsman-tmp"
-const stableHelmRepo = "https://kubernetes-charts.storage.googleapis.com"
-const incubatorHelmRepo = "http://storage.googleapis.com/kubernetes-charts-incubator"
-const defaultContextName = "default"
+var settings config
 
 func init() {
 	Cli()
@@ -67,8 +69,9 @@ func Main() {
 	defer os.RemoveAll(tempFilesDir)
 	defer cleanup()
 
+	settings = s.Settings
 	// set the kubecontext to be used Or create it if it does not exist
-	if !setKubeContext(s.Settings.KubeContext) {
+	if !setKubeContext(settings.KubeContext) {
 		if r, msg := createContext(); !r {
 			log.Fatal(msg)
 		}
@@ -100,9 +103,10 @@ func Main() {
 		log.Info("--destroy is enabled. Your releases will be deleted!")
 	}
 
-	p := makePlan(&s)
+	cs := buildState()
+	p := cs.makePlan(&s)
 	if !keepUntrackedReleases {
-		cleanUntrackedReleases()
+		cs.cleanUntrackedReleases()
 	}
 
 	p.sortPlan()

@@ -139,7 +139,7 @@ func (s state) validate() error {
 
 	names := make(map[string]map[string]bool)
 	for appLabel, r := range s.Apps {
-		result, errMsg := validateRelease(appLabel, r, names, s)
+		result, errMsg := r.validate(appLabel, names, s)
 		if !result {
 			return errors.New("apps validation failed -- for app [" + appLabel + " ]. " + errMsg)
 		}
