@@ -28,12 +28,6 @@ type namespace struct {
 	Annotations map[string]string `yaml:"annotations"`
 }
 
-// checkNamespaceDefined checks if a given namespace is defined in the namespaces section of the desired state file
-func checkNamespaceDefined(ns string, s state) bool {
-	_, ok := s.Namespaces[ns]
-	return ok
-}
-
 // print prints the namespace
 func (n namespace) print() {
 	fmt.Println("")
