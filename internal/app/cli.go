@@ -120,11 +120,11 @@ func Cli() {
 		os.Setenv("KUBECONFIG", kubeconfig)
 	}
 
-	if !toolExists("kubectl") {
+	if !toolExists("kubectl", debug) {
 		log.Fatal("kubectl is not installed/configured correctly. Aborting!")
 	}
 
-	if !toolExists(helmBin) {
+	if !toolExists(helmBin, debug) {
 		log.Fatal("" + helmBin + " is not installed/configured correctly. Aborting!")
 	}
 
@@ -169,7 +169,7 @@ func Cli() {
 	var fileState state
 	for _, f := range files {
 
-		result, msg := fromFile(f, &fileState)
+		result, msg := fileState.fromFile(f)
 		if result {
 			log.Info(msg)
 		} else {

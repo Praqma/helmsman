@@ -189,27 +189,6 @@ func substituteVarsInYaml(file string) string {
 	return outFile
 }
 
-// invokes either yaml or toml parser considering file extension
-func fromFile(file string, s *state) (bool, string) {
-	if isOfType(file, []string{".toml"}) {
-		return fromTOML(file, s)
-	} else if isOfType(file, []string{".yaml", ".yml"}) {
-		return fromYAML(file, s)
-	} else {
-		return false, "State file does not have toml/yaml extension."
-	}
-}
-
-func toFile(file string, s *state) {
-	if isOfType(file, []string{".toml"}) {
-		toTOML(file, s)
-	} else if isOfType(file, []string{".yaml", ".yml"}) {
-		toYAML(file, s)
-	} else {
-		log.Fatal("State file does not have toml/yaml extension.")
-	}
-}
-
 func stringInSlice(a string, list []string) bool {
 	for _, b := range list {
 		if b == a {
@@ -535,7 +514,7 @@ func writeStringToFile(filename string, data string) error {
 	return file.Sync()
 }
 
-// decrypt a eyaml secret file
+// decrypt a eyaml or helm secret file
 func decryptSecret(name string) error {
 	cmd := helmBin
 	args := []string{"secrets", "dec", name}

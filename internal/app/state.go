@@ -38,9 +38,30 @@ type state struct {
 	AppsTemplates          map[string]*release  `yaml:"appsTemplates,omitempty"`
 }
 
+// invokes either yaml or toml parser considering file extension
+func (s *state) fromFile(file string) (bool, string) {
+	if isOfType(file, []string{".toml"}) {
+		return fromTOML(file, s)
+	} else if isOfType(file, []string{".yaml", ".yml"}) {
+		return fromYAML(file, s)
+	} else {
+		return false, "State file does not have toml/yaml extension."
+	}
+}
+
+func (s *state) toFile(file string) {
+	if isOfType(file, []string{".toml"}) {
+		toTOML(file, s)
+	} else if isOfType(file, []string{".yaml", ".yml"}) {
+		toYAML(file, s)
+	} else {
+		log.Fatal("State file does not have toml/yaml extension.")
+	}
+}
+
 // validate validates that the values specified in the desired state are valid according to the desired state spec.
 // check https://github.com/Praqma/Helmsman/docs/desired_state_spec.md for the detailed specification
-func (s state) validate() error {
+func (s *state) validate() error {
 
 	// settings
 	if (s.Settings == (config{}) || s.Settings.KubeContext == "") && !getKubeContext() {
@@ -158,8 +179,22 @@ func isValidCert(value string) (bool, string) {
 	return true, value
 }
 
+// checkNamespaceDefined checks if a given namespace is defined in the namespaces section of the desired state file
+func (s *state) checkNamespaceDefined(ns string) bool {
+	_, ok := s.Namespaces[ns]
+	return ok
+}
+
+// overrideAppsNamespace replaces all apps namespaces with one specific namespace
+func (s *state) overrideAppsNamespace(newNs string) {
+	log.Info("Overriding apps namespaces with [ " + newNs + " ] ...")
+	for _, r := range s.Apps {
+		r.overrideNamespace(newNs)
+	}
+}
+
 // print prints the desired state
-func (s state) print() {
+func (s *state) print() {
 
 	fmt.Println("\nMetadata: ")
 	fmt.Println("--------- ")

@@ -11,11 +11,7 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 	t.Log("setup test case")
 	os.MkdirAll(os.TempDir()+"/helmsman-tests/myapp", os.ModePerm)
 	os.MkdirAll(os.TempDir()+"/helmsman-tests/dir-with space/myapp", os.ModePerm)
-	cmd := command{
-		Cmd:         helmBin,
-		Args:        []string{"create", os.TempDir() + "/helmsman-tests/dir-with space/myapp"},
-		Description: "creating an empty local chart directory",
-	}
+	cmd := helmCmd([]string{"create", os.TempDir() + "/helmsman-tests/dir-with space/myapp"}, "creating an empty local chart directory")
 	if exitCode, msg, _ := cmd.exec(debug, verbose); exitCode != 0 {
 		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", exitCode, msg))
 	}
@@ -291,7 +287,7 @@ func Test_validateRelease(t *testing.T) {
 	names := make(map[string]map[string]bool)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := tt.args.r.validate("testApp", names, tt.args.s)
+			got, got1 := tt.args.r.validate("testApp", names, &tt.args.s)
 			if got != tt.want {
 				t.Errorf("validateRelease() got = %v, want %v", got, tt.want)
 			}

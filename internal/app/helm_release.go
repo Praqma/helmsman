@@ -23,11 +23,7 @@ type helmRelease struct {
 // getHelmReleases fetches a list of all releases in a k8s cluster
 func getHelmReleases() []helmRelease {
 	var allReleases []helmRelease
-	cmd := command{
-		Cmd:         helmBin,
-		Args:        []string{"list", "--all", "--max", "0", "--output", "json", "--all-namespaces"},
-		Description: "Listing all existing releases...",
-	}
+	cmd := helmCmd([]string{"list", "--all", "--max", "0", "--output", "json", "--all-namespaces"}, "Listing all existing releases...")
 	exitCode, result, _ := cmd.exec(debug, verbose)
 	if exitCode != 0 {
 		log.Fatal("Failed to list all releases: " + result)
@@ -38,27 +34,27 @@ func getHelmReleases() []helmRelease {
 	return allReleases
 }
 
+func (r *helmRelease) key() string {
+	return fmt.Sprintf("%s-%s", r.Name, r.Namespace)
+}
+
 // uninstall creates the helm command to uninstall an untracked release
 func (r *helmRelease) uninstall() {
-	cmd := command{
-		Cmd:         helmBin,
-		Args:        concat([]string{"uninstall", r.Name, "--namespace", r.Namespace}, getDryRunFlags()),
-		Description: "Deleting untracked release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
-	}
+	cmd := helmCmd(concat([]string{"uninstall", r.Name, "--namespace", r.Namespace}, getDryRunFlags()), "Deleting untracked release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
 	outcome.addCommand(cmd, -800, nil)
 }
 
 // getRevision returns the revision number for an existing helm release
-func (rs *helmRelease) getRevision() string {
-	return strconv.Itoa(rs.Revision)
+func (r *helmRelease) getRevision() string {
+	return strconv.Itoa(r.Revision)
 }
 
 // getChartName extracts and returns the Helm chart name from the chart info in a release state.
 // example: chart in release state is "jenkins-0.9.0" and this function will extract "jenkins" from it.
-func (rs *helmRelease) getChartName() string {
+func (r *helmRelease) getChartName() string {
 
-	chart := rs.Chart
+	chart := r.Chart
 	runes := []rune(chart)
 	return string(runes[0:strings.LastIndexByte(chart[0:strings.IndexByte(chart, '.')], '-')])
 }
@@ -67,8 +63,8 @@ func (rs *helmRelease) getChartName() string {
 // example: chart in release state is returns "jenkins-0.9.0" and this functions will extract "0.9.0" from it.
 // It should also handle semver-valid pre-release/meta information, example: in: jenkins-0.9.0-1, out: 0.9.0-1
 // in the event of an error, an empty string is returned.
-func (rs *helmRelease) getChartVersion() string {
-	chart := rs.Chart
+func (r *helmRelease) getChartVersion() string {
+	chart := r.Chart
 	re := regexp.MustCompile(`-(v?[0-9]+\.[0-9]+\.[0-9]+.*)`)
 	matches := re.FindStringSubmatch(chart)
 	if len(matches) > 1 {
@@ -79,6 +75,6 @@ func (rs *helmRelease) getChartVersion() string {
 
 // getCurrentNamespaceProtection returns the protection state for the namespace where a release is currently installed.
 // It returns true if a namespace is defined as protected in the desired state file, false otherwise.
-func (rs *helmRelease) getCurrentNamespaceProtection() bool {
-	return s.Namespaces[rs.Namespace].Protected
+func (r *helmRelease) getCurrentNamespaceProtection() bool {
+	return s.Namespaces[r.Namespace].Protected
 }

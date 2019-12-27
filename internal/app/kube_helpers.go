@@ -21,35 +21,28 @@ func addNamespaces(namespaces map[string]namespace) {
 		}
 	} else {
 		createNamespace(nsOverride)
-		overrideAppsNamespace(nsOverride)
+		s.overrideAppsNamespace(nsOverride)
 	}
 }
 
-// overrideAppsNamespace replaces all apps namespaces with one specific namespace
-func overrideAppsNamespace(newNs string) {
-	log.Info("Overriding apps namespaces with [ " + newNs + " ] ...")
-	for _, r := range s.Apps {
-		r.overrideNamespace(newNs)
+// kubectl prepares a kubectl command to be executed
+func kubectl(args []string, desc string) command {
+	return command{
+		Cmd:         "kubectl",
+		Args:        args,
+		Description: desc,
 	}
 }
 
 // createNamespace creates a namespace in the k8s cluster
 func createNamespace(ns string) {
-	checkCmd := command{
-		Cmd:         "kubectl",
-		Args:        []string{"get", "namespace", ns},
-		Description: "Looking for namespace [ " + ns + " ]",
-	}
+	checkCmd := kubectl([]string{"get", "namespace", ns}, "Looking for namespace [ "+ns+" ]")
 	checkExitCode, _, _ := checkCmd.exec(debug, verbose)
 	if checkExitCode == 0 {
 		log.Verbose("Namespace [ " + ns + " ] exists")
 		return
 	}
-	cmd := command{
-		Cmd:         "kubectl",
-		Args:        []string{"create", "namespace", ns},
-		Description: "Creating namespace [ " + ns + " ]",
-	}
+	cmd := kubectl([]string{"create", "namespace", ns}, "Creating namespace [ "+ns+" ]")
 	exitCode, err, _ := cmd.exec(debug, verbose)
 	if exitCode == 0 {
 		log.Info("Namespace [ " + ns + " ] created")
@@ -72,11 +65,7 @@ func labelNamespace(ns string, labels map[string]string) {
 	args := []string{"label", "--overwrite", "namespace/" + ns}
 	args = append(args, labelSlice...)
 
-	cmd := command{
-		Cmd:         "kubectl",
-		Args:        args,
-		Description: "Labeling namespace [ " + ns + " ]",
-	}
+	cmd := kubectl(args, "Labeling namespace [ "+ns+" ]")
 
 	exitCode, errMsg, _ := cmd.exec(debug, verbose)
 	if exitCode != 0 && verbose {
@@ -96,11 +85,7 @@ func annotateNamespace(ns string, annotations map[string]string) {
 	}
 	args := []string{"annotate", "--overwrite", "namespace/" + ns}
 	args = append(args, annotationSlice...)
-	cmd := command{
-		Cmd:         "kubectl",
-		Args:        args,
-		Description: "Annotating namespace [ " + ns + " ]",
-	}
+	cmd := kubectl(args, "Annotating namespace [ "+ns+" ]")
 
 	exitCode, errMsg, _ := cmd.exec(debug, verbose)
 	if exitCode != 0 && verbose {
@@ -135,12 +120,7 @@ spec:
 		log.Fatal(err.Error())
 	}
 
-	cmd := command{
-		Cmd:         "kubectl",
-		Args:        []string{"apply", "-f", "temp-LimitRange.yaml", "-n", ns},
-		Description: "Creating LimitRange in namespace [ " + ns + " ]",
-	}
-
+	cmd := kubectl([]string{"apply", "-f", "temp-LimitRange.yaml", "-n", ns}, "Creating LimitRange in namespace [ "+ns+" ]")
 	exitCode, e, _ := cmd.exec(debug, verbose)
 
 	if exitCode != 0 {
@@ -221,31 +201,19 @@ func createContext() (bool, string) {
 			setCredentialsCmdArgs = append(setCredentialsCmdArgs, "--client-certificate="+caClient)
 		}
 	}
-	cmd := command{
-		Cmd:         "kubectl",
-		Args:        setCredentialsCmdArgs,
-		Description: "Creating kubectl context - setting credentials",
-	}
+	cmd := kubectl(setCredentialsCmdArgs, "Creating kubectl context - setting credentials")
 
 	if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "failed to create context [ " + s.Settings.KubeContext + " ]:  " + err
 	}
 
-	cmd = command{
-		Cmd:         "kubectl",
-		Args:        []string{"config", "set-cluster", s.Settings.KubeContext, "--server=" + s.Settings.ClusterURI, "--certificate-authority=" + caCrt},
-		Description: "Creating kubectl context - setting cluster",
-	}
+	cmd = kubectl([]string{"config", "set-cluster", s.Settings.KubeContext, "--server=" + s.Settings.ClusterURI, "--certificate-authority=" + caCrt}, "Creating kubectl context - setting cluster")
 
 	if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "failed to create context [ " + s.Settings.KubeContext + " ]: " + err
 	}
 
-	cmd = command{
-		Cmd:         "kubectl",
-		Args:        []string{"config", "set-context", s.Settings.KubeContext, "--cluster=" + s.Settings.KubeContext, "--user=" + s.Settings.Username},
-		Description: "Creating kubectl context - setting context",
-	}
+	cmd = kubectl([]string{"config", "set-context", s.Settings.KubeContext, "--cluster=" + s.Settings.KubeContext, "--user=" + s.Settings.Username}, "Creating kubectl context - setting context")
 
 	if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "failed to create context [ " + s.Settings.KubeContext + " ]: " + err
@@ -265,11 +233,7 @@ func setKubeContext(context string) bool {
 		return getKubeContext()
 	}
 
-	cmd := command{
-		Cmd:         "kubectl",
-		Args:        []string{"config", "use-context", context},
-		Description: "Setting kube context to [ " + context + " ]",
-	}
+	cmd := kubectl([]string{"config", "use-context", context}, "Setting kube context to [ "+context+" ]")
 
 	exitCode, _, _ := cmd.exec(debug, verbose)
 
@@ -284,11 +248,7 @@ func setKubeContext(context string) bool {
 // getKubeContext gets your kubectl context.
 // It returns false if no context is set.
 func getKubeContext() bool {
-	cmd := command{
-		Cmd:         "kubectl",
-		Args:        []string{"config", "current-context"},
-		Description: "Getting kubectl context",
-	}
+	cmd := kubectl([]string{"config", "current-context"}, "Getting kubectl context")
 
 	exitCode, result, _ := cmd.exec(debug, verbose)
 
@@ -305,11 +265,7 @@ func labelResource(r *release) {
 	if r.Enabled {
 		storageBackend := s.Settings.StorageBackend
 
-		cmd := command{
-			Cmd:         "kubectl",
-			Args:        []string{"label", storageBackend, "-n", r.Namespace, "-l", "owner=helm,name=" + r.Name, "MANAGED-BY=HELMSMAN", "NAMESPACE=" + r.Namespace, "HELMSMAN_CONTEXT=" + s.Context, "--overwrite"},
-			Description: "Applying Helmsman labels to [ " + r.Name + " ] release",
-		}
+		cmd := kubectl([]string{"label", storageBackend, "-n", r.Namespace, "-l", "owner=helm,name=" + r.Name, "MANAGED-BY=HELMSMAN", "NAMESPACE=" + r.Namespace, "HELMSMAN_CONTEXT=" + s.Context, "--overwrite"}, "Applying Helmsman labels to [ "+r.Name+" ] release")
 
 		exitCode, err, _ := cmd.exec(debug, verbose)
 
@@ -324,27 +280,19 @@ func getReleaseContext(releaseName string, namespace string) string {
 	storageBackend := s.Settings.StorageBackend
 	// kubectl get secrets -n test1 -l MANAGED-BY=HELMSMAN -o=jsonpath='{.items[0].metadata.labels.HELMSMAN_CONTEXT}'
 	// kubectl get secret sh.helm.release.v1.argo.v1  -n test1  -o=jsonpath='{.metadata.labels.HELMSMAN_CONTEXT}'
-	cmd := command{
-		Cmd:         "kubectl",
-		Args:        []string{"get", storageBackend, "-n", namespace, "sh.helm.release.v1." + releaseName + ".v1", "-o=jsonpath={.metadata.labels.HELMSMAN_CONTEXT}"},
-		Description: "Getting Helmsman context for [ " + releaseName + " ] release",
-	}
+	// kubectl get secret -l owner=helm,name=argo -n test1 -o=jsonpath='{.items[-1].metadata.labels.HELMSMAN_CONTEXT}'
+	cmd := kubectl([]string{"get", storageBackend, "-n", namespace, "-l", "owner=helm", "-l", "name=" + releaseName, "-o", "jsonpath='{.items[-1].metadata.labels.HELMSMAN_CONTEXT}'"}, "Getting Helmsman context for [ "+releaseName+" ] release")
 
 	exitCode, out, _ := cmd.exec(debug, verbose)
-
 	if exitCode != 0 {
 		log.Fatal(out)
 	}
-	return strings.TrimSpace(out)
+	return strings.Trim(out, `"' `)
 }
 
 // getKubectlClientVersion returns kubectl client version
 func getKubectlClientVersion() string {
-	cmd := command{
-		Cmd:         "kubectl",
-		Args:        []string{"version", "--client", "--short"},
-		Description: "Checking kubectl version",
-	}
+	cmd := kubectl([]string{"version", "--client", "--short"}, "Checking kubectl version")
 
 	exitCode, result, _ := cmd.exec(debug, false)
 	if exitCode != 0 {
