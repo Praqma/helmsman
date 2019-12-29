@@ -1,5 +1,5 @@
 ---
-version: v3.0.0-beta2
+version: v3.0.0-beta3
 ---
 
 # Using the priority key for Apps

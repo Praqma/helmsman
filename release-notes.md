@@ -1,4 +1,4 @@
-# v3.0.0-beta2
+# v3.0.0-beta3
 
 This is a major release to support Helm v3.
 It is recommended you read the [Helm 3 migration guide](https://helm.sh/docs/topics/v2_v3_migration/) before using this release.

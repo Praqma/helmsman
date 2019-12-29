@@ -1,4 +1,4 @@
-# version: v3.0.0-beta2
+# version: v3.0.0-beta3
 
 # context defines the context of this Desired State File.
 # It is used to allow Helmsman identify which releases are managed by which DSF.

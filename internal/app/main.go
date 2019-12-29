@@ -16,7 +16,7 @@ func (i *stringArray) Set(value string) error {
 	return nil
 }
 
-const appVersion = "v3.0.0-beta2"
+const appVersion = "v3.0.0-beta3"
 const tempFilesDir = ".helmsman-tmp"
 const stableHelmRepo = "https://kubernetes-charts.storage.googleapis.com"
 const incubatorHelmRepo = "http://storage.googleapis.com/kubernetes-charts-incubator"
