@@ -74,8 +74,8 @@ func (p *plan) addDecision(decision string, priority int, decisionType decisionT
 }
 
 // execPlan executes the commands (actions) which were added to the plan.
-func (p plan) execPlan() {
-	p.sortPlan()
+func (p plan) exec() {
+	p.sort()
 	if len(p.Commands) > 0 {
 		log.Info("Executing plan... ")
 	} else {
@@ -108,15 +108,15 @@ func (p plan) execPlan() {
 }
 
 // printPlanCmds prints the actual commands that will be executed as part of a plan.
-func (p plan) printPlanCmds() {
-	fmt.Println("Printing the commands of the current plan ...")
+func (p plan) printCmds() {
+	log.Info("Printing the commands of the current plan ...")
 	for _, cmd := range p.Commands {
-		fmt.Println(cmd.Command.Args[1])
+		fmt.Println(cmd.Command.String())
 	}
 }
 
 // printPlan prints the decisions made in a plan.
-func (p plan) printPlan() {
+func (p plan) print() {
 	log.Notice("-------- PLAN starts here --------------")
 	for _, decision := range p.Decisions {
 		if decision.Type == ignored {
@@ -133,7 +133,7 @@ func (p plan) printPlan() {
 }
 
 // sendPlanToSlack sends the description of plan commands to slack if a webhook is provided.
-func (p plan) sendPlanToSlack() {
+func (p plan) sendToSlack() {
 	if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err == nil {
 		str := ""
 		for _, c := range p.Commands {
@@ -147,7 +147,7 @@ func (p plan) sendPlanToSlack() {
 
 // sortPlan sorts the slices of commands and decisions based on priorities
 // the lower the priority value the earlier a command should be attempted
-func (p plan) sortPlan() {
+func (p plan) sort() {
 	log.Verbose("Sorting the commands in the plan based on priorities (order flags) ... ")
 
 	sort.SliceStable(p.Commands, func(i, j int) bool {

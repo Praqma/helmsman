@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 	"sync"
@@ -21,18 +20,24 @@ func logDecision(decision string, priority int, decisionType decisionType) {
 func buildState() currentState {
 	log.Info("Acquiring current Helm state from cluster...")
 
-	cs := make(map[string]helmRelease)
+	cs := currentState(make(map[string]helmRelease))
 	rel := getHelmReleases()
 
+	var wg sync.WaitGroup
 	for _, r := range rel {
-		r.HelmsmanContext = getReleaseContext(r.Name, r.Namespace)
-		cs[fmt.Sprintf("%s-%s", r.Name, r.Namespace)] = r
+		wg.Add(1)
+		go func(c currentState, r helmRelease, wg *sync.WaitGroup) {
+			defer wg.Done()
+			r.HelmsmanContext = getReleaseContext(r.Name, r.Namespace)
+			c[r.key()] = r
+		}(cs, r, &wg)
 	}
+	wg.Wait()
 	return cs
 }
 
 // makePlan creates a plan of the actions needed to make the desired state come true.
-func (cs *currentState) makePlan(s *state) *plan {
+func (cs currentState) makePlan(s *state) *plan {
 	outcome = createPlan()
 
 	wg := sync.WaitGroup{}
@@ -48,7 +53,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 
 // decide makes a decision about what commands (actions) need to be executed
 // to make a release section of the desired state come true.
-func (cs *currentState) decide(r *release, s *state, wg *sync.WaitGroup) {
+func (cs currentState) decide(r *release, s *state, wg *sync.WaitGroup) {
 	defer wg.Done()
 	// check for presence in defined targets or groups
 	if !r.isConsideredToRun() {
@@ -66,7 +71,7 @@ func (cs *currentState) decide(r *release, s *state, wg *sync.WaitGroup) {
 	if !r.Enabled {
 		if ok := cs.releaseExists(r, ""); ok {
 
-			if cs.isProtected(r) {
+			if r.isProtected(cs) {
 
 				logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 					"protection is removed.", r.Priority, noop)
@@ -81,7 +86,7 @@ func (cs *currentState) decide(r *release, s *state, wg *sync.WaitGroup) {
 	}
 
 	if ok := cs.releaseExists(r, "deployed"); ok {
-		if !cs.isProtected(r) {
+		if !r.isProtected(cs) {
 			cs.inspectUpgradeScenario(r) // upgrade or move
 
 		} else {
@@ -90,7 +95,7 @@ func (cs *currentState) decide(r *release, s *state, wg *sync.WaitGroup) {
 		}
 
 	} else if ok := cs.releaseExists(r, "deleted"); ok {
-		if !cs.isProtected(r) {
+		if !r.isProtected(cs) {
 
 			r.rollback(cs) // rollback
 
@@ -101,7 +106,7 @@ func (cs *currentState) decide(r *release, s *state, wg *sync.WaitGroup) {
 
 	} else if ok := cs.releaseExists(r, "failed"); ok {
 
-		if !cs.isProtected(r) {
+		if !r.isProtected(cs) {
 
 			logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in FAILED state. Upgrade is scheduled!", r.Priority, change)
 			r.upgrade()
@@ -112,7 +117,7 @@ func (cs *currentState) decide(r *release, s *state, wg *sync.WaitGroup) {
 		}
 	} else {
 		// If there is no release in the cluster with this name and in this namespace, then install it!
-		if _, ok := (*cs)[fmt.Sprintf("%s-%s", r.Name, r.Namespace)]; !ok {
+		if _, ok := cs[r.key()]; !ok {
 			r.install()
 		} else {
 			// A release with the same name and in the same namespace exists, but it has a different context label (managed by another DSF)
@@ -126,8 +131,8 @@ func (cs *currentState) decide(r *release, s *state, wg *sync.WaitGroup) {
 // It searches the Current State for releases.
 // The key format for releases uniqueness is:  <release name - release namespace>
 // If status is provided as an input [deployed, deleted, failed], then the search will verify the release status matches the search status.
-func (cs *currentState) releaseExists(r *release, status string) bool {
-	v, ok := (*cs)[fmt.Sprintf("%s-%s", r.Name, r.Namespace)]
+func (cs currentState) releaseExists(r *release, status string) bool {
+	v, ok := cs[r.key()]
 	if !ok || v.HelmsmanContext != s.Context {
 		return false
 	}
@@ -138,39 +143,44 @@ func (cs *currentState) releaseExists(r *release, status string) bool {
 	return true
 }
 
+var resourceNameExtractor = regexp.MustCompile(`(^\w+\/|\.v\d+$)`)
+var releaseNameExtractor = regexp.MustCompile(`sh\.helm\.release\.v\d+\.`)
+
 // getHelmsmanReleases returns a map of all releases that are labeled with "MANAGED-BY=HELMSMAN"
 // The releases are categorized by the namespaces in which they are deployed
 // The returned map format is: map[<namespace>:map[<helmRelease>:true]]
-func (cs *currentState) getHelmsmanReleases() map[string]map[helmRelease]bool {
+func (cs currentState) getHelmsmanReleases() map[string]map[string]bool {
 	var lines []string
-	releases := make(map[string]map[helmRelease]bool)
+	releases := make(map[string]map[string]bool)
 	storageBackend := s.Settings.StorageBackend
 
 	for ns := range s.Namespaces {
-		cmd := command{
-			Cmd:         "kubectl",
-			Args:        []string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN", "-l", "HELMSMAN_CONTEXT=" + s.Context, "-o", "name"},
-			Description: "Getting Helmsman-managed releases in namespace [ " + ns + " ]",
-		}
+		cmd := kubectl([]string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN", "-l", "HELMSMAN_CONTEXT=" + s.Context, "-o", "name"}, "Getting Helmsman-managed releases in namespace [ "+ns+" ]")
 
 		exitCode, output, _ := cmd.exec(debug, verbose)
 
 		if exitCode != 0 {
 			log.Fatal(output)
 		}
-		if strings.EqualFold("No resources found.", strings.TrimSpace(output)) {
+		if !strings.EqualFold("No resources found.", strings.TrimSpace(output)) {
 			lines = strings.Split(output, "\n")
 		}
 
-		for _, r := range lines {
-			if r == "" {
+		for _, name := range lines {
+			if name == "" {
 				continue
 			}
+			name = resourceNameExtractor.ReplaceAllString(name, "")
+			name = releaseNameExtractor.ReplaceAllString(name, "")
 			if _, ok := releases[ns]; !ok {
-				releases[ns] = make(map[helmRelease]bool)
+				releases[ns] = make(map[string]bool)
 			}
-			releaseName := strings.Split(strings.Split(r, "/")[1], ".")[4]
-			releases[ns][(*cs)[releaseName+"-"+ns]] = true
+			releases[ns][name] = false
+			for _, app := range s.Apps {
+				if app.Name == name && app.Namespace == ns {
+					releases[ns][name] = true
+				}
+			}
 		}
 	}
 	return releases
@@ -181,35 +191,21 @@ func (cs *currentState) getHelmsmanReleases() map[string]map[helmRelease]bool {
 // For all untracked releases found, a decision is made to uninstall them and is added to the Helmsman plan
 // NOTE: Untracked releases don't benefit from either namespace or application protection.
 // NOTE: Removing/Commenting out an app from the desired state makes it untracked.
-func (cs *currentState) cleanUntrackedReleases() {
-	toDelete := make(map[string]map[helmRelease]bool)
+func (cs currentState) cleanUntrackedReleases() {
+	toDelete := 0
 	log.Info("Checking if any Helmsman managed releases are no longer tracked by your desired state ...")
-	for ns, releases := range cs.getHelmsmanReleases() {
-		for r := range releases {
-			tracked := false
-			for _, app := range s.Apps {
-				if app.Name == r.Name && app.Namespace == r.Namespace {
-					tracked = true
-				}
-			}
+	for ns, hr := range cs.getHelmsmanReleases() {
+		for name, tracked := range hr {
 			if !tracked {
-				if _, ok := toDelete[ns]; !ok {
-					toDelete[ns] = make(map[helmRelease]bool)
-				}
-				toDelete[ns][r] = true
-			}
-		}
-	}
-
-	if len(toDelete) == 0 {
-		log.Info("No untracked releases found")
-	} else {
-		for _, releases := range toDelete {
-			for r := range releases {
+				toDelete++
+				r := cs[name+"-"+ns]
 				logDecision("Untracked release [ "+r.Name+" ] found and it will be deleted", -800, delete)
 				r.uninstall()
 			}
 		}
+	}
+	if toDelete == 0 {
+		log.Info("No untracked releases found")
 	}
 }
 
@@ -220,9 +216,9 @@ func (cs *currentState) cleanUntrackedReleases() {
 // it will be purge deleted and installed in the same namespace using the new chart.
 // - If the release is NOT in the same namespace specified in the input,
 // it will be purge deleted and installed in the new namespace.
-func (cs *currentState) inspectUpgradeScenario(r *release) {
+func (cs currentState) inspectUpgradeScenario(r *release) {
 
-	rs, ok := (*cs)[fmt.Sprintf("%s-%s", r.Name, r.Namespace)]
+	rs, ok := cs[r.key()]
 	if !ok {
 		return
 	}
@@ -264,37 +260,4 @@ func (cs *currentState) inspectUpgradeScenario(r *release) {
 			" ] might not correctly connect existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/move_charts_across_namespaces.md"+
 			" for details if this release uses PV and PVC.", r.Priority, change)
 	}
-}
-
-// isProtected checks if a release is protected or not.
-// A protected is release is either: a) deployed in a protected namespace b) flagged as protected in the desired state file
-// Any release in a protected namespace is protected by default regardless of its flag
-// returns true if a release is protected, false otherwise
-func (cs *currentState) isProtected(r *release) bool {
-
-	// if the release does not exist in the cluster, it is not protected
-	if ok := cs.releaseExists(r, ""); !ok {
-		return false
-	}
-
-	if s.Namespaces[r.Namespace].Protected || r.Protected {
-		return true
-	}
-
-	return false
-
-}
-
-var chartNameExtractor = regexp.MustCompile(`[\\/]([^\\/]+)$`)
-
-// extractChartName extracts the Helm chart name from full chart name in the desired state.
-// example: it extracts "chartY" from "repoX/chartY" and "chartZ" from "c:\charts\chartZ"
-func extractChartName(releaseChart string) string {
-
-	m := chartNameExtractor.FindStringSubmatch(releaseChart)
-	if len(m) == 2 {
-		return m[1]
-	}
-
-	return ""
 }
