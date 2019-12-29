@@ -60,6 +60,7 @@ var noDefaultRepos bool
 var settings config
 
 func init() {
+	// Parse cli flags and read config files
 	Cli()
 }
 
@@ -90,6 +91,7 @@ func Main() {
 	}
 
 	if !skipValidation {
+		log.Info("Validating charts...")
 		// validate charts-versions exist in defined repos
 		if err := validateReleaseCharts(s.Apps); err != nil {
 			log.Fatal(err.Error())
@@ -109,12 +111,15 @@ func Main() {
 		cs.cleanUntrackedReleases()
 	}
 
-	p.sortPlan()
-	p.printPlan()
-	p.sendPlanToSlack()
+	p.sort()
+	p.print()
+	if debug {
+		p.printCmds()
+	}
+	p.sendToSlack()
 
 	if apply || dryRun || destroy {
-		p.execPlan()
+		p.exec()
 	}
 }
 

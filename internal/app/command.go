@@ -16,8 +16,12 @@ type command struct {
 	Description string
 }
 
+func (c *command) String() string {
+	return c.Cmd + " " + strings.Join(c.Args, " ")
+}
+
 // exec executes the executable command and returns the exit code and execution result
-func (c command) exec(debug bool, verbose bool) (int, string, string) {
+func (c *command) exec(debug bool, verbose bool) (int, string, string) {
 	// Only use non-empty string args
 	args := []string{}
 	for _, str := range c.Args {
@@ -55,7 +59,7 @@ func (c command) exec(debug bool, verbose bool) (int, string, string) {
 
 // toolExists returns true if the tool is present in the environment and false otherwise.
 // It takes as input the tool's command to check if it is recognizable or not. e.g. helm or kubectl
-func toolExists(tool string) bool {
+func toolExists(tool string, debug bool) bool {
 	cmd := command{
 		Cmd:         tool,
 		Args:        []string{},

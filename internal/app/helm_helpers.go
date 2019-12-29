@@ -2,18 +2,38 @@ package app
 
 import (
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/Praqma/helmsman/internal/gcs"
 )
 
+// helmCmd prepares a helm command to be executed
+func helmCmd(args []string, desc string) command {
+	return command{
+		Cmd:         helmBin,
+		Args:        args,
+		Description: desc,
+	}
+}
+
+var chartNameExtractor = regexp.MustCompile(`[\\/]([^\\/]+)$`)
+
+// extractChartName extracts the Helm chart name from full chart name in the desired state.
+// example: it extracts "chartY" from "repoX/chartY" and "chartZ" from "c:\charts\chartZ"
+func extractChartName(releaseChart string) string {
+
+	m := chartNameExtractor.FindStringSubmatch(releaseChart)
+	if len(m) == 2 {
+		return m[1]
+	}
+
+	return ""
+}
+
 // getHelmClientVersion returns Helm client Version
 func getHelmVersion() string {
-	cmd := command{
-		Cmd:         helmBin,
-		Args:        []string{"version", "--short", "-c"},
-		Description: "Checking Helm version",
-	}
+	cmd := helmCmd([]string{"version", "--short", "-c"}, "Checking Helm version")
 
 	exitCode, result, _ := cmd.exec(debug, false)
 	if exitCode != 0 {
@@ -25,11 +45,7 @@ func getHelmVersion() string {
 // helmPluginExists returns true if the plugin is present in the environment and false otherwise.
 // It takes as input the plugin's name to check if it is recognizable or not. e.g. diff
 func helmPluginExists(plugin string) bool {
-	cmd := command{
-		Cmd:         helmBin,
-		Args:        []string{"plugin", "list"},
-		Description: "Validating that [ " + plugin + " ] is installed",
-	}
+	cmd := helmCmd([]string{"plugin", "list"}, "Validating that [ "+plugin+" ] is installed")
 
 	exitCode, result, _ := cmd.exec(debug, false)
 
@@ -42,11 +58,7 @@ func helmPluginExists(plugin string) bool {
 
 // updateChartDep updates dependencies for a local chart
 func updateChartDep(chartPath string) (bool, string) {
-	cmd := command{
-		Cmd:         helmBin,
-		Args:        []string{"dependency", "update", chartPath},
-		Description: "Updating dependency for local chart [ " + chartPath + " ]",
-	}
+	cmd := helmCmd([]string{"dependency", "update", chartPath}, "Updating dependency for local chart [ "+chartPath+" ]")
 
 	exitCode, err, _ := cmd.exec(debug, verbose)
 
@@ -84,11 +96,7 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 
 		}
 
-		cmd := command{
-			Cmd:         helmBin,
-			Args:        concat([]string{"repo", "add", repoName, repoLink}, basicAuthArgs),
-			Description: "Adding helm repository [ " + repoName + " ]",
-		}
+		cmd := helmCmd(concat([]string{"repo", "add", repoName, repoLink}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
 
 		if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
 			return false, "While adding helm repository [" + repoName + "]: " + err
@@ -96,11 +104,7 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 
 	}
 
-	cmd := command{
-		Cmd:         helmBin,
-		Args:        []string{"repo", "update"},
-		Description: "Updating helm repositories",
-	}
+	cmd := helmCmd([]string{"repo", "update"}, "Updating helm repositories")
 
 	if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
 		return false, "While updating helm repos : " + err

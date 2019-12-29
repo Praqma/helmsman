@@ -38,7 +38,7 @@ func Test_toolExists(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := toolExists(tt.args.tool); got != tt.want {
+			if got := toolExists(tt.args.tool, false); got != tt.want {
 				t.Errorf("toolExists() = %v, want %v", got, tt.want)
 			}
 		})

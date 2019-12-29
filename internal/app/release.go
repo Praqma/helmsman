@@ -43,6 +43,10 @@ type chartVersion struct {
 	Description string `json:"description"`
 }
 
+func (r *release) key() string {
+	return fmt.Sprintf("%s-%s", r.Name, r.Namespace)
+}
+
 // isReleaseConsideredToRun checks if a release is being targeted for operations as specified by user cmd flags (--group or --target)
 func (r *release) isConsideredToRun() bool {
 	if len(targetMap) > 0 {
@@ -62,7 +66,7 @@ func (r *release) isConsideredToRun() bool {
 
 // validateRelease validates if a release inside a desired state meets the specifications or not.
 // check the full specification @ https://github.com/Praqma/helmsman/docs/desired_state_spec.md
-func (r *release) validate(appLabel string, names map[string]map[string]bool, s state) (bool, string) {
+func (r *release) validate(appLabel string, names map[string]map[string]bool, s *state) (bool, string) {
 	if r.Name == "" {
 		r.Name = appLabel
 	}
@@ -73,7 +77,7 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 
 	if nsOverride == "" && r.Namespace == "" {
 		return false, "release targeted namespace can't be empty."
-	} else if nsOverride == "" && r.Namespace != "" && r.Namespace != "kube-system" && !checkNamespaceDefined(r.Namespace, s) {
+	} else if nsOverride == "" && r.Namespace != "" && r.Namespace != "kube-system" && !s.checkNamespaceDefined(r.Namespace) {
 		return false, "release " + r.Name + " is using namespace [ " + r.Namespace + " ] which is not defined in the Namespaces section of your desired state file." +
 			" Release [ " + r.Name + " ] can't be installed in that Namespace until its defined."
 	}
@@ -164,11 +168,7 @@ func (r *release) validateChart(app string, wg *sync.WaitGroup, c chan string) {
 	}
 	if validateCurrentChart {
 		if isLocalChart(r.Chart) {
-			cmd := command{
-				Cmd:         helmBin,
-				Args:        []string{"inspect", "chart", r.Chart},
-				Description: "Validating [ " + r.Chart + " ] chart's availability",
-			}
+			cmd := helmCmd([]string{"inspect", "chart", r.Chart}, "Validating [ "+r.Chart+" ] chart's availability")
 
 			var output string
 			var exitCode int
@@ -192,11 +192,7 @@ func (r *release) validateChart(app string, wg *sync.WaitGroup, c chan string) {
 			if len(version) == 0 {
 				version = "*"
 			}
-			cmd := command{
-				Cmd:         helmBin,
-				Args:        []string{"search", "repo", r.Chart, "--version", version, "-l"},
-				Description: "Validating [ " + r.Chart + " ] chart's version [ " + r.Version + " ] availability",
-			}
+			cmd := helmCmd([]string{"search", "repo", r.Chart, "--version", version, "-l"}, "Validating [ "+r.Chart+" ] chart's version [ "+r.Version+" ] availability")
 
 			if exitCode, result, _ := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
 				c <- "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified for " +
@@ -213,11 +209,7 @@ func (r *release) getChartVersion() (string, string) {
 	if isLocalChart(r.Chart) {
 		return r.Version, ""
 	}
-	cmd := command{
-		Cmd:         helmBin,
-		Args:        []string{"search", "repo", r.Chart, "--version", r.Version, "-o", "json"},
-		Description: "Getting latest chart's version " + r.Chart + "-" + r.Version + "",
-	}
+	cmd := helmCmd([]string{"search", "repo", r.Chart, "--version", r.Version, "-o", "json"}, "Getting latest chart's version "+r.Chart+"-"+r.Version+"")
 
 	var (
 		exitCode int
@@ -243,22 +235,14 @@ func (r *release) getChartVersion() (string, string) {
 
 // testRelease creates a Helm command to test a particular release.
 func (r *release) test() {
-	cmd := command{
-		Cmd:         helmBin,
-		Args:        []string{"test", "--namespace", r.Namespace, r.Name},
-		Description: "Running tests for release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
-	}
+	cmd := helmCmd(r.getHelmArgsFor("test"), "Running tests for release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 	outcome.addCommand(cmd, r.Priority, r)
 	logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is required to be tested during installation", r.Priority, noop)
 }
 
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
 func (r *release) install() {
-	cmd := command{
-		Cmd:         helmBin,
-		Args:        concat([]string{"install", r.Name, r.Chart, "--namespace", r.Namespace}, r.getValuesFiles(), []string{"--version", r.Version}, r.getSetValues(), r.getSetStringValues(), r.getWait(), r.getHelmFlags()),
-		Description: "Installing release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
-	}
+	cmd := helmCmd(r.getHelmArgsFor("install"), "Installing release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 	outcome.addCommand(cmd, r.Priority, r)
 	logDecision("Release [ "+r.Name+" ] will be installed in [ "+r.Namespace+" ] namespace", r.Priority, create)
 
@@ -274,11 +258,7 @@ func (r *release) uninstall() {
 		priority = priority * -1
 	}
 
-	cmd := command{
-		Cmd:         helmBin,
-		Args:        concat([]string{"uninstall", "--namespace", r.Namespace, r.Name}, getDryRunFlags()),
-		Description: "Deleting release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
-	}
+	cmd := helmCmd(concat(r.getHelmArgsFor("uninstall"), getDryRunFlags()), "Deleting release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 	outcome.addCommand(cmd, priority, r)
 	logDecision(fmt.Sprintf("release [ %s ] is desired to be DELETED.", r.Name), r.Priority, delete)
 }
@@ -300,11 +280,7 @@ func (r *release) diff() string {
 		suppressDiffSecretsFlag = "--suppress-secrets"
 	}
 
-	cmd := command{
-		Cmd:         helmBin,
-		Args:        concat([]string{"diff", colorFlag}, diffContextFlag, []string{suppressDiffSecretsFlag, "--namespace", r.Namespace, "upgrade", r.Name, r.Chart}, r.getValuesFiles(), []string{"--version", r.Version}, r.getSetValues(), r.getSetStringValues()),
-		Description: "Diffing release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
-	}
+	cmd := helmCmd(concat([]string{"diff", colorFlag, suppressDiffSecretsFlag}, diffContextFlag, r.getHelmArgsFor("upgrade")), "Diffing release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
 	if exitCode, msg, _ = cmd.exec(debug, verbose); exitCode != 0 {
 		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", exitCode, msg))
@@ -323,11 +299,7 @@ func (r *release) upgrade() {
 	if forceUpgrades {
 		force = "--force"
 	}
-	cmd := command{
-		Cmd:         helmBin,
-		Args:        concat([]string{"upgrade", "--namespace", r.Namespace, r.Name, r.Chart}, r.getValuesFiles(), []string{"--version", r.Version, force}, r.getSetValues(), r.getSetStringValues(), r.getWait(), r.getHelmFlags()),
-		Description: "Upgrading release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
-	}
+	cmd := helmCmd(concat(r.getHelmArgsFor("upgrade"), []string{force}, r.getWait(), r.getHelmFlags()), "Upgrading release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
 	outcome.addCommand(cmd, r.Priority, r)
 }
@@ -336,37 +308,25 @@ func (r *release) upgrade() {
 // This is used when moving a release to another namespace or when changing the chart used for it.
 func (r *release) reInstall(rs helmRelease) {
 
-	delCmd := command{
-		Cmd:         helmBin,
-		Args:        concat([]string{"delete", "--purge", r.Name}, getDryRunFlags()),
-		Description: "Deleting release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
-	}
+	delCmd := helmCmd(concat([]string{"delete", "--purge", r.Name}, getDryRunFlags()), "Deleting release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 	outcome.addCommand(delCmd, r.Priority, r)
 
-	installCmd := command{
-		Cmd:         helmBin,
-		Args:        concat([]string{"install", r.Chart, "--version", r.Version, "-n", r.Name, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getWait(), r.getHelmFlags()),
-		Description: "Installing release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
-	}
+	installCmd := helmCmd(r.getHelmArgsFor("install"), "Installing release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 	outcome.addCommand(installCmd, r.Priority, r)
 }
 
 // rollbackRelease evaluates if a rollback action needs to be taken for a given release.
 // if the release is already deleted but from a different namespace than the one specified in input,
 // it purge deletes it and create it in the specified namespace.
-func (r *release) rollback(cs *currentState) {
-	rs, ok := (*cs)[fmt.Sprintf("%s-%s", r.Name, r.Namespace)]
+func (r *release) rollback(cs currentState) {
+	rs, ok := cs[r.key()]
 	if !ok {
 		return
 	}
 
 	if r.Namespace == rs.Namespace {
 
-		cmd := command{
-			Cmd:         helmBin,
-			Args:        concat([]string{"rollback", r.Name, rs.getRevision()}, r.getWait(), r.getTimeout(), r.getNoHooks(), getDryRunFlags()),
-			Description: "Rolling back release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]",
-		}
+		cmd := helmCmd(concat([]string{"rollback", r.Name, rs.getRevision()}, r.getWait(), r.getTimeout(), r.getNoHooks(), getDryRunFlags()), "Rolling back release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 		outcome.addCommand(cmd, r.Priority, r)
 		r.upgrade() // this is to reflect any changes in values file(s)
 		logDecision("Release [ "+r.Name+" ] was deleted and is desired to be rolled back to "+
@@ -380,6 +340,21 @@ func (r *release) rollback(cs *currentState) {
 			" for details if this release uses PV and PVC.", r.Priority, create)
 
 	}
+}
+
+// isProtected checks if a release is protected or not.
+// A protected is release is either: a) deployed in a protected namespace b) flagged as protected in the desired state file
+// Any release in a protected namespace is protected by default regardless of its flag
+// returns true if a release is protected, false otherwise
+func (r *release) isProtected(cs currentState) bool {
+	// if the release does not exist in the cluster, it is not protected
+	if ok := cs.releaseExists(r, ""); !ok {
+		return false
+	}
+	if s.Namespaces[r.Namespace].Protected || r.Protected {
+		return true
+	}
+	return false
 }
 
 // getNoHooks returns the no-hooks flag for install/upgrade commands
@@ -479,6 +454,17 @@ func (r *release) getHelmFlags() []string {
 
 	flags = append(flags, r.HelmFlags...)
 	return concat(r.getNoHooks(), r.getTimeout(), getDryRunFlags(), flags)
+}
+
+func (r *release) getHelmArgsFor(action string) []string {
+	switch action {
+	case "install":
+		return concat([]string{action, r.Name, r.Chart, "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getWait(), r.getHelmFlags())
+	case "upgrade":
+		return concat([]string{action, "--namespace", r.Namespace, r.Name, r.Chart}, r.getValuesFiles(), []string{"--version", r.Version}, r.getSetValues(), r.getSetStringValues())
+	default:
+		return []string{action, "--namespace", r.Namespace, r.Name}
+	}
 }
 
 func (r *release) checkChartDepUpdate() {
