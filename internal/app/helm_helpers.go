@@ -1,6 +1,8 @@
 package app
 
 import (
+	"errors"
+	"fmt"
 	"net/url"
 	"regexp"
 	"strings"
@@ -35,11 +37,11 @@ func extractChartName(releaseChart string) string {
 func getHelmVersion() string {
 	cmd := helmCmd([]string{"version", "--short", "-c"}, "Checking Helm version")
 
-	exitCode, result, _ := cmd.exec(debug, false)
-	if exitCode != 0 {
-		log.Fatal("While checking helm version: " + result)
+	result := cmd.exec()
+	if result.code != 0 {
+		log.Fatal("While checking helm version: " + result.errors)
 	}
-	return result
+	return result.output
 }
 
 // helmPluginExists returns true if the plugin is present in the environment and false otherwise.
@@ -47,30 +49,29 @@ func getHelmVersion() string {
 func helmPluginExists(plugin string) bool {
 	cmd := helmCmd([]string{"plugin", "list"}, "Validating that [ "+plugin+" ] is installed")
 
-	exitCode, result, _ := cmd.exec(debug, false)
+	result := cmd.exec()
 
-	if exitCode != 0 {
+	if result.code != 0 {
 		return false
 	}
 
-	return strings.Contains(result, plugin)
+	return strings.Contains(result.output, plugin)
 }
 
 // updateChartDep updates dependencies for a local chart
-func updateChartDep(chartPath string) (bool, string) {
+func updateChartDep(chartPath string) error {
 	cmd := helmCmd([]string{"dependency", "update", chartPath}, "Updating dependency for local chart [ "+chartPath+" ]")
 
-	exitCode, err, _ := cmd.exec(debug, verbose)
-
-	if exitCode != 0 {
-		return false, err
+	result := cmd.exec()
+	if result.code != 0 {
+		return errors.New(result.errors)
 	}
-	return true, ""
+	return nil
 }
 
 // addHelmRepos adds repositories to Helm if they don't exist already.
 // Helm does not mind if a repo with the same name exists. It treats it as an update.
-func addHelmRepos(repos map[string]string) (bool, string) {
+func addHelmRepos(repos map[string]string) error {
 
 	for repoName, repoLink := range repos {
 		basicAuthArgs := []string{}
@@ -98,17 +99,17 @@ func addHelmRepos(repos map[string]string) (bool, string) {
 
 		cmd := helmCmd(concat([]string{"repo", "add", repoName, repoLink}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
 
-		if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
-			return false, "While adding helm repository [" + repoName + "]: " + err
+		if result := cmd.exec(); result.code != 0 {
+			return fmt.Errorf("While adding helm repository ["+repoName+"]: %w", err)
 		}
 
 	}
 
 	cmd := helmCmd([]string{"repo", "update"}, "Updating helm repositories")
 
-	if exitCode, err, _ := cmd.exec(debug, verbose); exitCode != 0 {
-		return false, "While updating helm repos : " + err
+	if result := cmd.exec(); result.code != 0 {
+		return errors.New("While updating helm repos : " + result.errors)
 	}
 
-	return true, ""
+	return nil
 }

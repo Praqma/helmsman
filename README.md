@@ -36,7 +36,7 @@ To limit execution to specific application:
 
 - **Built for CD**: Helmsman can be used as a docker image or a binary.
 - **Applications as code**: describe your desired applications and manage them from a single version-controlled declarative file.
-- **Suitable for Multitenant Clusters**: deploy Tiller in different namespaces with service accounts and TLS.
+- **Suitable for Multitenant Clusters**: deploy Tiller in different namespaces with service accounts and TLS (versions 1.x).
 - **Easy to use**: deep knowledge of Helm CLI and Kubectl is NOT mandatory to use Helmsman.
 - **Plan, View, apply**: you can run Helmsman to generate and view a plan with/without executing it.
 - **Portable**: Helmsman can be used to manage charts deployments on any k8s cluster.

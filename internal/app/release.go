@@ -48,15 +48,15 @@ func (r *release) key() string {
 }
 
 // isReleaseConsideredToRun checks if a release is being targeted for operations as specified by user cmd flags (--group or --target)
-func (r *release) isConsideredToRun() bool {
-	if len(targetMap) > 0 {
-		if _, ok := targetMap[r.Name]; ok {
+func (r *release) isConsideredToRun(s *state) bool {
+	if len(s.TargetMap) > 0 {
+		if _, ok := s.TargetMap[r.Name]; ok {
 			return true
 		}
 		return false
 	}
-	if len(groupMap) > 0 {
-		if _, ok := groupMap[r.Group]; ok {
+	if len(s.GroupMap) > 0 {
+		if _, ok := s.GroupMap[r.Group]; ok {
 			return true
 		}
 		return false
@@ -66,57 +66,57 @@ func (r *release) isConsideredToRun() bool {
 
 // validateRelease validates if a release inside a desired state meets the specifications or not.
 // check the full specification @ https://github.com/Praqma/helmsman/docs/desired_state_spec.md
-func (r *release) validate(appLabel string, names map[string]map[string]bool, s *state) (bool, string) {
+func (r *release) validate(appLabel string, names map[string]map[string]bool, s *state) error {
 	if r.Name == "" {
 		r.Name = appLabel
 	}
 
 	if names[r.Name][r.Namespace] {
-		return false, "release name must be unique within a given Tiller."
+		return errors.New("release name must be unique within a given namespace.")
 	}
 
-	if nsOverride == "" && r.Namespace == "" {
-		return false, "release targeted namespace can't be empty."
-	} else if nsOverride == "" && r.Namespace != "" && r.Namespace != "kube-system" && !s.checkNamespaceDefined(r.Namespace) {
-		return false, "release " + r.Name + " is using namespace [ " + r.Namespace + " ] which is not defined in the Namespaces section of your desired state file." +
-			" Release [ " + r.Name + " ] can't be installed in that Namespace until its defined."
+	if flags.nsOverride == "" && r.Namespace == "" {
+		return errors.New("release targeted namespace can't be empty.")
+	} else if flags.nsOverride == "" && r.Namespace != "" && r.Namespace != "kube-system" && !s.checkNamespaceDefined(r.Namespace) {
+		return errors.New("release " + r.Name + " is using namespace [ " + r.Namespace + " ] which is not defined in the Namespaces section of your desired state file." +
+			" Release [ " + r.Name + " ] can't be installed in that Namespace until its defined.")
 	}
 	_, err := os.Stat(r.Chart)
 	if r.Chart == "" || os.IsNotExist(err) && !strings.ContainsAny(r.Chart, "/") {
-		return false, "chart can't be empty and must be of the format: repo/chart."
+		return errors.New("chart can't be empty and must be of the format: repo/chart.")
 	}
 	if r.Version == "" {
-		return false, "version can't be empty."
+		return errors.New("version can't be empty.")
 	}
 
 	_, err = os.Stat(r.ValuesFile)
 	if r.ValuesFile != "" && (!isOfType(r.ValuesFile, []string{".yaml", ".yml", ".json"}) || err != nil) {
-		return false, fmt.Sprintf("valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to %q).", r.ValuesFile)
+		return errors.New(fmt.Sprintf("valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to %q).", r.ValuesFile))
 	} else if r.ValuesFile != "" && len(r.ValuesFiles) > 0 {
-		return false, "valuesFile and valuesFiles should not be used together."
+		return errors.New("valuesFile and valuesFiles should not be used together.")
 	} else if len(r.ValuesFiles) > 0 {
 		for i, filePath := range r.ValuesFiles {
 			if _, pathErr := os.Stat(filePath); !isOfType(filePath, []string{".yaml", ".yml", ".json"}) || pathErr != nil {
-				return false, fmt.Sprintf("valuesFiles must be valid relative (from dsf file) file paths for a yaml file; path at index %d provided path resolved to %q.", i, filePath)
+				return errors.New(fmt.Sprintf("valuesFiles must be valid relative (from dsf file) file paths for a yaml file; path at index %d provided path resolved to %q.", i, filePath))
 			}
 		}
 	}
 
 	_, err = os.Stat(r.SecretsFile)
 	if r.SecretsFile != "" && (!isOfType(r.SecretsFile, []string{".yaml", ".yml", ".json"}) || err != nil) {
-		return false, fmt.Sprintf("secretsFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to %q).", r.SecretsFile)
+		return errors.New(fmt.Sprintf("secretsFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to %q).", r.SecretsFile))
 	} else if r.SecretsFile != "" && len(r.SecretsFiles) > 0 {
-		return false, "secretsFile and secretsFiles should not be used together."
+		return errors.New("secretsFile and secretsFiles should not be used together.")
 	} else if len(r.SecretsFiles) > 0 {
 		for _, filePath := range r.SecretsFiles {
 			if i, pathErr := os.Stat(filePath); !isOfType(filePath, []string{".yaml", ".yml", ".json"}) || pathErr != nil {
-				return false, fmt.Sprintf("secretsFiles must be valid relative (from dsf file) file paths for a yaml file; path at index %d provided path resolved to %q.", i, filePath)
+				return errors.New(fmt.Sprintf("secretsFiles must be valid relative (from dsf file) file paths for a yaml file; path at index %d provided path resolved to %q.", i, filePath))
 			}
 		}
 	}
 
 	if r.Priority != 0 && r.Priority > 0 {
-		return false, "priority can only be 0 or negative value, positive values are not allowed."
+		return errors.New("priority can only be 0 or negative value, positive values are not allowed.")
 	}
 
 	if names[r.Name] == nil {
@@ -129,23 +129,23 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 	for k, v := range r.Set {
 		if strings.Contains(v, "$") {
 			if os.ExpandEnv(strings.Replace(v, "$$", "${HELMSMAN_DOLLAR}", -1)) == "" {
-				return false, "env var [ " + v + " ] is not set, but is wanted to be passed for [ " + k + " ] in [[ " + r.Name + " ]]"
+				return errors.New("env var [ " + v + " ] is not set, but is wanted to be passed for [ " + k + " ] in [[ " + r.Name + " ]]")
 			}
 		}
 	}
 
-	return true, ""
+	return nil
 }
 
 // validateReleaseCharts validates if the charts defined in a release are valid.
 // Valid charts are the ones that can be found in the defined repos.
 // This function uses Helm search to verify if the chart can be found or not.
-func validateReleaseCharts(apps map[string]*release) error {
+func validateReleaseCharts(s *state) error {
 	wg := sync.WaitGroup{}
-	c := make(chan string, len(apps))
-	for app, r := range apps {
+	c := make(chan string, len(s.Apps))
+	for app, r := range s.Apps {
 		wg.Add(1)
-		go r.validateChart(app, &wg, c)
+		go r.validateChart(app, s, &wg, c)
 	}
 	wg.Wait()
 	if len(c) > 0 {
@@ -159,25 +159,24 @@ func validateReleaseCharts(apps map[string]*release) error {
 
 var versionExtractor = regexp.MustCompile(`version:\s?(.*)`)
 
-func (r *release) validateChart(app string, wg *sync.WaitGroup, c chan string) {
+func (r *release) validateChart(app string, s *state, wg *sync.WaitGroup, c chan string) {
 
 	defer wg.Done()
 	validateCurrentChart := true
-	if !r.isConsideredToRun() {
+	if !r.isConsideredToRun(s) {
 		validateCurrentChart = false
 	}
 	if validateCurrentChart {
 		if isLocalChart(r.Chart) {
 			cmd := helmCmd([]string{"inspect", "chart", r.Chart}, "Validating [ "+r.Chart+" ] chart's availability")
 
-			var output string
-			var exitCode int
-			if exitCode, output, _ = cmd.exec(debug, verbose); exitCode != 0 {
+			result := cmd.exec()
+			if result.code != 0 {
 				maybeRepo := filepath.Base(filepath.Dir(r.Chart))
 				c <- "Chart [ " + r.Chart + " ] for app [" + app + "] can't be found. Did you mean to add a repo [ " + maybeRepo + " ]?"
 				return
 			}
-			matches := versionExtractor.FindStringSubmatch(output)
+			matches := versionExtractor.FindStringSubmatch(result.output)
 			if len(matches) == 2 {
 				version := matches[1]
 				if r.Version != version {
@@ -194,7 +193,7 @@ func (r *release) validateChart(app string, wg *sync.WaitGroup, c chan string) {
 			}
 			cmd := helmCmd([]string{"search", "repo", r.Chart, "--version", version, "-l"}, "Validating [ "+r.Chart+" ] chart's version [ "+r.Version+" ] availability")
 
-			if exitCode, result, _ := cmd.exec(debug, verbose); exitCode != 0 || strings.Contains(result, "No results found") {
+			if result := cmd.exec(); result.code != 0 || strings.Contains(result.output, "No results found") {
 				c <- "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified for " +
 					"app [" + app + "] but was not found"
 				return
@@ -211,17 +210,13 @@ func (r *release) getChartVersion() (string, string) {
 	}
 	cmd := helmCmd([]string{"search", "repo", r.Chart, "--version", r.Version, "-o", "json"}, "Getting latest chart's version "+r.Chart+"-"+r.Version+"")
 
-	var (
-		exitCode int
-		result   string
-	)
-
-	if exitCode, result, _ = cmd.exec(debug, verbose); exitCode != 0 {
+	result := cmd.exec()
+	if result.code != 0 {
 		return "", "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified but not found in the helm repositories"
 	}
 
 	chartVersions := make([]chartVersion, 0)
-	if err := json.Unmarshal([]byte(result), &chartVersions); err != nil {
+	if err := json.Unmarshal([]byte(result.output), &chartVersions); err != nil {
 		log.Fatal(fmt.Sprint(err))
 	}
 
@@ -234,111 +229,109 @@ func (r *release) getChartVersion() (string, string) {
 }
 
 // testRelease creates a Helm command to test a particular release.
-func (r *release) test() {
+func (r *release) test(p *plan) {
 	cmd := helmCmd(r.getHelmArgsFor("test"), "Running tests for release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-	outcome.addCommand(cmd, r.Priority, r)
-	logDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is required to be tested during installation", r.Priority, noop)
+	p.addCommand(cmd, r.Priority, r)
+	p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is required to be tested during installation", r.Priority, noop)
 }
 
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
-func (r *release) install() {
+func (r *release) install(p *plan) {
 	cmd := helmCmd(r.getHelmArgsFor("install"), "Installing release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-	outcome.addCommand(cmd, r.Priority, r)
-	logDecision("Release [ "+r.Name+" ] will be installed in [ "+r.Namespace+" ] namespace", r.Priority, create)
+	p.addCommand(cmd, r.Priority, r)
+	p.addDecision("Release [ "+r.Name+" ] will be installed in [ "+r.Namespace+" ] namespace", r.Priority, create)
 
 	if r.Test {
-		r.test()
+		r.test(p)
 	}
 }
 
 // uninstall deletes a release from a particular Tiller in a k8s cluster
-func (r *release) uninstall() {
+func (r *release) uninstall(p *plan) {
 	priority := r.Priority
 	if settings.ReverseDelete {
 		priority = priority * -1
 	}
 
-	cmd := helmCmd(concat(r.getHelmArgsFor("uninstall"), getDryRunFlags()), "Deleting release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-	outcome.addCommand(cmd, priority, r)
-	logDecision(fmt.Sprintf("release [ %s ] is desired to be DELETED.", r.Name), r.Priority, delete)
+	cmd := helmCmd(concat(r.getHelmArgsFor("uninstall"), flags.getDryRunFlags()), "Deleting release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
+	p.addCommand(cmd, priority, r)
+	p.addDecision(fmt.Sprintf("release [ %s ] is desired to be DELETED.", r.Name), r.Priority, delete)
 }
 
 // diffRelease diffs an existing release with the specified values.yaml
 func (r *release) diff() string {
-	exitCode := 0
-	msg := ""
 	colorFlag := ""
 	diffContextFlag := []string{}
 	suppressDiffSecretsFlag := ""
-	if noColors {
+	if flags.noColors {
 		colorFlag = "--no-color"
 	}
-	if diffContext != -1 {
-		diffContextFlag = []string{"--context", strconv.Itoa(diffContext)}
+	if flags.diffContext != -1 {
+		diffContextFlag = []string{"--context", strconv.Itoa(flags.diffContext)}
 	}
-	if suppressDiffSecrets {
+	if flags.suppressDiffSecrets {
 		suppressDiffSecretsFlag = "--suppress-secrets"
 	}
 
 	cmd := helmCmd(concat([]string{"diff", colorFlag, suppressDiffSecretsFlag}, diffContextFlag, r.getHelmArgsFor("upgrade")), "Diffing release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
-	if exitCode, msg, _ = cmd.exec(debug, verbose); exitCode != 0 {
-		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", exitCode, msg))
+	result := cmd.exec()
+	if result.code != 0 {
+		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors))
 	} else {
-		if (verbose || showDiff) && msg != "" {
-			fmt.Println(msg)
+		if (flags.verbose || flags.showDiff) && result.output != "" {
+			fmt.Println(result.output)
 		}
 	}
 
-	return msg
+	return result.output
 }
 
 // upgradeRelease upgrades an existing release with the specified values.yaml
-func (r *release) upgrade() {
+func (r *release) upgrade(p *plan) {
 	var force string
-	if forceUpgrades {
+	if flags.forceUpgrades {
 		force = "--force"
 	}
 	cmd := helmCmd(concat(r.getHelmArgsFor("upgrade"), []string{force}, r.getWait(), r.getHelmFlags()), "Upgrading release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
-	outcome.addCommand(cmd, r.Priority, r)
+	p.addCommand(cmd, r.Priority, r)
 }
 
 // reInstall purge deletes a release and reinstalls it.
 // This is used when moving a release to another namespace or when changing the chart used for it.
-func (r *release) reInstall(rs helmRelease) {
+func (r *release) reInstall(rs helmRelease, p *plan) {
 
-	delCmd := helmCmd(concat([]string{"delete", "--purge", r.Name}, getDryRunFlags()), "Deleting release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-	outcome.addCommand(delCmd, r.Priority, r)
+	delCmd := helmCmd(concat([]string{"delete", "--purge", r.Name}, flags.getDryRunFlags()), "Deleting release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
+	p.addCommand(delCmd, r.Priority, r)
 
 	installCmd := helmCmd(r.getHelmArgsFor("install"), "Installing release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-	outcome.addCommand(installCmd, r.Priority, r)
+	p.addCommand(installCmd, r.Priority, r)
 }
 
 // rollbackRelease evaluates if a rollback action needs to be taken for a given release.
 // if the release is already deleted but from a different namespace than the one specified in input,
 // it purge deletes it and create it in the specified namespace.
-func (r *release) rollback(cs currentState) {
-	rs, ok := cs[r.key()]
+func (r *release) rollback(cs *currentState, p *plan) {
+	rs, ok := cs.releases[r.key()]
 	if !ok {
 		return
 	}
 
 	if r.Namespace == rs.Namespace {
 
-		cmd := helmCmd(concat([]string{"rollback", r.Name, rs.getRevision()}, r.getWait(), r.getTimeout(), r.getNoHooks(), getDryRunFlags()), "Rolling back release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-		outcome.addCommand(cmd, r.Priority, r)
-		r.upgrade() // this is to reflect any changes in values file(s)
-		logDecision("Release [ "+r.Name+" ] was deleted and is desired to be rolled back to "+
+		cmd := helmCmd(concat([]string{"rollback", r.Name, rs.getRevision()}, r.getWait(), r.getTimeout(), r.getNoHooks(), flags.getDryRunFlags()), "Rolling back release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
+		p.addCommand(cmd, r.Priority, r)
+		r.upgrade(p) // this is to reflect any changes in values file(s)
+		p.addDecision("Release [ "+r.Name+" ] was deleted and is desired to be rolled back to "+
 			"namespace [ "+r.Namespace+" ]", r.Priority, create)
 	} else {
-		r.reInstall(rs)
-		logDecision("Release [ "+r.Name+" ] is deleted BUT from namespace [ "+rs.Namespace+
+		r.reInstall(rs, p)
+		p.addDecision("Release [ "+r.Name+" ] is deleted BUT from namespace [ "+rs.Namespace+
 			" ]. Will purge delete it from there and install it in namespace [ "+r.Namespace+" ]", r.Priority, create)
-		logDecision("WARNING: rolling back release [ "+r.Name+" ] from [ "+rs.Namespace+" ] to [ "+r.Namespace+
+		p.addDecision("WARNING: rolling back release [ "+r.Name+" ] from [ "+rs.Namespace+" ] to [ "+r.Namespace+
 			" ] might not correctly connect to existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/apps/moving_across_namespaces.md"+
 			" for details if this release uses PV and PVC.", r.Priority, create)
-
 	}
 }
 
@@ -346,7 +339,7 @@ func (r *release) rollback(cs currentState) {
 // A protected is release is either: a) deployed in a protected namespace b) flagged as protected in the desired state file
 // Any release in a protected namespace is protected by default regardless of its flag
 // returns true if a release is protected, false otherwise
-func (r *release) isProtected(cs currentState) bool {
+func (r *release) isProtected(cs *currentState, s *state) bool {
 	// if the release does not exist in the cluster, it is not protected
 	if ok := cs.releaseExists(r, ""); !ok {
 		return false
@@ -450,10 +443,10 @@ func (r *release) getDesiredNamespace() string {
 
 // getHelmFlags returns helm flags
 func (r *release) getHelmFlags() []string {
-	var flags []string
+	var flgs []string
 
-	flags = append(flags, r.HelmFlags...)
-	return concat(r.getNoHooks(), r.getTimeout(), getDryRunFlags(), flags)
+	flgs = append(flgs, r.HelmFlags...)
+	return concat(r.getNoHooks(), r.getTimeout(), flags.getDryRunFlags(), flgs)
 }
 
 func (r *release) getHelmArgsFor(action string) []string {
@@ -468,9 +461,9 @@ func (r *release) getHelmArgsFor(action string) []string {
 }
 
 func (r *release) checkChartDepUpdate() {
-	if updateDeps && isLocalChart(r.Chart) {
-		if ok, err := updateChartDep(r.Chart); !ok {
-			log.Fatal("helm dependency update failed: " + err)
+	if flags.updateDeps && isLocalChart(r.Chart) {
+		if err := updateChartDep(r.Chart); err != nil {
+			log.Fatal("helm dependency update failed: " + err.Error())
 		}
 	}
 }

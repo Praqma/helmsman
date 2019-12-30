@@ -24,11 +24,11 @@ type helmRelease struct {
 func getHelmReleases() []helmRelease {
 	var allReleases []helmRelease
 	cmd := helmCmd([]string{"list", "--all", "--max", "0", "--output", "json", "--all-namespaces"}, "Listing all existing releases...")
-	exitCode, result, _ := cmd.exec(debug, verbose)
-	if exitCode != 0 {
-		log.Fatal("Failed to list all releases: " + result)
+	result := cmd.exec()
+	if result.code != 0 {
+		log.Fatal("Failed to list all releases: " + result.errors)
 	}
-	if err := json.Unmarshal([]byte(result), &allReleases); err != nil {
+	if err := json.Unmarshal([]byte(result.output), &allReleases); err != nil {
 		log.Fatal(fmt.Sprintf("failed to unmarshal Helm CLI output: %s", err))
 	}
 	return allReleases
@@ -39,10 +39,10 @@ func (r *helmRelease) key() string {
 }
 
 // uninstall creates the helm command to uninstall an untracked release
-func (r *helmRelease) uninstall() {
-	cmd := helmCmd(concat([]string{"uninstall", r.Name, "--namespace", r.Namespace}, getDryRunFlags()), "Deleting untracked release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
+func (r *helmRelease) uninstall(p *plan) {
+	cmd := helmCmd(concat([]string{"uninstall", r.Name, "--namespace", r.Namespace}, flags.getDryRunFlags()), "Deleting untracked release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
-	outcome.addCommand(cmd, -800, nil)
+	p.addCommand(cmd, -800, nil)
 }
 
 // getRevision returns the revision number for an existing helm release
@@ -75,6 +75,6 @@ func (r *helmRelease) getChartVersion() string {
 
 // getCurrentNamespaceProtection returns the protection state for the namespace where a release is currently installed.
 // It returns true if a namespace is defined as protected in the desired state file, false otherwise.
-func (r *helmRelease) getCurrentNamespaceProtection() bool {
+func (r *helmRelease) getCurrentNamespaceProtection(s *state) bool {
 	return s.Namespaces[r.Namespace].Protected
 }
