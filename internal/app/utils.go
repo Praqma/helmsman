@@ -47,10 +47,10 @@ func fromTOML(file string, s *state) (bool, string) {
 	}
 
 	tomlFile := string(rawTomlFile)
-	if !noEnvSubst {
+	if !flags.noEnvSubst {
 		tomlFile = substituteEnv(tomlFile)
 	}
-	if !noSSMSubst {
+	if !flags.noSSMSubst {
 		tomlFile = substituteSSM(tomlFile)
 	}
 
@@ -99,10 +99,10 @@ func fromYAML(file string, s *state) (bool, string) {
 	}
 
 	yamlFile := string(rawYamlFile)
-	if !noEnvSubst {
+	if !flags.noEnvSubst {
 		yamlFile = substituteEnv(yamlFile)
 	}
-	if !noSSMSubst {
+	if !flags.noSSMSubst {
 		yamlFile = substituteSSM(yamlFile)
 	}
 
@@ -168,10 +168,10 @@ func substituteVarsInYaml(file string) string {
 	}
 
 	yamlFile := string(rawYamlFile)
-	if !noEnvSubst && !noEnvValuesSubst {
+	if !flags.noEnvSubst && !flags.noEnvValuesSubst {
 		yamlFile = substituteEnv(yamlFile)
 	}
-	if !noSSMSubst && !noSSMValuesSubst {
+	if !flags.noSSMSubst && !flags.noSSMValuesSubst {
 		yamlFile = substituteSSM(yamlFile)
 	}
 
@@ -200,7 +200,7 @@ func stringInSlice(a string, list []string) bool {
 
 // addDefaultHelmRepos adds stable and incubator helm repos to the state if they are not already defined
 func addDefaultHelmRepos(s *state) {
-	if noDefaultRepos {
+	if flags.noDefaultRepos {
 		log.Info("Default helm repo set disabled, 'stable' and 'incubator' repos unset.")
 		return
 	}
@@ -318,7 +318,7 @@ func substituteSSM(name string) string {
 			if err != nil {
 				fmt.Printf("Invalid decryption argument %T \n", string(match[3]))
 			}
-			value := aws.ReadSSMParam(paramPath, withDecryption, noColors)
+			value := aws.ReadSSMParam(paramPath, withDecryption, flags.noColors)
 			name = strings.ReplaceAll(name, placeholder, value)
 		}
 	}
@@ -341,12 +341,12 @@ func downloadFile(path string, outfile string) string {
 	if strings.HasPrefix(path, "s3") {
 
 		tmp := getBucketElements(path)
-		aws.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, noColors)
+		aws.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors)
 
 	} else if strings.HasPrefix(path, "gs") {
 
 		tmp := getBucketElements(path)
-		msg, err := gcs.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, noColors)
+		msg, err := gcs.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors)
 		if err != nil {
 			log.Fatal(msg)
 		}
@@ -354,7 +354,7 @@ func downloadFile(path string, outfile string) string {
 	} else if strings.HasPrefix(path, "az") {
 
 		tmp := getBucketElements(path)
-		azure.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, noColors)
+		azure.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors)
 
 	} else {
 
@@ -533,18 +533,18 @@ func decryptSecret(name string) error {
 		Description: "Decrypting " + name,
 	}
 
-	exitCode, output, stderr := command.exec(debug, false)
+	result := command.exec()
 	if !settings.EyamlEnabled {
 		_, fileNotFound := os.Stat(name + ".dec")
 		if fileNotFound != nil && !isOfType(name, []string{".dec"}) {
-			return errors.New(output)
+			return errors.New(result.errors)
 		}
 	}
 
-	if exitCode != 0 {
-		return errors.New(output)
-	} else if stderr != "" {
-		return errors.New(output)
+	if result.code != 0 {
+		return errors.New(result.errors)
+	} else if result.errors != "" {
+		return errors.New(result.errors)
 	}
 
 	if settings.EyamlEnabled {
@@ -554,7 +554,7 @@ func decryptSecret(name string) error {
 		} else {
 			outfile = name + ".dec"
 		}
-		err := writeStringToFile(outfile, output)
+		err := writeStringToFile(outfile, result.output)
 		if err != nil {
 			log.Fatal("Can't write [ " + outfile + " ] file")
 		}

@@ -2,7 +2,6 @@ package app
 
 import (
 	"bytes"
-	"fmt"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -16,12 +15,18 @@ type command struct {
 	Description string
 }
 
+type exitStatus struct {
+	code   int
+	errors string
+	output string
+}
+
 func (c *command) String() string {
 	return c.Cmd + " " + strings.Join(c.Args, " ")
 }
 
 // exec executes the executable command and returns the exit code and execution result
-func (c *command) exec(debug bool, verbose bool) (int, string, string) {
+func (c *command) exec() exitStatus {
 	// Only use non-empty string args
 	args := []string{}
 	for _, str := range c.Args {
@@ -31,10 +36,8 @@ func (c *command) exec(debug bool, verbose bool) (int, string, string) {
 	}
 
 	log.Verbose(c.Description)
+	log.Debug(c.String())
 
-	if debug {
-		log.Debug(fmt.Sprintf("%s %s", c.Cmd, strings.Join(args, " ")))
-	}
 	cmd := exec.Command(c.Cmd, args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -42,31 +45,42 @@ func (c *command) exec(debug bool, verbose bool) (int, string, string) {
 
 	if err := cmd.Start(); err != nil {
 		log.Info("cmd.Start: " + err.Error())
-		return 1, err.Error(), ""
+		return exitStatus{
+			code:   1,
+			errors: err.Error(),
+		}
 	}
 
 	if err := cmd.Wait(); err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				return status.ExitStatus(), stderr.String(), ""
+				return exitStatus{
+					code:   status.ExitStatus(),
+					output: stdout.String(),
+					errors: stderr.String(),
+				}
 			}
 		} else {
 			log.Fatal("cmd.Wait: " + err.Error())
 		}
 	}
-	return 0, stdout.String(), stderr.String()
+	return exitStatus{
+		code:   0,
+		output: stdout.String(),
+		errors: stderr.String(),
+	}
 }
 
 // toolExists returns true if the tool is present in the environment and false otherwise.
 // It takes as input the tool's command to check if it is recognizable or not. e.g. helm or kubectl
-func toolExists(tool string, debug bool) bool {
+func toolExists(tool string) bool {
 	cmd := command{
 		Cmd:         tool,
 		Args:        []string{},
 		Description: "Validating that [ " + tool + " ] is installed",
 	}
 
-	exitCode, _, _ := cmd.exec(debug, false)
+	result := cmd.exec()
 
-	return exitCode == 0
+	return result.code == 0
 }

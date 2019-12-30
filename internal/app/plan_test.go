@@ -9,11 +9,11 @@ import (
 func Test_createPlan(t *testing.T) {
 	tests := []struct {
 		name string
-		want plan
+		want *plan
 	}{
 		{
 			name: "test creating a plan",
-			want: createPlan(),
+			want: &plan{},
 		},
 	}
 	for _, tt := range tests {
@@ -154,7 +154,7 @@ func Test_plan_addDecision(t *testing.T) {
 // 				Args:        []string{"-c", "ls | grep hello.world | wc -l"},
 // 				Description: "",
 // 			}
-// 			if _, got := c.exec(false, false); strings.TrimSpace(got) != "2" {
+// 			if _, got := c.exec(); strings.TrimSpace(got) != "2" {
 // 				t.Errorf("execPlan(): got  %v, want hello world, again!", got)
 // 			}
 // 		})
