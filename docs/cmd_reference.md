@@ -1,5 +1,5 @@
 ---
-version: v3.0.0-beta3
+version: v3.0.0-beta4
 ---
 
 # CMD reference
