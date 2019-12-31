@@ -181,8 +181,8 @@ func isValidCert(value string) (bool, string) {
 	return true, value
 }
 
-// checkNamespaceDefined checks if a given namespace is defined in the namespaces section of the desired state file
-func (s *state) checkNamespaceDefined(ns string) bool {
+// isNamespaceDefined checks if a given namespace is defined in the namespaces section of the desired state file
+func (s *state) isNamespaceDefined(ns string) bool {
 	_, ok := s.Namespaces[ns]
 	return ok
 }
