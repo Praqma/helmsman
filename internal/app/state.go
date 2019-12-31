@@ -36,6 +36,8 @@ type state struct {
 	PreconfiguredHelmRepos []string             `yaml:"preconfiguredHelmRepos"`
 	Apps                   map[string]*release  `yaml:"apps"`
 	AppsTemplates          map[string]*release  `yaml:"appsTemplates,omitempty"`
+	TargetMap              map[string]bool
+	GroupMap               map[string]bool
 }
 
 // invokes either yaml or toml parser considering file extension
@@ -63,12 +65,19 @@ func (s *state) toFile(file string) {
 // check https://github.com/Praqma/Helmsman/docs/desired_state_spec.md for the detailed specification
 func (s *state) validate() error {
 
+	// apps
+	if s.Apps == nil {
+		log.Info("No apps specified. Nothing to be executed.")
+		os.Exit(0)
+	}
+
 	// settings
 	if (s.Settings == (config{}) || s.Settings.KubeContext == "") && !getKubeContext() {
 		return errors.New("settings validation failed -- you have not defined a " +
 			"kubeContext to use. Either define it in the desired state file or pass a kubeconfig with --kubeconfig to use an existing context")
-	} else if s.Settings.ClusterURI != "" {
+	}
 
+	if s.Settings.ClusterURI != "" {
 		if _, err := url.ParseRequestURI(s.Settings.ClusterURI); err != nil {
 			return errors.New("settings validation failed -- clusterURI must have a valid URL set in an env variable or passed directly. Either the env var is missing/empty or the URL is invalid")
 		}
@@ -130,14 +139,17 @@ func (s *state) validate() error {
 		}
 	}
 
+	if (s.Settings.EyamlPrivateKeyPath != "" && s.Settings.EyamlPublicKeyPath == "") || (s.Settings.EyamlPrivateKeyPath == "" && s.Settings.EyamlPublicKeyPath != "") {
+		return errors.New("both EyamlPrivateKeyPath and EyamlPublicKeyPath are required")
+	}
+
 	// namespaces
-	if nsOverride == "" {
+	if flags.nsOverride == "" {
 		if s.Namespaces == nil || len(s.Namespaces) == 0 {
 			return errors.New("namespaces validation failed -- at least one namespace is required")
 		}
-
 	} else {
-		log.Info("ns-override is used to override all namespaces with [ " + nsOverride + " ] Skipping defined namespaces validation.")
+		log.Info("ns-override is used to override all namespaces with [ " + flags.nsOverride + " ] Skipping defined namespaces validation.")
 	}
 
 	// repos
@@ -147,22 +159,12 @@ func (s *state) validate() error {
 			return errors.New("repos validation failed -- repo [" + k + " ] " +
 				"must have a valid URL")
 		}
-
-		continue
-
-	}
-
-	// apps
-	if s.Apps == nil {
-		log.Info("No apps specified. Nothing to be executed.")
-		os.Exit(0)
 	}
 
 	names := make(map[string]map[string]bool)
 	for appLabel, r := range s.Apps {
-		result, errMsg := r.validate(appLabel, names, s)
-		if !result {
-			return errors.New("apps validation failed -- for app [" + appLabel + " ]. " + errMsg)
+		if err := r.validate(appLabel, names, s); err != nil {
+			return fmt.Errorf("apps validation failed -- for app ["+appLabel+" ]. %w", err)
 		}
 	}
 
@@ -218,5 +220,15 @@ func (s *state) print() {
 	fmt.Println("--------------- ")
 	for _, r := range s.Apps {
 		r.print()
+	}
+	fmt.Println("\nTargets: ")
+	fmt.Println("--------------- ")
+	for t := range s.TargetMap {
+		fmt.Println(t)
+	}
+	fmt.Println("\nGroups: ")
+	fmt.Println("--------------- ")
+	for g := range s.GroupMap {
+		fmt.Println(g)
 	}
 }
