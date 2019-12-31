@@ -4,96 +4,71 @@ import (
 	"os"
 )
 
-// Allow parsing of multiple string command line options into an array of strings
-type stringArray []string
+const (
+	helmBin            = "helm"
+	appVersion         = "v3.0.0-beta3"
+	tempFilesDir       = ".helmsman-tmp"
+	stableHelmRepo     = "https://kubernetes-charts.storage.googleapis.com"
+	incubatorHelmRepo  = "http://storage.googleapis.com/kubernetes-charts-incubator"
+	defaultContextName = "default"
+)
 
-func (i *stringArray) String() string {
-	return "my string representation"
-}
-
-func (i *stringArray) Set(value string) error {
-	*i = append(*i, value)
-	return nil
-}
-
-const appVersion = "v3.0.0-beta3"
-const tempFilesDir = ".helmsman-tmp"
-const stableHelmRepo = "https://kubernetes-charts.storage.googleapis.com"
-const incubatorHelmRepo = "http://storage.googleapis.com/kubernetes-charts-incubator"
-const defaultContextName = "default"
-
-var s state
-var debug bool
-var files stringArray
-var envFiles stringArray
-var kubeconfig string
-var apply bool
-var v bool
-var verbose bool
-var noBanner bool
-var noColors bool
-var noFancy bool
-var noNs bool
-var nsOverride string
-var skipValidation bool
-var keepUntrackedReleases bool
-var helmBin = "helm"
-var helmVersion string
-var kubectlVersion string
-var dryRun bool
-var target stringArray
-var group stringArray
-var targetMap map[string]bool
-var groupMap map[string]bool
-var destroy bool
-var showDiff bool
-var suppressDiffSecrets bool
-var diffContext int
-var noEnvSubst bool
-var noEnvValuesSubst bool
-var noSSMSubst bool
-var noSSMValuesSubst bool
-var updateDeps bool
-var forceUpgrades bool
-var noDefaultRepos bool
-
-var settings config
+var (
+	flags      cli
+	settings   config
+	curContext string
+)
 
 func init() {
 	// Parse cli flags and read config files
-	Cli()
+	flags.parse()
 }
 
 // Main is the app main function
 func Main() {
+	var s state
+
 	// delete temp files with substituted env vars when the program terminates
 	defer os.RemoveAll(tempFilesDir)
-	defer cleanup()
+	defer s.cleanup()
 
+	flags.readState(&s)
 	settings = s.Settings
+	curContext = s.Context
+
 	// set the kubecontext to be used Or create it if it does not exist
+	log.Info("Setting up kubectl...")
 	if !setKubeContext(settings.KubeContext) {
-		if r, msg := createContext(); !r {
-			log.Fatal(msg)
+		if err := createContext(&s); err != nil {
+			log.Fatal(err.Error())
 		}
 	}
 
 	// add repos -- fails if they are not valid
-	if r, msg := addHelmRepos(s.HelmRepos); !r {
-		log.Fatal(msg)
-	}
-
-	if apply || dryRun || destroy {
-		// add/validate namespaces
-		if !noNs {
-			addNamespaces(s.Namespaces)
+	if !flags.destroy {
+		log.Info("Setting up helm...")
+		if err := addHelmRepos(s.HelmRepos); err != nil {
+			log.Fatal(err.Error())
 		}
 	}
 
-	if !skipValidation {
+	if flags.apply || flags.dryRun || flags.destroy {
+		// add/validate namespaces
+		if !flags.noNs {
+			log.Info("Setting up namespaces...")
+			if flags.nsOverride == "" {
+				addNamespaces(s.Namespaces)
+			} else {
+				createNamespace(flags.nsOverride)
+				s.overrideAppsNamespace(flags.nsOverride)
+			}
+		}
+	}
+
+	if !flags.skipValidation {
 		log.Info("Validating charts...")
 		// validate charts-versions exist in defined repos
-		if err := validateReleaseCharts(s.Apps); err != nil {
+		if err := validateReleaseCharts(&s); err != nil {
 			log.Fatal(err.Error())
 		}
 	} else {
@@ -101,24 +76,24 @@ func Main() {
 	}
 
 	log.Info("Preparing plan...")
-	if destroy {
+	if flags.destroy {
 		log.Info("--destroy is enabled. Your releases will be deleted!")
 	}
 
 	cs := buildState()
 	p := cs.makePlan(&s)
-	if !keepUntrackedReleases {
-		cs.cleanUntrackedReleases()
+	if !flags.keepUntrackedReleases {
+		cs.cleanUntrackedReleases(&s, p)
 	}
 
 	p.sort()
 	p.print()
-	if debug {
+	if flags.debug {
 		p.printCmds()
 	}
 	p.sendToSlack()
 
-	if apply || dryRun || destroy {
+	if flags.apply || flags.dryRun || flags.destroy {
 		p.exec()
 	}
 }
@@ -126,7 +101,7 @@ func Main() {
 // cleanup deletes the k8s certificates and keys files
 // It also deletes any Tiller TLS certs and keys
 // and secret files
-func cleanup() {
+func (s *state) cleanup() {
 	log.Verbose("Cleaning up sensitive and temp files")
 	if _, err := os.Stat("ca.crt"); err == nil {
 		deleteFile("ca.crt")
@@ -154,5 +129,4 @@ func cleanup() {
 			}
 		}
 	}
-
 }

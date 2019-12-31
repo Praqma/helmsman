@@ -108,11 +108,11 @@ func Test_inspectUpgradeScenario(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			outcome = plan{}
-			cs := currentState(*tt.args.s)
+			outcome := plan{}
+			cs := currentState{releases: *tt.args.s}
 
 			// Act
-			cs.inspectUpgradeScenario(tt.args.r)
+			cs.inspectUpgradeScenario(tt.args.r, &outcome)
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
 
@@ -204,17 +204,17 @@ func Test_decide(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			targetMap = make(map[string]bool)
-			cs := currentState(make(map[string]helmRelease))
+			cs := newCurrentState()
+			tt.args.s.TargetMap = make(map[string]bool)
 
 			for _, target := range tt.targetFlag {
-				targetMap[target] = true
+				tt.args.s.TargetMap[target] = true
 			}
-			outcome = plan{}
+			outcome := plan{}
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 			// Act
-			cs.decide(tt.args.r, tt.args.s, &wg)
+			cs.decide(tt.args.r, tt.args.s, &outcome, &wg)
 			wg.Wait()
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
@@ -287,20 +287,19 @@ func Test_decide_group(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			groupMap = make(map[string]bool)
-			targetMap = make(map[string]bool)
-			cs := currentState(*tt.args.currentState)
+			tt.args.s.GroupMap = make(map[string]bool)
+			cs := currentState{releases: *tt.args.currentState}
 
 			for _, target := range tt.targetFlag {
-				groupMap[target] = true
+				tt.args.s.GroupMap[target] = true
 			}
 			for _, group := range tt.groupFlag {
-				groupMap[group] = true
+				tt.args.s.GroupMap[group] = true
 			}
-			outcome = plan{}
+			outcome := plan{}
 			wg := sync.WaitGroup{}
 			wg.Add(1)
-			cs.decide(tt.args.r, tt.args.s, &wg)
+			cs.decide(tt.args.r, tt.args.s, &outcome, &wg)
 			wg.Wait()
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)

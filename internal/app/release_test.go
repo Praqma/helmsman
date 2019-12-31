@@ -3,7 +3,6 @@ package app
 import (
 	"fmt"
 	"os"
-	"strings"
 	"testing"
 )
 
@@ -12,8 +11,8 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 	os.MkdirAll(os.TempDir()+"/helmsman-tests/myapp", os.ModePerm)
 	os.MkdirAll(os.TempDir()+"/helmsman-tests/dir-with space/myapp", os.ModePerm)
 	cmd := helmCmd([]string{"create", os.TempDir() + "/helmsman-tests/dir-with space/myapp"}, "creating an empty local chart directory")
-	if exitCode, msg, _ := cmd.exec(debug, verbose); exitCode != 0 {
-		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", exitCode, msg))
+	if result := cmd.exec(); result.code != 0 {
+		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors))
 	}
 
 	return func(t *testing.T) {
@@ -37,10 +36,9 @@ func Test_validateRelease(t *testing.T) {
 		r *release
 	}
 	tests := []struct {
-		name  string
-		args  args
-		want  bool
-		want1 string
+		name string
+		args args
+		want string
 	}{
 		{
 			name: "test case 1",
@@ -57,8 +55,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want:  true,
-			want1: "",
+			want: "",
 		}, {
 			name: "test case 2",
 			args: args{
@@ -74,8 +71,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want:  false,
-			want1: "valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to \"xyz.yaml\").",
+			want: "valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to \"xyz.yaml\").",
 		}, {
 			name: "test case 3",
 			args: args{
@@ -91,8 +87,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want:  false,
-			want1: "valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to \"../../tests/values.xml\").",
+			want: "valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to \"../../tests/values.xml\").",
 		}, {
 			name: "test case 4",
 			args: args{
@@ -108,8 +103,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want:  false,
-			want1: "release name must be unique within a given Tiller.",
+			want: "release name must be unique within a given namespace.",
 		}, {
 			name: "test case 5",
 			args: args{
@@ -125,8 +119,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want:  true,
-			want1: "",
+			want: "",
 		}, {
 			name: "test case 6",
 			args: args{
@@ -142,8 +135,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want:  false,
-			want1: "release targeted namespace can't be empty.",
+			want: "release targeted namespace can't be empty.",
 		}, {
 			name: "test case 7",
 			args: args{
@@ -159,8 +151,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want:  false,
-			want1: "chart can't be empty and must be of the format: repo/chart.",
+			want: "chart can't be empty and must be of the format: repo/chart.",
 		}, {
 			name: "test case 8",
 			args: args{
@@ -176,8 +167,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want:  false,
-			want1: "chart can't be empty and must be of the format: repo/chart.",
+			want: "chart can't be empty and must be of the format: repo/chart.",
 		}, {
 			name: "test case 9",
 			args: args{
@@ -193,8 +183,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want:  false,
-			want1: "version can't be empty.",
+			want: "version can't be empty.",
 		}, {
 			name: "test case 10",
 			args: args{
@@ -210,8 +199,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want:  true,
-			want1: "",
+			want: "",
 		}, {
 			name: "test case 11",
 			args: args{
@@ -228,8 +216,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want:  false,
-			want1: "valuesFile and valuesFiles should not be used together.",
+			want: "valuesFile and valuesFiles should not be used together.",
 		}, {
 			name: "test case 12",
 			args: args{
@@ -245,8 +232,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want:  false,
-			want1: "valuesFiles must be valid relative (from dsf file) file paths for a yaml file; path at index 0 provided path resolved to \"xyz.yaml\".",
+			want: "valuesFiles must be valid relative (from dsf file) file paths for a yaml file; path at index 0 provided path resolved to \"xyz.yaml\".",
 		}, {
 			name: "test case 13",
 			args: args{
@@ -262,8 +248,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want:  true,
-			want1: "",
+			want: "",
 		}, {
 			name: "test case 14",
 			args: args{
@@ -280,19 +265,18 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want:  false,
-			want1: "env var [ $SOME_VAR ] is not set, but is wanted to be passed for [ some_var ] in [[ release14 ]]",
+			want: "env var [ $SOME_VAR ] is not set, but is wanted to be passed for [ some_var ] in [[ release14 ]]",
 		},
 	}
 	names := make(map[string]map[string]bool)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := tt.args.r.validate("testApp", names, &tt.args.s)
+			got := ""
+			if r := tt.args.r.validate("testApp", names, &tt.args.s); r != nil {
+				got = r.Error()
+			}
 			if got != tt.want {
 				t.Errorf("validateRelease() got = %v, want %v", got, tt.want)
-			}
-			if strings.TrimSpace(got1) != tt.want1 {
-				t.Errorf("validateRelease() got1 = %v, want %v", got1, tt.want1)
 			}
 		})
 	}
@@ -490,15 +474,17 @@ func Test_validateReleaseCharts(t *testing.T) {
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			targetMap = make(map[string]bool)
-			groupMap = make(map[string]bool)
+			stt := &state{}
+			stt.Apps = tt.args.apps
+			stt.TargetMap = make(map[string]bool)
+			stt.GroupMap = make(map[string]bool)
 			for _, target := range tt.targetFlag {
-				targetMap[target] = true
+				stt.TargetMap[target] = true
 			}
 			for _, group := range tt.groupFlag {
-				groupMap[group] = true
+				stt.GroupMap[group] = true
 			}
-			err := validateReleaseCharts(tt.args.apps)
+			err := validateReleaseCharts(stt)
 			switch err.(type) {
 			case nil:
 				if tt.want != true {

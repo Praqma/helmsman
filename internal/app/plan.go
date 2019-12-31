@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -36,24 +37,25 @@ type orderedCommand struct {
 
 // plan type representing the plan of actions to make the desired state come true.
 type plan struct {
+	sync.Mutex
 	Commands  []orderedCommand
 	Decisions []orderedDecision
 	Created   time.Time
 }
 
 // createPlan initializes an empty plan
-func createPlan() plan {
-
-	p := plan{
+func createPlan() *plan {
+	return &plan{
 		Commands:  []orderedCommand{},
 		Decisions: []orderedDecision{},
 		Created:   time.Now().UTC(),
 	}
-	return p
 }
 
 // addCommand adds a command type to the plan
 func (p *plan) addCommand(cmd command, priority int, r *release) {
+	p.Lock()
+	defer p.Unlock()
 	oc := orderedCommand{
 		Command:       cmd,
 		Priority:      priority,
@@ -65,6 +67,8 @@ func (p *plan) addCommand(cmd command, priority int, r *release) {
 
 // addDecision adds a decision type to the plan
 func (p *plan) addDecision(decision string, priority int, decisionType decisionType) {
+	p.Lock()
+	defer p.Unlock()
 	od := orderedDecision{
 		Description: decision,
 		Priority:    priority,
@@ -74,7 +78,7 @@ func (p *plan) addDecision(decision string, priority int, decisionType decisionT
 }
 
 // execPlan executes the commands (actions) which were added to the plan.
-func (p plan) exec() {
+func (p *plan) exec() {
 	p.sort()
 	if len(p.Commands) > 0 {
 		log.Info("Executing plan... ")
@@ -84,20 +88,20 @@ func (p plan) exec() {
 
 	for _, cmd := range p.Commands {
 		log.Notice(cmd.Command.Description)
-		if exitCode, msg, _ := cmd.Command.exec(debug, verbose); exitCode != 0 {
+		if result := cmd.Command.exec(); result.code != 0 {
 			var errorMsg string
-			if errorMsg = msg; !verbose {
-				errorMsg = strings.Split(msg, "---")[0]
+			if errorMsg = result.errors; !flags.verbose {
+				errorMsg = strings.Split(result.errors, "---")[0]
 			}
-			log.Fatal(fmt.Sprintf("Command returned [ %d ] exit code and error message [ %s ]", exitCode, errorMsg))
+			log.Fatal(fmt.Sprintf("Command returned [ %d ] exit code and error message [ %s ]", result.code, errorMsg))
 		} else {
-			log.Notice(msg)
-			if cmd.targetRelease != nil && !dryRun {
+			log.Notice(result.output)
+			if cmd.targetRelease != nil && !flags.dryRun {
 				labelResource(cmd.targetRelease)
 			}
 			log.Notice("Finished: " + cmd.Command.Description)
-			if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err == nil {
-				notifySlack(cmd.Command.Description+" ... SUCCESS!", s.Settings.SlackWebhook, false, true)
+			if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
+				notifySlack(cmd.Command.Description+" ... SUCCESS!", settings.SlackWebhook, false, true)
 			}
 		}
 	}
@@ -108,7 +112,7 @@ func (p plan) exec() {
 }
 
 // printPlanCmds prints the actual commands that will be executed as part of a plan.
-func (p plan) printCmds() {
+func (p *plan) printCmds() {
 	log.Info("Printing the commands of the current plan ...")
 	for _, cmd := range p.Commands {
 		fmt.Println(cmd.Command.String())
@@ -116,7 +120,7 @@ func (p plan) printCmds() {
 }
 
 // printPlan prints the decisions made in a plan.
-func (p plan) print() {
+func (p *plan) print() {
 	log.Notice("-------- PLAN starts here --------------")
 	for _, decision := range p.Decisions {
 		if decision.Type == ignored {
@@ -133,21 +137,19 @@ func (p plan) print() {
 }
 
 // sendPlanToSlack sends the description of plan commands to slack if a webhook is provided.
-func (p plan) sendToSlack() {
-	if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err == nil {
+func (p *plan) sendToSlack() {
+	if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
 		str := ""
 		for _, c := range p.Commands {
 			str = str + c.Command.Description + "\n"
 		}
-
-		notifySlack(strings.TrimRight(str, "\n"), s.Settings.SlackWebhook, false, false)
+		notifySlack(strings.TrimRight(str, "\n"), settings.SlackWebhook, false, false)
 	}
-
 }
 
 // sortPlan sorts the slices of commands and decisions based on priorities
 // the lower the priority value the earlier a command should be attempted
-func (p plan) sort() {
+func (p *plan) sort() {
 	log.Verbose("Sorting the commands in the plan based on priorities (order flags) ... ")
 
 	sort.SliceStable(p.Commands, func(i, j int) bool {

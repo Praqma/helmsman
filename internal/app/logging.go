@@ -1,9 +1,10 @@
 package app
 
 import (
-	"github.com/apsdehal/go-logger"
 	"net/url"
 	"os"
+
+	"github.com/apsdehal/go-logger"
 )
 
 type Logger struct {
@@ -18,11 +19,13 @@ func (l *Logger) Info(message string) {
 }
 
 func (l *Logger) Debug(message string) {
-	baseLogger.Debug(message)
+	if flags.debug {
+		baseLogger.Debug(message)
+	}
 }
 
 func (l *Logger) Verbose(message string) {
-	if verbose {
+	if flags.verbose {
 		baseLogger.Info(message)
 	}
 }
@@ -40,8 +43,8 @@ func (l *Logger) Notice(message string) {
 }
 
 func (l *Logger) Fatal(message string) {
-	if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err == nil {
-		notifySlack(message, s.Settings.SlackWebhook, true, apply)
+	if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
+		notifySlack(message, settings.SlackWebhook, true, flags.apply)
 	}
 	baseLogger.Fatal(message)
 }
