@@ -72,51 +72,51 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 	}
 
 	if names[r.Name][r.Namespace] {
-		return errors.New("release name must be unique within a given namespace.")
+		return errors.New("release name must be unique within a given namespace")
 	}
 
 	if flags.nsOverride == "" && r.Namespace == "" {
-		return errors.New("release targeted namespace can't be empty.")
+		return errors.New("release targeted namespace can't be empty")
 	} else if flags.nsOverride == "" && r.Namespace != "" && r.Namespace != "kube-system" && !s.isNamespaceDefined(r.Namespace) {
 		return errors.New("release " + r.Name + " is using namespace [ " + r.Namespace + " ] which is not defined in the Namespaces section of your desired state file." +
 			" Release [ " + r.Name + " ] can't be installed in that Namespace until its defined.")
 	}
 	_, err := os.Stat(r.Chart)
 	if r.Chart == "" || os.IsNotExist(err) && !strings.ContainsAny(r.Chart, "/") {
-		return errors.New("chart can't be empty and must be of the format: repo/chart.")
+		return errors.New("chart can't be empty and must be of the format: repo/chart")
 	}
 	if r.Version == "" {
-		return errors.New("version can't be empty.")
+		return errors.New("version can't be empty")
 	}
 
 	_, err = os.Stat(r.ValuesFile)
 	if r.ValuesFile != "" && (!isOfType(r.ValuesFile, []string{".yaml", ".yml", ".json"}) || err != nil) {
-		return errors.New(fmt.Sprintf("valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to %q).", r.ValuesFile))
+		return fmt.Errorf("valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to %q)", r.ValuesFile)
 	} else if r.ValuesFile != "" && len(r.ValuesFiles) > 0 {
-		return errors.New("valuesFile and valuesFiles should not be used together.")
+		return errors.New("valuesFile and valuesFiles should not be used together")
 	} else if len(r.ValuesFiles) > 0 {
 		for i, filePath := range r.ValuesFiles {
 			if _, pathErr := os.Stat(filePath); !isOfType(filePath, []string{".yaml", ".yml", ".json"}) || pathErr != nil {
-				return errors.New(fmt.Sprintf("valuesFiles must be valid relative (from dsf file) file paths for a yaml file; path at index %d provided path resolved to %q.", i, filePath))
+				return fmt.Errorf("valuesFiles must be valid relative (from dsf file) file paths for a yaml file; path at index %d provided path resolved to %q", i, filePath)
 			}
 		}
 	}
 
 	_, err = os.Stat(r.SecretsFile)
 	if r.SecretsFile != "" && (!isOfType(r.SecretsFile, []string{".yaml", ".yml", ".json"}) || err != nil) {
-		return errors.New(fmt.Sprintf("secretsFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to %q).", r.SecretsFile))
+		return fmt.Errorf("secretsFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to %q)", r.SecretsFile)
 	} else if r.SecretsFile != "" && len(r.SecretsFiles) > 0 {
-		return errors.New("secretsFile and secretsFiles should not be used together.")
+		return errors.New("secretsFile and secretsFiles should not be used together")
 	} else if len(r.SecretsFiles) > 0 {
 		for _, filePath := range r.SecretsFiles {
 			if i, pathErr := os.Stat(filePath); !isOfType(filePath, []string{".yaml", ".yml", ".json"}) || pathErr != nil {
-				return errors.New(fmt.Sprintf("secretsFiles must be valid relative (from dsf file) file paths for a yaml file; path at index %d provided path resolved to %q.", i, filePath))
+				return fmt.Errorf("secretsFiles must be valid relative (from dsf file) file paths for a yaml file; path at index %d provided path resolved to %q", i, filePath)
 			}
 		}
 	}
 
 	if r.Priority != 0 && r.Priority > 0 {
-		return errors.New("priority can only be 0 or negative value, positive values are not allowed.")
+		return errors.New("priority can only be 0 or negative value, positive values are not allowed")
 	}
 
 	if names[r.Name] == nil {

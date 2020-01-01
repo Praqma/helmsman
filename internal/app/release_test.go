@@ -71,7 +71,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to \"xyz.yaml\").",
+			want: "valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to \"xyz.yaml\")",
 		}, {
 			name: "test case 3",
 			args: args{
@@ -87,7 +87,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to \"../../tests/values.xml\").",
+			want: "valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to \"../../tests/values.xml\")",
 		}, {
 			name: "test case 4",
 			args: args{
@@ -103,7 +103,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "release name must be unique within a given namespace.",
+			want: "release name must be unique within a given namespace",
 		}, {
 			name: "test case 5",
 			args: args{
@@ -135,7 +135,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "release targeted namespace can't be empty.",
+			want: "release targeted namespace can't be empty",
 		}, {
 			name: "test case 7",
 			args: args{
@@ -151,7 +151,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "chart can't be empty and must be of the format: repo/chart.",
+			want: "chart can't be empty and must be of the format: repo/chart",
 		}, {
 			name: "test case 8",
 			args: args{
@@ -167,7 +167,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "chart can't be empty and must be of the format: repo/chart.",
+			want: "chart can't be empty and must be of the format: repo/chart",
 		}, {
 			name: "test case 9",
 			args: args{
@@ -183,7 +183,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "version can't be empty.",
+			want: "version can't be empty",
 		}, {
 			name: "test case 10",
 			args: args{
@@ -216,7 +216,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "valuesFile and valuesFiles should not be used together.",
+			want: "valuesFile and valuesFiles should not be used together",
 		}, {
 			name: "test case 12",
 			args: args{
@@ -232,7 +232,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "valuesFiles must be valid relative (from dsf file) file paths for a yaml file; path at index 0 provided path resolved to \"xyz.yaml\".",
+			want: "valuesFiles must be valid relative (from dsf file) file paths for a yaml file; path at index 0 provided path resolved to \"xyz.yaml\"",
 		}, {
 			name: "test case 13",
 			args: args{
