@@ -184,6 +184,11 @@ func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool
 		if _, ok := releases[ns]; !ok {
 			releases[ns] = make(map[string]bool)
 		}
+		if !s.isNamespaceDefined(ns) {
+			// if the namespace is not managed by this desired state we assume it's tracked
+			releases[ns][name] = true
+			continue
+		}
 		if rctx != s.Context {
 			// if the release is not related to the current context we assume it's tracked
 			releases[ns][name] = true
@@ -193,6 +198,7 @@ func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool
 		for _, app := range s.Apps {
 			if app.Name == name && app.Namespace == ns {
 				releases[ns][name] = true
+				break
 			}
 		}
 	}
