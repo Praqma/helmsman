@@ -220,7 +220,7 @@ func createContext(s *state) error {
 		return nil
 	}
 
-	return errors.New("something went wrong while setting the kube context to the newly created one.")
+	return errors.New("something went wrong while setting the kube context to the newly created one")
 }
 
 // setKubeContext sets your kubectl context to the one specified in the desired state file.
