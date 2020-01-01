@@ -335,6 +335,20 @@ func (r *release) rollback(cs *currentState, p *plan) {
 	}
 }
 
+// label applies Helmsman specific labels to Helm's state resources (secrets/configmaps)
+func (r *release) label() {
+	if r.Enabled {
+		storageBackend := settings.StorageBackend
+
+		cmd := kubectl([]string{"label", storageBackend, "-n", r.Namespace, "-l", "owner=helm,name=" + r.Name, "MANAGED-BY=HELMSMAN", "NAMESPACE=" + r.Namespace, "HELMSMAN_CONTEXT=" + curContext, "--overwrite"}, "Applying Helmsman labels to [ "+r.Name+" ] release")
+
+		result := cmd.exec()
+		if result.code != 0 {
+			log.Fatal(result.errors)
+		}
+	}
+}
+
 // isProtected checks if a release is protected or not.
 // A protected is release is either: a) deployed in a protected namespace b) flagged as protected in the desired state file
 // Any release in a protected namespace is protected by default regardless of its flag
