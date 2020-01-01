@@ -257,20 +257,6 @@ func getKubeContext() bool {
 	return true
 }
 
-// labelResource applies Helmsman specific labels to Helm's state resources (secrets/configmaps)
-func labelResource(r *release) {
-	if r.Enabled {
-		storageBackend := settings.StorageBackend
-
-		cmd := kubectl([]string{"label", storageBackend, "-n", r.Namespace, "-l", "owner=helm,name=" + r.Name, "MANAGED-BY=HELMSMAN", "NAMESPACE=" + r.Namespace, "HELMSMAN_CONTEXT=" + curContext, "--overwrite"}, "Applying Helmsman labels to [ "+r.Name+" ] release")
-
-		result := cmd.exec()
-		if result.code != 0 {
-			log.Fatal(result.errors)
-		}
-	}
-}
-
 // getReleaseContext extracts the Helmsman release context from the helm storage driver objects (secret or configmap) labels
 func getReleaseContext(releaseName string, namespace string) string {
 	storageBackend := settings.StorageBackend

@@ -88,17 +88,18 @@ func (p *plan) exec() {
 
 	for _, cmd := range p.Commands {
 		log.Notice(cmd.Command.Description)
-		if result := cmd.Command.exec(); result.code != 0 {
-			var errorMsg string
-			if errorMsg = result.errors; !flags.verbose {
+		result := cmd.Command.exec()
+		if cmd.targetRelease != nil && !flags.dryRun && !flags.destroy {
+			cmd.targetRelease.label()
+		}
+		if result.code != 0 {
+			errorMsg := result.errors
+			if !flags.verbose {
 				errorMsg = strings.Split(result.errors, "---")[0]
 			}
 			log.Fatal(fmt.Sprintf("Command returned [ %d ] exit code and error message [ %s ]", result.code, errorMsg))
 		} else {
 			log.Notice(result.output)
-			if cmd.targetRelease != nil && !flags.dryRun {
-				labelResource(cmd.targetRelease)
-			}
 			log.Notice("Finished: " + cmd.Command.Description)
 			if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
 				notifySlack(cmd.Command.Description+" ... SUCCESS!", settings.SlackWebhook, false, true)
@@ -123,9 +124,7 @@ func (p *plan) printCmds() {
 func (p *plan) print() {
 	log.Notice("-------- PLAN starts here --------------")
 	for _, decision := range p.Decisions {
-		if decision.Type == ignored {
-			log.Info(decision.Description + " -- priority: " + strconv.Itoa(decision.Priority))
-		} else if decision.Type == noop {
+		if decision.Type == ignored || decision.Type == noop {
 			log.Info(decision.Description + " -- priority: " + strconv.Itoa(decision.Priority))
 		} else if decision.Type == delete {
 			log.Warning(decision.Description + " -- priority: " + strconv.Itoa(decision.Priority))
