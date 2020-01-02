@@ -1,5 +1,5 @@
 ---
-version: v3.0.0-beta4
+version: v3.0.0-beta5
 ---
 
 # Deployment Strategies
@@ -135,7 +135,7 @@ If you need supporting applications (charts) for your application (e.g, reverse 
 
 ## Notes on using multiple Helmsman desired state files for the same cluster
 
-Helmsman v3.0.0-beta4 introduces the `context` stanza.
+Helmsman v3.0.0-beta5 introduces the `context` stanza.
 When having multiple DSFs operating on different releases, it is essential to use the `context` stanza in each DSF to define what context the DSF covers. The user-provided value for `context` is used by Helmsman to label and distinguish which DSF manages which deployed releases in the cluster. This way, each helmsman operation will only operate on releases within the context defined in the DSF.
 
 When having multiple DSFs be aware of the following:
