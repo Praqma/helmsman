@@ -157,7 +157,7 @@ func validateReleaseCharts(s *state) error {
 	return nil
 }
 
-var versionExtractor = regexp.MustCompile(`version:\s?(.*)`)
+var versionExtractor = regexp.MustCompile(`[\n]version:\s?(.*)`)
 
 func (r *release) validateChart(app string, s *state, wg *sync.WaitGroup, c chan string) {
 
