@@ -1,5 +1,5 @@
 ---
-version: v3.0.0-beta4
+version: v3.0.0-beta5
 ---
 
 # Run Helmsman in CI
@@ -13,7 +13,7 @@ jobs:
 
     deploy-apps:
       docker:
-        - image: praqma/helmsman:v3.0.0-beta4
+        - image: praqma/helmsman:v3.0.0-beta5
       steps:
         - checkout
         - run:
