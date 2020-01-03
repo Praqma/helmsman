@@ -168,10 +168,10 @@ func substituteVarsInYaml(file string) string {
 	}
 
 	yamlFile := string(rawYamlFile)
-	if !flags.noEnvSubst && !flags.noEnvValuesSubst {
+	if !flags.noEnvSubst && flags.substEnvValues {
 		yamlFile = substituteEnv(yamlFile)
 	}
-	if !flags.noSSMSubst && !flags.noSSMValuesSubst {
+	if !flags.noSSMSubst && flags.substSSMValues {
 		yamlFile = substituteSSM(yamlFile)
 	}
 

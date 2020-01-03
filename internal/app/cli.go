@@ -53,12 +53,11 @@ type cli struct {
 	skipValidation        bool
 	keepUntrackedReleases bool
 	showDiff              bool
-	suppressDiffSecrets   bool
 	diffContext           int
 	noEnvSubst            bool
-	noEnvValuesSubst      bool
+	substEnvValues        bool
 	noSSMSubst            bool
-	noSSMValuesSubst      bool
+	substSSMValues        bool
 	updateDeps            bool
 	forceUpgrades         bool
 	noDefaultRepos        bool
@@ -88,8 +87,8 @@ func (c *cli) parse() {
 	flag.BoolVar(&c.dryRun, "dry-run", false, "apply the dry-run option for helm commands.")
 	flag.BoolVar(&c.destroy, "destroy", false, "delete all deployed releases.")
 	flag.BoolVar(&c.version, "v", false, "show the version")
-	flag.BoolVar(&c.debug, "debug", false, "show the execution logs")
-	flag.BoolVar(&c.verbose, "verbose", false, "show verbose execution logs")
+	flag.BoolVar(&c.debug, "debug", false, "show the debug execution logs and actual helm/kubectl commands. This can log secrets and should only be used for debugging purposes.")
+	flag.BoolVar(&c.verbose, "verbose", false, "show verbose execution logs.")
 	flag.BoolVar(&c.noBanner, "no-banner", false, "don't show the banner")
 	flag.BoolVar(&c.noColors, "no-color", false, "don't use colors")
 	flag.BoolVar(&c.noFancy, "no-fancy", false, "don't display the banner and don't use colors")
@@ -97,11 +96,10 @@ func (c *cli) parse() {
 	flag.BoolVar(&c.skipValidation, "skip-validation", false, "skip desired state validation")
 	flag.BoolVar(&c.keepUntrackedReleases, "keep-untracked-releases", false, "keep releases that are managed by Helmsman from the used DSFs in the command, and are no longer tracked in your desired state.")
 	flag.BoolVar(&c.showDiff, "show-diff", false, "show helm diff results. Can expose sensitive information.")
-	flag.BoolVar(&c.suppressDiffSecrets, "suppress-diff-secrets", true, "don't show secrets in helm diff output. (default true).")
 	flag.BoolVar(&c.noEnvSubst, "no-env-subst", false, "turn off environment substitution globally")
-	flag.BoolVar(&c.noEnvValuesSubst, "no-env-values-subst", true, "turn off environment substitution in values files only. (default true).")
+	flag.BoolVar(&c.substEnvValues, "subst-env-values", false, "turn on environment substitution in values files.")
 	flag.BoolVar(&c.noSSMSubst, "no-ssm-subst", false, "turn off SSM parameter substitution globally")
-	flag.BoolVar(&c.noSSMValuesSubst, "no-ssm-values-subst", true, "turn off SSM parameter substitution in values files only")
+	flag.BoolVar(&c.substSSMValues, "subst-ssm-values", false, "turn on SSM parameter substitution in values files.")
 	flag.BoolVar(&c.updateDeps, "update-deps", false, "run 'helm dep up' for local chart")
 	flag.BoolVar(&c.forceUpgrades, "force-upgrades", false, "use --force when upgrading helm releases. May cause resources to be recreated.")
 	flag.BoolVar(&c.noDefaultRepos, "no-default-repos", false, "don't set default Helm repos from Google for 'stable' and 'incubator'")
@@ -174,13 +172,13 @@ func (c *cli) parse() {
 
 	if !c.noEnvSubst {
 		log.Verbose("Substitution of env variables enabled")
-		if !c.noEnvValuesSubst {
+		if c.substEnvValues {
 			log.Verbose("Substitution of env variables in values enabled")
 		}
 	}
 	if !c.noSSMSubst {
 		log.Verbose("Substitution of SSM variables enabled")
-		if !c.noSSMValuesSubst {
+		if c.substSSMValues {
 			log.Verbose("Substitution of SSM variables in values enabled")
 		}
 	}
