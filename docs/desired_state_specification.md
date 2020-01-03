@@ -1,5 +1,5 @@
 ---
-version: v3.0.0-beta5
+version: v3.0.0-beta6
 ---
 
 # Helmsman desired state specification
@@ -121,11 +121,9 @@ kubeContext = "minikube"
 # password = "$K8S_PASSWORD"
 # clusterURI = "https://192.168.99.100:8443"
 ## clusterURI= "$K8S_URI"
-# serviceAccount = "my-service-account"
 # storageBackend = "secret"
 # slackWebhook = $MY_SLACK_WEBHOOK
 # reverseDelete = false
-# tilerless = true
 # eyamlEnabled = true
 # eyamlPrivateKeyPath = "../keys/custom-key.pem"
 # eyamlPublicKeyPath = "../keys/custom-key.pub"
@@ -138,11 +136,9 @@ settings:
   #password: "$K8S_PASSWORD"
   #clusterURI: "https://192.168.99.100:8443"
   ##clusterURI: "$K8S_URI"
-  #serviceAccount: "my-service-account"
   #storageBackend: "secret"
   #slackWebhook: "$MY_SLACK_WEBHOOK"
   #reverseDelete: false
-  #tilerless: true
   # eyamlEnabled: true
   # eyamlPrivateKeyPath: ../keys/custom-key.pem
   # eyamlPublicKeyPath: ../keys/custom-key.pub
@@ -295,7 +291,6 @@ appsTemplates:
 
   default: &template
     valuesFile: ""
-    purge: false
     test: true
     protected: false
     wait: true
@@ -303,7 +298,6 @@ appsTemplates:
 
   custom: &template_custom
     valuesFile: ""
-    purge: true
     test: true
     protected: false
     wait: false
@@ -380,7 +374,6 @@ Example:
     chart = "stable/jenkins"
     version = "0.9.0"
     valuesFile = ""
-    purge = false
     test = true
     protected = false
     wait = true
@@ -407,7 +400,6 @@ apps:
     chart: "stable/jenkins"
     version: "0.9.0"
     valuesFile: ""
-    purge: false
     test: true
     protected: false
     wait: true
