@@ -60,7 +60,6 @@ type cli struct {
 	substSSMValues        bool
 	updateDeps            bool
 	forceUpgrades         bool
-	noDefaultRepos        bool
 	version               bool
 }
 
@@ -102,7 +101,6 @@ func (c *cli) parse() {
 	flag.BoolVar(&c.substSSMValues, "subst-ssm-values", false, "turn on SSM parameter substitution in values files.")
 	flag.BoolVar(&c.updateDeps, "update-deps", false, "run 'helm dep up' for local chart")
 	flag.BoolVar(&c.forceUpgrades, "force-upgrades", false, "use --force when upgrading helm releases. May cause resources to be recreated.")
-	flag.BoolVar(&c.noDefaultRepos, "no-default-repos", false, "don't set default Helm repos from Google for 'stable' and 'incubator'")
 	flag.Usage = printUsage
 	flag.Parse()
 

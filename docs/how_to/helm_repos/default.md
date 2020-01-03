@@ -4,11 +4,12 @@ version: v3.0.0-beta5
 
 # Default helm repos
 
-Helm v3 no longer adds the `stable` and `incubator` repos by default. However, Helmsman v3.0.0-beta5 still adds these two repos by default. These two DO NOT need to be defined explicitly in your desired state file (DSF). However, if you would like to configure some repo with the name stable for example, you can override the default repo.
+Helm v3 no longer adds the `stable` and `incubator` repos by default. Up to Helmsman v3.0.0-beta5, Helmsman adds these two repos by default. And you can disable the automatic addition of these two repos, use the `--no-default-repos` flag.
 
-> You can disable the automatic addition of these two repos, use the `--no-default-repos` flag.
+Starting from `v3.0.0-beta6`, Helmsman complies with the Helm v3 behavior and DOES NOT add `stable` nor `incubator` by default. The `--no-default-repos` is also deprecated.
+ 
 
-This example would have `stable` and `incubator` added by default and another `custom` repo defined explicitly:
+This example would have only the `custom` repo defined explicitly:
 
 ```toml
 
@@ -26,7 +27,7 @@ helmRepos:
 
 ```
 
-This example would have `stable` overriden with a custom repo:
+This example would have `stable` defined with a custom repo:
 
 ```toml
 ...
@@ -42,6 +43,26 @@ stable = "https://mycustomstablerepo.com"
 
 helmRepos:
   stable: "https://mycustomstablerepo.com"
+# ...
+
+```
+
+This example would have `stable` defined with a Google stable repo:
+
+```toml
+...
+
+[helmRepos]
+stable = "https://kubernetes-charts.storage.googleapis.com"
+...
+
+```
+
+```yaml
+# ...
+
+helmRepos:
+  stable: "https://kubernetes-charts.storage.googleapis.com"
 # ...
 
 ```
