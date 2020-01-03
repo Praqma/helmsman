@@ -262,15 +262,12 @@ func (r *release) uninstall(p *plan) {
 func (r *release) diff() string {
 	colorFlag := ""
 	diffContextFlag := []string{}
-	suppressDiffSecretsFlag := ""
+	suppressDiffSecretsFlag := "--suppress-secrets"
 	if flags.noColors {
 		colorFlag = "--no-color"
 	}
 	if flags.diffContext != -1 {
 		diffContextFlag = []string{"--context", strconv.Itoa(flags.diffContext)}
-	}
-	if flags.suppressDiffSecrets {
-		suppressDiffSecretsFlag = "--suppress-secrets"
 	}
 
 	cmd := helmCmd(concat([]string{"diff", colorFlag, suppressDiffSecretsFlag}, diffContextFlag, r.getHelmArgsFor("upgrade")), "Diffing release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")

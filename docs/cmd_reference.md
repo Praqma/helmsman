@@ -1,5 +1,5 @@
 ---
-version: v3.0.0-beta5
+version: v3.0.0-beta6
 ---
 
 # CMD reference
@@ -12,7 +12,10 @@ This lists available CMD options in Helmsman:
         apply the plan directly.
 
   `--debug`
-        show execution logs.
+        show the debug execution logs and actual helm/kubectl commands. This can log secrets and should only be used for debugging purposes.
+
+  `--verbose`
+        show verbose execution logs.   
 
   `--destroy`
         delete all deployed releases.
@@ -50,8 +53,8 @@ This lists available CMD options in Helmsman:
   `--no-env-subst`
         turn off environment substitution globally.
 
-  `--no-env-values-subst`
-        turn off environment substitution in values files only. (default true).
+  `--subst-env-values`
+        turn on environment substitution in values files.
 
   `--no-fancy`
         don't display the banner and don't use colors.
@@ -59,11 +62,11 @@ This lists available CMD options in Helmsman:
   `--no-ns`
         don't create namespaces.
 
-  `-no-ssm-subst`
+  `--no-ssm-subst`
         turn off SSM parameter substitution globally.
 
-  `-no-ssm-values-subst`
-        turn off SSM parameter substitution in values files only (default true).
+  `--subst-ssm-values`
+        turn on SSM parameter substitution in values files.
 
   `--ns-override string`
         override defined namespaces with this one.
@@ -73,9 +76,6 @@ This lists available CMD options in Helmsman:
 
   `--skip-validation`
         skip desired state validation.
-
-  `--suppress-diff-secrets`
-        don't show secrets in helm diff output. (default true).
 
   `--target`
         limit execution to specific app.
@@ -87,6 +87,3 @@ This lists available CMD options in Helmsman:
         run 'helm dep up' for local chart
 
   `--v`    show the version.
-
-  `--verbose`
-        show verbose execution logs.
