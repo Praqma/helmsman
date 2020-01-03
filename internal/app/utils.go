@@ -57,7 +57,6 @@ func fromTOML(file string, s *state) (bool, string) {
 	if _, err := toml.Decode(tomlFile, s); err != nil {
 		return false, err.Error()
 	}
-	//addDefaultHelmRepos(s)
 	resolvePaths(file, s)
 	substituteVarsInValuesFiles(s)
 
@@ -109,7 +108,6 @@ func fromYAML(file string, s *state) (bool, string) {
 	if err = yaml.UnmarshalStrict([]byte(yamlFile), s); err != nil {
 		return false, err.Error()
 	}
-	//addDefaultHelmRepos(s)
 	resolvePaths(file, s)
 	substituteVarsInValuesFiles(s)
 
