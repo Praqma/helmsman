@@ -57,7 +57,7 @@ func fromTOML(file string, s *state) (bool, string) {
 	if _, err := toml.Decode(tomlFile, s); err != nil {
 		return false, err.Error()
 	}
-	addDefaultHelmRepos(s)
+	//addDefaultHelmRepos(s)
 	resolvePaths(file, s)
 	substituteVarsInValuesFiles(s)
 
@@ -109,7 +109,7 @@ func fromYAML(file string, s *state) (bool, string) {
 	if err = yaml.UnmarshalStrict([]byte(yamlFile), s); err != nil {
 		return false, err.Error()
 	}
-	addDefaultHelmRepos(s)
+	//addDefaultHelmRepos(s)
 	resolvePaths(file, s)
 	substituteVarsInValuesFiles(s)
 
@@ -196,27 +196,6 @@ func stringInSlice(a string, list []string) bool {
 		}
 	}
 	return false
-}
-
-// addDefaultHelmRepos adds stable and incubator helm repos to the state if they are not already defined
-func addDefaultHelmRepos(s *state) {
-	if flags.noDefaultRepos {
-		log.Info("Default helm repo set disabled, 'stable' and 'incubator' repos unset.")
-		return
-	}
-	if s.HelmRepos == nil || len(s.HelmRepos) == 0 {
-		s.HelmRepos = map[string]string{
-			"stable":    stableHelmRepo,
-			"incubator": incubatorHelmRepo,
-		}
-		log.Info("No helm repos provided, using the default 'stable' and 'incubator' repos.")
-	}
-	if _, ok := s.HelmRepos["stable"]; !ok {
-		s.HelmRepos["stable"] = stableHelmRepo
-	}
-	if _, ok := s.HelmRepos["incubator"]; !ok {
-		s.HelmRepos["incubator"] = incubatorHelmRepo
-	}
 }
 
 // resolvePaths resolves relative paths of certs/keys/chart and replace them with a absolute paths

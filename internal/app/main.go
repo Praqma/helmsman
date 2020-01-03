@@ -8,8 +8,6 @@ const (
 	helmBin            = "helm"
 	appVersion         = "v3.0.0-beta5"
 	tempFilesDir       = ".helmsman-tmp"
-	stableHelmRepo     = "https://kubernetes-charts.storage.googleapis.com"
-	incubatorHelmRepo  = "http://storage.googleapis.com/kubernetes-charts-incubator"
 	defaultContextName = "default"
 )
 
