@@ -74,9 +74,7 @@ func (cs *currentState) decide(r *release, s *state, p *plan, wg *sync.WaitGroup
 
 	if !r.Enabled {
 		if ok := cs.releaseExists(r, ""); ok {
-
 			if r.isProtected(cs, s) {
-
 				p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 					"protection is removed.", r.Priority, noop)
 				return
@@ -86,35 +84,26 @@ func (cs *currentState) decide(r *release, s *state, p *plan, wg *sync.WaitGroup
 		}
 		p.addDecision("Release [ "+r.Name+" ] disabled", r.Priority, noop)
 		return
-
 	}
 
 	if ok := cs.releaseExists(r, "deployed"); ok {
 		if !r.isProtected(cs, s) {
 			cs.inspectUpgradeScenario(r, p) // upgrade or move
-
 		} else {
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 				"you remove its protection.", r.Priority, noop)
 		}
-
 	} else if ok := cs.releaseExists(r, "deleted"); ok {
 		if !r.isProtected(cs, s) {
-
 			r.rollback(cs, p) // rollback
-
 		} else {
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 				"you remove its protection.", r.Priority, noop)
 		}
-
 	} else if ok := cs.releaseExists(r, "failed"); ok {
-
 		if !r.isProtected(cs, s) {
-
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in FAILED state. Upgrade is scheduled!", r.Priority, change)
 			r.upgrade(p)
-
 		} else {
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 				"you remove its protection.", r.Priority, noop)
@@ -154,54 +143,65 @@ var releaseNameExtractor = regexp.MustCompile(`sh\.helm\.release\.v\d+\.`)
 // The releases are categorized by the namespaces in which they are deployed
 // The returned map format is: map[<namespace>:map[<helmRelease>:true]]
 func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool {
-	var lines []string
-	const outputFmt = "custom-columns=NAME:.metadata.name,NS:.metadata.namespace,CTX:.metadata.labels.HELMSMAN_CONTEXT"
+	var (
+		wg    sync.WaitGroup
+		mutex = &sync.Mutex{}
+	)
+	const outputFmt = "custom-columns=NAME:.metadata.name,CTX:.metadata.labels.HELMSMAN_CONTEXT"
 	releases := make(map[string]map[string]bool)
 	storageBackend := s.Settings.StorageBackend
 
-	cmd := kubectl([]string{"get", storageBackend, "--all-namespaces", "-l", "MANAGED-BY=HELMSMAN", "-o", outputFmt, "--no-headers"}, "Getting Helmsman-managed releases")
-	result := cmd.exec()
+	for ns := range s.Namespaces {
+		wg.Add(1)
+		go func(ns string, releases map[string]map[string]bool, s *state, wg *sync.WaitGroup, mutex *sync.Mutex) {
+			var lines []string
+			defer wg.Done()
 
-	if result.code != 0 {
-		log.Fatal(result.errors)
-	}
-	if !strings.EqualFold("No resources found.", strings.TrimSpace(result.output)) {
-		lines = strings.Split(result.output, "\n")
-	}
-
-	for _, line := range lines {
-		if line == "" {
-			continue
-		}
-		flds := strings.Fields(line)
-		name := resourceNameExtractor.ReplaceAllString(flds[0], "")
-		name = releaseNameExtractor.ReplaceAllString(name, "")
-		ns := flds[1]
-		rctx := defaultContextName
-		if len(flds) > 2 {
-			rctx = flds[2]
-		}
-		if _, ok := releases[ns]; !ok {
-			releases[ns] = make(map[string]bool)
-		}
-		if !s.isNamespaceDefined(ns) {
-			// if the namespace is not managed by this desired state we assume it's tracked
-			releases[ns][name] = true
-			continue
-		}
-		if rctx != s.Context {
-			// if the release is not related to the current context we assume it's tracked
-			releases[ns][name] = true
-			continue
-		}
-		releases[ns][name] = false
-		for _, app := range s.Apps {
-			if app.Name == name && app.Namespace == ns {
-				releases[ns][name] = true
-				break
+			cmd := kubectl([]string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN", "-o", outputFmt, "--no-headers"}, "Getting Helmsman-managed releases")
+			result := cmd.exec()
+			if result.code != 0 {
+				log.Fatal(result.errors)
 			}
-		}
+
+			if !strings.EqualFold("No resources found.", strings.TrimSpace(result.output)) {
+				lines = strings.Split(result.output, "\n")
+			}
+
+			for _, line := range lines {
+				if line == "" {
+					continue
+				}
+				flds := strings.Fields(line)
+				name := resourceNameExtractor.ReplaceAllString(flds[0], "")
+				name = releaseNameExtractor.ReplaceAllString(name, "")
+				rctx := defaultContextName
+				if len(flds) > 1 {
+					rctx = flds[1]
+				}
+
+				mutex.Lock()
+				if _, ok := releases[ns]; !ok {
+					releases[ns] = make(map[string]bool)
+				}
+				if !s.isNamespaceDefined(ns) || rctx != s.Context {
+					// if the namespace is not managed by this desired state
+					// or the release is not related to the current context we assume it's tracked
+					releases[ns][name] = true
+					continue
+				}
+				releases[ns][name] = false
+				for _, app := range s.Apps {
+					if app.Name == name && app.Namespace == ns {
+						releases[ns][name] = true
+						break
+					}
+				}
+				mutex.Unlock()
+			}
+
+		}(ns, releases, s, &wg, mutex)
 	}
+	wg.Wait()
 	return releases
 }
 

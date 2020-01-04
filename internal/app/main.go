@@ -75,7 +75,7 @@ func Main() {
 
 	log.Info("Preparing plan...")
 	if flags.destroy {
-		log.Info("--destroy is enabled. Your releases will be deleted!")
+		log.Warning("Destroy flag is enabled. Your releases will be deleted!")
 	}
 
 	cs := buildState()
