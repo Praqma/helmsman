@@ -6,23 +6,6 @@ import (
 	"testing"
 )
 
-// func Test_printMap(t *testing.T) {
-// 	type args struct {
-// 		m map[string]string
-// 	}
-// 	tests := []struct {
-// 		name string
-// 		args args
-// 	}{
-// 	// TODO: Add test cases.
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			printMap(tt.args.m)
-// 		})
-// 	}
-// }
-
 func Test_fromTOML(t *testing.T) {
 	type args struct {
 		file string
@@ -139,24 +122,6 @@ func Test_fromTOML_Expand(t *testing.T) {
 		})
 	}
 }
-
-// func Test_toTOML(t *testing.T) {
-// 	type args struct {
-// 		file string
-// 		s    *state
-// 	}
-// 	tests := []struct {
-// 		name string
-// 		args args
-// 	}{
-// 	// TODO: Add test cases.
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			toTOML(tt.args.file, tt.args.s)
-// 		})
-// 	}
-// }
 
 func Test_fromYAML(t *testing.T) {
 	type args struct {
@@ -275,24 +240,6 @@ func Test_fromYAML_Expand(t *testing.T) {
 		})
 	}
 }
-
-// func Test_toYAML(t *testing.T) {
-// 	type args struct {
-// 		file string
-// 		s    *state
-// 	}
-// 	tests := []struct {
-// 		name string
-// 		args args
-// 	}{
-// 	// TODO: Add test cases.
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			toYAML(tt.args.file, tt.args.s)
-// 		})
-// 	}
-// }
 
 func Test_isOfType(t *testing.T) {
 	type args struct {
@@ -459,16 +406,3 @@ func Test_eyamlSecrets(t *testing.T) {
 		})
 	}
 }
-
-// func Test_printHelp(t *testing.T) {
-// 	tests := []struct {
-// 		name string
-// 	}{
-// 	// TODO: Add test cases.
-// 	}
-// 	for range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			printHelp()
-// 		})
-// 	}
-// }
