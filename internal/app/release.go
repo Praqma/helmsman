@@ -173,7 +173,8 @@ func (r *release) validateChart(app string, s *state, wg *sync.WaitGroup, c chan
 			result := cmd.exec()
 			if result.code != 0 {
 				maybeRepo := filepath.Base(filepath.Dir(r.Chart))
-				c <- "Chart [ " + r.Chart + " ] for app [" + app + "] can't be found. Did you mean to add a repo [ " + maybeRepo + " ]?"
+				c <- "Chart [ " + r.Chart + " ] for app [" + app + "] can't be found. Inspection returned error: \"" +
+					strings.TrimSpace(result.errors) + "\" -- If this is not a local chart, add the repo [ " + maybeRepo + " ] in your helmRepos stanza."
 				return
 			}
 			matches := versionExtractor.FindStringSubmatch(result.output)
