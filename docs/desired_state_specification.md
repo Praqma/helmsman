@@ -1,5 +1,5 @@
 ---
-version: v3.0.0-beta6
+version: v3.0.0
 ---
 
 # Helmsman desired state specification

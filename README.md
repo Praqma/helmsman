@@ -1,4 +1,4 @@
-[![GitHub version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=gh&type=6&v=v3.0.0-beta6&x2=0)](https://github.com/Praqma/helmsman/releases) [![CircleCI](https://circleci.com/gh/Praqma/helmsman/tree/master.svg?style=svg)](https://circleci.com/gh/Praqma/helmsman/tree/master)
+[![GitHub version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=gh&type=6&v=v3.0.0&x2=0)](https://github.com/Praqma/helmsman/releases) [![CircleCI](https://circleci.com/gh/Praqma/helmsman/tree/master.svg?style=svg)](https://circleci.com/gh/Praqma/helmsman/tree/master)
 
 ![helmsman-logo](docs/images/helmsman.png)
 
@@ -52,7 +52,7 @@ To limit execution to specific application:
 Please make sure the following are installed prior to using `helmsman` as a binary (the docker image contains all of them):
 
 - [kubectl](https://github.com/kubernetes/kubectl)
-- [helm](https://github.com/helm/helm) (for `helmsman` >= 1.6.0)
+- [helm](https://github.com/helm/helm) (helm >=v2.10.0 for `helmsman` >= 1.6.0, helm >=v3.0.0 for `helmsman` >=v3.0.0)
 - [helm-diff](https://github.com/databus23/helm-diff) (`helmsman` >= 1.6.0)
 
 If you use private helm repos, you will need either `helm-gcs` or `helm-s3` plugin or you can use basic auth to authenticate to your repos. See the [docs](https://github.com/Praqma/helmsman/blob/master/docs/how_to/helm_repos) for details.
@@ -61,9 +61,9 @@ If you use private helm repos, you will need either `helm-gcs` or `helm-s3` plug
 Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the different versions.
 ```
 # on Linux
-curl -L https://github.com/Praqma/helmsman/releases/download/v3.0.0-beta6/helmsman_3.0.0-beta6_linux_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v3.0.0/helmsman_3.0.0_linux_amd64.tar.gz | tar zx
 # on MacOS
-curl -L https://github.com/Praqma/helmsman/releases/download/v3.0.0-beta6/helmsman_3.0.0-beta6_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v3.0.0/helmsman_3.0.0_darwin_amd64.tar.gz | tar zx
 
 mv helmsman /usr/local/bin/helmsman
 ```
