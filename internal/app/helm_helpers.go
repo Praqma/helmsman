@@ -105,10 +105,12 @@ func addHelmRepos(repos map[string]string) error {
 
 	}
 
-	cmd := helmCmd([]string{"repo", "update"}, "Updating helm repositories")
+	if len(repos) > 0 {
+		cmd := helmCmd([]string{"repo", "update"}, "Updating helm repositories")
 
-	if result := cmd.exec(); result.code != 0 {
-		return errors.New("While updating helm repos : " + result.errors)
+		if result := cmd.exec(); result.code != 0 {
+			return errors.New("While updating helm repos : " + result.errors)
+		}
 	}
 
 	return nil
