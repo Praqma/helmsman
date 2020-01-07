@@ -195,7 +195,7 @@ func (r *release) validateChart(app string, s *state, wg *sync.WaitGroup, c chan
 
 			if result := cmd.exec(); result.code != 0 || strings.Contains(result.output, "No results found") {
 				c <- "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified for " +
-					"app [" + app + "] but was not found. If this is not a local chart, define its helm repo in your DSF."
+					"app [" + app + "] but was not found. If this is not a local chart, define its helm repo in the helmRepo stanza in your DSF."
 				return
 			}
 		}
