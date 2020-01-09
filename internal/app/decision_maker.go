@@ -187,6 +187,7 @@ func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool
 					// if the namespace is not managed by this desired state
 					// or the release is not related to the current context we assume it's tracked
 					releases[ns][name] = true
+					mutex.Unlock()
 					continue
 				}
 				releases[ns][name] = false
