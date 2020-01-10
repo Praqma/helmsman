@@ -298,9 +298,8 @@ func (r *release) upgrade(p *plan) {
 
 // reInstall purge deletes a release and reinstalls it.
 // This is used when moving a release to another namespace or when changing the chart used for it.
-func (r *release) reInstall(rs helmRelease, p *plan) {
-
-	delCmd := helmCmd(concat([]string{"delete", "--purge", r.Name}, flags.getDryRunFlags()), "Deleting release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
+func (r *release) reInstall(p *plan) {
+	delCmd := helmCmd(concat(r.getHelmArgsFor("uninstall"), flags.getDryRunFlags()), "Deleting release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 	p.addCommand(delCmd, r.Priority, r)
 
 	installCmd := helmCmd(r.getHelmArgsFor("install"), "Installing release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
@@ -324,7 +323,7 @@ func (r *release) rollback(cs *currentState, p *plan) {
 		p.addDecision("Release [ "+r.Name+" ] was deleted and is desired to be rolled back to "+
 			"namespace [ "+r.Namespace+" ]", r.Priority, create)
 	} else {
-		r.reInstall(rs, p)
+		r.reInstall(p)
 		p.addDecision("Release [ "+r.Name+" ] is deleted BUT from namespace [ "+rs.Namespace+
 			" ]. Will purge delete it from there and install it in namespace [ "+r.Namespace+" ]", r.Priority, create)
 		p.addDecision("WARNING: rolling back release [ "+r.Name+" ] from [ "+rs.Namespace+" ] to [ "+r.Namespace+
