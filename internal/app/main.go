@@ -78,7 +78,7 @@ func Main() {
 		log.Warning("Destroy flag is enabled. Your releases will be deleted!")
 	}
 
-	cs := buildState()
+	cs := buildState(&s)
 	p := cs.makePlan(&s)
 	if !flags.keepUntrackedReleases {
 		cs.cleanUntrackedReleases(&s, p)

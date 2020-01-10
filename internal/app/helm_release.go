@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // helmRelease represents the current state of a release
@@ -21,16 +22,32 @@ type helmRelease struct {
 }
 
 // getHelmReleases fetches a list of all releases in a k8s cluster
-func getHelmReleases() []helmRelease {
-	var allReleases []helmRelease
-	cmd := helmCmd([]string{"list", "--all", "--max", "0", "--output", "json", "--all-namespaces"}, "Listing all existing releases...")
-	result := cmd.exec()
-	if result.code != 0 {
-		log.Fatal("Failed to list all releases: " + result.errors)
+func getHelmReleases(s *state) []helmRelease {
+	var (
+		allReleases []helmRelease
+		wg          sync.WaitGroup
+		mutex       = &sync.Mutex{}
+	)
+
+	for ns := range s.Namespaces {
+		wg.Add(1)
+		go func(ns string) {
+			var releases []helmRelease
+			defer wg.Done()
+			cmd := helmCmd([]string{"list", "--all", "--max", "0", "--output", "json", "-n", ns}, "Listing all existing releases...")
+			result := cmd.exec()
+			if result.code != 0 {
+				log.Fatal("Failed to list all releases: " + result.errors)
+			}
+			if err := json.Unmarshal([]byte(result.output), &releases); err != nil {
+				log.Fatal(fmt.Sprintf("failed to unmarshal Helm CLI output: %s", err))
+			}
+			mutex.Lock()
+			allReleases = append(allReleases, releases...)
+			mutex.Unlock()
+		}(ns)
 	}
-	if err := json.Unmarshal([]byte(result.output), &allReleases); err != nil {
-		log.Fatal(fmt.Sprintf("failed to unmarshal Helm CLI output: %s", err))
-	}
+	wg.Wait()
 	return allReleases
 }
 

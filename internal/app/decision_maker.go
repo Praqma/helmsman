@@ -19,11 +19,11 @@ func newCurrentState() *currentState {
 }
 
 // buildState builds the currentState map containing information about all releases existing in a k8s cluster
-func buildState() *currentState {
+func buildState(s *state) *currentState {
 	log.Info("Acquiring current Helm state from cluster...")
 
 	cs := newCurrentState()
-	rel := getHelmReleases()
+	rel := getHelmReleases(s)
 
 	var wg sync.WaitGroup
 	for _, r := range rel {
@@ -153,7 +153,7 @@ func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool
 
 	for ns := range s.Namespaces {
 		wg.Add(1)
-		go func(ns string, releases map[string]map[string]bool, s *state, wg *sync.WaitGroup, mutex *sync.Mutex) {
+		go func(ns string) {
 			var lines []string
 			defer wg.Done()
 
@@ -200,7 +200,7 @@ func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool
 				mutex.Unlock()
 			}
 
-		}(ns, releases, s, &wg, mutex)
+		}(ns)
 	}
 	wg.Wait()
 	return releases
