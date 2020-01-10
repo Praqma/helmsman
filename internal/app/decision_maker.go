@@ -259,7 +259,7 @@ func (cs *currentState) inspectUpgradeScenario(r *release, p *plan) {
 			p.addDecision("Release [ "+r.Name+" ] will be updated", r.Priority, change)
 
 		} else if extractChartName(r.Chart) != rs.getChartName() {
-			r.reInstall(rs, p)
+			r.reInstall(p)
 			p.addDecision("Release [ "+r.Name+" ] is desired to use a new chart [ "+r.Chart+
 				" ]. Delete of the current release will be planned and new chart will be installed in namespace [ "+
 				r.Namespace+" ]", r.Priority, change)
@@ -272,7 +272,7 @@ func (cs *currentState) inspectUpgradeScenario(r *release, p *plan) {
 			}
 		}
 	} else {
-		r.reInstall(rs, p)
+		r.reInstall(p)
 		p.addDecision("Release [ "+r.Name+" ] is desired to be enabled in a new namespace [ "+r.Namespace+
 			" ]. Uninstall of the current release from namespace [ "+rs.Namespace+" ] will be performed "+
 			"and then installation in namespace [ "+r.Namespace+" ] will take place", r.Priority, change)
