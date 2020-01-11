@@ -141,6 +141,7 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 // Valid charts are the ones that can be found in the defined repos.
 // This function uses Helm search to verify if the chart can be found or not.
 func validateReleaseCharts(s *state) error {
+	var fail bool
 	wg := sync.WaitGroup{}
 	c := make(chan string, len(s.Apps))
 	for app, r := range s.Apps {
@@ -148,11 +149,15 @@ func validateReleaseCharts(s *state) error {
 		go r.validateChart(app, s, &wg, c)
 	}
 	wg.Wait()
-	if len(c) > 0 {
-		err := <-c
+	close(c)
+	for err := range c {
 		if err != "" {
-			return errors.New(err)
+			fail = true
+			log.Error(err)
 		}
+	}
+	if fail {
+		return errors.New("chart validation failed")
 	}
 	return nil
 }
