@@ -10,6 +10,12 @@ type resources struct {
 	Memory string `yaml:"memory,omitempty"`
 }
 
+// custom resource type
+type customResource struct {
+	Name  string `yaml:"name,omitempty"`
+	Value string `yaml:"value,omitempty"`
+}
+
 // limits type
 type limits []struct {
 	Max                  resources `yaml:"max,omitempty"`
@@ -18,6 +24,14 @@ type limits []struct {
 	DefaultRequest       resources `yaml:"defaultRequest,omitempty"`
 	MaxLimitRequestRatio resources `yaml:"maxLimitRequestRatio,omitempty"`
 	LimitType            string    `yaml:"type"`
+}
+
+// quota type
+type quotas struct {
+	Pods         string           `yaml:"pods,omitempty"`
+	Requests     resources        `yaml:"requests,omitempty"`
+	Limits       resources        `yaml:"limits,omitempty"`
+	CustomQuotas []customResource `yaml:"customQuotas,omitempty"`
 }
 
 // namespace type represents the fields of a namespace
@@ -37,6 +51,7 @@ type namespace struct {
 	Limits                 limits            `yaml:"limits,omitempty"`
 	Labels                 map[string]string `yaml:"labels"`
 	Annotations            map[string]string `yaml:"annotations"`
+	Quotas                 *quotas           `yaml:"quotas,omitempty"`
 }
 
 // checkNamespaceDefined checks if a given namespace is defined in the namespaces section of the desired state file

@@ -13,6 +13,7 @@ This page contains a list of guides on how to use Helmsman.
     - [Label namespaces](namespaces/labels_and_annotations.md)
     - [Set resource limits for namespaces](namespaces/limits.md)
     - [Protecting namespaces](namespaces/protection.md)
+    - [Namespace resource quotas](namespaces/quotas.md)
 - Deploying Helm Tiller
     - [Using existing Tillers](tiller/existing.md)
     - [Deploy shared Tiller in kube-system](tiller/shared.md)

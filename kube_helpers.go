@@ -71,6 +71,7 @@ func addNamespaces(namespaces map[string]namespace) {
 			labelNamespace(nsName, ns.Labels)
 			annotateNamespace(nsName, ns.Annotations)
 			setLimits(nsName, ns.Limits)
+			setQuotas(nsName, ns.Quotas)
 		}
 	} else {
 		createNamespace(nsOverride)
@@ -174,6 +175,65 @@ spec:
 	}
 
 	deleteFile("temp-LimitRange.yaml")
+
+}
+
+// setQuotas creates a ResourceQuota resource in the provided Namespace
+func setQuotas(ns string, quotas *quotas) {
+	if quotas == nil {
+		return
+	}
+
+	definition := `
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: resource-quota
+spec:
+  hard:
+`
+	if quotas.Pods != "" {
+		definition = definition + Indent("pods: "+quotas.Pods+"\n", strings.Repeat(" ", 4))
+	}
+	if quotas.Requests != (resources{}) {
+		if quotas.Requests.CPU != "" {
+			definition = definition + Indent("requests.cpu: "+quotas.Requests.CPU+"\n", strings.Repeat(" ", 4))
+		}
+		if quotas.Requests.Memory != "" {
+			definition = definition + Indent("requests.memory: "+quotas.Requests.Memory+"\n", strings.Repeat(" ", 4))
+		}
+	}
+	if quotas.Limits != (resources{}) {
+		if quotas.Limits.CPU != "" {
+			definition = definition + Indent("limits.cpu: "+quotas.Limits.CPU+"\n", strings.Repeat(" ", 4))
+		}
+		if quotas.Limits.Memory != "" {
+			definition = definition + Indent("limits.memory: "+quotas.Limits.Memory+"\n", strings.Repeat(" ", 4))
+		}
+	}
+
+	for _, customQuota := range quotas.CustomQuotas {
+		definition = definition + Indent(customQuota.Name+": "+customQuota.Value+"\n", strings.Repeat(" ", 4))
+	}
+
+	if err := ioutil.WriteFile("temp-ResourceQuota.yaml", []byte(definition), 0666); err != nil {
+		logError(err.Error())
+	}
+
+	cmd := command{
+		Cmd:         "kubectl",
+		Args:        []string{"apply", "-f", "temp-ResourceQuota.yaml", "-n", ns},
+		Description: "creating ResourceQuota in namespace [ " + ns + " ]",
+	}
+
+	exitCode, e, _ := cmd.exec(debug, verbose)
+
+	if exitCode != 0 {
+		logError("ERROR: failed to create ResourceQuota in namespace [ " + ns + " ]: " + e)
+	}
+
+	deleteFile("temp-ResourceQuota.yaml")
 
 }
 
@@ -396,7 +456,7 @@ func createRole(namespace string, role string, roleTemplateFile string) (bool, s
 
 	cmd := command{
 		Cmd:         "kubectl",
-		Args:        []string{"apply", "-f", "temp-modified-role.yaml"},
+		Args:        []string{"apply", "-f", "temp-modified-role.yaml", "-n", namespace},
 		Description: "creating role [" + role + "] in namespace [ " + namespace + " ]",
 	}
 
