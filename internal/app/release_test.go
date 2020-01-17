@@ -26,7 +26,7 @@ func Test_validateRelease(t *testing.T) {
 		Metadata:     make(map[string]string),
 		Certificates: make(map[string]string),
 		Settings:     (config{}),
-		Namespaces:   map[string]namespace{"namespace": namespace{false, limits{}, make(map[string]string), make(map[string]string)}},
+		Namespaces:   map[string]namespace{"namespace": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}}},
 		HelmRepos:    make(map[string]string),
 		Apps:         make(map[string]*release),
 	}
