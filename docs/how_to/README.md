@@ -17,6 +17,7 @@ It is recommended that you also check the [DSF spec](../desired_state_specificat
     - [Label namespaces](namespaces/labels_and_annotations.md)
     - [Set resource limits for namespaces](namespaces/limits.md)
     - [Protecting namespaces](namespaces/protection.md)
+    - [Namespace resource quotas](namespaces/quotas.md)
 - Defining Helm repositories
     - [Using default helm repos](helm_repos/default.md)
     - [Using private repos in Google GCS](helm_repos/gcs.md)

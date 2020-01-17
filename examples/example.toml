@@ -58,6 +58,15 @@ context= "test-infra"   # defaults to "default" if not provided
     protected = false
     [namespaces.staging.labels]
       env = "staging"
+    [namespaces.staging.quotas]
+       "limits.cpu" = "10"
+       "limits.memory" = "30Gi"
+       pods = "25"
+       "requests.cpu" = "10"
+       "requests.memory" = "30Gi"
+       [[namespaces.helmsman1.quotas.customQuotas]]
+         name = "requests.nvidia.com/gpu"
+         value = "2"
 
 
 # define any private/public helm charts repos you would like to get charts from
