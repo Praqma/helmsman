@@ -10,8 +10,8 @@ Helmsman is a Helm Charts (k8s applications) as Code tool which allows you to au
 
 # How does it work?
 
-Helmsman uses a simple declarative [TOML](https://github.com/toml-lang/toml) file to allow you to describe a desired state for your k8s applications as in the [example toml file](https://github.com/Praqma/helmsman/blob/master/example.toml).
-Alternatively YAML declaration is also acceptable [example yaml file](https://github.com/Praqma/helmsman/blob/master/example.yaml).
+Helmsman uses a simple declarative [TOML](https://github.com/toml-lang/toml) file to allow you to describe a desired state for your k8s applications as in the [example toml file](https://github.com/Praqma/helmsman/blob/master/examples/example.toml).
+Alternatively YAML declaration is also acceptable [example yaml file](https://github.com/Praqma/helmsman/blob/master/examples/example.yaml).
 
 The desired state file (DSF) follows the [desired state specification](https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md).
 
