@@ -184,8 +184,8 @@ func (r *release) validateChart(app string, s *state, wg *sync.WaitGroup, c chan
 			}
 			matches := versionExtractor.FindStringSubmatch(result.output)
 			if len(matches) == 2 {
-				version := matches[1]
-				if r.Version != version {
+				version := strings.Trim(matches[1], `'"`)
+				if strings.Trim(r.Version, `'"`) != version {
 					c <- "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified for " +
 						"app [" + app + "] but the chart found at that path has version [ " + version + " ] which does not match."
 					return
