@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 // release type representing Helm releases which are described in the desired state
@@ -147,6 +148,7 @@ func validateReleaseCharts(s *state) error {
 	for app, r := range s.Apps {
 		wg.Add(1)
 		go r.validateChart(app, s, &wg, c)
+		time.Sleep(2 * time.Second)
 	}
 	wg.Wait()
 	close(c)
@@ -174,7 +176,7 @@ func (r *release) validateChart(app string, s *state, wg *sync.WaitGroup, c chan
 	if validateCurrentChart {
 		if isLocalChart(r.Chart) {
 			cmd := helmCmd([]string{"inspect", "chart", r.Chart}, "Validating [ "+r.Chart+" ] chart's availability")
-
+			time.Sleep(2 * time.Second)
 			result := cmd.exec()
 			if result.code != 0 {
 				maybeRepo := filepath.Base(filepath.Dir(r.Chart))
@@ -184,8 +186,8 @@ func (r *release) validateChart(app string, s *state, wg *sync.WaitGroup, c chan
 			}
 			matches := versionExtractor.FindStringSubmatch(result.output)
 			if len(matches) == 2 {
-				version := strings.Trim(matches[1], `'"`)
-				if strings.Trim(r.Version, `'"`) != version {
+				version := matches[1]
+				if r.Version != version {
 					c <- "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified for " +
 						"app [" + app + "] but the chart found at that path has version [ " + version + " ] which does not match."
 					return
@@ -198,7 +200,7 @@ func (r *release) validateChart(app string, s *state, wg *sync.WaitGroup, c chan
 				version = "*"
 			}
 			cmd := helmCmd([]string{"search", "repo", r.Chart, "--version", version, "-l"}, "Validating [ "+r.Chart+" ] chart's version [ "+r.Version+" ] availability")
-
+			time.Sleep(2 * time.Second)
 			if result := cmd.exec(); result.code != 0 || strings.Contains(result.output, "No results found") {
 				c <- "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified for " +
 					"app [" + app + "] but was not found. If this is not a local chart, define its helm repo in the helmRepo stanza in your DSF."

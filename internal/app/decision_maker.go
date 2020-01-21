@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 type currentState struct {
@@ -45,6 +46,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 	p := createPlan()
 
 	wg := sync.WaitGroup{}
+	time.Sleep(2 * time.Second)
 	for _, r := range s.Apps {
 		r.checkChartDepUpdate()
 		wg.Add(1)
@@ -202,6 +204,7 @@ func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool
 
 		}(ns)
 	}
+	time.Sleep(2 * time.Second)
 	wg.Wait()
 	return releases
 }
