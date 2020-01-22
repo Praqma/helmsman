@@ -236,7 +236,7 @@ func (r *release) getChartVersion() (string, string) {
 	filteredChartVersions := make([]chartVersion, 0)
 	for _, chart := range chartVersions {
 		if chart.Name == r.Chart {
-			append(filteredChartVersions, chart)
+			filteredChartVersions = append(filteredChartVersions, chart)
 		}
 	}
 
