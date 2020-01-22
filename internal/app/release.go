@@ -143,10 +143,18 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 func validateReleaseCharts(s *state) error {
 	var fail bool
 	wg := sync.WaitGroup{}
+	sem := make(chan struct{}, resourcePool)
 	c := make(chan string, len(s.Apps))
 	for app, r := range s.Apps {
+		sem <- struct{}{}
 		wg.Add(1)
-		go r.validateChart(app, s, &wg, c)
+		go func(r *release, app string) {
+			defer func() {
+				wg.Done()
+				<-sem
+			}()
+			r.validateChart(app, s, c)
+		}(r, app)
 	}
 	wg.Wait()
 	close(c)
@@ -164,9 +172,8 @@ func validateReleaseCharts(s *state) error {
 
 var versionExtractor = regexp.MustCompile(`[\n]version:\s?(.*)`)
 
-func (r *release) validateChart(app string, s *state, wg *sync.WaitGroup, c chan string) {
+func (r *release) validateChart(app string, s *state, c chan string) {
 
-	defer wg.Done()
 	validateCurrentChart := true
 	if !r.isConsideredToRun(s) {
 		validateCurrentChart = false

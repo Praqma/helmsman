@@ -2,7 +2,6 @@ package app
 
 import (
 	"reflect"
-	"sync"
 	"testing"
 )
 
@@ -211,11 +210,8 @@ func Test_decide(t *testing.T) {
 				tt.args.s.TargetMap[target] = true
 			}
 			outcome := plan{}
-			wg := sync.WaitGroup{}
-			wg.Add(1)
 			// Act
-			cs.decide(tt.args.r, tt.args.s, &outcome, &wg)
-			wg.Wait()
+			cs.decide(tt.args.r, tt.args.s, &outcome)
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
 
@@ -297,10 +293,7 @@ func Test_decide_group(t *testing.T) {
 				tt.args.s.GroupMap[group] = true
 			}
 			outcome := plan{}
-			wg := sync.WaitGroup{}
-			wg.Add(1)
-			cs.decide(tt.args.r, tt.args.s, &outcome, &wg)
-			wg.Wait()
+			cs.decide(tt.args.r, tt.args.s, &outcome)
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
 
