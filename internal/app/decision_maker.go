@@ -25,16 +25,24 @@ func buildState(s *state) *currentState {
 	cs := newCurrentState()
 	rel := getHelmReleases(s)
 
-	var wg sync.WaitGroup
+	wg := sync.WaitGroup{}
+	sem := make(chan struct{}, resourcePool)
+
 	for _, r := range rel {
+		// aquire
+		sem <- struct{}{}
 		wg.Add(1)
-		go func(c *currentState, r helmRelease, wg *sync.WaitGroup) {
-			c.Lock()
-			defer c.Unlock()
-			defer wg.Done()
+		go func(r helmRelease) {
+			cs.Lock()
+			defer func() {
+				cs.Unlock()
+				wg.Done()
+				// release
+				<-sem
+			}()
 			r.HelmsmanContext = getReleaseContext(r.Name, r.Namespace)
-			c.releases[r.key()] = r
-		}(cs, r, &wg)
+			cs.releases[r.key()] = r
+		}(r)
 	}
 	wg.Wait()
 	return cs
@@ -45,10 +53,19 @@ func (cs *currentState) makePlan(s *state) *plan {
 	p := createPlan()
 
 	wg := sync.WaitGroup{}
+	sem := make(chan struct{}, resourcePool)
+
 	for _, r := range s.Apps {
 		r.checkChartDepUpdate()
+		sem <- struct{}{}
 		wg.Add(1)
-		go cs.decide(r, s, p, &wg)
+		go func(r *release) {
+			defer func() {
+				wg.Done()
+				<-sem
+			}()
+			cs.decide(r, s, p)
+		}(r)
 	}
 	wg.Wait()
 
@@ -57,8 +74,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 
 // decide makes a decision about what commands (actions) need to be executed
 // to make a release section of the desired state come true.
-func (cs *currentState) decide(r *release, s *state, p *plan, wg *sync.WaitGroup) {
-	defer wg.Done()
+func (cs *currentState) decide(r *release, s *state, p *plan) {
 	// check for presence in defined targets or groups
 	if !r.isConsideredToRun(s) {
 		p.addDecision("Release [ "+r.Name+" ] ignored", r.Priority, ignored)
@@ -149,13 +165,20 @@ func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool
 	)
 	const outputFmt = "custom-columns=NAME:.metadata.name,CTX:.metadata.labels.HELMSMAN_CONTEXT"
 	releases := make(map[string]map[string]bool)
+	sem := make(chan struct{}, resourcePool)
 	storageBackend := s.Settings.StorageBackend
 
 	for ns := range s.Namespaces {
+		// aquire
+		sem <- struct{}{}
 		wg.Add(1)
 		go func(ns string) {
 			var lines []string
-			defer wg.Done()
+			defer func() {
+				wg.Done()
+				// release
+				<-sem
+			}()
 
 			cmd := kubectl([]string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN", "-o", outputFmt, "--no-headers"}, "Getting Helmsman-managed releases")
 			result := cmd.exec()
