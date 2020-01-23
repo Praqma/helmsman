@@ -233,12 +233,19 @@ func (r *release) getChartVersion() (string, string) {
 		log.Fatal(fmt.Sprint(err))
 	}
 
-	if len(chartVersions) < 1 {
+	filteredChartVersions := make([]chartVersion, 0)
+	for _, chart := range chartVersions {
+		if chart.Name == r.Chart {
+			filteredChartVersions = append(filteredChartVersions, chart)
+		}
+	}
+
+	if len(filteredChartVersions) < 1 {
 		return "", "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified but not found in the helm repositories"
-	} else if len(chartVersions) > 1 {
+	} else if len(filteredChartVersions) > 1 {
 		return "", "Multiple versions of chart [ " + r.Chart + " ] with version [ " + r.Version + " ] found in the helm repositories"
 	}
-	return chartVersions[0].Version, ""
+	return filteredChartVersions[0].Version, ""
 }
 
 // testRelease creates a Helm command to test a particular release.
