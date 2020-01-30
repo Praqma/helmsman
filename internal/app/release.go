@@ -142,10 +142,16 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 // This function uses Helm search to verify if the chart can be found or not.
 func validateReleaseCharts(s *state) error {
 	var fail bool
+	var apps map[string]*release
 	wg := sync.WaitGroup{}
 	sem := make(chan struct{}, resourcePool)
-	c := make(chan string, len(s.Apps))
-	for app, r := range s.Apps {
+	if len(s.TargetMap) > 0 {
+		apps = s.TargetApps
+	} else {
+		apps = s.Apps
+	}
+	c := make(chan string, len(apps))
+	for app, r := range apps {
 		sem <- struct{}{}
 		wg.Add(1)
 		go func(r *release, app string) {
