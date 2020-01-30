@@ -27,12 +27,18 @@ func getHelmReleases(s *state) []helmRelease {
 		allReleases []helmRelease
 		wg          sync.WaitGroup
 		mutex       = &sync.Mutex{}
+		namespaces  map[string]namespace
 	)
-
-	for ns := range s.Namespaces {
+	if len(s.TargetMap) > 0 {
+		namespaces = s.TargetNamespaces
+	} else {
+		namespaces = s.Namespaces
+	}
+	for ns := range namespaces {
 		wg.Add(1)
 		go func(ns string) {
 			var releases []helmRelease
+			var targetReleases []helmRelease
 			defer wg.Done()
 			cmd := helmCmd([]string{"list", "--all", "--max", "0", "--output", "json", "-n", ns}, "Listing all existing releases...")
 			result := cmd.exec()
@@ -42,8 +48,13 @@ func getHelmReleases(s *state) []helmRelease {
 			if err := json.Unmarshal([]byte(result.output), &releases); err != nil {
 				log.Fatal(fmt.Sprintf("failed to unmarshal Helm CLI output: %s", err))
 			}
+			for _, r := range releases {
+				if use, ok := s.TargetMap[r.Name]; ok && use {
+					targetReleases = append(targetReleases, r)
+				}
+			}
 			mutex.Lock()
-			allReleases = append(allReleases, releases...)
+			allReleases = append(allReleases, targetReleases...)
 			mutex.Unlock()
 		}(ns)
 	}
