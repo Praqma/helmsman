@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -9,6 +10,12 @@ import (
 
 	"github.com/Praqma/helmsman/internal/gcs"
 )
+
+type helmRepo struct {
+	Name            string   `json:"name"`
+	Url             string   `json:"url"`
+}
+
 
 // helmCmd prepares a helm command to be executed
 func helmCmd(args []string, desc string) command {
@@ -72,6 +79,24 @@ func updateChartDep(chartPath string) error {
 // addHelmRepos adds repositories to Helm if they don't exist already.
 // Helm does not mind if a repo with the same name exists. It treats it as an update.
 func addHelmRepos(repos map[string]string) error {
+	var helmRepos []helmRepo
+	existingRepos := make(map[string]string)
+
+	// get existing helm repositories
+	cmdList := helmCmd(concat([]string{"repo", "list", "--output", "json"}), "Listing helm repositories")
+	if reposResult := cmdList.exec(); reposResult.code == 0 {
+		if err := json.Unmarshal([]byte(reposResult.output), &helmRepos); err != nil {
+			log.Fatal(fmt.Sprintf("failed to unmarshal Helm CLI output: %s", err))
+		}
+		// create map of existing repositories
+		for _, repo := range helmRepos {
+			existingRepos[repo.Name] = repo.Url
+		}
+	} else {
+		if !strings.Contains(reposResult.errors,"no repositories to show") {
+			return fmt.Errorf("while listing helm repositories: %s", reposResult.errors)
+		}
+	}
 
 	for repoName, repoLink := range repos {
 		basicAuthArgs := []string{}
@@ -98,11 +123,15 @@ func addHelmRepos(repos map[string]string) error {
 		}
 
 		cmd := helmCmd(concat([]string{"repo", "add", repoName, repoLink}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
-
-		if result := cmd.exec(); result.code != 0 {
-			return fmt.Errorf("While adding helm repository ["+repoName+"]: %w", err)
+		// check current repository against existing repositories map in order to make sure it's missing and needs to be added
+		if existingRepoUrl, ok := existingRepos[repoName]; ok {
+			if repoLink == existingRepoUrl {
+				continue
+			}
 		}
-
+		if result := cmd.exec(); result.code != 0 {
+			return fmt.Errorf("While adding helm repository ["+repoName+"]: %s", result.errors)
+		}
 	}
 
 	if len(repos) > 0 {
