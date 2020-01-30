@@ -166,10 +166,16 @@ func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool
 	const outputFmt = "custom-columns=NAME:.metadata.name,CTX:.metadata.labels.HELMSMAN_CONTEXT"
 	releases := make(map[string]map[string]bool)
 	sem := make(chan struct{}, resourcePool)
+	namespaces := make(map[string]namespace)
+	if len(s.TargetMap) > 0 {
+		namespaces = s.TargetNamespaces
+	} else {
+		namespaces = s.Namespaces
+	}
 	storageBackend := s.Settings.StorageBackend
 
-	for ns := range s.Namespaces {
-		// aquire
+	for ns := range namespaces {
+		// acquire
 		sem <- struct{}{}
 		wg.Add(1)
 		go func(ns string) {
@@ -201,7 +207,11 @@ func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool
 				if len(flds) > 1 {
 					rctx = flds[1]
 				}
-
+				if len(s.TargetMap) > 0 {
+					if use, ok := s.TargetMap[name]; !ok || !use {
+						continue
+					}
+				}
 				mutex.Lock()
 				if _, ok := releases[ns]; !ok {
 					releases[ns] = make(map[string]bool)

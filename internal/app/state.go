@@ -38,6 +38,8 @@ type state struct {
 	AppsTemplates          map[string]*release  `yaml:"appsTemplates,omitempty"`
 	TargetMap              map[string]bool
 	GroupMap               map[string]bool
+	TargetApps             map[string]*release
+	TargetNamespaces       map[string]namespace
 }
 
 // invokes either yaml or toml parser considering file extension
@@ -193,6 +195,31 @@ func (s *state) overrideAppsNamespace(newNs string) {
 	for _, r := range s.Apps {
 		r.overrideNamespace(newNs)
 	}
+}
+
+// get only those Apps that exist in TargetMap
+func (s *state) getAppsInTargetsOnly() map[string]*release {
+	targetApps := make(map[string]*release)
+	for appName, use := range s.TargetMap {
+		if use {
+			if value, ok := s.Apps[appName]; ok {
+				targetApps[appName] = value
+			}
+		}
+	}
+	return targetApps
+}
+
+func (s *state) getNamespacesInTargetsOnly() map[string]namespace {
+	targetNamespaces := make(map[string]namespace)
+	for appName, use := range s.TargetMap {
+		if use {
+			if value, ok := s.Apps[appName]; ok {
+				targetNamespaces[value.Namespace] = s.Namespaces[value.Namespace]
+			}
+		}
+	}
+	return targetNamespaces
 }
 
 // print prints the desired state
