@@ -225,30 +225,21 @@ func Test_decide(t *testing.T) {
 
 func Test_decide_group(t *testing.T) {
 	type args struct {
-		r            *release
-		s            *state
-		currentState *map[string]helmRelease
-		curContext   string
+		s *state
 	}
 	tests := []struct {
-		name       string
-		groupFlag  []string
-		targetFlag []string
-		args       args
-		want       decisionType
+		name      string
+		groupFlag []string
+		args      args
+		want      map[string]bool
 	}{
 		{
 			name:      "decide() - groupMap does not contain this service - skip",
 			groupFlag: []string{"some-group"},
 			args: args{
-				r: &release{
-					Name:      "release1",
-					Namespace: "namespace",
-					Enabled:   true,
-				},
 				s: &state{
 					Apps: map[string]*release{
-						"app": {
+						"release1": {
 							Name:      "release1",
 							Namespace: "namespace",
 							Group:     "run-me",
@@ -256,32 +247,16 @@ func Test_decide_group(t *testing.T) {
 						},
 					},
 				},
-				currentState: &map[string]helmRelease{
-					"release2-namespace": {
-						Name:            "release2",
-						Namespace:       "namespace",
-						Chart:           "chart-1.0.0",
-						Status:          "deployed",
-						HelmsmanContext: "some-other-context",
-					},
-				},
-				curContext: "some-other-context",
 			},
-			want: ignored,
+			want: map[string]bool{},
 		},
 		{
 			name:      "decide() - groupMap contains this service - proceed",
 			groupFlag: []string{"run-me"},
 			args: args{
-				r: &release{
-					Name:      "release1",
-					Namespace: "namespace",
-					Enabled:   true,
-					Group:     "run-me",
-				},
 				s: &state{
 					Apps: map[string]*release{
-						"app": {
+						"release1": {
 							Name:      "release1",
 							Namespace: "namespace",
 							Group:     "run-me",
@@ -289,39 +264,22 @@ func Test_decide_group(t *testing.T) {
 						},
 					},
 				},
-				currentState: &map[string]helmRelease{
-					"release2-namespace": {
-						Name:            "release2",
-						Namespace:       "namespace",
-						Chart:           "chart-1.0.0",
-						Status:          "deployed",
-						HelmsmanContext: "some-other-context",
-					},
-				},
-				curContext: "some-other-context",
 			},
-			want: create,
+			want: map[string]bool{
+				"release1": true,
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.args.s.GroupMap = make(map[string]bool)
-			cs := currentState{releases: *tt.args.currentState}
-			curContext = tt.args.curContext
-			tt.args.s.Context = tt.args.curContext
-			for _, target := range tt.targetFlag {
-				tt.args.s.GroupMap[target] = true
+			for _, group := range tt.groupFlag {
+				tt.args.s.GroupMap[group] = true
 			}
-			tt.args.s.GroupMap = tt.args.s.getAppsInGroupsAsTargetMap()
-			outcome := plan{}
-			cs.decide(tt.args.r, tt.args.s, &outcome)
-			got := outcome.Decisions[0].Type
-			t.Log(outcome.Decisions[0].Description)
-
-			// Assert
-			if got != tt.want {
-				t.Errorf("decide() = %s, want %s", got, tt.want)
+			tt.args.s.TargetMap = tt.args.s.getAppsInGroupsAsTargetMap()
+			if len(tt.args.s.TargetMap) != len(tt.want) {
+				t.Errorf("decide() = %d, want %d", len(tt.args.s.TargetMap), len(tt.want))
 			}
 		})
 	}
