@@ -12,10 +12,9 @@ import (
 )
 
 type helmRepo struct {
-	Name            string   `json:"name"`
-	Url             string   `json:"url"`
+	Name string `json:"name"`
+	Url  string `json:"url"`
 }
-
 
 // helmCmd prepares a helm command to be executed
 func helmCmd(args []string, desc string) command {
@@ -93,7 +92,7 @@ func addHelmRepos(repos map[string]string) error {
 			existingRepos[repo.Name] = repo.Url
 		}
 	} else {
-		if !strings.Contains(reposResult.errors,"no repositories to show") {
+		if !strings.Contains(reposResult.errors, "no repositories to show") {
 			return fmt.Errorf("while listing helm repositories: %s", reposResult.errors)
 		}
 	}

@@ -228,6 +228,7 @@ func Test_decide_group(t *testing.T) {
 		r            *release
 		s            *state
 		currentState *map[string]helmRelease
+		curContext   string
 	}
 	tests := []struct {
 		name       string
@@ -245,13 +246,26 @@ func Test_decide_group(t *testing.T) {
 					Namespace: "namespace",
 					Enabled:   true,
 				},
-				s: &state{},
-				currentState: &map[string]helmRelease{
-					"release1-namespace": {
-						Namespace: "namespace",
-						Chart:     "chart-1.0.0",
+				s: &state{
+					Apps: map[string]*release{
+						"app": {
+							Name:      "release1",
+							Namespace: "namespace",
+							Group:     "run-me",
+							Enabled:   true,
+						},
 					},
 				},
+				currentState: &map[string]helmRelease{
+					"release2-namespace": {
+						Name:            "release2",
+						Namespace:       "namespace",
+						Chart:           "chart-1.0.0",
+						Status:          "deployed",
+						HelmsmanContext: "some-other-context",
+					},
+				},
+				curContext: "some-other-context",
 			},
 			want: ignored,
 		},
@@ -266,16 +280,25 @@ func Test_decide_group(t *testing.T) {
 					Group:     "run-me",
 				},
 				s: &state{
-					Context: "default",
+					Apps: map[string]*release{
+						"app": {
+							Name:      "release1",
+							Namespace: "namespace",
+							Group:     "run-me",
+							Enabled:   true,
+						},
+					},
 				},
 				currentState: &map[string]helmRelease{
 					"release2-namespace": {
 						Name:            "release2",
 						Namespace:       "namespace",
 						Chart:           "chart-1.0.0",
+						Status:          "deployed",
 						HelmsmanContext: "some-other-context",
 					},
 				},
+				curContext: "some-other-context",
 			},
 			want: create,
 		},
@@ -285,13 +308,12 @@ func Test_decide_group(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.args.s.GroupMap = make(map[string]bool)
 			cs := currentState{releases: *tt.args.currentState}
-
+			curContext = tt.args.curContext
+			tt.args.s.Context = tt.args.curContext
 			for _, target := range tt.targetFlag {
 				tt.args.s.GroupMap[target] = true
 			}
-			for _, group := range tt.groupFlag {
-				tt.args.s.GroupMap[group] = true
-			}
+			tt.args.s.GroupMap = tt.args.s.getAppsInGroupsAsTargetMap()
 			outcome := plan{}
 			cs.decide(tt.args.r, tt.args.s, &outcome)
 			got := outcome.Decisions[0].Type
