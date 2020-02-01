@@ -60,7 +60,7 @@ func Main() {
 		if !flags.noNs {
 			log.Info("Setting up namespaces...")
 			if flags.nsOverride == "" {
-				addNamespaces(s)
+				addNamespaces(&s)
 			} else {
 				createNamespace(flags.nsOverride)
 				s.overrideAppsNamespace(flags.nsOverride)

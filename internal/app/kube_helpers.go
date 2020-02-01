@@ -13,7 +13,7 @@ import (
 // addNamespaces creates a set of namespaces in your k8s cluster.
 // If a namespace with the same name exists, it will skip it.
 // If --ns-override flag is used, it only creates the provided namespace in that flag
-func addNamespaces(s state) {
+func addNamespaces(s *state) {
 	var wg sync.WaitGroup
 	var namespaces map[string]namespace
 	if len(s.TargetMap) > 0 {
