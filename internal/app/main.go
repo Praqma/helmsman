@@ -32,6 +32,10 @@ func Main() {
 	defer s.cleanup()
 
 	flags.readState(&s)
+	if len(s.TargetMap) > 0 {
+		s.TargetApps = s.getAppsInTargetsOnly()
+		s.TargetNamespaces = s.getNamespacesInTargetsOnly()
+	}
 	settings = s.Settings
 	curContext = s.Context
 
@@ -56,7 +60,7 @@ func Main() {
 		if !flags.noNs {
 			log.Info("Setting up namespaces...")
 			if flags.nsOverride == "" {
-				addNamespaces(s.Namespaces)
+				addNamespaces(&s)
 			} else {
 				createNamespace(flags.nsOverride)
 				s.overrideAppsNamespace(flags.nsOverride)

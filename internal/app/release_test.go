@@ -478,8 +478,14 @@ func Test_validateReleaseCharts(t *testing.T) {
 			stt.Apps = tt.args.apps
 			stt.TargetMap = make(map[string]bool)
 			stt.GroupMap = make(map[string]bool)
+			stt.TargetApps = make(map[string]*release)
 			for _, target := range tt.targetFlag {
 				stt.TargetMap[target] = true
+			}
+			for name, use := range stt.TargetMap {
+				if value, ok := stt.Apps[name]; ok && use {
+					stt.TargetApps[name] = value
+				}
 			}
 			for _, group := range tt.groupFlag {
 				stt.GroupMap[group] = true
