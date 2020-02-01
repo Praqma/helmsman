@@ -32,6 +32,9 @@ func Main() {
 	defer s.cleanup()
 
 	flags.readState(&s)
+	if len(s.GroupMap) > 0 {
+		s.TargetMap = s.getAppsInGroupsAsTargetMap()
+	}
 	if len(s.TargetMap) > 0 {
 		s.TargetApps = s.getAppsInTargetsOnly()
 		s.TargetNamespaces = s.getNamespacesInTargetsOnly()

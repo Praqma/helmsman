@@ -55,12 +55,6 @@ func (r *release) isConsideredToRun(s *state) bool {
 		}
 		return false
 	}
-	if len(s.GroupMap) > 0 {
-		if _, ok := s.GroupMap[r.Group]; ok {
-			return true
-		}
-		return false
-	}
 	return true
 }
 
