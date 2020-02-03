@@ -225,81 +225,61 @@ func Test_decide(t *testing.T) {
 
 func Test_decide_group(t *testing.T) {
 	type args struct {
-		r            *release
-		s            *state
-		currentState *map[string]helmRelease
+		s *state
 	}
 	tests := []struct {
-		name       string
-		groupFlag  []string
-		targetFlag []string
-		args       args
-		want       decisionType
+		name      string
+		groupFlag []string
+		args      args
+		want      map[string]bool
 	}{
 		{
 			name:      "decide() - groupMap does not contain this service - skip",
 			groupFlag: []string{"some-group"},
 			args: args{
-				r: &release{
-					Name:      "release1",
-					Namespace: "namespace",
-					Enabled:   true,
-				},
-				s: &state{},
-				currentState: &map[string]helmRelease{
-					"release1-namespace": {
-						Namespace: "namespace",
-						Chart:     "chart-1.0.0",
+				s: &state{
+					Apps: map[string]*release{
+						"release1": {
+							Name:      "release1",
+							Namespace: "namespace",
+							Group:     "run-me",
+							Enabled:   true,
+						},
 					},
 				},
 			},
-			want: ignored,
+			want: map[string]bool{},
 		},
 		{
 			name:      "decide() - groupMap contains this service - proceed",
 			groupFlag: []string{"run-me"},
 			args: args{
-				r: &release{
-					Name:      "release1",
-					Namespace: "namespace",
-					Enabled:   true,
-					Group:     "run-me",
-				},
 				s: &state{
-					Context: "default",
-				},
-				currentState: &map[string]helmRelease{
-					"release2-namespace": {
-						Name:            "release2",
-						Namespace:       "namespace",
-						Chart:           "chart-1.0.0",
-						HelmsmanContext: "some-other-context",
+					Apps: map[string]*release{
+						"release1": {
+							Name:      "release1",
+							Namespace: "namespace",
+							Group:     "run-me",
+							Enabled:   true,
+						},
 					},
 				},
 			},
-			want: create,
+			want: map[string]bool{
+				"release1": true,
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.args.s.GroupMap = make(map[string]bool)
-			cs := currentState{releases: *tt.args.currentState}
-
-			for _, target := range tt.targetFlag {
-				tt.args.s.GroupMap[target] = true
-			}
 			for _, group := range tt.groupFlag {
 				tt.args.s.GroupMap[group] = true
 			}
-			outcome := plan{}
-			cs.decide(tt.args.r, tt.args.s, &outcome)
-			got := outcome.Decisions[0].Type
-			t.Log(outcome.Decisions[0].Description)
-
-			// Assert
-			if got != tt.want {
-				t.Errorf("decide() = %s, want %s", got, tt.want)
+			tt.args.s.TargetMap = tt.args.s.getAppsInGroupsAsTargetMap()
+			if len(tt.args.s.TargetMap) != len(tt.want) {
+				t.Errorf("decide() = %d, want %d", len(tt.args.s.TargetMap), len(tt.want))
 			}
 		})
 	}

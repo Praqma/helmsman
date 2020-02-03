@@ -197,6 +197,16 @@ func (s *state) overrideAppsNamespace(newNs string) {
 	}
 }
 
+func (s *state) getAppsInGroupsAsTargetMap() map[string]bool {
+	targetApps := make(map[string]bool)
+	for appName, data := range s.Apps {
+		if use, ok := s.GroupMap[data.Group]; ok && use {
+			targetApps[appName] = true
+		}
+	}
+	return targetApps
+}
+
 // get only those Apps that exist in TargetMap
 func (s *state) getAppsInTargetsOnly() map[string]*release {
 	targetApps := make(map[string]*release)
