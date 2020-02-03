@@ -49,6 +49,9 @@ jobs:
             docker build -t praqma/helmsman:$TAG-helm-v3.0.2 --build-arg HELM_VERSION=v3.0.2 . --no-cache
             docker push praqma/helmsman:$TAG-helm-v3.0.2
 
+            docker build -t praqma/helmsman:$TAG-helm-v3.0.3 --build-arg HELM_VERSION=v3.0.3 . --no-cache
+            docker push praqma/helmsman:$TAG-helm-v3.0.3
+
 workflows:
   version: 2
   build-test-push-release:
