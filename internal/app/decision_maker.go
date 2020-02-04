@@ -1,6 +1,7 @@
 package app
 
 import (
+	"os"
 	"regexp"
 	"strings"
 	"sync"
@@ -124,6 +125,11 @@ func (cs *currentState) decide(r *release, s *state, p *plan) {
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 				"you remove its protection.", r.Priority, noop)
 		}
+	} else if ok := cs.releaseExists(r, "pending-upgrade"); ok {
+		log.Error("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in pending-upgrade state. " +
+			"This means application is being upgraded outside of this Helmsman invocation's scope." +
+			"Exiting, as this may cause issues when continuing...")
+		os.Exit(1)
 	} else {
 		// If there is no release in the cluster with this name and in this namespace, then install it!
 		if _, ok := cs.releases[r.key()]; !ok {
