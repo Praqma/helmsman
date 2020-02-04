@@ -102,6 +102,9 @@ func addHelmRepos(repos map[string]string) error {
 		// check if repo is in GCS, then perform GCS auth -- needed for private GCS helm repos
 		// failed auth would not throw an error here, as it is possible that the repo is public and does not need authentication
 		if strings.HasPrefix(repoLink, "gs://") {
+			if !helmPluginExists("gcs") {
+				log.Fatal(fmt.Sprintf("repository %s can't be used: helm-gcs plugin is missing", repoLink))
+			}
 			msg, err := gcs.Auth()
 			if err != nil {
 				log.Fatal(msg)
