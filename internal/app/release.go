@@ -406,18 +406,23 @@ func (r *release) getValuesFiles() []string {
 		fileList = append(fileList, r.ValuesFiles...)
 	}
 
-	if r.SecretsFile != "" {
-		if !helmPluginExists("secrets") {
-			log.Fatal("helm secrets plugin is not installed/configured correctly. Aborting!")
+	if r.SecretsFile != "" || len(r.SecretsFiles) > 0 {
+		if settings.EyamlEnabled {
+			if !toolExists("eyaml") {
+				log.Fatal("hiera-eyaml is not installed/configured correctly. Aborting!")
+			}
+		} else {
+			if !helmPluginExists("secrets") {
+				log.Fatal("helm secrets plugin is not installed/configured correctly. Aborting!")
+			}
 		}
+	}
+	if r.SecretsFile != "" {
 		if err := decryptSecret(r.SecretsFile); err != nil {
 			log.Fatal(err.Error())
 		}
 		fileList = append(fileList, r.SecretsFile+".dec")
 	} else if len(r.SecretsFiles) > 0 {
-		if !helmPluginExists("secrets") {
-			log.Fatal("helm secrets plugin is not installed/configured correctly. Aborting!")
-		}
 		for i := 0; i < len(r.SecretsFiles); i++ {
 			if err := decryptSecret(r.SecretsFiles[i]); err != nil {
 				log.Fatal(err.Error())
