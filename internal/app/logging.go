@@ -31,6 +31,9 @@ func (l *Logger) Verbose(message string) {
 }
 
 func (l *Logger) Error(message string) {
+        if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
+                notifySlack(message, settings.SlackWebhook, true, flags.apply)
+        }
 	baseLogger.Error(message)
 }
 
