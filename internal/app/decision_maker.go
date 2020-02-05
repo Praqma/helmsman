@@ -103,21 +103,21 @@ func (cs *currentState) decide(r *release, s *state, p *plan) {
 		return
 	}
 
-	if ok := cs.releaseExists(r, "deployed"); ok {
+	if ok := cs.releaseExists(r, helmStatusDeployed); ok {
 		if !r.isProtected(cs, s) {
 			cs.inspectUpgradeScenario(r, p) // upgrade or move
 		} else {
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 				"you remove its protection.", r.Priority, noop)
 		}
-	} else if ok := cs.releaseExists(r, "deleted"); ok {
+	} else if ok := cs.releaseExists(r, helmStatusDeleted); ok {
 		if !r.isProtected(cs, s) {
 			r.rollback(cs, p) // rollback
 		} else {
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 				"you remove its protection.", r.Priority, noop)
 		}
-	} else if ok := cs.releaseExists(r, "failed"); ok {
+	} else if ok := cs.releaseExists(r, helmStatusFailed); ok {
 		if !r.isProtected(cs, s) {
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in FAILED state. Upgrade is scheduled!", r.Priority, change)
 			r.upgrade(p)
@@ -125,7 +125,7 @@ func (cs *currentState) decide(r *release, s *state, p *plan) {
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 				"you remove its protection.", r.Priority, noop)
 		}
-	} else if ok := cs.releaseExists(r, "pending-upgrade"); ok {
+	} else if ok := cs.releaseExists(r, helmStatusPending); ok {
 		log.Error("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in pending-upgrade state. " +
 			"This means application is being upgraded outside of this Helmsman invocation's scope." +
 			"Exiting, as this may cause issues when continuing...")

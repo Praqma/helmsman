@@ -9,6 +9,13 @@ import (
 	"sync"
 )
 
+const (
+	helmStatusDeployed = "deployed"
+	helmStatusDeleted = "deleted"
+	helmStatusFailed = "failed"
+	helmStatusPending = "pending-upgrade"
+)
+
 // helmRelease represents the current state of a release
 type helmRelease struct {
 	Name            string   `json:"Name"`
