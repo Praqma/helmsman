@@ -396,7 +396,7 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 	content_split := strings.Split(content, "\n")
 
 	for i := range content_split {
-		content_split[i] = "*" + content_split[i] + "*"
+		content_split[i] = "* *" + content_split[i] + "*"
 	}
 
 	content_bold := strings.Join(content_split, "\n")
