@@ -409,7 +409,8 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 				"pretext": "` + pretext + `",
 				"text": "` + content_bold + `",
 				"footer": "Helmsman ` + appVersion + `",
-				"ts": ` + strconv.FormatInt(t.Unix(), 10) + `
+				"ts": ` + strconv.FormatInt(t.Unix(), 10) + `,
+				"mrkdwn_in": ["text","pretext"]
 			}
 		]
 	}`)
