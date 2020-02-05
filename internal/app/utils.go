@@ -401,6 +401,11 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 
 	content_bold := strings.Join(content_split, "\n")
 
+	if failure {
+		content_trimmed := strings.TrimSuffix(content, "\n")
+		content_bold = "*" + content_trimmed + "*"
+	}
+
 	var jsonStr = []byte(`{
 		"attachments": [
 			{
