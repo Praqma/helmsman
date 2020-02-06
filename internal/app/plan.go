@@ -97,7 +97,7 @@ func (p *plan) exec() {
 			if !flags.verbose {
 				errorMsg = strings.Split(result.errors, "---")[0]
 			}
-			log.Fatal(fmt.Sprintf("Command returned [ %d ] exit code and error message [ %s ]", result.code, errorMsg))
+			log.Fatal(fmt.Sprintf("Command returned [ %d ] exit code and error message [ %s ]", result.code, strings.TrimSpace(errorMsg)))
 		} else {
 			log.Notice(result.output)
 			log.Notice("Finished: " + cmd.Command.Description)
