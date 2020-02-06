@@ -381,30 +381,29 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 		color = "#FF0000" // red
 	}
 
+	var contentBold string
 	var pretext string
+
 	if content == "" {
 		pretext = "*No actions to perform!*"
+		contentBold = content
 	} else if failure {
 		pretext = "*Failed to generate/execute a plan: *"
+		contentTrimmed := strings.TrimSuffix(content, "\n")
+		contentBold = "*" + contentTrimmed + "*"
 	} else if executing && !failure {
 		pretext = "*Here is what I have done: *"
+		contentBold = "*" + content + "*"
 	} else {
 		pretext = "*Here is what I am going to do: *"
+		contentSplit := strings.Split(content, "\n")
+		for i := range contentSplit {
+			contentSplit[i] = "* *" + contentSplit[i] + "*"
+		}
+		contentBold = strings.Join(contentSplit, "\n")
 	}
 
 	t := time.Now().UTC()
-	content_split := strings.Split(content, "\n")
-
-	for i := range content_split {
-		content_split[i] = "* *" + content_split[i] + "*"
-	}
-
-	content_bold := strings.Join(content_split, "\n")
-
-	if failure {
-		content_trimmed := strings.TrimSuffix(content, "\n")
-		content_bold = "*" + content_trimmed + "*"
-	}
 
 	var jsonStr = []byte(`{
 		"attachments": [
@@ -412,7 +411,7 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 				"fallback": "Helmsman results.",
 				"color": "` + color + `" ,
 				"pretext": "` + pretext + `",
-				"text": "` + content_bold + `",
+				"text": "` + contentBold + `",
 				"footer": "Helmsman ` + appVersion + `",
 				"ts": ` + strconv.FormatInt(t.Unix(), 10) + `,
 				"mrkdwn_in": ["text","pretext"]
