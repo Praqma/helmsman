@@ -257,7 +257,7 @@ func (r *release) test(p *plan) {
 
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
 func (r *release) install(p *plan) {
-	cmd := helmCmd(r.getHelmArgsFor("install"), "Installing release [ "+r.Name+" ] version [ "+r.Version+" ] in namespace [ "+r.Namespace+" ]")
+	cmd := helmCmd(r.getHelmArgsFor("install"), "Install release [ "+r.Name+" ] version [ "+r.Version+" ] in namespace [ "+r.Namespace+" ]")
 	p.addCommand(cmd, r.Priority, r)
 	p.addDecision("Release [ "+r.Name+" ] version [ "+r.Version+" ] will be installed in [ "+r.Namespace+" ] namespace", r.Priority, create)
 
@@ -310,7 +310,7 @@ func (r *release) upgrade(p *plan) {
 	if flags.forceUpgrades {
 		force = "--force"
 	}
-	cmd := helmCmd(concat(r.getHelmArgsFor("upgrade"), []string{force}, r.getWait(), r.getHelmFlags()), "Upgrading release [ "+r.Name+" ] to version [ "+r.Version+" ] in namespace [ "+r.Namespace+" ]")
+	cmd := helmCmd(concat(r.getHelmArgsFor("upgrade"), []string{force}, r.getWait(), r.getHelmFlags()), "Upgrade release [ "+r.Name+" ] to version [ "+r.Version+" ] in namespace [ "+r.Namespace+" ]")
 
 	p.addCommand(cmd, r.Priority, r)
 }
@@ -318,10 +318,10 @@ func (r *release) upgrade(p *plan) {
 // reInstall purge deletes a release and reinstalls it.
 // This is used when moving a release to another namespace or when changing the chart used for it.
 func (r *release) reInstall(p *plan) {
-	delCmd := helmCmd(concat(r.getHelmArgsFor("uninstall"), flags.getDryRunFlags()), "Deleting release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
+	delCmd := helmCmd(concat(r.getHelmArgsFor("uninstall"), flags.getDryRunFlags()), "Delete release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 	p.addCommand(delCmd, r.Priority, r)
 
-	installCmd := helmCmd(r.getHelmArgsFor("install"), "Installing release [ "+r.Name+" ] version [ "+r.Version+" ] in namespace [ "+r.Namespace+" ]")
+	installCmd := helmCmd(r.getHelmArgsFor("install"), "Install release [ "+r.Name+" ] version [ "+r.Version+" ] in namespace [ "+r.Namespace+" ]")
 	p.addCommand(installCmd, r.Priority, r)
 }
 
