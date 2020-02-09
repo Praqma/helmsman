@@ -386,7 +386,6 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 
 	if content == "" {
 		pretext = "*No actions to perform!*"
-		contentBold = content
 	} else if failure {
 		pretext = "*Failed to generate/execute a plan: *"
 		contentTrimmed := strings.TrimSuffix(content, "\n")
