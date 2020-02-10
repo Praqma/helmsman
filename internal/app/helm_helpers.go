@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"regexp"
 	"strings"
 
 	"github.com/Praqma/helmsman/internal/gcs"
@@ -25,18 +24,25 @@ func helmCmd(args []string, desc string) command {
 	}
 }
 
-var chartNameExtractor = regexp.MustCompile(`[\\/]([^\\/]+)$`)
-
 // extractChartName extracts the Helm chart name from full chart name in the desired state.
-// example: it extracts "chartY" from "repoX/chartY" and "chartZ" from "c:\charts\chartZ"
 func extractChartName(releaseChart string) string {
+	cmd := helmCmd([]string{"show", "chart", releaseChart}, "Show chart information")
 
-	m := chartNameExtractor.FindStringSubmatch(releaseChart)
-	if len(m) == 2 {
-		return m[1]
+	result := cmd.exec()
+	if result.code != 0 {
+		log.Fatal("While getting chart information: " + result.errors)
 	}
 
-	return ""
+	name := ""
+	for _, v := range strings.Split(result.output, "\n") {
+		split := strings.Split(v, ":")
+		if len(split) == 2 && split[0] == "name" {
+			name = strings.TrimSpace(split[1])
+			break
+		}
+	}
+
+	return name
 }
 
 // getHelmClientVersion returns Helm client Version
