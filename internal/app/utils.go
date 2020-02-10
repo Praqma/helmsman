@@ -374,22 +374,32 @@ func deleteFile(path string) {
 // and the webhook URL as well as a flag specifying if this is a failure message or not
 // It returns true if the sending of the message is successful, otherwise returns false
 func notifySlack(content string, url string, failure bool, executing bool) bool {
-	log.Info("Posting notifications to slack ... ")
+	log.Info("Posting notifications to Slack ... ")
 
 	color := "#36a64f" // green
 	if failure {
 		color = "#FF0000" // red
 	}
 
+	var contentBold string
 	var pretext string
+
 	if content == "" {
-		pretext = "No actions to perform!"
+		pretext = "*No actions to perform!*"
 	} else if failure {
-		pretext = "Failed to generate/execute a plan: "
+		pretext = "*Failed to generate/execute a plan: *"
+		contentTrimmed := strings.TrimSuffix(content, "\n")
+		contentBold = "*" + contentTrimmed + "*"
 	} else if executing && !failure {
-		pretext = "Here is what I have done: "
+		pretext = "*Here is what I have done: *"
+		contentBold = "*" + content + "*"
 	} else {
-		pretext = "Here is what I am going to do:"
+		pretext = "*Here is what I am going to do: *"
+		contentSplit := strings.Split(content, "\n")
+		for i := range contentSplit {
+			contentSplit[i] = "* *" + contentSplit[i] + "*"
+		}
+		contentBold = strings.Join(contentSplit, "\n")
 	}
 
 	t := time.Now().UTC()
@@ -400,9 +410,10 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 				"fallback": "Helmsman results.",
 				"color": "` + color + `" ,
 				"pretext": "` + pretext + `",
-				"title": "` + content + `",
+				"text": "` + contentBold + `",
 				"footer": "Helmsman ` + appVersion + `",
-				"ts": ` + strconv.FormatInt(t.Unix(), 10) + `
+				"ts": ` + strconv.FormatInt(t.Unix(), 10) + `,
+				"mrkdwn_in": ["text","pretext"]
 			}
 		]
 	}`)
