@@ -37,7 +37,7 @@ func extractChartName(releaseChart string) string {
 	for _, v := range strings.Split(result.output, "\n") {
 		split := strings.Split(v, ":")
 		if len(split) == 2 && split[0] == "name" {
-			name = strings.TrimSpace(split[1])
+			name = strings.Trim(split[1], `"' `)
 			break
 		}
 	}
