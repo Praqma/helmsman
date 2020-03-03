@@ -59,11 +59,9 @@ func Main() {
 	}
 
 	// add repos -- fails if they are not valid
-	if !flags.destroy {
-		log.Info("Setting up helm...")
-		if err := addHelmRepos(s.HelmRepos); err != nil {
-			log.Fatal(err.Error())
-		}
+	log.Info("Setting up helm...")
+	if err := addHelmRepos(s.HelmRepos); err != nil && !flags.destroy {
+		log.Fatal(err.Error())
 	}
 
 	if flags.apply || flags.dryRun || flags.destroy {
