@@ -419,14 +419,14 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 	}`)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	if err != nil {
-		log.Errorf("Failed to send slack message: %w", err)
+		log.Errorf("Failed to send slack message: %v", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Errorf("Failed to send notification to slack: %w", err)
+		log.Errorf("Failed to send notification to slack: %v", err)
 	}
 	defer resp.Body.Close()
 
