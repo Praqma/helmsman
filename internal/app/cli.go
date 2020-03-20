@@ -61,6 +61,7 @@ type cli struct {
 	updateDeps            bool
 	forceUpgrades         bool
 	version               bool
+	noCleanup             bool
 }
 
 func printUsage() {
@@ -101,6 +102,7 @@ func (c *cli) parse() {
 	flag.BoolVar(&c.substSSMValues, "subst-ssm-values", false, "turn on SSM parameter substitution in values files.")
 	flag.BoolVar(&c.updateDeps, "update-deps", false, "run 'helm dep up' for local chart")
 	flag.BoolVar(&c.forceUpgrades, "force-upgrades", false, "use --force when upgrading helm releases. May cause resources to be recreated.")
+	flag.BoolVar(&c.noCleanup, "no-cleanup", false, "keeps any credentials files that has been downloaded on the host where helmsman runs.")
 	flag.Usage = printUsage
 	flag.Parse()
 
