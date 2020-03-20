@@ -63,7 +63,7 @@ func Test_plan_addCommand(t *testing.T) {
 				Created:   tt.fields.Created,
 			}
 			r := &release{}
-			p.addCommand(tt.args.c, 0, r)
+			p.addCommand(tt.args.c, 0, r, []command{}, []command{})
 			if got := len(p.Commands); got != 1 {
 				t.Errorf("addCommand(): got  %v, want 1", got)
 			}

@@ -34,6 +34,20 @@ type release struct {
 	HelmFlags    []string          `yaml:"helmFlags"`
 	NoHooks      bool              `yaml:"noHooks"`
 	Timeout      int               `yaml:"timeout"`
+	Hooks        hooks             `yaml:"hooks"`
+}
+
+// hooks type which defines life-cycle hooks
+type hooks struct {
+	SuccessCondition string `yaml:"successCondition"`
+	SuccessTimeout   string `yaml:"successTimeout"`
+	DeleteOnSuccess  bool   `yaml:"deleteOnSuccess"`
+	PreInstall       string `yaml:"preInstall"`
+	PostInstall      string `yaml:"postInstall"`
+	PreUpgrade       string `yaml:"preUpgrade"`
+	PostUpgrade      string `yaml:"postUpgrade"`
+	PreDelete        string `yaml:"preDelete"`
+	PostDelete       string `yaml:"postDelete"`
 }
 
 type chartVersion struct {
@@ -58,7 +72,7 @@ func (r *release) isConsideredToRun(s *state) bool {
 	return true
 }
 
-// validateRelease validates if a release inside a desired state meets the specifications or not.
+// validate validates if a release inside a desired state meets the specifications or not.
 // check the full specification @ https://github.com/Praqma/helmsman/docs/desired_state_spec.md
 func (r *release) validate(appLabel string, names map[string]map[string]bool, s *state) error {
 	if r.Name == "" {
@@ -83,34 +97,42 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 		return errors.New("version can't be empty")
 	}
 
-	_, err = os.Stat(r.ValuesFile)
-	if r.ValuesFile != "" && (!isOfType(r.ValuesFile, []string{".yaml", ".yml", ".json"}) || err != nil) {
-		return fmt.Errorf("valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to %q)", r.ValuesFile)
-	} else if r.ValuesFile != "" && len(r.ValuesFiles) > 0 {
+	if r.ValuesFile != "" && len(r.ValuesFiles) > 0 {
 		return errors.New("valuesFile and valuesFiles should not be used together")
+	} else if r.ValuesFile != "" {
+		if err := isValidFile(r.ValuesFile, []string{".yaml", ".yml", ".json"}); err != nil {
+			return fmt.Errorf(err.Error())
+		}
 	} else if len(r.ValuesFiles) > 0 {
-		for i, filePath := range r.ValuesFiles {
-			if _, pathErr := os.Stat(filePath); !isOfType(filePath, []string{".yaml", ".yml", ".json"}) || pathErr != nil {
-				return fmt.Errorf("valuesFiles must be valid relative (from dsf file) file paths for a yaml file; path at index %d provided path resolved to %q", i, filePath)
+		for _, filePath := range r.ValuesFiles {
+			if err := isValidFile(filePath, []string{".yaml", ".yml", ".json"}); err != nil {
+				return fmt.Errorf(err.Error())
 			}
 		}
 	}
 
-	_, err = os.Stat(r.SecretsFile)
-	if r.SecretsFile != "" && (!isOfType(r.SecretsFile, []string{".yaml", ".yml", ".json"}) || err != nil) {
-		return fmt.Errorf("secretsFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to %q)", r.SecretsFile)
-	} else if r.SecretsFile != "" && len(r.SecretsFiles) > 0 {
+	if r.SecretsFile != "" && len(r.SecretsFiles) > 0 {
 		return errors.New("secretsFile and secretsFiles should not be used together")
+	} else if r.SecretsFile != "" {
+		if err := isValidFile(r.SecretsFile, []string{".yaml", ".yml", ".json"}); err != nil {
+			return fmt.Errorf(err.Error())
+		}
 	} else if len(r.SecretsFiles) > 0 {
 		for _, filePath := range r.SecretsFiles {
-			if i, pathErr := os.Stat(filePath); !isOfType(filePath, []string{".yaml", ".yml", ".json"}) || pathErr != nil {
-				return fmt.Errorf("secretsFiles must be valid relative (from dsf file) file paths for a yaml file; path at index %d provided path resolved to %q", i, filePath)
+			if err := isValidFile(filePath, []string{".yaml", ".yml", ".json"}); err != nil {
+				return fmt.Errorf(err.Error())
 			}
 		}
 	}
 
 	if r.Priority != 0 && r.Priority > 0 {
 		return errors.New("priority can only be 0 or negative value, positive values are not allowed")
+	}
+
+	if (hooks{}) != r.Hooks {
+		if ok, errorMsg := validateHooks(r.Hooks); !ok {
+			return fmt.Errorf(errorMsg)
+		}
 	}
 
 	if names[r.Name] == nil {
@@ -129,6 +151,46 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 	}
 
 	return nil
+}
+
+// validateHooks validates that hook files exist and of YAML type
+func validateHooks(hks hooks) (bool, string) {
+	if hks.PreInstall != "" {
+		if err := isValidFile(hks.PreInstall, []string{".yaml", ".yml"}); err != nil {
+			return false, err.Error()
+		}
+	}
+
+	if hks.PostInstall != "" {
+		if err := isValidFile(hks.PostInstall, []string{".yaml", ".yml"}); err != nil {
+			return false, err.Error()
+		}
+	}
+
+	if hks.PreUpgrade != "" {
+		if err := isValidFile(hks.PreUpgrade, []string{".yaml", ".yml"}); err != nil {
+			return false, err.Error()
+		}
+	}
+
+	if hks.PostUpgrade != "" {
+		if err := isValidFile(hks.PostUpgrade, []string{".yaml", ".yml"}); err != nil {
+			return false, err.Error()
+		}
+	}
+
+	if hks.PreDelete != "" {
+		if err := isValidFile(hks.PreDelete, []string{".yaml", ".yml"}); err != nil {
+			return false, err.Error()
+		}
+	}
+
+	if hks.PostDelete != "" {
+		if err := isValidFile(hks.PostDelete, []string{".yaml", ".yml"}); err != nil {
+			return false, err.Error()
+		}
+	}
+	return true, ""
 }
 
 // validateReleaseCharts validates if the charts defined in a release are valid.
@@ -172,6 +234,7 @@ func validateReleaseCharts(s *state) error {
 
 var versionExtractor = regexp.MustCompile(`[\n]version:\s?(.*)`)
 
+// validateChart validates if chart with the same name and version as specified in the DSF exists
 func (r *release) validateChart(app string, s *state, c chan string) {
 
 	validateCurrentChart := true
@@ -251,31 +314,37 @@ func (r *release) getChartVersion() (string, string) {
 // testRelease creates a Helm command to test a particular release.
 func (r *release) test(p *plan) {
 	cmd := helmCmd(r.getHelmArgsFor("test"), "Running tests for release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-	p.addCommand(cmd, r.Priority, r)
-	p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is required to be tested during installation", r.Priority, noop)
+	p.addCommand(cmd, r.Priority, r, []command{}, []command{})
 }
 
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
 func (r *release) install(p *plan) {
+
+	before, after := r.checkHooks("install", p)
 	cmd := helmCmd(r.getHelmArgsFor("install"), "Install release [ "+r.Name+" ] version [ "+r.Version+" ] in namespace [ "+r.Namespace+" ]")
-	p.addCommand(cmd, r.Priority, r)
-	p.addDecision("Release [ "+r.Name+" ] version [ "+r.Version+" ] will be installed in [ "+r.Namespace+" ] namespace", r.Priority, create)
+	p.addCommand(cmd, r.Priority, r, before, after)
 
 	if r.Test {
 		r.test(p)
 	}
 }
 
-// uninstall deletes a release from a particular Tiller in a k8s cluster
-func (r *release) uninstall(p *plan) {
+// uninstall uninstalls a release
+func (r *release) uninstall(p *plan, optionalNamespace ...string) {
+	ns := r.Namespace
+	if len(optionalNamespace) > 0 {
+		ns = optionalNamespace[0]
+	}
 	priority := r.Priority
 	if settings.ReverseDelete {
 		priority = priority * -1
 	}
 
-	cmd := helmCmd(concat(r.getHelmArgsFor("uninstall"), flags.getDryRunFlags()), "Deleting release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-	p.addCommand(cmd, priority, r)
-	p.addDecision(fmt.Sprintf("release [ %s ] is desired to be DELETED.", r.Name), r.Priority, delete)
+	before, after := r.checkHooks("delete", p, ns)
+
+	cmd := helmCmd(concat(r.getHelmArgsFor("uninstall", ns), flags.getDryRunFlags()), "Delete release [ "+r.Name+" ] in namespace [ "+ns+" ]")
+	p.addCommand(cmd, priority, r, before, after)
+
 }
 
 // diffRelease diffs an existing release with the specified values.yaml
@@ -310,19 +379,26 @@ func (r *release) upgrade(p *plan) {
 	if flags.forceUpgrades {
 		force = "--force"
 	}
+
+	before, after := r.checkHooks("upgrade", p)
+
 	cmd := helmCmd(concat(r.getHelmArgsFor("upgrade"), []string{force}, r.getWait(), r.getHelmFlags()), "Upgrade release [ "+r.Name+" ] to version [ "+r.Version+" ] in namespace [ "+r.Namespace+" ]")
 
-	p.addCommand(cmd, r.Priority, r)
+	p.addCommand(cmd, r.Priority, r, before, after)
+
 }
 
-// reInstall purge deletes a release and reinstalls it.
+// reInstall uninstalls a release and reinstalls it.
 // This is used when moving a release to another namespace or when changing the chart used for it.
-func (r *release) reInstall(p *plan) {
-	delCmd := helmCmd(concat(r.getHelmArgsFor("uninstall"), flags.getDryRunFlags()), "Delete release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-	p.addCommand(delCmd, r.Priority, r)
-
-	installCmd := helmCmd(r.getHelmArgsFor("install"), "Install release [ "+r.Name+" ] version [ "+r.Version+" ] in namespace [ "+r.Namespace+" ]")
-	p.addCommand(installCmd, r.Priority, r)
+// When the release is being moved to another namespace, the optionalOldNamespace is used to provide
+// the namespace from which the release is deleted.
+func (r *release) reInstall(p *plan, optionalOldNamespace ...string) {
+	oldNamespace := ""
+	if len(optionalOldNamespace) > 0 {
+		oldNamespace = optionalOldNamespace[0]
+	}
+	r.uninstall(p, oldNamespace)
+	r.install(p)
 }
 
 // rollbackRelease evaluates if a rollback action needs to be taken for a given release.
@@ -337,7 +413,7 @@ func (r *release) rollback(cs *currentState, p *plan) {
 	if r.Namespace == rs.Namespace {
 
 		cmd := helmCmd(concat([]string{"rollback", r.Name, rs.getRevision()}, r.getWait(), r.getTimeout(), r.getNoHooks(), flags.getDryRunFlags()), "Rolling back release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-		p.addCommand(cmd, r.Priority, r)
+		p.addCommand(cmd, r.Priority, r, []command{}, []command{})
 		r.upgrade(p) // this is to reflect any changes in values file(s)
 		p.addDecision("Release [ "+r.Name+" ] was deleted and is desired to be rolled back to "+
 			"namespace [ "+r.Namespace+" ]", r.Priority, create)
@@ -484,14 +560,19 @@ func (r *release) getHelmFlags() []string {
 	return concat(r.getNoHooks(), r.getTimeout(), flags.getDryRunFlags(), flgs)
 }
 
-func (r *release) getHelmArgsFor(action string) []string {
+// getHelmArgsFor returns helm arguments for a specific helm operation
+func (r *release) getHelmArgsFor(action string, optionalNamespaceOverride ...string) []string {
+	ns := r.Namespace
+	if len(optionalNamespaceOverride) > 0 {
+		ns = optionalNamespaceOverride[0]
+	}
 	switch action {
 	case "install":
-		return concat([]string{action, r.Name, r.Chart, "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getWait(), r.getHelmFlags())
+		return concat([]string{action, r.Name, r.Chart, "--version", r.Version, "--namespace", ns}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getWait(), r.getHelmFlags())
 	case "upgrade":
-		return concat([]string{action, "--namespace", r.Namespace, r.Name, r.Chart}, r.getValuesFiles(), []string{"--version", r.Version}, r.getSetValues(), r.getSetStringValues())
+		return concat([]string{action, "--namespace", ns, r.Name, r.Chart}, r.getValuesFiles(), []string{"--version", r.Version}, r.getSetValues(), r.getSetStringValues())
 	default:
-		return []string{action, "--namespace", r.Namespace, r.Name}
+		return []string{action, "--namespace", ns, r.Name}
 	}
 }
 
@@ -509,6 +590,119 @@ func (r *release) overrideNamespace(newNs string) {
 	r.Namespace = newNs
 }
 
+// inheritHooks passes global hooks config from the state to the release hooks if they are unset
+// release hooks override the global ones
+func (r *release) inheritHooks(s *state) {
+	if (hooks{}) != s.Settings.GlobalHooks {
+		if (hooks{}) == r.Hooks {
+			r.Hooks = s.Settings.GlobalHooks
+		} else {
+			if r.Hooks.PreInstall == "" {
+				r.Hooks.PreInstall = s.Settings.GlobalHooks.PreInstall
+			}
+			if r.Hooks.PostInstall == "" {
+				r.Hooks.PostInstall = s.Settings.GlobalHooks.PostInstall
+			}
+			if r.Hooks.PreUpgrade == "" {
+				r.Hooks.PreUpgrade = s.Settings.GlobalHooks.PreUpgrade
+			}
+			if r.Hooks.PostUpgrade == "" {
+				r.Hooks.PostUpgrade = s.Settings.GlobalHooks.PostUpgrade
+			}
+			if r.Hooks.PreDelete == "" {
+				r.Hooks.PreDelete = s.Settings.GlobalHooks.PreDelete
+			}
+			if r.Hooks.SuccessCondition == "" {
+				r.Hooks.SuccessCondition = s.Settings.GlobalHooks.SuccessCondition
+			}
+			if r.Hooks.SuccessTimeout == "" {
+				r.Hooks.SuccessTimeout = s.Settings.GlobalHooks.SuccessTimeout
+			}
+			if !r.Hooks.DeleteOnSuccess {
+				r.Hooks.DeleteOnSuccess = s.Settings.GlobalHooks.DeleteOnSuccess
+			}
+		}
+	}
+}
+
+// checkHooks checks if a hook of certain type exists and creates its command
+// if success condition for the hook is defined, a "kubectl wait" command is created
+// returns two slices of before and after commands
+func (r *release) checkHooks(hookType string, p *plan, optionalNamespace ...string) ([]command, []command) {
+	ns := r.Namespace
+	if len(optionalNamespace) > 0 {
+		ns = optionalNamespace[0]
+	}
+	var beforeCommands []command
+	var afterCommands []command
+	switch hookType {
+	case "install":
+		{
+			if r.Hooks.PreInstall != "" {
+				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks.PreInstall}, "Apply pre-install manifest "+r.Hooks.PreInstall))
+				if wait, cmds := r.shouldWaitForHook(r.Hooks.PreInstall, "pre-install", ns); wait {
+					beforeCommands = append(beforeCommands, cmds...)
+				}
+			}
+			if r.Hooks.PostInstall != "" {
+				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks.PostInstall}, "Apply post-install manifest "+r.Hooks.PostInstall))
+				if wait, cmds := r.shouldWaitForHook(r.Hooks.PostInstall, "post-install", ns); wait {
+					afterCommands = append(afterCommands, cmds...)
+				}
+			}
+		}
+	case "upgrade":
+		{
+			if r.Hooks.PreUpgrade != "" {
+				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks.PreUpgrade}, "Apply pre-upgrade manifest "+r.Hooks.PreUpgrade))
+				if wait, cmds := r.shouldWaitForHook(r.Hooks.PreUpgrade, "pre-upgrade", ns); wait {
+					beforeCommands = append(beforeCommands, cmds...)
+				}
+			}
+			if r.Hooks.PostUpgrade != "" {
+				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks.PostUpgrade}, "Apply post-upgrade manifest "+r.Hooks.PostUpgrade))
+				if wait, cmds := r.shouldWaitForHook(r.Hooks.PostUpgrade, "post-upgrade", ns); wait {
+					afterCommands = append(afterCommands, cmds...)
+				}
+			}
+		}
+	case "delete":
+		{
+			if r.Hooks.PreDelete != "" {
+				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks.PreDelete}, "Apply pre-delete manifest "+r.Hooks.PreDelete))
+				if wait, cmds := r.shouldWaitForHook(r.Hooks.PreDelete, "pre-delete", ns); wait {
+					beforeCommands = append(beforeCommands, cmds...)
+				}
+			}
+			if r.Hooks.PostDelete != "" {
+				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks.PostDelete}, "Apply post-delete manifest "+r.Hooks.PostDelete))
+				if wait, cmds := r.shouldWaitForHook(r.Hooks.PostDelete, "post-delete", ns); wait {
+					afterCommands = append(afterCommands, cmds...)
+				}
+			}
+		}
+	}
+	return beforeCommands, afterCommands
+}
+
+// shouldWaitForHook checks if there is a success condition to wait for after applying a hook
+// returns a boolean and the wait command if applicable
+func (r *release) shouldWaitForHook(hookFile string, hookType string, namespace string) (bool, []command) {
+	var cmds []command
+	if r.Hooks.SuccessCondition != "" {
+		timeoutFlag := ""
+		if r.Hooks.SuccessTimeout != "" {
+			timeoutFlag = "--timeout=" + r.Hooks.SuccessTimeout
+		}
+		cmds = append(cmds, kubectl([]string{"wait", "-n", namespace, "-f", hookFile, "--for=condition=" + r.Hooks.SuccessCondition, timeoutFlag}, "Wait for "+hookType+" : "+hookFile))
+		if r.Hooks.DeleteOnSuccess {
+			cmds = append(cmds, kubectl([]string{"delete", "-n", namespace, "-f", hookFile}, "Delete "+hookType+" : "+hookFile))
+		}
+		return true, cmds
+	}
+	return false, cmds
+}
+
 // print prints the details of the release
 func (r release) print() {
 	fmt.Println("")
@@ -524,6 +718,15 @@ func (r release) print() {
 	fmt.Println("\tprotected : ", r.Protected)
 	fmt.Println("\twait : ", r.Wait)
 	fmt.Println("\tpriority : ", r.Priority)
+	fmt.Println("\tSuccessCondition : ", r.Hooks.SuccessCondition)
+	fmt.Println("\tSuccessTimeout : ", r.Hooks.SuccessTimeout)
+	fmt.Println("\tDeleteOnSuccess : ", r.Hooks.DeleteOnSuccess)
+	fmt.Println("\tpreInstall : ", r.Hooks.PreInstall)
+	fmt.Println("\tpostInstall : ", r.Hooks.PostInstall)
+	fmt.Println("\tpreUpgrade : ", r.Hooks.PreUpgrade)
+	fmt.Println("\tpostUpgrade : ", r.Hooks.PostUpgrade)
+	fmt.Println("\tpreDelete : ", r.Hooks.PreDelete)
+	fmt.Println("\tpostDelete : ", r.Hooks.PostDelete)
 	fmt.Println("\tno-hooks : ", r.NoHooks)
 	fmt.Println("\ttimeout : ", r.Timeout)
 	fmt.Println("\tvalues to override from env:")

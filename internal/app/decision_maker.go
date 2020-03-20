@@ -82,8 +82,12 @@ func (cs *currentState) decide(r *release, s *state, p *plan) {
 		return
 	}
 
+	// inherit globalHooks if local ones are not set
+	r.inheritHooks(s)
+
 	if flags.destroy {
 		if ok := cs.releaseExists(r, ""); ok {
+			p.addDecision("Release [ "+r.Name+" ] will be DELETED (destroy flag enabled).", r.Priority, delete)
 			r.uninstall(p)
 		}
 		return
@@ -96,6 +100,7 @@ func (cs *currentState) decide(r *release, s *state, p *plan) {
 					"protection is removed.", r.Priority, noop)
 				return
 			}
+			p.addDecision("Release [ "+r.Name+" ] is desired to be DELETED.", r.Priority, delete)
 			r.uninstall(p)
 			return
 		}
@@ -126,13 +131,14 @@ func (cs *currentState) decide(r *release, s *state, p *plan) {
 				"you remove its protection.", r.Priority, noop)
 		}
 	} else if ok := cs.releaseExists(r, helmStatusPending); ok {
-		log.Error("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in pending-upgrade state. " +
+		log.Error("Release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ] is in pending-upgrade state. " +
 			"This means application is being upgraded outside of this Helmsman invocation's scope." +
 			"Exiting, as this may cause issues when continuing...")
 		os.Exit(1)
 	} else {
 		// If there is no release in the cluster with this name and in this namespace, then install it!
 		if _, ok := cs.releases[r.key()]; !ok {
+			p.addDecision("Release [ "+r.Name+" ] version [ "+r.Version+" ] will be installed in [ "+r.Namespace+" ] namespace", r.Priority, create)
 			r.install(p)
 		} else {
 			// A release with the same name and in the same namespace exists, but it has a different context label (managed by another DSF)
@@ -258,7 +264,7 @@ func (cs *currentState) cleanUntrackedReleases(s *state, p *plan) {
 			if !tracked {
 				toDelete++
 				r := cs.releases[name+"-"+ns]
-				p.addDecision("Untracked release [ "+r.Name+" ] found and it will be deleted", -800, delete)
+				p.addDecision("Untracked release [ "+r.Name+" ] found and it will be deleted", -1000, delete)
 				r.uninstall(p)
 			}
 		}
@@ -311,12 +317,12 @@ func (cs *currentState) inspectUpgradeScenario(r *release, p *plan) {
 			}
 		}
 	} else {
-		r.reInstall(p)
+		r.reInstall(p, rs.Namespace)
 		p.addDecision("Release [ "+r.Name+" ] is desired to be enabled in a new namespace [ "+r.Namespace+
 			" ]. Uninstall of the current release from namespace [ "+rs.Namespace+" ] will be performed "+
 			"and then installation in namespace [ "+r.Namespace+" ] will take place", r.Priority, change)
 		p.addDecision("WARNING: moving release [ "+r.Name+" ] from [ "+rs.Namespace+" ] to [ "+r.Namespace+
-			" ] might not correctly connect existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/move_charts_across_namespaces.md"+
+			" ] might not correctly connect existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/apps/moving_across_namespaces.md#note-on-persistent-volumes"+
 			" for details if this release uses PV and PVC.", r.Priority, change)
 	}
 }

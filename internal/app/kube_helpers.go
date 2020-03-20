@@ -170,23 +170,23 @@ func createContext(s *state) error {
 
 	// CA cert
 	if caCrt != "" {
-		caCrt = downloadFile(caCrt, "ca.crt")
+		caCrt = downloadFile(caCrt, "", "ca.crt")
 	}
 
 	// CA key
 	if caKey != "" {
-		caKey = downloadFile(caKey, "ca.key")
+		caKey = downloadFile(caKey, "", "ca.key")
 	}
 
 	// client certificate
 	if caClient != "" {
-		caClient = downloadFile(caClient, "client.crt")
+		caClient = downloadFile(caClient, "", "client.crt")
 	}
 
 	// bearer token
 	tokenPath := "bearer.token"
 	if s.Settings.BearerToken && s.Settings.BearerTokenPath != "" {
-		downloadFile(s.Settings.BearerTokenPath, tokenPath)
+		downloadFile(s.Settings.BearerTokenPath, "", tokenPath)
 	}
 
 	// connecting to the cluster

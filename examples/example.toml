@@ -24,7 +24,7 @@ context= "test-infra"   # defaults to "default" if not provided
   kubeContext = "minikube" # will try connect to this context first, if it does not exist, it will be created using the details below
 #  username = "admin"
 #  password = "$K8S_PASSWORD" # the name of an environment variable containing the k8s password
-  clusterURI = "${SET_URI}" # the name of an environment variable containing the cluster API
+  # clusterURI = "${SET_URI}" # the name of an environment variable containing the cluster API
 #  #clusterURI = "https://192.168.99.100:8443" # equivalent to the above
 #  storageBackend = "secret" # default is secret
 #  slackWebhook = "$slack" # or "your slack webhook url"
@@ -32,6 +32,11 @@ context= "test-infra"   # defaults to "default" if not provided
 #### to use bearer token:
 #  bearerToken = true
 #  clusterURI = "https://kubernetes.default"
+ [settings.globalHooks]
+    successCondition= "Initialized"
+    deleteOnSuccess= true
+    postInstall= "job.yaml"
+
 
 
 
@@ -41,23 +46,23 @@ context= "test-infra"   # defaults to "default" if not provided
 # protected = <true or false> -- default to false
 [namespaces]
   [namespaces.production]
-    protected = true
-    [[namespaces.production.limits]]
-      type = "Container"
-      [namespaces.production.limits.default]
-        cpu = "300m"
-        memory = "200Mi"
-      [namespaces.production.limits.defaultRequest]
-        cpu = "200m"
-        memory = "100Mi"
-    [[namespaces.production.limits]]
-      type = "Pod"
-      [namespaces.production.limits.max]
-        memory = "300Mi"
+  #   protected = true
+  #   [[namespaces.production.limits]]
+  #     type = "Container"
+  #     [namespaces.production.limits.default]
+  #       cpu = "300m"
+  #       memory = "200Mi"
+  #     [namespaces.production.limits.defaultRequest]
+  #       cpu = "200m"
+  #       memory = "100Mi"
+  #   [[namespaces.production.limits]]
+  #     type = "Pod"
+  #     [namespaces.production.limits.max]
+  #       memory = "300Mi"      
   [namespaces.staging]
-    protected = false
-    [namespaces.staging.labels]
-      env = "staging"
+    # protected = false
+    # [namespaces.staging.labels]
+    #   env = "staging"
 
 
 # define any private/public helm charts repos you would like to get charts from
@@ -78,7 +83,7 @@ context= "test-infra"   # defaults to "default" if not provided
 [apps]
 
   [apps.argo]
-    namespace = "staging" # maps to the namespace as defined in namespaces above
+    namespace = "production" # maps to the namespace as defined in namespaces above
     enabled = true # change to false if you want to delete this app release [default = false]
     chart = "argo/argo" # changing the chart name means delete and recreate this release
     version = "0.6.4" # chart version
@@ -88,24 +93,35 @@ context= "test-infra"   # defaults to "default" if not provided
     protected = true
     priority= -3
     wait = true
+    [apps.argo.hooks]
+    successCondition= "Complete"
+    successTimeout= "90s"
+    # deleteOnSuccess= true
+    preInstall="job.yaml"
+    # preInstall="https://github.com/jetstack/cert-manager/releases/download/v0.14.0/cert-manager.crds.yaml"
+    # postInstall="https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml"
+    # preUpgrade="job.yaml"
+    # postUpgrade="job.yaml"
+    # preDelete="job.yaml"
+    # postDelete="job.yaml"
   # [apps.argo.setString] # values to override values from values.yaml with values from env vars or directly entered-- useful for passing secrets to charts
-  #   AdminPassword="$SOME_PASSWORD" # $JENKINS_PASSWORD must exist in the environment
+  #   AdminPassword="$SOME_PASSWORD" # $SOME_PASSWORD must exist in the environment
   #   MyLongIntVar="1234567890"
   # [apps.argo.set]
   #   installCRD="true"
 
 
-  [apps.artifactory]
-    namespace = "production" # maps to the namespace as defined in namespaces above
-    enabled = true # change to false if you want to delete this app release [default = false]
-    chart = "jfrog/artifactory" # changing the chart name means delete and recreate this release
-    version = "8.3.2" # chart version
-    ### Optional values below
-    valuesFile = "" # leaving it empty uses the default chart values
-    test = false # run the tests when this release is installed for the first time only
-    priority= -2
-    noHooks= false
-    timeout= 300
-    helmFlags= [] # additional helm flags for this release
+  # [apps.artifactory]
+  #   namespace = "production" # maps to the namespace as defined in namespaces above
+  #   enabled = true # change to false if you want to delete this app release [default = false]
+  #   chart = "jfrog/artifactory" # changing the chart name means delete and recreate this release
+  #   version = "8.3.2" # chart version
+  #   ### Optional values below
+  #   valuesFile = "" # leaving it empty uses the default chart values
+  #   test = false # run the tests when this release is installed for the first time only
+  #   priority= -2
+  #   noHooks= false
+  #   timeout= 300
+  #   helmFlags= [] # additional helm flags for this release
 
 # See https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md#apps for more apps options
