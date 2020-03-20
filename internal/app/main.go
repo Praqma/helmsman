@@ -29,7 +29,9 @@ func Main() {
 
 	// delete temp files with substituted env vars when the program terminates
 	defer os.RemoveAll(tempFilesDir)
-	defer s.cleanup()
+	if !flags.noCleanup {
+		defer s.cleanup()
+	}
 
 	flags.readState(&s)
 	if len(s.GroupMap) > 0 {
