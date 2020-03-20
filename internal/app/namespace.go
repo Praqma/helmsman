@@ -17,7 +17,7 @@ type limits []struct {
 	Default              resources `yaml:"default,omitempty"`
 	DefaultRequest       resources `yaml:"defaultRequest,omitempty"`
 	MaxLimitRequestRatio resources `yaml:"maxLimitRequestRatio,omitempty"`
-	LimitType            string    `yaml:"type"`
+	Type                 string    `yaml:"type"`
 }
 
 // namespace type represents the fields of a namespace
