@@ -53,12 +53,11 @@ func fromTOML(file string, s *state) (bool, string) {
 	if !flags.noSSMSubst {
 		tomlFile = substituteSSM(tomlFile)
 	}
-
 	if _, err := toml.Decode(tomlFile, s); err != nil {
 		return false, err.Error()
 	}
 	resolvePaths(file, s)
-	substituteVarsInValuesFiles(s)
+	substituteVarsInStaticFiles(s)
 
 	return true, "Parsed TOML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps"
 }
@@ -109,7 +108,7 @@ func fromYAML(file string, s *state) (bool, string) {
 		return false, err.Error()
 	}
 	resolvePaths(file, s)
-	substituteVarsInValuesFiles(s)
+	substituteVarsInStaticFiles(s)
 
 	return true, "Parsed YAML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps"
 }
@@ -139,14 +138,54 @@ func toYAML(file string, s *state) {
 	newFile.Close()
 }
 
-// substituteVarsInValuesFiles loops through the values/secrets files and substitutes variables into them.
-func substituteVarsInValuesFiles(s *state) {
+// substituteVarsInStaticFiles loops through the values/secrets files and substitutes variables into them.
+func substituteVarsInStaticFiles(s *state) {
 	for _, v := range s.Apps {
 		if v.ValuesFile != "" {
 			v.ValuesFile = substituteVarsInYaml(v.ValuesFile)
 		}
 		if v.SecretsFile != "" {
 			v.SecretsFile = substituteVarsInYaml(v.SecretsFile)
+		}
+		if (hooks{}) != v.Hooks {
+			if v.Hooks.PreInstall != "" {
+				v.Hooks.PreInstall = substituteVarsInYaml(v.Hooks.PreInstall)
+			}
+			if v.Hooks.PostInstall != "" {
+				v.Hooks.PostInstall = substituteVarsInYaml(v.Hooks.PostInstall)
+			}
+			if v.Hooks.PreUpgrade != "" {
+				v.Hooks.PreUpgrade = substituteVarsInYaml(v.Hooks.PreUpgrade)
+			}
+			if v.Hooks.PostUpgrade != "" {
+				v.Hooks.PostUpgrade = substituteVarsInYaml(v.Hooks.PostUpgrade)
+			}
+			if v.Hooks.PreDelete != "" {
+				v.Hooks.PreDelete = substituteVarsInYaml(v.Hooks.PreDelete)
+			}
+			if v.Hooks.PostDelete != "" {
+				v.Hooks.PostDelete = substituteVarsInYaml(v.Hooks.PostDelete)
+			}
+		}
+		if (hooks{}) != s.Settings.GlobalHooks {
+			if s.Settings.GlobalHooks.PreInstall != "" {
+				s.Settings.GlobalHooks.PreInstall = substituteVarsInYaml(s.Settings.GlobalHooks.PreInstall)
+			}
+			if s.Settings.GlobalHooks.PostInstall != "" {
+				s.Settings.GlobalHooks.PostInstall = substituteVarsInYaml(s.Settings.GlobalHooks.PostInstall)
+			}
+			if s.Settings.GlobalHooks.PreUpgrade != "" {
+				s.Settings.GlobalHooks.PreUpgrade = substituteVarsInYaml(s.Settings.GlobalHooks.PreUpgrade)
+			}
+			if s.Settings.GlobalHooks.PostUpgrade != "" {
+				s.Settings.GlobalHooks.PostUpgrade = substituteVarsInYaml(s.Settings.GlobalHooks.PostUpgrade)
+			}
+			if s.Settings.GlobalHooks.PreDelete != "" {
+				s.Settings.GlobalHooks.PreDelete = substituteVarsInYaml(s.Settings.GlobalHooks.PreDelete)
+			}
+			if s.Settings.GlobalHooks.PostDelete != "" {
+				s.Settings.GlobalHooks.PostDelete = substituteVarsInYaml(s.Settings.GlobalHooks.PostDelete)
+			}
 		}
 		for i := range v.ValuesFiles {
 			v.ValuesFiles[i] = substituteVarsInYaml(v.ValuesFiles[i])
@@ -173,10 +212,7 @@ func substituteVarsInYaml(file string) string {
 		yamlFile = substituteSSM(yamlFile)
 	}
 
-	dir, err := ioutil.TempDir(tempFilesDir, "tmp")
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	dir := createTempDir(tempFilesDir, "tmp")
 
 	// output file contents with env variables substituted into temp files
 	outFile := path.Join(dir, filepath.Base(file))
@@ -187,6 +223,7 @@ func substituteVarsInYaml(file string) string {
 	return outFile
 }
 
+// func stringInSlice checks if a string is in a slice
 func stringInSlice(a string, list []string) bool {
 	for _, b := range list {
 		if b == a {
@@ -196,24 +233,43 @@ func stringInSlice(a string, list []string) bool {
 	return false
 }
 
-// resolvePaths resolves relative paths of certs/keys/chart and replace them with a absolute paths
+// resolvePaths resolves relative paths of certs/keys/chart/value file/secret files/etc and replace them with a absolute paths
 func resolvePaths(relativeToFile string, s *state) {
 	dir := filepath.Dir(relativeToFile)
-	for ns, v := range s.Namespaces {
-		s.Namespaces[ns] = v
-	}
+	downloadDest, _ := filepath.Abs(createTempDir(tempFilesDir, "tmp"))
 	for k, v := range s.Apps {
 		if v.ValuesFile != "" {
-			v.ValuesFile, _ = filepath.Abs(filepath.Join(dir, v.ValuesFile))
+			v.ValuesFile, _ = resolveOnePath(v.ValuesFile, dir, downloadDest)
 		}
 		if v.SecretsFile != "" {
-			v.SecretsFile, _ = filepath.Abs(filepath.Join(dir, v.SecretsFile))
+			v.SecretsFile, _ = resolveOnePath(v.SecretsFile, dir, downloadDest)
 		}
-		for i, f := range v.ValuesFiles {
-			v.ValuesFiles[i], _ = filepath.Abs(filepath.Join(dir, f))
+		if (hooks{}) != v.Hooks {
+			if v.Hooks.PreInstall != "" {
+				v.Hooks.PreInstall, _ = resolveOnePath(v.Hooks.PreInstall, dir, downloadDest)
+			}
+
+			if v.Hooks.PostInstall != "" {
+				v.Hooks.PostInstall, _ = resolveOnePath(v.Hooks.PostInstall, dir, downloadDest)
+			}
+			if v.Hooks.PreUpgrade != "" {
+				v.Hooks.PreUpgrade, _ = resolveOnePath(v.Hooks.PreUpgrade, dir, downloadDest)
+			}
+			if v.Hooks.PostUpgrade != "" {
+				v.Hooks.PostUpgrade, _ = resolveOnePath(v.Hooks.PostUpgrade, dir, downloadDest)
+			}
+			if v.Hooks.PreDelete != "" {
+				v.Hooks.PreDelete, _ = resolveOnePath(v.Hooks.PreDelete, dir, downloadDest)
+			}
+			if v.Hooks.PostDelete != "" {
+				v.Hooks.PostDelete, _ = resolveOnePath(v.Hooks.PostDelete, dir, downloadDest)
+			}
 		}
-		for i, f := range v.SecretsFiles {
-			v.SecretsFiles[i], _ = filepath.Abs(filepath.Join(dir, f))
+		for i := range v.ValuesFiles {
+			v.ValuesFiles[i], _ = resolveOnePath(v.ValuesFiles[i], dir, downloadDest)
+		}
+		for i := range v.SecretsFiles {
+			v.SecretsFiles[i], _ = resolveOnePath(v.SecretsFiles[i], dir, downloadDest)
 		}
 
 		if v.Chart != "" {
@@ -235,17 +291,52 @@ func resolvePaths(relativeToFile string, s *state) {
 	}
 	// resolving paths for Bearer Token path in settings
 	if s.Settings.BearerTokenPath != "" {
-		if _, err := url.ParseRequestURI(s.Settings.BearerTokenPath); err != nil {
-			s.Settings.BearerTokenPath, _ = filepath.Abs(filepath.Join(dir, s.Settings.BearerTokenPath))
+		s.Settings.BearerTokenPath, _ = resolveOnePath(s.Settings.BearerTokenPath, dir, downloadDest)
+	}
+	// resolve paths for global hooks
+	if (hooks{}) != s.Settings.GlobalHooks {
+		if s.Settings.GlobalHooks.PreInstall != "" {
+			s.Settings.GlobalHooks.PreInstall, _ = resolveOnePath(s.Settings.GlobalHooks.PreInstall, dir, downloadDest)
+		}
+		if s.Settings.GlobalHooks.PostInstall != "" {
+			s.Settings.GlobalHooks.PostInstall, _ = resolveOnePath(s.Settings.GlobalHooks.PostInstall, dir, downloadDest)
+		}
+		if s.Settings.GlobalHooks.PreUpgrade != "" {
+			s.Settings.GlobalHooks.PreUpgrade, _ = resolveOnePath(s.Settings.GlobalHooks.PreUpgrade, dir, downloadDest)
+		}
+		if s.Settings.GlobalHooks.PostUpgrade != "" {
+			s.Settings.GlobalHooks.PostUpgrade, _ = resolveOnePath(s.Settings.GlobalHooks.PostUpgrade, dir, downloadDest)
+		}
+		if s.Settings.GlobalHooks.PreDelete != "" {
+			s.Settings.GlobalHooks.PreDelete, _ = resolveOnePath(s.Settings.GlobalHooks.PreDelete, dir, downloadDest)
+		}
+		if s.Settings.GlobalHooks.PostDelete != "" {
+			s.Settings.GlobalHooks.PostDelete, _ = resolveOnePath(s.Settings.GlobalHooks.PostDelete, dir, downloadDest)
 		}
 	}
 	// resolving paths for k8s certificate files
-	for k, v := range s.Certificates {
-		if _, err := url.ParseRequestURI(v); err != nil {
-			v, _ = filepath.Abs(filepath.Join(dir, v))
-		}
-		s.Certificates[k] = v
+	for k := range s.Certificates {
+		s.Certificates[k], _ = resolveOnePath(s.Certificates[k], "", downloadDest)
 	}
+
+}
+
+// resolveOnePath takes the input file (URL, cloud bucket, or local file relative path),
+// the directory containing the DSF and the temp directory where files will be fetched to
+// and downloads/fetches the file locally into helmsman temp directory and returns
+// its absolute path
+func resolveOnePath(file string, dir string, downloadDest string) (string, error) {
+	destFileName := filepath.Join(downloadDest, path.Base(file))
+	return filepath.Abs(downloadFile(file, dir, destFileName))
+}
+
+// createTempDir creates a temp directory in a specific location with a pattern
+func createTempDir(parent string, pattern string) string {
+	dir, err := ioutil.TempDir(parent, pattern)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	return dir
 }
 
 // isOfType checks if the file extension of a filename/path is the same as "filetype".
@@ -312,33 +403,60 @@ func sliceContains(slice []string, s string) bool {
 	return false
 }
 
-// downloadFile downloads a file from GCS or AWS buckets and name it with a given outfile
+// downloadFile downloads a file from a URL, GCS, Azure or AWS buckets or local file system
+// and saves it with a given outfile name and in a given dir
 // if downloaded, returns the outfile name. If the file path is local file system path, it is copied to current directory.
-func downloadFile(path string, outfile string) string {
-	if strings.HasPrefix(path, "s3") {
+func downloadFile(file string, dir string, outfile string) string {
+	if strings.HasPrefix(file, "http") {
+		if err := downloadFileFromURL(file, outfile); err != nil {
+			log.Fatal(err.Error())
+		}
+	} else if strings.HasPrefix(file, "s3") {
 
-		tmp := getBucketElements(path)
+		tmp := getBucketElements(file)
 		aws.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors)
 
-	} else if strings.HasPrefix(path, "gs") {
+	} else if strings.HasPrefix(file, "gs") {
 
-		tmp := getBucketElements(path)
+		tmp := getBucketElements(file)
 		msg, err := gcs.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors)
 		if err != nil {
 			log.Fatal(msg)
 		}
 
-	} else if strings.HasPrefix(path, "az") {
+	} else if strings.HasPrefix(file, "az") {
 
-		tmp := getBucketElements(path)
+		tmp := getBucketElements(file)
 		azure.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors)
 
 	} else {
 
 		log.Info("" + outfile + " will be used from local file system.")
-		copyFile(path, outfile)
+		toCopy, _ := filepath.Abs(filepath.Join(dir, file))
+		copyFile(toCopy, outfile)
 	}
 	return outfile
+}
+
+// downloadFileFromURL will download a url to a local file. It writes to the file as it downloads
+func downloadFileFromURL(url string, filepath string) error {
+	// Get the data
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Create the file
+	out, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	// Write the body to file
+	_, err = io.Copy(out, resp.Body)
+	return err
 }
 
 // copyFile copies a file from source to destination
@@ -546,6 +664,20 @@ func decryptSecret(name string) error {
 		if err != nil {
 			log.Fatal("Can't write [ " + outfile + " ] file")
 		}
+	}
+	return nil
+}
+
+// isValidFile checks if the file exists in the given path or accessible via http and is of allowed file extension (e.g. yaml, json ...)
+func isValidFile(filePath string, allowedFileTypes []string) error {
+	if strings.HasPrefix(filePath, "http") {
+		if _, err := url.ParseRequestURI(filePath); err != nil {
+			return errors.New(filePath + " must be valid URL path to a raw file.")
+		}
+	} else if _, pathErr := os.Stat(filePath); pathErr != nil {
+		return errors.New(filePath + " must be valid relative (from dsf file) file path.")
+	} else if !isOfType(filePath, allowedFileTypes) {
+		return errors.New(filePath + " must be of one the following file formats: " + strings.Join(allowedFileTypes, ", "))
 	}
 	return nil
 }

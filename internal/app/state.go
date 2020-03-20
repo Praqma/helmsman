@@ -23,6 +23,7 @@ type config struct {
 	EyamlEnabled        bool   `yaml:"eyamlEnabled"`
 	EyamlPrivateKeyPath string `yaml:"eyamlPrivateKeyPath"`
 	EyamlPublicKeyPath  string `yaml:"eyamlPublicKeyPath"`
+	GlobalHooks         hooks  `yaml:"globalHooks"`
 }
 
 // state type represents the desired state of applications on a k8s cluster.
@@ -99,6 +100,13 @@ func (s *state) validate() error {
 		}
 	} else if s.Settings.BearerToken && s.Settings.ClusterURI == "" {
 		return errors.New("settings validation failed -- bearer token is enabled but no cluster URI provided")
+	}
+
+	// lifecycle hooks validation
+	if (hooks{}) != s.Settings.GlobalHooks {
+		if ok, errorMsg := validateHooks(s.Settings.GlobalHooks); !ok {
+			return fmt.Errorf(errorMsg)
+		}
 	}
 
 	// slack webhook validation (if provided)

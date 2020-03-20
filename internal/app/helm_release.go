@@ -11,9 +11,9 @@ import (
 
 const (
 	helmStatusDeployed = "deployed"
-	helmStatusDeleted = "deleted"
-	helmStatusFailed = "failed"
-	helmStatusPending = "pending-upgrade"
+	helmStatusDeleted  = "deleted"
+	helmStatusFailed   = "failed"
+	helmStatusPending  = "pending-upgrade"
 )
 
 // helmRelease represents the current state of a release
@@ -81,7 +81,7 @@ func (r *helmRelease) key() string {
 func (r *helmRelease) uninstall(p *plan) {
 	cmd := helmCmd(concat([]string{"uninstall", r.Name, "--namespace", r.Namespace}, flags.getDryRunFlags()), "Delete untracked release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
-	p.addCommand(cmd, -800, nil)
+	p.addCommand(cmd, -800, nil, []command{}, []command{})
 }
 
 // getRevision returns the revision number for an existing helm release

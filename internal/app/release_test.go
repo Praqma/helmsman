@@ -8,6 +8,7 @@ import (
 
 func setupTestCase(t *testing.T) func(t *testing.T) {
 	t.Log("setup test case")
+	os.MkdirAll(tempFilesDir, 0755)
 	os.MkdirAll(os.TempDir()+"/helmsman-tests/myapp", os.ModePerm)
 	os.MkdirAll(os.TempDir()+"/helmsman-tests/dir-with space/myapp", os.ModePerm)
 	cmd := helmCmd([]string{"create", os.TempDir() + "/helmsman-tests/dir-with space/myapp"}, "creating an empty local chart directory")
@@ -71,7 +72,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to \"xyz.yaml\")",
+			want: "xyz.yaml must be valid relative (from dsf file) file path.",
 		}, {
 			name: "test case 3",
 			args: args{
@@ -87,7 +88,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "valuesFile must be a valid relative (from dsf file) file path for a yaml file, or can be left empty (provided path resolved to \"../../tests/values.xml\")",
+			want: "../../tests/values.xml must be of one the following file formats: .yaml, .yml, .json",
 		}, {
 			name: "test case 4",
 			args: args{
@@ -232,7 +233,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "valuesFiles must be valid relative (from dsf file) file paths for a yaml file; path at index 0 provided path resolved to \"xyz.yaml\"",
+			want: "xyz.yaml must be valid relative (from dsf file) file path.",
 		}, {
 			name: "test case 13",
 			args: args{
@@ -266,6 +267,96 @@ func Test_validateRelease(t *testing.T) {
 				s: st,
 			},
 			want: "env var [ $SOME_VAR ] is not set, but is wanted to be passed for [ some_var ] in [[ release14 ]]",
+		}, {
+			name: "test case 15 - non-existing hook file",
+			args: args{
+				r: &release{
+					Name:        "release15",
+					Description: "",
+					Namespace:   "namespace",
+					Enabled:     true,
+					Chart:       "repo/chartX",
+					Version:     "1.0",
+					ValuesFile:  "../../tests/values.yaml",
+					Hooks: hooks{
+						PreInstall: "xyz.fake",
+					},
+				},
+				s: st,
+			},
+			want: "xyz.fake must be valid relative (from dsf file) file path.",
+		}, {
+			name: "test case 16 - invalid hook file type",
+			args: args{
+				r: &release{
+					Name:        "release16",
+					Description: "",
+					Namespace:   "namespace",
+					Enabled:     true,
+					Chart:       "repo/chartX",
+					Version:     "1.0",
+					ValuesFile:  "../../tests/values.yaml",
+					Hooks: hooks{
+						PreInstall: "../../tests/values.xml",
+					},
+				},
+				s: st,
+			},
+			want: "../../tests/values.xml must be of one the following file formats: .yaml, .yml",
+		}, {
+			name: "test case 17 - valid hook file type",
+			args: args{
+				r: &release{
+					Name:        "release17",
+					Description: "",
+					Namespace:   "namespace",
+					Enabled:     true,
+					Chart:       "repo/chartX",
+					Version:     "1.0",
+					ValuesFile:  "../../tests/values.yaml",
+					Hooks: hooks{
+						PreDelete: "../../tests/values.yaml",
+					},
+				},
+				s: st,
+			},
+			want: "",
+		}, {
+			name: "test case 18 - valid hook file URL",
+			args: args{
+				r: &release{
+					Name:        "release18",
+					Description: "",
+					Namespace:   "namespace",
+					Enabled:     true,
+					Chart:       "repo/chartX",
+					Version:     "1.0",
+					ValuesFile:  "../../tests/values.yaml",
+					Hooks: hooks{
+						PostUpgrade: "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
+					},
+				},
+				s: st,
+			},
+			want: "",
+		}, {
+			name: "test case 19 - invalid hook file URL",
+			args: args{
+				r: &release{
+					Name:        "release19",
+					Description: "",
+					Namespace:   "namespace",
+					Enabled:     true,
+					Chart:       "repo/chartX",
+					Version:     "1.0",
+					ValuesFile:  "../../tests/values.yaml",
+					Hooks: hooks{
+						PreDelete: "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
+					},
+				},
+				s: st,
+			},
+			want: "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml must be valid URL path to a raw file.",
 		},
 	}
 	names := make(map[string]map[string]bool)
@@ -282,6 +373,68 @@ func Test_validateRelease(t *testing.T) {
 	}
 }
 
+func Test_inheritHooks(t *testing.T) {
+	st := state{
+		Metadata:     make(map[string]string),
+		Certificates: make(map[string]string),
+		Settings: config{
+			GlobalHooks: hooks{
+				PreInstall:       "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
+				PostInstall:      "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
+				SuccessCondition: "Complete",
+				SuccessTimeout:   "60s",
+			},
+		},
+		Namespaces: map[string]namespace{"namespace": namespace{false, limits{}, make(map[string]string), make(map[string]string)}},
+		HelmRepos:  make(map[string]string),
+		Apps:       make(map[string]*release),
+	}
+
+	type args struct {
+		s state
+		r *release
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "test case 1",
+			args: args{
+				r: &release{
+					Name:        "release1 - Global hooks correctly inherited",
+					Description: "",
+					Namespace:   "namespace",
+					Enabled:     true,
+					Chart:       "repo/chartX",
+					Version:     "1.0",
+					ValuesFile:  "../../tests/values.yaml",
+					Hooks: hooks{
+						PostInstall:    "../../tests/values.yaml",
+						PreDelete:      "../../tests/values.yaml",
+						SuccessTimeout: "360s",
+					},
+				},
+				s: st,
+			},
+			want: "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml -- " +
+				"../../tests/values.yaml -- " +
+				"../../tests/values.yaml -- " +
+				"Complete -- 360s",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.args.r.inheritHooks(&tt.args.s)
+			got := tt.args.r.Hooks.PreInstall + " -- " + tt.args.r.Hooks.PostInstall + " -- " + tt.args.r.Hooks.PreDelete +
+				" -- " + tt.args.r.Hooks.SuccessCondition + " -- " + tt.args.r.Hooks.SuccessTimeout
+			if got != tt.want {
+				t.Errorf("inheritHooks() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 func Test_validateReleaseCharts(t *testing.T) {
 	type args struct {
 		apps map[string]*release
