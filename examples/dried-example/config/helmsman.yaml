@@ -56,7 +56,7 @@ appsTemplates:
   puppetserver: &puppetserver
     enabled: true
     priority: -1
-    chart: "../../../../puppetserver-helm-chart-1.8.2.tgz"
+    chart: "../../../../puppetserver-helm-chart-1.8.2.tgz"   # https://github.com/puppetlabs/pupperware/tree/master/k8s
     version: "1.8.2"   # chart version
     valuesFiles: [
         "../apps/puppetserver/common-values.yaml",
