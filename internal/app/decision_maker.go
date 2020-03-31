@@ -126,7 +126,7 @@ func (cs *currentState) decide(r *release, s *state, p *plan) {
 				"you remove its protection.", r.Priority, noop)
 		}
 	} else if ok := cs.releaseExists(r, helmStatusPending); ok {
-		log.Error("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in pending-upgrade state. " +
+		log.Error("Release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ] is in pending-upgrade state. " +
 			"This means application is being upgraded outside of this Helmsman invocation's scope." +
 			"Exiting, as this may cause issues when continuing...")
 		os.Exit(1)
