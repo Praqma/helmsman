@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"path"
 	"strings"
 	"sync"
 
@@ -124,19 +125,19 @@ spec:
 	}
 
 	definition = definition + Indent(string(d), strings.Repeat(" ", 4))
-
-	if err := ioutil.WriteFile("temp-LimitRange.yaml", []byte(definition), 0666); err != nil {
+	targetFile := path.Join(createTempDir(tempFilesDir, "tmp"), "temp-LimitRange.yaml")
+	if err := ioutil.WriteFile(targetFile, []byte(definition), 0666); err != nil {
 		log.Fatal(err.Error())
 	}
 
-	cmd := kubectl([]string{"apply", "-f", "temp-LimitRange.yaml", "-n", ns}, "Creating LimitRange in namespace [ "+ns+" ]")
+	cmd := kubectl([]string{"apply", "-f", targetFile, "-n", ns}, "Creating LimitRange in namespace [ "+ns+" ]")
 	result := cmd.exec()
 
 	if result.code != 0 {
 		log.Fatal("Failed to create LimitRange in namespace [ " + ns + " ] with error: " + result.errors)
 	}
 
-	deleteFile("temp-LimitRange.yaml")
+	deleteFile(targetFile)
 
 }
 
