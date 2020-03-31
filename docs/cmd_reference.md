@@ -11,6 +11,9 @@ This lists available CMD options in Helmsman:
   `--apply`
         apply the plan directly.
 
+  `--context-override string`
+        override releases context defined in release state with this one.       
+
   `--debug`
         show the debug execution logs and actual helm/kubectl commands. This can log secrets and should only be used for debugging purposes.
 
