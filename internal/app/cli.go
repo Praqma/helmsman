@@ -50,6 +50,7 @@ type cli struct {
 	noFancy               bool
 	noNs                  bool
 	nsOverride            string
+	contextOverride       string
 	skipValidation        bool
 	keepUntrackedReleases bool
 	showDiff              bool
@@ -83,6 +84,7 @@ func (c *cli) parse() {
 	flag.IntVar(&c.diffContext, "diff-context", -1, "number of lines of context to show around changes in helm diff output")
 	flag.StringVar(&c.kubeconfig, "kubeconfig", "", "path to the kubeconfig file to use for CLI requests")
 	flag.StringVar(&c.nsOverride, "ns-override", "", "override defined namespaces with this one")
+	flag.StringVar(&c.contextOverride, "context-override", "", "override releases context with this one")
 	flag.BoolVar(&c.apply, "apply", false, "apply the plan directly")
 	flag.BoolVar(&c.dryRun, "dry-run", false, "apply the dry-run option for helm commands.")
 	flag.BoolVar(&c.destroy, "destroy", false, "delete all deployed releases.")
