@@ -1,5 +1,5 @@
 ---
-version: v3.0.0
+version: v3.2.0
 ---
 
 # Helmsman desired state specification
@@ -80,6 +80,8 @@ certificates:
 Optional : Yes.
 
 Synopsis: defines the context in which a DSF is used. This context is used as the ID of that specific DSF and must be unique across the used DSFs. If not defined, `default` is used. Check [here](how_to/misc/merge_desired_state_files.md) for more details on the limitations.
+
+> Renaming the Helmsman context can be done from v3.2.0 using the `--migrate-context` flag. Check [this guide](how_to/apps/migrate_contexts.md) for details.
 
 ```yaml
 context: prod-apps
