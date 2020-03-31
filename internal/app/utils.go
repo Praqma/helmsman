@@ -341,6 +341,15 @@ func downloadFile(path string, outfile string) string {
 	return outfile
 }
 
+// createTempDir creates a temp directory in a specific location with a pattern
+func createTempDir(parent string, pattern string) string {
+	dir, err := ioutil.TempDir(parent, pattern)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	return dir
+}
+
 // copyFile copies a file from source to destination
 func copyFile(source string, destination string) {
 	from, err := os.Open(source)
