@@ -94,10 +94,12 @@ apps:
 ...
 ```
 
+> If you need to migrate releases from one Helmsman's context to another, check this [guide](../apps/migrate_contexts.md).
+
 ### Limitations
 
 - If no context is provided in DSF (or merged DSFs), `default` is applied as a default context. This means any set of DSFs that don't define custom contexts can still operate on each other's releases (same behavior as in Helmsman 1.x).
 
 - When merging multiple DSFs, context from the firs DSF in the list gets overridden by the context in the last DSF.
 
-- If multiple DSFs use the same context name, they will mess up each other's releases.
+- If multiple DSFs use the same context name, they will mess up each other's releases. You can use `--keep-untracked-releases` to avoid that. However, it is recommended to avoid having multiple DSFs using the same context name.

@@ -63,6 +63,7 @@ type cli struct {
 	forceUpgrades         bool
 	version               bool
 	noCleanup             bool
+	migrateContext        bool
 }
 
 func printUsage() {
@@ -105,6 +106,7 @@ func (c *cli) parse() {
 	flag.BoolVar(&c.updateDeps, "update-deps", false, "run 'helm dep up' for local chart")
 	flag.BoolVar(&c.forceUpgrades, "force-upgrades", false, "use --force when upgrading helm releases. May cause resources to be recreated.")
 	flag.BoolVar(&c.noCleanup, "no-cleanup", false, "keeps any credentials files that has been downloaded on the host where helmsman runs.")
+	flag.BoolVar(&c.migrateContext, "migrate-context", false, "Updates the context name for all apps defined in the DSF and applies Helmsman labels. Using this flag is required if you want to change context name after it has been set.")
 	flag.Usage = printUsage
 	flag.Parse()
 

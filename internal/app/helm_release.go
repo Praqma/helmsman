@@ -11,9 +11,9 @@ import (
 
 const (
 	helmStatusDeployed = "deployed"
-	helmStatusDeleted = "deleted"
-	helmStatusFailed = "failed"
-	helmStatusPending = "pending-upgrade"
+	helmStatusDeleted  = "deleted"
+	helmStatusFailed   = "failed"
+	helmStatusPending  = "pending-upgrade"
 )
 
 // helmRelease represents the current state of a release
