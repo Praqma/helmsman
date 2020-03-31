@@ -41,6 +41,9 @@ This lists available CMD options in Helmsman:
   `--kubeconfig`
         path to the kubeconfig file to use for CLI requests.
 
+  `--migrate-context`
+        Updates the context name for all apps defined in the DSF and applies Helmsman labels. Using this flag is required if you want to change context name after it has been set.      
+
   `--no-banner`
         don't show the banner.
 
