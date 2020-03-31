@@ -37,6 +37,8 @@ It is recommended that you also check the [DSF spec](../desired_state_specificat
     - [Distinguish releases deployed from different DSF files using Helmsman's contexts](misc/merge_desired_state_files.md#distinguishing-releases-deployed-from-different-desired-state-files)
     - [Migrating releases from Helmsman context to another](apps/migrate_contexts.md)
     - [Rename Helmsman's contexts](apps/migrate_contexts.md)
+    - [Speed up Helmsman execution by skipping context fetching](apps/override_context_from_cmd.md)
+    - [Override context from cmd flags](apps/override_context_from_cmd.md)
 - Running Helmsman in different environments
     - [Running Helmsman in CI](deployments/ci.md)
     - [Running Helmsman inside your k8s cluster](deployments/inside_k8s.md)
