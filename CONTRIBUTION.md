@@ -42,9 +42,10 @@ Release is automated from CicrcleCI based on Git tags. [Goreleaser](goreleaser.c
 The following steps are needed to cut a release (They assume that you are on master and the code is up to date):
 1. Change the version variable in [main.go](internal/app/main.go) and in [.version](.version)
 2. Update the [release-notes.md](release-notes.md) file with new version and changelog.
-3. (Optional), if new helm versions are required, update the [circleci config](.circleci/config.yml) and add more docker commands.
-4. Commit your changes locally.
-5. Create a git tag with the following command: `git tag -a <semantic version number> -m "<semantic version number>" <your-last-commit-sha>`
-6. Push your commit and tag with `git push --follow-tags`
-7. This should trigger the [pipeline on circleci](https://circleci.com/gh/Praqma/workflows/helmsman) which eventually releases to Github and dockerhub.
+3. Update the installation section in the [README.md](README.md) file to point to the latest version.
+4. (Optional), if new helm versions are required, update the [circleci config](.circleci/config.yml) and add more docker commands.
+5. Commit your changes locally.
+6. Create a git tag with the following command: `git tag -a <semantic version number> -m "<semantic version number>" <your-last-commit-sha>`
+7. Push your commit and tag with `git push --follow-tags`
+8. This should trigger the [pipeline on circleci](https://circleci.com/gh/Praqma/workflows/helmsman) which eventually releases to Github and dockerhub.
 
