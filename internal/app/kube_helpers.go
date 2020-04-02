@@ -30,6 +30,7 @@ func addNamespaces(s *state) {
 			labelNamespace(name, cfg.Labels)
 			annotateNamespace(name, cfg.Annotations)
 			setLimits(name, cfg.Limits)
+			setQuotas(name, cfg.Quotas)
 		}(nsName, ns, &wg)
 	}
 	wg.Wait()
@@ -139,6 +140,49 @@ spec:
 
 	deleteFile(targetFile)
 
+}
+
+func setQuotas(ns string, quotas *quotas) {
+	if quotas == nil {
+		return
+	}
+
+	definition := `
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: resource-quota
+spec:
+  hard:
+`
+
+	for _, customQuota := range quotas.CustomQuotas {
+		definition = definition + Indent(customQuota.Name+": '"+customQuota.Value+"'\n", strings.Repeat(" ", 4))
+	}
+
+	//Special formatting for custom quotas so manually write these and then set to nil for marshalling
+	quotas.CustomQuotas = nil
+
+	d, err := yaml.Marshal(&quotas)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	definition = definition + Indent(string(d), strings.Repeat(" ", 4))
+
+	if err := ioutil.WriteFile("temp-ResourceQuota.yaml", []byte(definition), 0666); err != nil {
+		log.Fatal(err.Error())
+	}
+
+	cmd := kubectl([]string{"apply", "-f", "temp-ResourceQuota.yaml", "-n", ns}, "Creating ResourceQuota in namespace [ "+ns+" ]")
+	result := cmd.exec()
+
+	deleteFile("temp-ResourceQuota.yaml")
+
+	if result.code != 0 {
+		log.Fatal("ERROR: failed to create ResourceQuota in namespace [ " + ns + " ]: " + result.errors)
+	}
 }
 
 // createContext creates a context -connecting to a k8s cluster- in kubectl config.
