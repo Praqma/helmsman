@@ -41,7 +41,12 @@ func buildState(s *state) *currentState {
 				// release
 				<-sem
 			}()
-			r.HelmsmanContext = getReleaseContext(r.Name, r.Namespace)
+			if flags.contextOverride == "" {
+				r.HelmsmanContext = getReleaseContext(r.Name, r.Namespace)
+			} else {
+				log.Info("Overriding Helmsman context for " + r.Name + " as " + flags.contextOverride)
+				r.HelmsmanContext = flags.contextOverride
+			}
 			cs.releases[r.key()] = r
 		}(r)
 	}
@@ -126,7 +131,7 @@ func (cs *currentState) decide(r *release, s *state, p *plan) {
 				"you remove its protection.", r.Priority, noop)
 		}
 	} else if ok := cs.releaseExists(r, helmStatusPending); ok {
-		log.Error("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in pending-upgrade state. " +
+		log.Error("Release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ] is in pending-upgrade state. " +
 			"This means application is being upgraded outside of this Helmsman invocation's scope." +
 			"Exiting, as this may cause issues when continuing...")
 		os.Exit(1)
