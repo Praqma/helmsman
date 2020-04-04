@@ -5,6 +5,8 @@ This page contains a list of guides on how to use Helmsman.
 
 It is recommended that you also check the [DSF spec](../desired_state_specification.md), [cmd reference](../cmd_reference.md), and the [best practice guide](../best_practice.md).
 
+- [Migrating from Helm 2 (Helmsman v1.x) to Helm 3 (Helmsman v3.x)](misc/migrate_to_3.md)
+
 - Connecting to Kubernetes clusters
     - [Using an existing kube context](settings/existing_kube_context.md)
     - [Using the current kube context](settings/current_kube_context.md)
@@ -15,6 +17,7 @@ It is recommended that you also check the [DSF spec](../desired_state_specificat
     - [Label namespaces](namespaces/labels_and_annotations.md)
     - [Set resource limits for namespaces](namespaces/limits.md)
     - [Protecting namespaces](namespaces/protection.md)
+    - [Namespace resource quotas](namespaces/quotas.md)
 - Defining Helm repositories
     - [Using default helm repos](helm_repos/default.md)
     - [Using private repos in Google GCS](helm_repos/gcs.md)
@@ -32,6 +35,11 @@ It is recommended that you also check the [DSF spec](../desired_state_specificat
     - [Run helm tests for deployed releases (apps)](apps/helm_tests.md)
     - [Define the order of apps operations](apps/order.md)
     - [Delete all releases (apps)](apps/destroy.md)
+    - [Distinguish releases deployed from different DSF files using Helmsman's contexts](misc/merge_desired_state_files.md#distinguishing-releases-deployed-from-different-desired-state-files)
+    - [Migrating releases from Helmsman context to another](apps/migrate_contexts.md)
+    - [Rename Helmsman's contexts](apps/migrate_contexts.md)
+    - [Speed up Helmsman execution by skipping context fetching](apps/override_context_from_cmd.md)
+    - [Override context from cmd flags](apps/override_context_from_cmd.md)
 - Running Helmsman in different environments
     - [Running Helmsman in CI](deployments/ci.md)
     - [Running Helmsman inside your k8s cluster](deployments/inside_k8s.md)

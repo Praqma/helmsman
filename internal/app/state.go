@@ -232,6 +232,18 @@ func (s *state) getNamespacesInTargetsOnly() map[string]namespace {
 	return targetNamespaces
 }
 
+// updateContextLabels applies Helmsman labels including overriding any previously-set context with the one found in the DSF
+func (s *state) updateContextLabels() {
+	for _, r := range s.Apps {
+		if r.isConsideredToRun(s) {
+			log.Info("Updating context and reapplying Helmsman labels for release [ " + r.Name + " ]")
+			r.label()
+		} else {
+			log.Warning(r.Name + " is not in the target group and therefore context and labels are not changed.")
+		}
+	}
+}
+
 // print prints the desired state
 func (s *state) print() {
 
