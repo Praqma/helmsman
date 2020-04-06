@@ -12,19 +12,22 @@ This lists available CMD options in Helmsman:
         apply the plan directly.
 
   `--context-override string`
-        override releases context defined in release state with this one.       
+        override releases context defined in release state with this one.
 
   `--debug`
         show the debug execution logs and actual helm/kubectl commands. This can log secrets and should only be used for debugging purposes.
 
   `--verbose`
-        show verbose execution logs.   
+        show verbose execution logs.
 
   `--destroy`
         delete all deployed releases.
 
   `--diff-context num`
         number of lines of context to show around changes in helm diff output.
+
+  `-p`
+        max number of concurrent helm releases to run
 
   `--dry-run`
         apply the dry-run (do not update) option for helm commands.
@@ -45,7 +48,7 @@ This lists available CMD options in Helmsman:
         path to the kubeconfig file to use for CLI requests.
 
   `--migrate-context`
-        Updates the context name for all apps defined in the DSF and applies Helmsman labels. Using this flag is required if you want to change context name after it has been set.      
+        Updates the context name for all apps defined in the DSF and applies Helmsman labels. Using this flag is required if you want to change context name after it has been set.
 
   `--no-banner`
         don't show the banner.

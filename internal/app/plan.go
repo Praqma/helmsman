@@ -86,24 +86,59 @@ func (p *plan) exec() {
 		log.Info("Nothing to execute")
 	}
 
+	wg := sync.WaitGroup{}
+	sem := make(chan struct{}, flags.parallel)
+	var fail bool
+	var priorities []int
+	pl := make(map[int][]orderedCommand)
 	for _, cmd := range p.Commands {
-		log.Notice(cmd.Command.Description)
-		result := cmd.Command.exec()
-		if cmd.targetRelease != nil && !flags.dryRun && !flags.destroy {
-			cmd.targetRelease.label()
+		pl[cmd.Priority] = append(pl[cmd.Priority], cmd)
+	}
+	for priority := range pl {
+		priorities = append(priorities, priority)
+	}
+	sort.Ints(priorities)
+
+	for _, priority := range priorities {
+		c := make(chan string, len(pl[priority]))
+		for _, cmd := range pl[priority] {
+			sem <- struct{}{}
+			wg.Add(1)
+			go func(cmd orderedCommand) {
+				defer func() {
+					wg.Done()
+					<-sem
+				}()
+				log.Notice(cmd.Command.Description)
+				result := cmd.Command.exec()
+				if cmd.targetRelease != nil && !flags.dryRun && !flags.destroy {
+					cmd.targetRelease.label()
+				}
+				if result.code != 0 {
+					errorMsg := result.errors
+					if !flags.verbose {
+						errorMsg = strings.Split(result.errors, "---")[0]
+					}
+					c <- fmt.Sprintf("Command for release [%s] returned [ %d ] exit code and error message [ %s ]", cmd.targetRelease.Name, result.code, strings.TrimSpace(errorMsg))
+				} else {
+					log.Notice(result.output)
+					log.Notice("Finished: " + cmd.Command.Description)
+					if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
+						notifySlack(cmd.Command.Description+" ... SUCCESS!", settings.SlackWebhook, false, true)
+					}
+				}
+			}(cmd)
 		}
-		if result.code != 0 {
-			errorMsg := result.errors
-			if !flags.verbose {
-				errorMsg = strings.Split(result.errors, "---")[0]
+		wg.Wait()
+		close(c)
+		for err := range c {
+			if err != "" {
+				fail = true
+				log.Error(err)
 			}
-			log.Fatal(fmt.Sprintf("Command returned [ %d ] exit code and error message [ %s ]", result.code, strings.TrimSpace(errorMsg)))
-		} else {
-			log.Notice(result.output)
-			log.Notice("Finished: " + cmd.Command.Description)
-			if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
-				notifySlack(cmd.Command.Description+" ... SUCCESS!", settings.SlackWebhook, false, true)
-			}
+		}
+		if fail {
+			log.Fatal("Plan execution failed")
 		}
 	}
 
