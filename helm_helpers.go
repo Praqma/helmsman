@@ -507,7 +507,7 @@ func deployTiller(namespace string, serviceAccount string, defaultServiceAccount
 	}
 	cmd := command{
 		Cmd:         "helm",
-		Args:        concat([]string{"init", "--force-upgrade"}, maxHistory, sa, tillerNameSpace, tls, storageBackend),
+		Args:        concat([]string{"init", "--upgrade", "--force-upgrade", "--wait"}, maxHistory, sa, tillerNameSpace, tls, storageBackend),
 		Description: "initializing helm on the current context and upgrading Tiller on namespace [ " + namespace + " ].",
 	}
 
