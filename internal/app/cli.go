@@ -64,6 +64,7 @@ type cli struct {
 	version               bool
 	noCleanup             bool
 	migrateContext        bool
+	parallel              int
 }
 
 func printUsage() {
@@ -83,6 +84,7 @@ func (c *cli) parse() {
 	flag.Var(&c.target, "target", "limit execution to specific app.")
 	flag.Var(&c.group, "group", "limit execution to specific group of apps.")
 	flag.IntVar(&c.diffContext, "diff-context", -1, "number of lines of context to show around changes in helm diff output")
+	flag.IntVar(&c.parallel, "p", 1, "max number of concurrent helm releases to run")
 	flag.StringVar(&c.kubeconfig, "kubeconfig", "", "path to the kubeconfig file to use for CLI requests")
 	flag.StringVar(&c.nsOverride, "ns-override", "", "override defined namespaces with this one")
 	flag.StringVar(&c.contextOverride, "context-override", "", "override releases context defined in release state with this one")
@@ -136,6 +138,10 @@ func (c *cli) parse() {
 
 	if len(c.target) > 0 && len(c.group) > 0 {
 		log.Fatal("--target and --group can't be used together.")
+	}
+
+	if c.parallel < 1 {
+		c.parallel = 1
 	}
 
 	helmVersion := strings.TrimSpace(getHelmVersion())
