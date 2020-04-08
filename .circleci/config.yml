@@ -29,16 +29,25 @@ jobs:
             export GOOS=linux
             make test
   release:
+    docker:
+      - image: goreleaser/goreleaser
+        entrypoint: /bin/bash
+    working_directory: "/go/src/github.com/Praqma/helmsman"
+    steps:
+      - run:
+          name: install git
+          command: apk update && apk add --no-cache git dep openssh
+      - checkout
+      - run:
+          name: release
+          command: |
+            dep ensure
+            goreleaser release --release-notes release-notes.md
+
+  docker-release:
     working_directory: "/tmp/go/src/helmsman"
     machine: true
     steps:
-      - checkout
-      - run:
-          name: Release helmsman
-          command: |
-            echo "releasing ..."
-            curl -sL https://git.io/goreleaser | bash -s -- --release-notes release-notes.md --rm-dist
-
       - run:
           name: build docker images and push them to dockerhub
           command: |
@@ -64,7 +73,6 @@ jobs:
             docker build -t praqma/helmsman-test:latest test_files/. --no-cache
             docker push praqma/helmsman-test:latest
 
-
 workflows:
   version: 2
   build-test-push-release:
@@ -82,6 +90,14 @@ workflows:
       - release:
           requires:
             - test
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
+      - docker-release:
+          requires:
+            - release
           filters:
             branches:
               ignore: /.*/
