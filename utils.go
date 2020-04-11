@@ -478,7 +478,7 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 				"fallback": "Helmsman results.",
 				"color": "` + color + `" ,
 				"pretext": "` + pretext + `",
-				"title": "` + content + `",
+				"title": ` + strconv.Quote(content) + `,
 				"footer": "Helmsman ` + appVersion + `",
 				"ts": ` + strconv.FormatInt(t.Unix(), 10) + `
 			}
