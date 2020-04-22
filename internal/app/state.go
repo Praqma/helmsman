@@ -5,25 +5,26 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"reflect"
 	"strings"
 )
 
 // config type represents the settings fields
 type config struct {
-	KubeContext         string `yaml:"kubeContext"`
-	Username            string `yaml:"username"`
-	Password            string `yaml:"password"`
-	ClusterURI          string `yaml:"clusterURI"`
-	ServiceAccount      string `yaml:"serviceAccount"`
-	StorageBackend      string `yaml:"storageBackend"`
-	SlackWebhook        string `yaml:"slackWebhook"`
-	ReverseDelete       bool   `yaml:"reverseDelete"`
-	BearerToken         bool   `yaml:"bearerToken"`
-	BearerTokenPath     string `yaml:"bearerTokenPath"`
-	EyamlEnabled        bool   `yaml:"eyamlEnabled"`
-	EyamlPrivateKeyPath string `yaml:"eyamlPrivateKeyPath"`
-	EyamlPublicKeyPath  string `yaml:"eyamlPublicKeyPath"`
-	GlobalHooks         hooks  `yaml:"globalHooks"`
+	KubeContext         string            `yaml:"kubeContext"`
+	Username            string            `yaml:"username"`
+	Password            string            `yaml:"password"`
+	ClusterURI          string            `yaml:"clusterURI"`
+	ServiceAccount      string            `yaml:"serviceAccount"`
+	StorageBackend      string            `yaml:"storageBackend"`
+	SlackWebhook        string            `yaml:"slackWebhook"`
+	ReverseDelete       bool              `yaml:"reverseDelete"`
+	BearerToken         bool              `yaml:"bearerToken"`
+	BearerTokenPath     string            `yaml:"bearerTokenPath"`
+	EyamlEnabled        bool              `yaml:"eyamlEnabled"`
+	EyamlPrivateKeyPath string            `yaml:"eyamlPrivateKeyPath"`
+	EyamlPublicKeyPath  string            `yaml:"eyamlPublicKeyPath"`
+	GlobalHooks         map[string]string `yaml:"globalHooks"`
 }
 
 // state type represents the desired state of applications on a k8s cluster.
@@ -75,7 +76,9 @@ func (s *state) validate() error {
 	}
 
 	// settings
-	if (s.Settings == (config{}) || s.Settings.KubeContext == "") && !getKubeContext() {
+	// if (s.Settings == (config{}) || s.Settings.KubeContext == "") && !getKubeContext() {
+	// use reflect.DeepEqual to compare Settings are empty, since it now contains a map
+	if (reflect.DeepEqual(s.Settings, config{}) || s.Settings.KubeContext == "") && !getKubeContext() {
 		return errors.New("settings validation failed -- you have not defined a " +
 			"kubeContext to use. Either define it in the desired state file or pass a kubeconfig with --kubeconfig to use an existing context")
 	}
@@ -103,7 +106,7 @@ func (s *state) validate() error {
 	}
 
 	// lifecycle hooks validation
-	if (hooks{}) != s.Settings.GlobalHooks {
+	if len(s.Settings.GlobalHooks) != 0 {
 		if ok, errorMsg := validateHooks(s.Settings.GlobalHooks); !ok {
 			return fmt.Errorf(errorMsg)
 		}

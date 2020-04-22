@@ -278,9 +278,7 @@ func Test_validateRelease(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks: hooks{
-						PreInstall: "xyz.fake",
-					},
+					Hooks:       map[string]string{"preInstall": "xyz.fake"},
 				},
 				s: st,
 			},
@@ -296,9 +294,7 @@ func Test_validateRelease(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks: hooks{
-						PreInstall: "../../tests/values.xml",
-					},
+					Hooks:       map[string]string{"preInstall": "../../tests/values.xml"},
 				},
 				s: st,
 			},
@@ -314,9 +310,7 @@ func Test_validateRelease(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks: hooks{
-						PreDelete: "../../tests/values.yaml",
-					},
+					Hooks:       map[string]string{"preDelete": "../../tests/values.xml"},
 				},
 				s: st,
 			},
@@ -332,9 +326,7 @@ func Test_validateRelease(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks: hooks{
-						PostUpgrade: "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
-					},
+					Hooks:       map[string]string{"postUpgrade": "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml"},
 				},
 				s: st,
 			},
@@ -350,9 +342,7 @@ func Test_validateRelease(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks: hooks{
-						PreDelete: "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
-					},
+					Hooks:       map[string]string{"preDelete": "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml"},
 				},
 				s: st,
 			},
@@ -378,11 +368,11 @@ func Test_inheritHooks(t *testing.T) {
 		Metadata:     make(map[string]string),
 		Certificates: make(map[string]string),
 		Settings: config{
-			GlobalHooks: hooks{
-				PreInstall:       "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
-				PostInstall:      "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
-				SuccessCondition: "Complete",
-				SuccessTimeout:   "60s",
+			GlobalHooks: map[string]string{
+				"preInstall":       "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
+				"postInstall":      "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
+				"successCondition": "Complete",
+				"successTimeout":   "60s",
 			},
 		},
 		Namespaces: map[string]namespace{"namespace": namespace{false, limits{}, make(map[string]string), make(map[string]string)}},
@@ -410,10 +400,10 @@ func Test_inheritHooks(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks: hooks{
-						PostInstall:    "../../tests/values.yaml",
-						PreDelete:      "../../tests/values.yaml",
-						SuccessTimeout: "360s",
+					Hooks: map[string]string{
+						"postInstall":    "../../tests/values.yaml",
+						"preDelete":      "../../tests/values.yaml",
+						"successTimeout": "360s",
 					},
 				},
 				s: st,
@@ -427,8 +417,8 @@ func Test_inheritHooks(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.args.r.inheritHooks(&tt.args.s)
-			got := tt.args.r.Hooks.PreInstall + " -- " + tt.args.r.Hooks.PostInstall + " -- " + tt.args.r.Hooks.PreDelete +
-				" -- " + tt.args.r.Hooks.SuccessCondition + " -- " + tt.args.r.Hooks.SuccessTimeout
+			got := tt.args.r.Hooks["preInstall"] + " -- " + tt.args.r.Hooks["postInstall"] + " -- " + tt.args.r.Hooks["preDelete"] +
+				" -- " + tt.args.r.Hooks["successCondition"] + " -- " + tt.args.r.Hooks["successTimeout"]
 			if got != tt.want {
 				t.Errorf("inheritHooks() got = %v, want %v", got, tt.want)
 			}

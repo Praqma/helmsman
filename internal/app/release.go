@@ -34,7 +34,7 @@ type release struct {
 	HelmFlags    []string          `yaml:"helmFlags"`
 	NoHooks      bool              `yaml:"noHooks"`
 	Timeout      int               `yaml:"timeout"`
-	Hooks        hooks             `yaml:"hooks"`
+	Hooks        map[string]string `yaml:"hooks"`
 }
 
 // hooks type which defines life-cycle hooks
@@ -129,7 +129,7 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 		return errors.New("priority can only be 0 or negative value, positive values are not allowed")
 	}
 
-	if (hooks{}) != r.Hooks {
+	if (len(r.Hooks)) != 0 {
 		if ok, errorMsg := validateHooks(r.Hooks); !ok {
 			return fmt.Errorf(errorMsg)
 		}
@@ -154,39 +154,9 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 }
 
 // validateHooks validates that hook files exist and of YAML type
-func validateHooks(hks hooks) (bool, string) {
-	if hks.PreInstall != "" {
-		if err := isValidFile(hks.PreInstall, []string{".yaml", ".yml"}); err != nil {
-			return false, err.Error()
-		}
-	}
-
-	if hks.PostInstall != "" {
-		if err := isValidFile(hks.PostInstall, []string{".yaml", ".yml"}); err != nil {
-			return false, err.Error()
-		}
-	}
-
-	if hks.PreUpgrade != "" {
-		if err := isValidFile(hks.PreUpgrade, []string{".yaml", ".yml"}); err != nil {
-			return false, err.Error()
-		}
-	}
-
-	if hks.PostUpgrade != "" {
-		if err := isValidFile(hks.PostUpgrade, []string{".yaml", ".yml"}); err != nil {
-			return false, err.Error()
-		}
-	}
-
-	if hks.PreDelete != "" {
-		if err := isValidFile(hks.PreDelete, []string{".yaml", ".yml"}); err != nil {
-			return false, err.Error()
-		}
-	}
-
-	if hks.PostDelete != "" {
-		if err := isValidFile(hks.PostDelete, []string{".yaml", ".yml"}); err != nil {
+func validateHooks(hooks map[string]string) (bool, string) {
+	for _, value := range hooks {
+		if err := isValidFile(value, []string{".yaml", ".yml"}); err != nil {
 			return false, err.Error()
 		}
 	}
@@ -593,33 +563,12 @@ func (r *release) overrideNamespace(newNs string) {
 // inheritHooks passes global hooks config from the state to the release hooks if they are unset
 // release hooks override the global ones
 func (r *release) inheritHooks(s *state) {
-	if (hooks{}) != s.Settings.GlobalHooks {
-		if (hooks{}) == r.Hooks {
+	if len(s.Settings.GlobalHooks) != 0 {
+		if len(r.Hooks) == 0 {
 			r.Hooks = s.Settings.GlobalHooks
 		} else {
-			if r.Hooks.PreInstall == "" {
-				r.Hooks.PreInstall = s.Settings.GlobalHooks.PreInstall
-			}
-			if r.Hooks.PostInstall == "" {
-				r.Hooks.PostInstall = s.Settings.GlobalHooks.PostInstall
-			}
-			if r.Hooks.PreUpgrade == "" {
-				r.Hooks.PreUpgrade = s.Settings.GlobalHooks.PreUpgrade
-			}
-			if r.Hooks.PostUpgrade == "" {
-				r.Hooks.PostUpgrade = s.Settings.GlobalHooks.PostUpgrade
-			}
-			if r.Hooks.PreDelete == "" {
-				r.Hooks.PreDelete = s.Settings.GlobalHooks.PreDelete
-			}
-			if r.Hooks.SuccessCondition == "" {
-				r.Hooks.SuccessCondition = s.Settings.GlobalHooks.SuccessCondition
-			}
-			if r.Hooks.SuccessTimeout == "" {
-				r.Hooks.SuccessTimeout = s.Settings.GlobalHooks.SuccessTimeout
-			}
-			if !r.Hooks.DeleteOnSuccess {
-				r.Hooks.DeleteOnSuccess = s.Settings.GlobalHooks.DeleteOnSuccess
+			for key, _ := range s.Settings.GlobalHooks {
+				r.Hooks[key] = s.Settings.GlobalHooks[key]
 			}
 		}
 	}
@@ -638,45 +587,45 @@ func (r *release) checkHooks(hookType string, p *plan, optionalNamespace ...stri
 	switch hookType {
 	case "install":
 		{
-			if r.Hooks.PreInstall != "" {
-				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks.PreInstall}, "Apply pre-install manifest "+r.Hooks.PreInstall))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks.PreInstall, "pre-install", ns); wait {
+			if _, ok := r.Hooks["preInstall"]; ok {
+				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["preInstall"]}, "Apply pre-install manifest "+r.Hooks["preInstall"]))
+				if wait, cmds := r.shouldWaitForHook(r.Hooks["preInstall"], "pre-install", ns); wait {
 					beforeCommands = append(beforeCommands, cmds...)
 				}
 			}
-			if r.Hooks.PostInstall != "" {
-				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks.PostInstall}, "Apply post-install manifest "+r.Hooks.PostInstall))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks.PostInstall, "post-install", ns); wait {
+			if _, ok := r.Hooks["postInstall"]; ok {
+				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["postInstall"]}, "Apply post-install manifest "+r.Hooks["postInstall"]))
+				if wait, cmds := r.shouldWaitForHook(r.Hooks["postIntall"], "post-install", ns); wait {
 					afterCommands = append(afterCommands, cmds...)
 				}
 			}
 		}
 	case "upgrade":
 		{
-			if r.Hooks.PreUpgrade != "" {
-				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks.PreUpgrade}, "Apply pre-upgrade manifest "+r.Hooks.PreUpgrade))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks.PreUpgrade, "pre-upgrade", ns); wait {
+			if _, ok := r.Hooks["PreUpgrade"]; ok {
+				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["PreUpgrade"]}, "Apply pre-upgrade manifest "+r.Hooks["PreUpgrade"]))
+				if wait, cmds := r.shouldWaitForHook(r.Hooks["PreUpgrade"], "pre-upgrade", ns); wait {
 					beforeCommands = append(beforeCommands, cmds...)
 				}
 			}
-			if r.Hooks.PostUpgrade != "" {
-				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks.PostUpgrade}, "Apply post-upgrade manifest "+r.Hooks.PostUpgrade))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks.PostUpgrade, "post-upgrade", ns); wait {
+			if _, ok := r.Hooks["postUpgrade"]; ok {
+				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["postUpgrade"]}, "Apply post-upgrade manifest "+r.Hooks["postUpgrade"]))
+				if wait, cmds := r.shouldWaitForHook(r.Hooks["postUpgrade"], "post-upgrade", ns); wait {
 					afterCommands = append(afterCommands, cmds...)
 				}
 			}
 		}
 	case "delete":
 		{
-			if r.Hooks.PreDelete != "" {
-				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks.PreDelete}, "Apply pre-delete manifest "+r.Hooks.PreDelete))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks.PreDelete, "pre-delete", ns); wait {
+			if _, ok := r.Hooks["preDelete"]; ok {
+				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["preDelete"]}, "Apply pre-delete manifest "+r.Hooks["preDelete"]))
+				if wait, cmds := r.shouldWaitForHook(r.Hooks["preDelete"], "pre-delete", ns); wait {
 					beforeCommands = append(beforeCommands, cmds...)
 				}
 			}
-			if r.Hooks.PostDelete != "" {
-				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks.PostDelete}, "Apply post-delete manifest "+r.Hooks.PostDelete))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks.PostDelete, "post-delete", ns); wait {
+			if _, ok := r.Hooks["postDelete"]; ok {
+				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["postDelete"]}, "Apply post-delete manifest "+r.Hooks["postDelete"]))
+				if wait, cmds := r.shouldWaitForHook(r.Hooks["postDelete"], "post-delete", ns); wait {
 					afterCommands = append(afterCommands, cmds...)
 				}
 			}
@@ -689,13 +638,14 @@ func (r *release) checkHooks(hookType string, p *plan, optionalNamespace ...stri
 // returns a boolean and the wait command if applicable
 func (r *release) shouldWaitForHook(hookFile string, hookType string, namespace string) (bool, []command) {
 	var cmds []command
-	if r.Hooks.SuccessCondition != "" {
+	// if r.Hooks.SuccessCondition != "" {
+	if _, ok := r.Hooks["successCondition"]; ok {
 		timeoutFlag := ""
-		if r.Hooks.SuccessTimeout != "" {
-			timeoutFlag = "--timeout=" + r.Hooks.SuccessTimeout
+		if _, ok := r.Hooks["successTimeout"]; ok {
+			timeoutFlag = "--timeout=" + r.Hooks["successTimeout"]
 		}
-		cmds = append(cmds, kubectl([]string{"wait", "-n", namespace, "-f", hookFile, "--for=condition=" + r.Hooks.SuccessCondition, timeoutFlag}, "Wait for "+hookType+" : "+hookFile))
-		if r.Hooks.DeleteOnSuccess {
+		cmds = append(cmds, kubectl([]string{"wait", "-n", namespace, "-f", hookFile, "--for=condition=" + r.Hooks["successCondition"], timeoutFlag}, "Wait for "+hookType+" : "+hookFile))
+		if _, ok := r.Hooks["deleteOnSuccess"]; ok {
 			cmds = append(cmds, kubectl([]string{"delete", "-n", namespace, "-f", hookFile}, "Delete "+hookType+" : "+hookFile))
 		}
 		return true, cmds
@@ -718,15 +668,15 @@ func (r release) print() {
 	fmt.Println("\tprotected : ", r.Protected)
 	fmt.Println("\twait : ", r.Wait)
 	fmt.Println("\tpriority : ", r.Priority)
-	fmt.Println("\tSuccessCondition : ", r.Hooks.SuccessCondition)
-	fmt.Println("\tSuccessTimeout : ", r.Hooks.SuccessTimeout)
-	fmt.Println("\tDeleteOnSuccess : ", r.Hooks.DeleteOnSuccess)
-	fmt.Println("\tpreInstall : ", r.Hooks.PreInstall)
-	fmt.Println("\tpostInstall : ", r.Hooks.PostInstall)
-	fmt.Println("\tpreUpgrade : ", r.Hooks.PreUpgrade)
-	fmt.Println("\tpostUpgrade : ", r.Hooks.PostUpgrade)
-	fmt.Println("\tpreDelete : ", r.Hooks.PreDelete)
-	fmt.Println("\tpostDelete : ", r.Hooks.PostDelete)
+	fmt.Println("\tSuccessCondition : ", r.Hooks["successCondition"])
+	fmt.Println("\tSuccessTimeout : ", r.Hooks["successTimeout"])
+	fmt.Println("\tDeleteOnSuccess : ", r.Hooks["deleteOnSuccess"])
+	fmt.Println("\tpreInstall : ", r.Hooks["preInstall"])
+	fmt.Println("\tpostInstall : ", r.Hooks["postInstall"])
+	fmt.Println("\tpreUpgrade : ", r.Hooks["preUpgrade"])
+	fmt.Println("\tpostUpgrade : ", r.Hooks["postUpgrade"])
+	fmt.Println("\tpreDelete : ", r.Hooks["preDelete"])
+	fmt.Println("\tpostDelete : ", r.Hooks["postDelete"])
 	fmt.Println("\tno-hooks : ", r.NoHooks)
 	fmt.Println("\ttimeout : ", r.Timeout)
 	fmt.Println("\tvalues to override from env:")
