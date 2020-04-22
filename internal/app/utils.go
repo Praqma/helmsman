@@ -147,46 +147,19 @@ func substituteVarsInStaticFiles(s *state) {
 		if v.SecretsFile != "" {
 			v.SecretsFile = substituteVarsInYaml(v.SecretsFile)
 		}
-		if (hooks{}) != v.Hooks {
-			if v.Hooks.PreInstall != "" {
-				v.Hooks.PreInstall = substituteVarsInYaml(v.Hooks.PreInstall)
-			}
-			if v.Hooks.PostInstall != "" {
-				v.Hooks.PostInstall = substituteVarsInYaml(v.Hooks.PostInstall)
-			}
-			if v.Hooks.PreUpgrade != "" {
-				v.Hooks.PreUpgrade = substituteVarsInYaml(v.Hooks.PreUpgrade)
-			}
-			if v.Hooks.PostUpgrade != "" {
-				v.Hooks.PostUpgrade = substituteVarsInYaml(v.Hooks.PostUpgrade)
-			}
-			if v.Hooks.PreDelete != "" {
-				v.Hooks.PreDelete = substituteVarsInYaml(v.Hooks.PreDelete)
-			}
-			if v.Hooks.PostDelete != "" {
-				v.Hooks.PostDelete = substituteVarsInYaml(v.Hooks.PostDelete)
+
+		if len(v.Hooks) != 0 {
+			for key, val := range v.Hooks {
+				v.Hooks[key] = substituteVarsInYaml(val)
 			}
 		}
-		if (hooks{}) != s.Settings.GlobalHooks {
-			if s.Settings.GlobalHooks.PreInstall != "" {
-				s.Settings.GlobalHooks.PreInstall = substituteVarsInYaml(s.Settings.GlobalHooks.PreInstall)
-			}
-			if s.Settings.GlobalHooks.PostInstall != "" {
-				s.Settings.GlobalHooks.PostInstall = substituteVarsInYaml(s.Settings.GlobalHooks.PostInstall)
-			}
-			if s.Settings.GlobalHooks.PreUpgrade != "" {
-				s.Settings.GlobalHooks.PreUpgrade = substituteVarsInYaml(s.Settings.GlobalHooks.PreUpgrade)
-			}
-			if s.Settings.GlobalHooks.PostUpgrade != "" {
-				s.Settings.GlobalHooks.PostUpgrade = substituteVarsInYaml(s.Settings.GlobalHooks.PostUpgrade)
-			}
-			if s.Settings.GlobalHooks.PreDelete != "" {
-				s.Settings.GlobalHooks.PreDelete = substituteVarsInYaml(s.Settings.GlobalHooks.PreDelete)
-			}
-			if s.Settings.GlobalHooks.PostDelete != "" {
-				s.Settings.GlobalHooks.PostDelete = substituteVarsInYaml(s.Settings.GlobalHooks.PostDelete)
+
+		if len(s.Settings.GlobalHooks) != 0 {
+			for key, val := range s.Settings.GlobalHooks {
+				s.Settings.GlobalHooks[key] = substituteVarsInYaml(val)
 			}
 		}
+
 		for i := range v.ValuesFiles {
 			v.ValuesFiles[i] = substituteVarsInYaml(v.ValuesFiles[i])
 		}
@@ -244,27 +217,13 @@ func resolvePaths(relativeToFile string, s *state) {
 		if v.SecretsFile != "" {
 			v.SecretsFile, _ = resolveOnePath(v.SecretsFile, dir, downloadDest)
 		}
-		if (hooks{}) != v.Hooks {
-			if v.Hooks.PreInstall != "" {
-				v.Hooks.PreInstall, _ = resolveOnePath(v.Hooks.PreInstall, dir, downloadDest)
-			}
 
-			if v.Hooks.PostInstall != "" {
-				v.Hooks.PostInstall, _ = resolveOnePath(v.Hooks.PostInstall, dir, downloadDest)
-			}
-			if v.Hooks.PreUpgrade != "" {
-				v.Hooks.PreUpgrade, _ = resolveOnePath(v.Hooks.PreUpgrade, dir, downloadDest)
-			}
-			if v.Hooks.PostUpgrade != "" {
-				v.Hooks.PostUpgrade, _ = resolveOnePath(v.Hooks.PostUpgrade, dir, downloadDest)
-			}
-			if v.Hooks.PreDelete != "" {
-				v.Hooks.PreDelete, _ = resolveOnePath(v.Hooks.PreDelete, dir, downloadDest)
-			}
-			if v.Hooks.PostDelete != "" {
-				v.Hooks.PostDelete, _ = resolveOnePath(v.Hooks.PostDelete, dir, downloadDest)
+		if len(v.Hooks) != 0 {
+			for key, val := range v.Hooks {
+				v.Hooks[key], _ = resolveOnePath(val, dir, downloadDest)
 			}
 		}
+
 		for i := range v.ValuesFiles {
 			v.ValuesFiles[i], _ = resolveOnePath(v.ValuesFiles[i], dir, downloadDest)
 		}
@@ -294,24 +253,9 @@ func resolvePaths(relativeToFile string, s *state) {
 		s.Settings.BearerTokenPath, _ = resolveOnePath(s.Settings.BearerTokenPath, dir, downloadDest)
 	}
 	// resolve paths for global hooks
-	if (hooks{}) != s.Settings.GlobalHooks {
-		if s.Settings.GlobalHooks.PreInstall != "" {
-			s.Settings.GlobalHooks.PreInstall, _ = resolveOnePath(s.Settings.GlobalHooks.PreInstall, dir, downloadDest)
-		}
-		if s.Settings.GlobalHooks.PostInstall != "" {
-			s.Settings.GlobalHooks.PostInstall, _ = resolveOnePath(s.Settings.GlobalHooks.PostInstall, dir, downloadDest)
-		}
-		if s.Settings.GlobalHooks.PreUpgrade != "" {
-			s.Settings.GlobalHooks.PreUpgrade, _ = resolveOnePath(s.Settings.GlobalHooks.PreUpgrade, dir, downloadDest)
-		}
-		if s.Settings.GlobalHooks.PostUpgrade != "" {
-			s.Settings.GlobalHooks.PostUpgrade, _ = resolveOnePath(s.Settings.GlobalHooks.PostUpgrade, dir, downloadDest)
-		}
-		if s.Settings.GlobalHooks.PreDelete != "" {
-			s.Settings.GlobalHooks.PreDelete, _ = resolveOnePath(s.Settings.GlobalHooks.PreDelete, dir, downloadDest)
-		}
-		if s.Settings.GlobalHooks.PostDelete != "" {
-			s.Settings.GlobalHooks.PostDelete, _ = resolveOnePath(s.Settings.GlobalHooks.PostDelete, dir, downloadDest)
+	if len(s.Settings.GlobalHooks) != 0 {
+		for key, val := range s.Settings.GlobalHooks {
+			s.Settings.GlobalHooks[key], _ = resolveOnePath(val, dir, downloadDest)
 		}
 	}
 	// resolving paths for k8s certificate files
@@ -537,14 +481,14 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 	}`)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	if err != nil {
-		log.Errorf("Failed to send slack message: %w", err)
+		log.Errorf("Failed to send slack message: %v", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Errorf("Failed to send notification to slack: %w", err)
+		log.Errorf("Failed to send notification to slack: %v", err)
 	}
 	defer resp.Body.Close()
 

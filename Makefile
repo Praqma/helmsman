@@ -79,9 +79,9 @@ release: ## Generate a new release
 	@goreleaser --release-notes release-notes.md --rm-dist
 
 tools: ## Get extra tools used by this makefile
-	@go get -u github.com/golang/dep/cmd/dep
-	@go get -u github.com/mitchellh/gox
-	@go get -u github.com/goreleaser/goreleaser
+	@go get -d -u github.com/golang/dep/cmd/dep
+	@go get -d -u github.com/mitchellh/gox
+	@go get -d -u github.com/goreleaser/goreleaser
 	@gem install hiera-eyaml
 .PHONY: tools
 
