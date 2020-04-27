@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync"
 
 	"github.com/Praqma/helmsman/internal/gcs"
 )
@@ -14,6 +15,8 @@ type helmRepo struct {
 	Name string `json:"name"`
 	Url  string `json:"url"`
 }
+
+var chartNameCache sync.Map
 
 // helmCmd prepares a helm command to be executed
 func helmCmd(args []string, desc string) command {
@@ -26,6 +29,11 @@ func helmCmd(args []string, desc string) command {
 
 // extractChartName extracts the Helm chart name from full chart name in the desired state.
 func extractChartName(releaseChart string) string {
+	chart, ok := chartNameCache.Load(releaseChart)
+	if ok {
+		return chart.(string)
+	}
+
 	cmd := helmCmd([]string{"show", "chart", releaseChart}, "Show chart information")
 
 	result := cmd.exec()
@@ -42,6 +50,7 @@ func extractChartName(releaseChart string) string {
 		}
 	}
 
+	chartNameCache.Store(releaseChart, name)
 	return name
 }
 
