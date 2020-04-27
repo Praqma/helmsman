@@ -44,8 +44,8 @@ func buildState(s *state) *currentState {
 			if flags.contextOverride == "" {
 				r.HelmsmanContext = getReleaseContext(r.Name, r.Namespace)
 			} else {
-				log.Info("Overriding Helmsman context for " + r.Name + " as " + flags.contextOverride)
 				r.HelmsmanContext = flags.contextOverride
+				log.Info("Overwrote Helmsman context for release [ " + r.Name + " ] to " + flags.contextOverride)
 			}
 			cs.releases[r.key()] = r
 		}(r)
@@ -60,18 +60,115 @@ func (cs *currentState) makePlan(s *state) *plan {
 
 	wg := sync.WaitGroup{}
 	sem := make(chan struct{}, resourcePool)
+	namesC := make(chan [2]string, len(s.Apps))
+	versionsC := make(chan [4]string, len(s.Apps))
 
+	// We store the results of the helm commands
+	extractedChartNames := make(map[string]string)
+	extractedChartVersions := make(map[string]map[string]string)
+
+	// We get the charts and versions with the expensive helm commands first.
+	// We can probably DRY this concurrency stuff up somehow.
+	// We can also definitely DRY this with validateReleaseChart.
+	// We should probably have a data structure earlier on that sorts this out properly.
+	// Ideally we'd have a pipeline of helm command tasks with several stages that can all come home if one of them fails.
+	// Is it better to fail early here? I am not sure.
+
+	// Initialize the rejigged data structures
+	charts := make(map[string]map[string]bool)
 	for _, r := range s.Apps {
-		r.checkChartDepUpdate()
+		if charts[r.Chart] == nil {
+			charts[r.Chart] = make(map[string]bool)
+		}
+
+		if extractedChartVersions[r.Chart] == nil {
+			extractedChartVersions[r.Chart] = make(map[string]string)
+		}
+
+		if r.isConsideredToRun(s) {
+			charts[r.Chart][r.Version] = true
+		}
+	}
+
+	// Concurrently extract chart names and versions
+	// I'm not fond of this concurrency pattern, it's just a continuation of what's already there.
+	// This seems like overkill somehow. Is it necessary to run all the helm commands concurrently? Does that speed it up? (Quick sanity check says: yes, it does)
+	for chart, versions := range charts {
 		sem <- struct{}{}
 		wg.Add(1)
-		go func(r *release) {
+		go func(chart string) {
 			defer func() {
 				wg.Done()
 				<-sem
 			}()
-			cs.decide(r, s, p)
-		}(r)
+
+			namesC <- [2]string{chart, extractChartName(chart)}
+		}(chart)
+
+		for version, shouldRun := range versions {
+			if !shouldRun {
+				continue
+			}
+
+			sem <- struct{}{}
+			wg.Add(1)
+			go func(chart, version string) {
+				defer func() {
+					wg.Done()
+					<-sem
+				}()
+
+				// even though I wrote it, lines like this are a code smell to me -- we need to rethink the concurrency as i mentioned above.
+				// ideally you just process all helm commands "in a background pool", they return channels,
+				// and we would be looping over select statements until we had the results of the helm commands we wanted.
+				n, m := getChartVersion(chart, version)
+				versionsC <- [4]string{chart, version, n, m}
+			}(chart, version)
+		}
+	}
+
+	wg.Wait()
+	close(namesC)
+	close(versionsC)
+
+	// One thing we could do here instead would be:
+	// instead of waiting for everything to come back, just start deciding for releases as their chart names and versions come through.
+
+	for nameResult := range namesC {
+		// Is there a ... that can do this? I forget
+		c, n := nameResult[0], nameResult[1]
+		log.Info("Extracted chart name [ " + c + " ].")
+		extractedChartNames[c] = n
+	}
+
+	for versionResult := range versionsC {
+		// Is there a ... that can do this? I forget
+		c, v, n, m := versionResult[0], versionResult[1], versionResult[2], versionResult[3]
+		if m != "" {
+			// Better to fail early and return here?
+			log.Error(m)
+		} else {
+			log.Info("Extracted chart version from chart [ " + c + " ] with version [ " + v + " ]: '" + n + "'")
+			extractedChartVersions[c][v] = n
+		}
+	}
+
+	// Pass the extracted names and versions back to the apps to decide.
+	// We still have to run decide on all the apps, even the ones we previously filtered out when extracting names and versions.
+	// We can now proceed without trying lots of identical helm commands at the same time.
+	for _, r := range s.Apps {
+		// To be honest, the helmCmd function should probably pass back a channel at this point, making the resource pool "global", for all helm commands.
+		// It would make more sense than parallelising *some of the workload* like we do here with r.checkChartDepUpdate(), leaving some helm commands outside the concurrent part.
+		r.checkChartDepUpdate()
+		sem <- struct{}{}
+		wg.Add(1)
+		go func(r *release, chartName, chartVersion string) {
+			defer func() {
+				wg.Done()
+				<-sem
+			}()
+			cs.decide(r, s, p, chartName, chartVersion)
+		}(r, extractedChartNames[r.Chart], extractedChartVersions[r.Chart][r.Version])
 	}
 	wg.Wait()
 
@@ -80,7 +177,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 
 // decide makes a decision about what commands (actions) need to be executed
 // to make a release section of the desired state come true.
-func (cs *currentState) decide(r *release, s *state, p *plan) {
+func (cs *currentState) decide(r *release, s *state, p *plan, chartName, chartVersion string) {
 	// check for presence in defined targets or groups
 	if !r.isConsideredToRun(s) {
 		p.addDecision("Release [ "+r.Name+" ] ignored", r.Priority, ignored)
@@ -112,7 +209,7 @@ func (cs *currentState) decide(r *release, s *state, p *plan) {
 
 	if ok := cs.releaseExists(r, helmStatusDeployed); ok {
 		if !r.isProtected(cs, s) {
-			cs.inspectUpgradeScenario(r, p) // upgrade or move
+			cs.inspectUpgradeScenario(r, p, chartName, chartVersion) // upgrade or move
 		} else {
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 				"you remove its protection.", r.Priority, noop)
@@ -284,7 +381,10 @@ func (cs *currentState) cleanUntrackedReleases(s *state, p *plan) {
 // it will be purge deleted and installed in the same namespace using the new chart.
 // - If the release is NOT in the same namespace specified in the input,
 // it will be purge deleted and installed in the new namespace.
-func (cs *currentState) inspectUpgradeScenario(r *release, p *plan) {
+func (cs *currentState) inspectUpgradeScenario(r *release, p *plan, chartName, chartVersion string) {
+	if chartName == "" || chartVersion == "" {
+		return
+	}
 
 	rs, ok := cs.releases[r.key()]
 	if !ok {
@@ -292,21 +392,15 @@ func (cs *currentState) inspectUpgradeScenario(r *release, p *plan) {
 	}
 
 	if r.Namespace == rs.Namespace {
+		r.Version = chartVersion
 
-		version, msg := r.getChartVersion()
-		if msg != "" {
-			log.Fatal(msg)
-			return
-		}
-		r.Version = version
-
-		if extractChartName(r.Chart) == rs.getChartName() && r.Version != rs.getChartVersion() {
+		if chartName == rs.getChartName() && r.Version != rs.getChartVersion() {
 			// upgrade
 			r.diff()
 			r.upgrade(p)
 			p.addDecision("Release [ "+r.Name+" ] will be updated", r.Priority, change)
 
-		} else if extractChartName(r.Chart) != rs.getChartName() {
+		} else if chartName != rs.getChartName() {
 			r.reInstall(p)
 			p.addDecision("Release [ "+r.Name+" ] is desired to use a new chart [ "+r.Chart+
 				" ]. Delete of the current release will be planned and new chart will be installed in namespace [ "+
