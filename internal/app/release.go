@@ -201,7 +201,7 @@ func validateReleaseCharts(s *state) error {
 					wg.Done()
 					<-sem
 				}()
-				validateChart(concattedApps, chart, version, s, c)
+				validateChart(concattedApps, chart, version, c)
 			}(concattedApps, ch, v)
 		}
 	}
@@ -223,7 +223,7 @@ func validateReleaseCharts(s *state) error {
 var versionExtractor = regexp.MustCompile(`[\n]version:\s?(.*)`)
 
 // validateChart validates if chart with the same name and version as specified in the DSF exists
-func validateChart(apps, chart, version string, s *state, c chan string) {
+func validateChart(apps, chart, version string, c chan string) {
 	if isLocalChart(chart) {
 		cmd := helmCmd([]string{"inspect", "chart", chart}, "Validating [ "+chart+" ] chart's availability")
 
@@ -260,45 +260,38 @@ func validateChart(apps, chart, version string, s *state, c chan string) {
 
 // getChartVersion fetches the lastest chart version matching the semantic versioning constraints.
 // If chart is local, returns the given release version
-func (r *release) getChartVersion() (string, string) {
-	if isLocalChart(r.Chart) {
-		log.Info("Chart [ " + r.Chart + "] with version [ " + r.Version + " ] was found locally.")
-		return r.Version, ""
+func getChartVersion(chart, version string) (string, string) {
+	if isLocalChart(chart) {
+		log.Info("Chart [ " + chart + "] with version [ " + version + " ] was found locally.")
+		return version, ""
 	}
 
-	if len(r.cachedVersion) > 0 {
-		log.Info("Non-local chart [ " + r.Chart + "] with version [ " + r.Version + " ] was found in cache.")
-		return r.cachedVersion, ""
-	}
-
-	cmd := helmCmd([]string{"search", "repo", r.Chart, "--version", r.Version, "-o", "json"}, "Getting latest non-local chart's version "+r.Chart+"-"+r.Version+"")
+	cmd := helmCmd([]string{"search", "repo", chart, "--version", version, "-o", "json"}, "Getting latest non-local chart's version "+chart+"-"+version+"")
 
 	result := cmd.exec()
 	if result.code != 0 {
-		return "", "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified but not found in the helm repositories"
+		return "", "Chart [ " + chart + " ] with version [ " + version + " ] is specified but not found in the helm repositories"
 	}
 
-	chartVersions := make([]chartVersion, 0)
-	if err := json.Unmarshal([]byte(result.output), &chartVersions); err != nil {
+	cv := make([]chartVersion, 0)
+	if err := json.Unmarshal([]byte(result.output), &cv); err != nil {
 		log.Fatal(fmt.Sprint(err))
 	}
 
 	filteredChartVersions := make([]chartVersion, 0)
-	for _, chart := range chartVersions {
-		if chart.Name == r.Chart {
-			filteredChartVersions = append(filteredChartVersions, chart)
+	for _, c := range cv {
+		if c.Name == chart {
+			filteredChartVersions = append(filteredChartVersions, c)
 		}
 	}
 
 	if len(filteredChartVersions) < 1 {
-		return "", "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified but not found in the helm repositories"
+		return "", "Chart [ " + chart + " ] with version [ " + version + " ] is specified but not found in the helm repositories"
 	} else if len(filteredChartVersions) > 1 {
-		return "", "Multiple versions of chart [ " + r.Chart + " ] with version [ " + r.Version + " ] found in the helm repositories"
+		return "", "Multiple versions of chart [ " + chart + " ] with version [ " + version + " ] found in the helm repositories"
 	}
 
-	v := filteredChartVersions[0].Version
-	r.cachedVersion = v
-	return v, ""
+	return filteredChartVersions[0].Version, ""
 }
 
 // testRelease creates a Helm command to test a particular release.
