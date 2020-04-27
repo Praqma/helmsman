@@ -34,8 +34,6 @@ type release struct {
 	HelmFlags    []string          `yaml:"helmFlags"`
 	NoHooks      bool              `yaml:"noHooks"`
 	Timeout      int               `yaml:"timeout"`
-
-	cachedVersion string
 }
 
 type chartVersion struct {
@@ -239,11 +237,6 @@ func (r *release) getChartVersion() (string, string) {
 		return r.Version, ""
 	}
 
-	if len(r.cachedVersion) > 0 {
-		log.Info("Non-local chart [ " + r.Chart + "] with version [ " + r.Version + " ] was found in cache.")
-		return r.cachedVersion, ""
-	}
-
 	cmd := helmCmd([]string{"search", "repo", r.Chart, "--version", r.Version, "-o", "json"}, "Getting latest non-local chart's version "+r.Chart+"-"+r.Version+"")
 
 	result := cmd.exec()
@@ -269,9 +262,7 @@ func (r *release) getChartVersion() (string, string) {
 		return "", "Multiple versions of chart [ " + r.Chart + " ] with version [ " + r.Version + " ] found in the helm repositories"
 	}
 
-	v := filteredChartVersions[0].Version
-	r.cachedVersion = v
-	return v, ""
+	return filteredChartVersions[0].Version, ""
 }
 
 // testRelease creates a Helm command to test a particular release.

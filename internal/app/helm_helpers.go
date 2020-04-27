@@ -31,10 +31,11 @@ func helmCmd(args []string, desc string) command {
 func extractChartName(releaseChart string) string {
 	chart, ok := chartNameCache.Load(releaseChart)
 	if ok {
+		log.Info("Returning chart information for [ " + releaseChart + " ] from cache.")
 		return chart.(string)
 	}
 
-	cmd := helmCmd([]string{"show", "chart", releaseChart}, "Show chart information")
+	cmd := helmCmd([]string{"show", "chart", releaseChart}, "Caching chart information for [ " + releaseChart + " ].")
 
 	result := cmd.exec()
 	if result.code != 0 {
@@ -62,6 +63,8 @@ func getHelmVersion() string {
 	if result.code != 0 {
 		log.Fatal("While checking helm version: " + result.errors)
 	}
+
+	log.Info("Helm version " + result.output + "")
 	return result.output
 }
 

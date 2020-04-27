@@ -43,9 +43,10 @@ func buildState(s *state) *currentState {
 			}()
 			if flags.contextOverride == "" {
 				r.HelmsmanContext = getReleaseContext(r.Name, r.Namespace)
+				log.Info("Set Helmsman context for release [ " + r.Name + " ] as " + r.HelmsmanContext)
 			} else {
-				log.Info("Overriding Helmsman context for " + r.Name + " as " + flags.contextOverride)
 				r.HelmsmanContext = flags.contextOverride
+				log.Info("Overwrote Helmsman context for release [ " + r.Name + " ] to " + flags.contextOverride)
 			}
 			cs.releases[r.key()] = r
 		}(r)
