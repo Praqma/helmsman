@@ -262,9 +262,16 @@ func validateChart(apps, chart, version string, s *state, c chan string) {
 // If chart is local, returns the given release version
 func (r *release) getChartVersion() (string, string) {
 	if isLocalChart(r.Chart) {
+		log.Info("Chart [ " + r.Chart + "] with version [ " + r.Version + " ] was found locally.")
 		return r.Version, ""
 	}
-	cmd := helmCmd([]string{"search", "repo", r.Chart, "--version", r.Version, "-o", "json"}, "Getting latest chart's version "+r.Chart+"-"+r.Version+"")
+
+	if len(r.cachedVersion) > 0 {
+		log.Info("Non-local chart [ " + r.Chart + "] with version [ " + r.Version + " ] was found in cache.")
+		return r.cachedVersion, ""
+	}
+
+	cmd := helmCmd([]string{"search", "repo", r.Chart, "--version", r.Version, "-o", "json"}, "Getting latest non-local chart's version "+r.Chart+"-"+r.Version+"")
 
 	result := cmd.exec()
 	if result.code != 0 {
@@ -288,7 +295,10 @@ func (r *release) getChartVersion() (string, string) {
 	} else if len(filteredChartVersions) > 1 {
 		return "", "Multiple versions of chart [ " + r.Chart + " ] with version [ " + r.Version + " ] found in the helm repositories"
 	}
-	return filteredChartVersions[0].Version, ""
+
+	v := filteredChartVersions[0].Version
+	r.cachedVersion = v
+	return v, ""
 }
 
 // testRelease creates a Helm command to test a particular release.
