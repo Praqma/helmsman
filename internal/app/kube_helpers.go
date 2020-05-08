@@ -292,3 +292,11 @@ func getKubectlClientVersion() string {
 	}
 	return result.output
 }
+
+// getKubeDryRunFlag returns kubectl dry-run flag if helmsman --dry-run flag is enabled
+func (c *cli) getKubeDryRunFlag() string {
+	if c.dryRun {
+		return "--server-dry-run"
+	}
+	return ""
+}

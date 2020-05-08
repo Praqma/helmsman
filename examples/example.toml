@@ -32,10 +32,10 @@ context= "test-infra"   # defaults to "default" if not provided
 #### to use bearer token:
 #  bearerToken = true
 #  clusterURI = "https://kubernetes.default"
- [settings.globalHooks]
-    successCondition= "Initialized"
-    deleteOnSuccess= true
-    postInstall= "job.yaml"
+#  [settings.globalHooks]
+#     successCondition= "Initialized"
+#     deleteOnSuccess= true
+#     postInstall= "job.yaml"
 
 
 
@@ -86,7 +86,7 @@ context= "test-infra"   # defaults to "default" if not provided
     namespace = "production" # maps to the namespace as defined in namespaces above
     enabled = true # change to false if you want to delete this app release [default = false]
     chart = "argo/argo" # changing the chart name means delete and recreate this release
-    version = "0.6.4" # chart version
+    version = "0.8.5" # chart version
     ### Optional values below
     valuesFile = "" # leaving it empty uses the default chart values
     test = false # run the tests when this release is installed for the first time only
@@ -96,7 +96,7 @@ context= "test-infra"   # defaults to "default" if not provided
     [apps.argo.hooks]
     successCondition= "Complete"
     successTimeout= "90s"
-    # deleteOnSuccess= true
+    deleteOnSuccess= true
     preInstall="job.yaml"
     # preInstall="https://github.com/jetstack/cert-manager/releases/download/v0.14.0/cert-manager.crds.yaml"
     # postInstall="https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml"
@@ -111,17 +111,17 @@ context= "test-infra"   # defaults to "default" if not provided
   #   installCRD="true"
 
 
-  # [apps.artifactory]
-  #   namespace = "production" # maps to the namespace as defined in namespaces above
-  #   enabled = true # change to false if you want to delete this app release [default = false]
-  #   chart = "jfrog/artifactory" # changing the chart name means delete and recreate this release
-  #   version = "8.3.2" # chart version
-  #   ### Optional values below
-  #   valuesFile = "" # leaving it empty uses the default chart values
-  #   test = false # run the tests when this release is installed for the first time only
-  #   priority= -2
-  #   noHooks= false
-  #   timeout= 300
-  #   helmFlags= [] # additional helm flags for this release
+  [apps.artifactory]
+    namespace = "production" # maps to the namespace as defined in namespaces above
+    enabled = true # change to false if you want to delete this app release [default = false]
+    chart = "jfrog/artifactory" # changing the chart name means delete and recreate this release
+    version = "8.3.2" # chart version
+    ### Optional values below
+    valuesFile = "" # leaving it empty uses the default chart values
+    test = false # run the tests when this release is installed for the first time only
+    priority= -2
+    noHooks= false
+    timeout= 300
+    helmFlags= [] # additional helm flags for this release
 
 # See https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md#apps for more apps options

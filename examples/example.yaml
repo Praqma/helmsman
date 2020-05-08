@@ -81,7 +81,7 @@ apps:
       ### Optional values below
       valuesFile: "" # leaving it empty uses the default chart values
       test: false
-      #protected: true
+      protected: true
       priority: -3
       wait: true
       # hooks:

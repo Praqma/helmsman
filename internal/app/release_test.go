@@ -278,7 +278,7 @@ func Test_validateRelease(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks:       map[string]string{"preInstall": "xyz.fake"},
+					Hooks:       map[string]interface{}{"preInstall": "xyz.fake"},
 				},
 				s: st,
 			},
@@ -294,7 +294,7 @@ func Test_validateRelease(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks:       map[string]string{"preInstall": "../../tests/values.xml"},
+					Hooks:       map[string]interface{}{"preInstall": "../../tests/values.xml"},
 				},
 				s: st,
 			},
@@ -310,7 +310,7 @@ func Test_validateRelease(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks:       map[string]string{"preDelete": "../../tests/values.xml"},
+					Hooks:       map[string]interface{}{"preDelete": "../../tests/values.yaml"},
 				},
 				s: st,
 			},
@@ -326,7 +326,7 @@ func Test_validateRelease(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks:       map[string]string{"postUpgrade": "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml"},
+					Hooks:       map[string]interface{}{"postUpgrade": "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml"},
 				},
 				s: st,
 			},
@@ -342,11 +342,43 @@ func Test_validateRelease(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks:       map[string]string{"preDelete": "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml"},
+					Hooks:       map[string]interface{}{"preDelete": "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml"},
 				},
 				s: st,
 			},
 			want: "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml must be valid URL path to a raw file.",
+		}, {
+			name: "test case 20 - invalid hook type 1",
+			args: args{
+				r: &release{
+					Name:        "release20",
+					Description: "",
+					Namespace:   "namespace",
+					Enabled:     true,
+					Chart:       "repo/chartX",
+					Version:     "1.0",
+					ValuesFile:  "../../tests/values.yaml",
+					Hooks:       map[string]interface{}{"afterDelete": "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml"},
+				},
+				s: st,
+			},
+			want: "afterDelete is an Invalid hook type.",
+		}, {
+			name: "test case 21 - invalid hook type 2",
+			args: args{
+				r: &release{
+					Name:        "release21",
+					Description: "",
+					Namespace:   "namespace",
+					Enabled:     true,
+					Chart:       "repo/chartX",
+					Version:     "1.0",
+					ValuesFile:  "../../tests/values.yaml",
+					Hooks:       map[string]interface{}{"PreDelete": "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml"},
+				},
+				s: st,
+			},
+			want: "PreDelete is an Invalid hook type.",
 		},
 	}
 	names := make(map[string]map[string]bool)
@@ -368,9 +400,9 @@ func Test_inheritHooks(t *testing.T) {
 		Metadata:     make(map[string]string),
 		Certificates: make(map[string]string),
 		Settings: config{
-			GlobalHooks: map[string]string{
-				"preInstall":       "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
-				"postInstall":      "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
+			GlobalHooks: map[string]interface{}{
+				"preInstall":       "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
+				"postInstall":      "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
 				"successCondition": "Complete",
 				"successTimeout":   "60s",
 			},
@@ -400,7 +432,7 @@ func Test_inheritHooks(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks: map[string]string{
+					Hooks: map[string]interface{}{
 						"postInstall":    "../../tests/values.yaml",
 						"preDelete":      "../../tests/values.yaml",
 						"successTimeout": "360s",
@@ -408,7 +440,7 @@ func Test_inheritHooks(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml -- " +
+			want: "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml -- " +
 				"../../tests/values.yaml -- " +
 				"../../tests/values.yaml -- " +
 				"Complete -- 360s",
@@ -417,8 +449,8 @@ func Test_inheritHooks(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.args.r.inheritHooks(&tt.args.s)
-			got := tt.args.r.Hooks["preInstall"] + " -- " + tt.args.r.Hooks["postInstall"] + " -- " + tt.args.r.Hooks["preDelete"] +
-				" -- " + tt.args.r.Hooks["successCondition"] + " -- " + tt.args.r.Hooks["successTimeout"]
+			got := tt.args.r.Hooks["preInstall"].(string) + " -- " + tt.args.r.Hooks["postInstall"].(string) + " -- " + tt.args.r.Hooks["preDelete"].(string) +
+				" -- " + tt.args.r.Hooks["successCondition"].(string) + " -- " + tt.args.r.Hooks["successTimeout"].(string)
 			if got != tt.want {
 				t.Errorf("inheritHooks() got = %v, want %v", got, tt.want)
 			}

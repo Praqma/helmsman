@@ -1,5 +1,5 @@
 ---
-version: v3.2.0
+version: v3.4.0
 ---
 
 # Helmsman Lifecycle hooks
@@ -15,12 +15,14 @@ Another useful use-case is if you are using a 3rd party chart which does not def
 
 ## Supported lifecycle stages
 
-- pre-install : before installing a release.
-- post-install: after installing a release.
-- pre-upgrade: before upgrading a release.
-- post-upgrade: after upgrading a release.
-- pre-delete: before uninstalling a release.
-- post-delete: after uninstalling a release.
+> hook types are case sensitive. Also, note the camleCase. 
+
+- `preInstall` : before installing a release.
+- `postInstall`: after installing a release.
+- `preUpgrade`: before upgrading a release.
+- `postUpgrade`: after upgrading a release.
+- `preDelete`: before uninstalling a release.
+- `postDelete`: after uninstalling a release.
 
 ## Hooks stanza details
 
@@ -34,6 +36,8 @@ For deployments, it is `Available`
 
 - `successTimeout` (default 30s) how much time to wait for the `successCondition`
 - `deleteOnSuccess` (true/false) indicates if you wish to delete the hook's manifest after the hook succeeds. This is only used if you define `successCondition`
+
+> Note: successCondition, deleteOnSuccess and successTimeout are ignored when the `--dry-run` flag is used. 
 
 ## Global vs App-specific hooks
 

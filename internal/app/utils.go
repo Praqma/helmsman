@@ -150,13 +150,17 @@ func substituteVarsInStaticFiles(s *state) {
 
 		if len(v.Hooks) != 0 {
 			for key, val := range v.Hooks {
-				v.Hooks[key] = substituteVarsInYaml(val)
+				if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
+					v.Hooks[key] = substituteVarsInYaml(val.(string))
+				}
 			}
 		}
 
 		if len(s.Settings.GlobalHooks) != 0 {
 			for key, val := range s.Settings.GlobalHooks {
-				s.Settings.GlobalHooks[key] = substituteVarsInYaml(val)
+				if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
+					s.Settings.GlobalHooks[key] = substituteVarsInYaml(val.(string))
+				}
 			}
 		}
 
@@ -220,7 +224,9 @@ func resolvePaths(relativeToFile string, s *state) {
 
 		if len(v.Hooks) != 0 {
 			for key, val := range v.Hooks {
-				v.Hooks[key], _ = resolveOnePath(val, dir, downloadDest)
+				if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
+					v.Hooks[key], _ = resolveOnePath(val.(string), dir, downloadDest)
+				}
 			}
 		}
 
@@ -255,7 +261,9 @@ func resolvePaths(relativeToFile string, s *state) {
 	// resolve paths for global hooks
 	if len(s.Settings.GlobalHooks) != 0 {
 		for key, val := range s.Settings.GlobalHooks {
-			s.Settings.GlobalHooks[key], _ = resolveOnePath(val, dir, downloadDest)
+			if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
+				s.Settings.GlobalHooks[key], _ = resolveOnePath(val.(string), dir, downloadDest)
+			}
 		}
 	}
 	// resolving paths for k8s certificate files
