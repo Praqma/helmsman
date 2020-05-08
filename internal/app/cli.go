@@ -50,6 +50,7 @@ type cli struct {
 	noFancy               bool
 	noNs                  bool
 	nsOverride            string
+	contextOverride       string
 	skipValidation        bool
 	keepUntrackedReleases bool
 	showDiff              bool
@@ -61,6 +62,9 @@ type cli struct {
 	updateDeps            bool
 	forceUpgrades         bool
 	version               bool
+	noCleanup             bool
+	migrateContext        bool
+	parallel              int
 }
 
 func printUsage() {
@@ -80,8 +84,10 @@ func (c *cli) parse() {
 	flag.Var(&c.target, "target", "limit execution to specific app.")
 	flag.Var(&c.group, "group", "limit execution to specific group of apps.")
 	flag.IntVar(&c.diffContext, "diff-context", -1, "number of lines of context to show around changes in helm diff output")
+	flag.IntVar(&c.parallel, "p", 1, "max number of concurrent helm releases to run")
 	flag.StringVar(&c.kubeconfig, "kubeconfig", "", "path to the kubeconfig file to use for CLI requests")
 	flag.StringVar(&c.nsOverride, "ns-override", "", "override defined namespaces with this one")
+	flag.StringVar(&c.contextOverride, "context-override", "", "override releases context defined in release state with this one")
 	flag.BoolVar(&c.apply, "apply", false, "apply the plan directly")
 	flag.BoolVar(&c.dryRun, "dry-run", false, "apply the dry-run option for helm commands.")
 	flag.BoolVar(&c.destroy, "destroy", false, "delete all deployed releases.")
@@ -101,6 +107,8 @@ func (c *cli) parse() {
 	flag.BoolVar(&c.substSSMValues, "subst-ssm-values", false, "turn on SSM parameter substitution in values files.")
 	flag.BoolVar(&c.updateDeps, "update-deps", false, "run 'helm dep up' for local chart")
 	flag.BoolVar(&c.forceUpgrades, "force-upgrades", false, "use --force when upgrading helm releases. May cause resources to be recreated.")
+	flag.BoolVar(&c.noCleanup, "no-cleanup", false, "keeps any credentials files that has been downloaded on the host where helmsman runs.")
+	flag.BoolVar(&c.migrateContext, "migrate-context", false, "Updates the context name for all apps defined in the DSF and applies Helmsman labels. Using this flag is required if you want to change context name after it has been set.")
 	flag.Usage = printUsage
 	flag.Parse()
 
@@ -130,6 +138,10 @@ func (c *cli) parse() {
 
 	if len(c.target) > 0 && len(c.group) > 0 {
 		log.Fatal("--target and --group can't be used together.")
+	}
+
+	if c.parallel < 1 {
+		c.parallel = 1
 	}
 
 	helmVersion := strings.TrimSpace(getHelmVersion())

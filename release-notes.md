@@ -1,16 +1,12 @@
-# v3.1.0
+# v3.3.0
 
-This is a minor release.
-It is recommended you read the [Helm 3 migration guide](https://helm.sh/docs/topics/v2_v3_migration/) before using this release.
+If you migrating from Helmsman v1.x, it is recommended you read the [migration guide](https://github.com/Praqma/helmsman/blob/master/docs/how_to/misc/migrate_to_3.md) before using this release.
 
 > Starting from Helmsman v3.0.0 GA release, support for Helmsman v1.x will be limited to bug fixes.
 
 # Fixes and improvements:
-- Add helm v3.0.3 to Docker images built
-- Fix multiple versions of chart found in the helm repositories; PR #397
-- Get existing helm repos first before adding new ones from DSF in order to limit actions to be taken; PR #403
-- Enhance the way -target flag checks releases states; PR #405
-- Take advantage of enhancements in -target flag flow for -group flags; PR #407
+- Add DRY-ed examples using appsTemplates; PR #425
 
 # New features:
-None
+- Add `--p` flag to define parallel apps installation/upgrade for those with the same priority defined in DSF; PR #431
+- Add Namespace's resource quotas to DSF; PR #384

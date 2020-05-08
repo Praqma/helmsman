@@ -31,6 +31,7 @@ type release struct {
 	Priority     int                    `yaml:"priority"`
 	Set          map[string]string      `yaml:"set"`
 	SetString    map[string]string      `yaml:"setString"`
+	SetFile      map[string]string      `yaml:"setFile"`
 	HelmFlags    []string               `yaml:"helmFlags"`
 	NoHooks      bool                   `yaml:"noHooks"`
 	Timeout      int                    `yaml:"timeout"`
@@ -501,6 +502,15 @@ func (r *release) getSetStringValues() []string {
 	return result
 }
 
+// getSetFileValues returns --set-file params to be used with helm install/upgrade commands
+func (r *release) getSetFileValues() []string {
+	result := []string{}
+	for k, v := range r.SetFile {
+		result = append(result, "--set-file", k+"="+strings.Replace(v, ",", "\\,", -1)+"")
+	}
+	return result
+}
+
 // getWait returns a partial helm command containing the helm wait flag (--wait) if the wait flag for the release was set to true
 // Otherwise, retruns an empty string
 func (r *release) getWait() []string {
@@ -532,9 +542,9 @@ func (r *release) getHelmArgsFor(action string, optionalNamespaceOverride ...str
 	}
 	switch action {
 	case "install":
-		return concat([]string{action, r.Name, r.Chart, "--version", r.Version, "--namespace", ns}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getWait(), r.getHelmFlags())
+		return concat([]string{action, r.Name, r.Chart, "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getWait(), r.getHelmFlags())
 	case "upgrade":
-		return concat([]string{action, "--namespace", ns, r.Name, r.Chart}, r.getValuesFiles(), []string{"--version", r.Version}, r.getSetValues(), r.getSetStringValues())
+		return concat([]string{action, "--namespace", r.Namespace, r.Name, r.Chart}, r.getValuesFiles(), []string{"--version", r.Version}, r.getSetValues(), r.getSetStringValues(), r.getSetFileValues())
 	default:
 		return []string{action, "--namespace", ns, r.Name}
 	}
