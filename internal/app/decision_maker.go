@@ -82,9 +82,6 @@ func (cs *currentState) decide(r *release, s *state, p *plan) {
 		return
 	}
 
-	// inherit globalHooks if local ones are not set
-	r.inheritHooks(s)
-
 	if flags.destroy {
 		if ok := cs.releaseExists(r, ""); ok {
 			p.addDecision("Release [ "+r.Name+" ] will be DELETED (destroy flag enabled).", r.Priority, delete)
