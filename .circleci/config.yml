@@ -48,6 +48,7 @@ jobs:
     working_directory: "/tmp/go/src/helmsman"
     machine: true
     steps:
+      - checkout
       - run:
           name: build docker images and push them to dockerhub
           command: |
