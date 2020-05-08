@@ -262,10 +262,6 @@ func (c *cli) readState(s *state) {
 		}
 	}
 
-	if c.debug {
-		s.print()
-	}
-
 	if !c.skipValidation {
 		// validate the desired state content
 		if len(c.files) > 0 {
@@ -288,6 +284,15 @@ func (c *cli) readState(s *state) {
 	// if there is no user-defined context name in the DSF(s), use the default context name
 	if s.Context == "" {
 		s.Context = defaultContextName
+	}
+
+	// inherit globalHooks if local ones are not set
+	for _, r := range s.Apps {
+		r.inheritHooks(s)
+	}
+
+	if c.debug {
+		s.print()
 	}
 }
 
