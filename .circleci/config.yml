@@ -53,9 +53,9 @@ jobs:
           name: build docker images and push them to dockerhub
           command: |
             docker login -u $DOCKER_USER -p $DOCKER_PASS
-            docker build -t praqma/helmsman:$CIRCLE_TAG-helm-v2.16.7 --build-arg HELM_VERSION=v2.16.7 --build-arg HELM_DIFF_VERSION=master dockerfile/. --no-cache
+            docker build -t praqma/helmsman:$CIRCLE_TAG-helm-v2.16.7 --build-arg HELM_VERSION=v2.16.7 --build-arg HELM_DIFF_VERSION=master -f dockerfile/dockerfile --no-cache .
             docker push praqma/helmsman:$CIRCLE_TAG-helm-v2.16.7
-            docker build -t praqma/helmsman:$CIRCLE_TAG-helm-v2.15.2 --build-arg HELM_VERSION=v2.15.2 --build-arg HELM_DIFF_VERSION=master dockerfile/. --no-cache
+            docker build -t praqma/helmsman:$CIRCLE_TAG-helm-v2.15.2 --build-arg HELM_VERSION=v2.15.2 --build-arg HELM_DIFF_VERSION=master -f dockerfile/dockerfile --no-cache .
             docker push praqma/helmsman:$CIRCLE_TAG-helm-v2.15.2
 
       - run:
