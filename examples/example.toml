@@ -46,19 +46,19 @@ context= "test-infra"   # defaults to "default" if not provided
 # protected = <true or false> -- default to false
 [namespaces]
   [namespaces.production]
-  #   protected = true
-  #   [[namespaces.production.limits]]
-  #     type = "Container"
-  #     [namespaces.production.limits.default]
-  #       cpu = "300m"
-  #       memory = "200Mi"
-  #     [namespaces.production.limits.defaultRequest]
-  #       cpu = "200m"
-  #       memory = "100Mi"
-  #   [[namespaces.production.limits]]
-  #     type = "Pod"
-  #     [namespaces.production.limits.max]
-  #       memory = "300Mi"      
+    protected = true
+    [[namespaces.production.limits]]
+      type = "Container"
+      [namespaces.production.limits.default]
+        cpu = "300m"
+        memory = "200Mi"
+      [namespaces.production.limits.defaultRequest]
+        cpu = "200m"
+        memory = "100Mi"
+    [[namespaces.production.limits]]
+      type = "Pod"
+      [namespaces.production.limits.max]
+        memory = "300Mi"      
   [namespaces.staging]
     # protected = false
     # [namespaces.staging.labels]

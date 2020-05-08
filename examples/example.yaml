@@ -38,18 +38,18 @@ settings:
 # define your environments and their k8s namespaces
 namespaces:
   production:
-    # protected: true
-    # limits:
-    #   - type: Container
-    #     default:
-    #       cpu: "300m"
-    #       memory: "200Mi"
-    #     defaultRequest:
-    #       cpu: "200m"
-    #       memory: "100Mi"
-    #   - type: Pod
-    #     max:
-    #       memory: "300Mi"
+    protected: true
+    limits:
+      - type: Container
+        default:
+          cpu: "300m"
+          memory: "200Mi"
+        defaultRequest:
+          cpu: "200m"
+          memory: "100Mi"
+      - type: Pod
+        max:
+          memory: "300Mi"
   staging:
    # protected: false
     # labels:
