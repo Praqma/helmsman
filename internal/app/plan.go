@@ -90,16 +90,64 @@ func (p *plan) exec() {
 		log.Info("Nothing to execute")
 	}
 
+	wg := sync.WaitGroup{}
+	sem := make(chan struct{}, flags.parallel)
+	var fail bool
+	var priorities []int
+	pl := make(map[int][]orderedCommand)
 	for _, cmd := range p.Commands {
-		for _, c := range cmd.beforeCommands {
-			execOne(c)
+		pl[cmd.Priority] = append(pl[cmd.Priority], cmd)
+	}
+	for priority := range pl {
+		priorities = append(priorities, priority)
+	}
+	sort.Ints(priorities)
+
+	for _, priority := range priorities {
+		c := make(chan string, len(pl[priority]))
+		for _, cmd := range pl[priority] {
+			sem <- struct{}{}
+			wg.Add(1)
+			go func(cmd orderedCommand) {
+				defer func() {
+					wg.Done()
+					<-sem
+				}()
+				for _, c := range cmd.beforeCommands {
+					execOne(c, cmd.targetRelease.Name)
+				}
+				execOne(cmd.Command, cmd.targetRelease.Name)
+				if cmd.targetRelease != nil && !flags.dryRun && !flags.destroy {
+					cmd.targetRelease.label()
+				}
+				for _, c := range cmd.afterCommands {
+					execOne(c, cmd.targetRelease.Name)
+				}
+				// if result.code != 0 {
+				// 	errorMsg := result.errors
+				// 	if !flags.verbose {
+				// 		errorMsg = strings.Split(result.errors, "---")[0]
+				// 	}
+				// 	c <- fmt.Sprintf("Command for release [%s] returned [ %d ] exit code and error message [ %s ]", cmd.targetRelease.Name, result.code, strings.TrimSpace(errorMsg))
+				// } else {
+				// 	log.Notice(result.output)
+				// 	log.Notice("Finished: " + cmd.Command.Description)
+				// 	if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
+				// 		notifySlack(cmd.Command.Description+" ... SUCCESS!", settings.SlackWebhook, false, true)
+				// 	}
+				// }
+			}(cmd)
 		}
-		execOne(cmd.Command)
-		if cmd.targetRelease != nil && !flags.dryRun && !flags.destroy {
-			cmd.targetRelease.label()
+		wg.Wait()
+		close(c)
+		for err := range c {
+			if err != "" {
+				fail = true
+				log.Error(err)
+			}
 		}
-		for _, c := range cmd.afterCommands {
-			execOne(c)
+		if fail {
+			log.Fatal("Plan execution failed")
 		}
 	}
 
@@ -109,7 +157,7 @@ func (p *plan) exec() {
 }
 
 // execOne executes a single ordered command
-func execOne(cmd command) {
+func execOne(cmd command, targetRelease string) {
 	log.Notice(cmd.Description)
 	result := cmd.exec()
 
@@ -118,7 +166,7 @@ func execOne(cmd command) {
 		if !flags.verbose {
 			errorMsg = strings.Split(result.errors, "---")[0]
 		}
-		log.Fatal(fmt.Sprintf("Command returned [ %d ] exit code and error message [ %s ]", result.code, strings.TrimSpace(errorMsg)))
+		log.Fatal(fmt.Sprintf("Command for release [%s] returned [ %d ] exit code and error message [ %s ]", targetRelease, result.code, strings.TrimSpace(errorMsg)))
 	} else {
 		log.Notice(result.output)
 		log.Notice("Finished: " + cmd.Description)

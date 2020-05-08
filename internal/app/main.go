@@ -6,7 +6,7 @@ import (
 
 const (
 	helmBin            = "helm"
-	appVersion         = "v3.1.0"
+	appVersion         = "v3.3.0"
 	tempFilesDir       = ".helmsman-tmp"
 	defaultContextName = "default"
 	resourcePool       = 10
@@ -29,7 +29,9 @@ func Main() {
 
 	// delete temp files with substituted env vars when the program terminates
 	defer os.RemoveAll(tempFilesDir)
-	defer s.cleanup()
+	if !flags.noCleanup {
+		defer s.cleanup()
+	}
 
 	flags.readState(&s)
 	if len(s.GroupMap) > 0 {
@@ -59,11 +61,9 @@ func Main() {
 	}
 
 	// add repos -- fails if they are not valid
-	if !flags.destroy {
-		log.Info("Setting up helm...")
-		if err := addHelmRepos(s.HelmRepos); err != nil {
-			log.Fatal(err.Error())
-		}
+	log.Info("Setting up helm...")
+	if err := addHelmRepos(s.HelmRepos); err != nil && !flags.destroy {
+		log.Fatal(err.Error())
 	}
 
 	if flags.apply || flags.dryRun || flags.destroy {
@@ -89,11 +89,16 @@ func Main() {
 		log.Info("Skipping charts' validation.")
 	}
 
-	log.Info("Preparing plan...")
 	if flags.destroy {
 		log.Warning("Destroy flag is enabled. Your releases will be deleted!")
 	}
 
+	if flags.migrateContext {
+		log.Warning("migrate-context flag is enabled. Context will be changed to [ " + s.Context + " ] and Helmsman labels will be applied.")
+		s.updateContextLabels()
+	}
+
+	log.Info("Preparing plan...")
 	cs := buildState(&s)
 	p := cs.makePlan(&s)
 	if !flags.keepUntrackedReleases {

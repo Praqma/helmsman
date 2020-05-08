@@ -41,7 +41,12 @@ func buildState(s *state) *currentState {
 				// release
 				<-sem
 			}()
-			r.HelmsmanContext = getReleaseContext(r.Name, r.Namespace)
+			if flags.contextOverride == "" {
+				r.HelmsmanContext = getReleaseContext(r.Name, r.Namespace)
+			} else {
+				log.Info("Overriding Helmsman context for " + r.Name + " as " + flags.contextOverride)
+				r.HelmsmanContext = flags.contextOverride
+			}
 			cs.releases[r.key()] = r
 		}(r)
 	}
@@ -168,14 +173,15 @@ var releaseNameExtractor = regexp.MustCompile(`sh\.helm\.release\.v\d+\.`)
 // The releases are categorized by the namespaces in which they are deployed
 // The returned map format is: map[<namespace>:map[<helmRelease>:true]]
 func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool {
-	var (
-		wg    sync.WaitGroup
-		mutex = &sync.Mutex{}
-	)
 	const outputFmt = "custom-columns=NAME:.metadata.name,CTX:.metadata.labels.HELMSMAN_CONTEXT"
+	var (
+		wg         sync.WaitGroup
+		mutex      = &sync.Mutex{}
+		namespaces map[string]namespace
+	)
 	releases := make(map[string]map[string]bool)
 	sem := make(chan struct{}, resourcePool)
-	namespaces := make(map[string]namespace)
+
 	if len(s.TargetMap) > 0 {
 		namespaces = s.TargetNamespaces
 	} else {

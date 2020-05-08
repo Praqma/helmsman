@@ -1,5 +1,5 @@
 ---
-version: v3.0.0
+version: v3.2.0
 ---
 
 # Helmsman desired state specification
@@ -80,6 +80,8 @@ certificates:
 Optional : Yes.
 
 Synopsis: defines the context in which a DSF is used. This context is used as the ID of that specific DSF and must be unique across the used DSFs. If not defined, `default` is used. Check [here](how_to/misc/merge_desired_state_files.md) for more details on the limitations.
+
+> Renaming the Helmsman context can be done from v3.2.0 using the `--migrate-context` flag. Check [this guide](how_to/apps/migrate_contexts.md) for details.
 
 ```yaml
 context: prod-apps
@@ -365,6 +367,7 @@ Options:
 - **priority**    : defines the priority of applying operations on this release. Only negative values allowed and the lower the value, the higher the priority. Default priority is 0. Apps with equal priorities will be applied in the order they were added in your state file (DSF).
 - **set**  : is used to override certain values from values.yaml with values from environment variables (or ,starting from v1.3.0-rc, directly provided in the Desired State File). This is particularly useful for passing secrets to charts. If the an environment variable with the same name as the provided value exists, the environment variable value will be used, otherwise, the provided value will be used as is. The TOML stanza for this is `[apps.<app_name>.set]`
 - **setString**   : is used to override String values from values.yaml or chart's defaults. This uses the `--set-string` flag in helm which is available only in helm >v2.9.0. This option is useful for image tags and the like. The TOML stanza for this is `[apps.<app_name>.setString]`
+- **setFile**     : is used to override values from values.yaml or chart's defaults from provided file. This uses the `--set-file` flag in helm. This option is useful for embedding file contents in the values. The TOML stanza for this is `[apps.<app_name>.setFile]`
 - **helmFlags**   : array of `helm` flags, is used to pass flags to helm install/upgrade commands
 - **hooks** : defines global lifecycle hooks to apply yaml manifest before and/or after different helmsman operations. Check [here](how_to/apps/lifecycle_hooks.md) for more details. Unset hooks for a release are inherited from `globalHooks` in the [settings](#Settings) stanza.
 
