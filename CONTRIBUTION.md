@@ -8,7 +8,9 @@ To build helmsman from source, you need go:1.13+.  Follow the steps below:
 
 ```
 git clone https://github.com/Praqma/helmsman.git
+make tools # installs few tools for testing, building, releasing
 make build
+make test
 ```
 
 ## The branches and tags

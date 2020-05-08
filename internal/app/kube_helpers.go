@@ -215,23 +215,23 @@ func createContext(s *state) error {
 
 	// CA cert
 	if caCrt != "" {
-		caCrt = downloadFile(caCrt, "ca.crt")
+		caCrt = downloadFile(caCrt, "", "ca.crt")
 	}
 
 	// CA key
 	if caKey != "" {
-		caKey = downloadFile(caKey, "ca.key")
+		caKey = downloadFile(caKey, "", "ca.key")
 	}
 
 	// client certificate
 	if caClient != "" {
-		caClient = downloadFile(caClient, "client.crt")
+		caClient = downloadFile(caClient, "", "client.crt")
 	}
 
 	// bearer token
 	tokenPath := "bearer.token"
 	if s.Settings.BearerToken && s.Settings.BearerTokenPath != "" {
-		downloadFile(s.Settings.BearerTokenPath, tokenPath)
+		downloadFile(s.Settings.BearerTokenPath, "", tokenPath)
 	}
 
 	// connecting to the cluster
@@ -336,4 +336,12 @@ func getKubectlClientVersion() string {
 		log.Fatal("While checking kubectl version: " + result.errors)
 	}
 	return result.output
+}
+
+// getKubeDryRunFlag returns kubectl dry-run flag if helmsman --dry-run flag is enabled
+func (c *cli) getKubeDryRunFlag() string {
+	if c.dryRun {
+		return "--server-dry-run"
+	}
+	return ""
 }

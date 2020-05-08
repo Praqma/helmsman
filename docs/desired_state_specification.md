@@ -49,9 +49,9 @@ Optional : Yes, only needed if you want Helmsman to connect kubectl to your clus
 Synopsis: defines where to find the certificates needed for connecting kubectl to a k8s cluster. If connection settings (username/password/clusterAPI) are provided in the Settings section below, then you need **AT LEAST** to provide caCrt and caKey. You can optionally provide a client certificate (caClient) depending on your cluster connection setup.
 
 Options:
-- **caCrt** : a valid S3/GCS/Azure bucket or local relative file path to a certificate file.
-- **caKey** : a valid S3/GCS/Azure bucket or local relative file path to a client key file.
-- **caClient**: a valid S3/GCS/Azure bucket or local relative file path to a client certificate file.
+- **caCrt** : a valid URL/S3/GCS/Azure bucket or local relative file path to a certificate file.
+- **caKey** : a valid URL/S3/GCS/Azure bucket or local relative file path to a client key file.
+- **caClient**: a valid URL/S3/GCS/Azure bucket or local relative file path to a client certificate file.
 
 
 > bucket format is: [s3 or gs or az]://bucket-name/dir1/dir2/.../file.extension
@@ -105,13 +105,14 @@ The following options can be skipped if your kubectl context is already created 
 - **password**   : an environment variable name (starting with `$`) where your password is stored. Get the password from your k8s admin or consult k8s docs on how to get/set it.
 - **clusterURI** : the URI for your cluster API or the name of an environment variable (starting with `$`) containing the URI.
 - **bearerToken**: whether you want helmsman to connect to the cluster using a bearer token. Default is `false`
-- **bearerTokenPath**: optional. If bearer token is used, you can specify a custom location for the token file.
+- **bearerTokenPath**: optional. If bearer token is used, you can specify a custom location (URL, cloud bucket, local file path) for the token file.
 - **storageBackend** : by default Helm v3 stores release information in secrets, using secrets for storage is recommended for security.
 - **slackWebhook** : a [Slack](http://slack.com) Webhook URL to receive Helmsman notifications. This can be passed directly or in an environment variable.
 - **reverseDelete** : if set to `true` it will reverse the priority order whilst deleting.
 - **eyamlEnabled** : if set to `true' it will use [hiera-eyaml](https://github.com/voxpupuli/hiera-eyaml) to decrypt secret files instead of using default helm-secrets based on sops
 - **eyamlPrivateKeyPath** : if set with path to the eyaml private key file, it will use it instead of looking for default one in ./keys directory relative to where Helmsman were run. It needs to be defined in conjunction with eyamlPublicKeyPath.
 - **eyamlPublicKeyPath** : if set with path to the eyaml public key file, it will use it instead of looking for default one in ./keys directory relative to where Helmsman were run. It needs to be defined in conjunction with eyamlPrivateKeyPath.
+- **globalHooks** : defines global lifecycle hooks to apply yaml manifest before and/or after different helmsman operations. Check [here](how_to/apps/lifecycle_hooks.md) for more details.
 
 
 Example:
@@ -129,6 +130,10 @@ kubeContext = "minikube"
 # eyamlEnabled = true
 # eyamlPrivateKeyPath = "../keys/custom-key.pem"
 # eyamlPublicKeyPath = "../keys/custom-key.pub"
+# [settings.globalHooks]
+#   successCondition= "Complete"
+#   deleteOnSuccess= true
+#   postInstall= "job.yaml"    
 ```
 
 ```yaml
@@ -144,6 +149,10 @@ settings:
   # eyamlEnabled: true
   # eyamlPrivateKeyPath: ../keys/custom-key.pem
   # eyamlPublicKeyPath: ../keys/custom-key.pub
+  # globalHooks:
+  #   successCondition: "Complete"
+  #   deleteOnSuccess: true
+  #   preInstall: "job.yaml"    
 ```
 
 ## Namespaces
@@ -343,11 +352,11 @@ Options:
 **Optional**
 - **group**       : group name this apps belongs to. It has no effect until Helmsman's flag `-group` is passed. Check this [doc](how_to/misc/limit-deployment-to-specific-group-of-apps.md) for more details.
 - **description** : a release metadata for human readers.
-- **valuesFile**  : a valid path to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFiles together. Leaving it empty uses the default chart values.
-- **valuesFiles** : array of valid paths to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFile together. Leaving it empty uses the default chart values.
+- **valuesFile**  : a valid path (URL, cloud bucket, local file path) to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFiles together. Leaving it empty uses the default chart values.
+- **valuesFiles** : array of valid paths (URL, cloud bucket, local file path) to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFile together. Leaving it empty uses the default chart values.
 > The values file(s) path is resolved when the DSF yaml/toml file is loaded, relative to the path that the dsf was loaded from.
-- **secretsFile**  : a valid path to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFiles together. Leaving it empty uses the default chart secrets.
-- **secretsFiles** : array of valid paths to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFile together. Leaving it empty uses the default chart secrets.
+- **secretsFile**  : a valid path (URL, cloud bucket, local file path) to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFiles together. Leaving it empty uses the default chart secrets.
+- **secretsFiles** : array of valid paths (URL, cloud bucket, local file path) to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFile together. Leaving it empty uses the default chart secrets.
 > The secrets file(s) path is resolved when the DSF yaml/toml file is loaded, relative to the path that the dsf was loaded from.
 > To use the secrets files you must have the helm-secrets plugin
 - **test**        : defines whether to run the chart tests whenever the release is installed. Default is false.
@@ -360,6 +369,7 @@ Options:
 - **setString**   : is used to override String values from values.yaml or chart's defaults. This uses the `--set-string` flag in helm which is available only in helm >v2.9.0. This option is useful for image tags and the like. The TOML stanza for this is `[apps.<app_name>.setString]`
 - **setFile**     : is used to override values from values.yaml or chart's defaults from provided file. This uses the `--set-file` flag in helm. This option is useful for embedding file contents in the values. The TOML stanza for this is `[apps.<app_name>.setFile]`
 - **helmFlags**   : array of `helm` flags, is used to pass flags to helm install/upgrade commands
+- **hooks** : defines global lifecycle hooks to apply yaml manifest before and/or after different helmsman operations. Check [here](how_to/apps/lifecycle_hooks.md) for more details. Unset hooks for a release are inherited from `globalHooks` in the [settings](#Settings) stanza.
 
 Example:
 
@@ -390,6 +400,12 @@ Example:
   [apps.jenkins.setString]
     longInt = "1234567890"
     "image.tag" = "1.0.0"
+  [apps.jenkins.hooks]
+    successCondition= "Complete"
+    successTimeout= "90s"
+    deleteOnSuccess= true
+    postInstall="job.yaml"
+    preInstall="https://github.com/jetstack/cert-manager/releases/download/v0.14.0/cert-manager.crds.yaml"  
 ```
 
 ```yaml
@@ -417,4 +433,10 @@ apps:
       longInt: "1234567890"
       image:
         tag: "1.0.0"
+    hooks:
+      successCondition: "Complete"
+      successTimeout: "90s"
+      deleteOnSuccess: true
+      postInstall: "job.yaml"
+      preInstall: "https://github.com/jetstack/cert-manager/releases/download/v0.14.0/cert-manager.crds.yaml"    
 ```

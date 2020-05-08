@@ -30,9 +30,11 @@ type orderedDecision struct {
 
 // orderedCommand type representing a Command and it's priority weight and the targeted release from the desired state
 type orderedCommand struct {
-	Command       command
-	Priority      int
-	targetRelease *release
+	Command        command
+	Priority       int
+	targetRelease  *release
+	beforeCommands []command
+	afterCommands  []command
 }
 
 // plan type representing the plan of actions to make the desired state come true.
@@ -53,13 +55,15 @@ func createPlan() *plan {
 }
 
 // addCommand adds a command type to the plan
-func (p *plan) addCommand(cmd command, priority int, r *release) {
+func (p *plan) addCommand(cmd command, priority int, r *release, beforeCommands []command, afterCommands []command) {
 	p.Lock()
 	defer p.Unlock()
 	oc := orderedCommand{
-		Command:       cmd,
-		Priority:      priority,
-		targetRelease: r,
+		Command:        cmd,
+		Priority:       priority,
+		targetRelease:  r,
+		beforeCommands: beforeCommands,
+		afterCommands:  afterCommands,
 	}
 
 	p.Commands = append(p.Commands, oc)
@@ -77,7 +81,7 @@ func (p *plan) addDecision(decision string, priority int, decisionType decisionT
 	p.Decisions = append(p.Decisions, od)
 }
 
-// execPlan executes the commands (actions) which were added to the plan.
+// exec executes the commands (actions) which were added to the plan.
 func (p *plan) exec() {
 	p.sort()
 	if len(p.Commands) > 0 {
@@ -109,24 +113,29 @@ func (p *plan) exec() {
 					wg.Done()
 					<-sem
 				}()
-				log.Notice(cmd.Command.Description)
-				result := cmd.Command.exec()
+				for _, c := range cmd.beforeCommands {
+					execOne(c, cmd.targetRelease.Name)
+				}
+				execOne(cmd.Command, cmd.targetRelease.Name)
 				if cmd.targetRelease != nil && !flags.dryRun && !flags.destroy {
 					cmd.targetRelease.label()
 				}
-				if result.code != 0 {
-					errorMsg := result.errors
-					if !flags.verbose {
-						errorMsg = strings.Split(result.errors, "---")[0]
-					}
-					c <- fmt.Sprintf("Command for release [%s] returned [ %d ] exit code and error message [ %s ]", cmd.targetRelease.Name, result.code, strings.TrimSpace(errorMsg))
-				} else {
-					log.Notice(result.output)
-					log.Notice("Finished: " + cmd.Command.Description)
-					if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
-						notifySlack(cmd.Command.Description+" ... SUCCESS!", settings.SlackWebhook, false, true)
-					}
+				for _, c := range cmd.afterCommands {
+					execOne(c, cmd.targetRelease.Name)
 				}
+				// if result.code != 0 {
+				// 	errorMsg := result.errors
+				// 	if !flags.verbose {
+				// 		errorMsg = strings.Split(result.errors, "---")[0]
+				// 	}
+				// 	c <- fmt.Sprintf("Command for release [%s] returned [ %d ] exit code and error message [ %s ]", cmd.targetRelease.Name, result.code, strings.TrimSpace(errorMsg))
+				// } else {
+				// 	log.Notice(result.output)
+				// 	log.Notice("Finished: " + cmd.Command.Description)
+				// 	if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
+				// 		notifySlack(cmd.Command.Description+" ... SUCCESS!", settings.SlackWebhook, false, true)
+				// 	}
+				// }
 			}(cmd)
 		}
 		wg.Wait()
@@ -147,11 +156,37 @@ func (p *plan) exec() {
 	}
 }
 
+// execOne executes a single ordered command
+func execOne(cmd command, targetRelease string) {
+	log.Notice(cmd.Description)
+	result := cmd.exec()
+
+	if result.code != 0 {
+		errorMsg := result.errors
+		if !flags.verbose {
+			errorMsg = strings.Split(result.errors, "---")[0]
+		}
+		log.Fatal(fmt.Sprintf("Command for release [%s] returned [ %d ] exit code and error message [ %s ]", targetRelease, result.code, strings.TrimSpace(errorMsg)))
+	} else {
+		log.Notice(result.output)
+		log.Notice("Finished: " + cmd.Description)
+		if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
+			notifySlack(cmd.Description+" ... SUCCESS!", settings.SlackWebhook, false, true)
+		}
+	}
+}
+
 // printPlanCmds prints the actual commands that will be executed as part of a plan.
 func (p *plan) printCmds() {
 	log.Info("Printing the commands of the current plan ...")
 	for _, cmd := range p.Commands {
+		for _, c := range cmd.beforeCommands {
+			fmt.Println(c.String())
+		}
 		fmt.Println(cmd.Command.String())
+		for _, c := range cmd.afterCommands {
+			fmt.Println(c.String())
+		}
 	}
 }
 
