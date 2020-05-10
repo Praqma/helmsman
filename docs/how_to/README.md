@@ -51,3 +51,4 @@ It is recommended that you also check the [DSF spec](../desired_state_specificat
     - [Limit Helmsman deployment to specific apps](misc/limit-deployment-to-specific-apps.md)
     - [Limit Helmsman deployment to specific group of apps](misc/limit-deployment-to-specific-group-of-apps.md)
     - [Use hiera-eyaml as secrets encryption backend](settings/use-hiera-eyaml-as-secrets-encryption.md)
+    - [Use DRY-ed code](misc/use-dry-code.md)

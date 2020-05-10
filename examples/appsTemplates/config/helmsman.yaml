@@ -38,6 +38,7 @@ namespaces:
 
 helmRepos:
   stable: "https://kubernetes-charts.storage.googleapis.com"
+  puppet: "https://puppetlabs.github.io/puppetserver-helm-chart"
 
 appsTemplates:
   common: &common
@@ -56,8 +57,8 @@ appsTemplates:
   puppetserver: &puppetserver
     enabled: true
     priority: -1
-    chart: "../../../../puppetserver-helm-chart-1.8.2.tgz"   # https://github.com/puppetlabs/pupperware/tree/master/k8s
-    version: "1.8.2"   # chart version
+    chart: "puppet/puppetserver-helm-chart"
+    version: "3.0.2"   # chart version
     valuesFiles: [
         "../apps/puppetserver/common-values.yaml",
     ]
