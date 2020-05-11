@@ -6,6 +6,8 @@ version: v3.3.0-beta1
 
 You can include multiple yaml value files to separate configuration for different environments.
 
+> file paths can be a URL (e.g. to a public git repo) , cloud bucket, local absolute/relative file path.
+
 ```toml
 ...
 [apps]

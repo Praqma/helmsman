@@ -352,11 +352,11 @@ Options:
 **Optional**
 - **group**       : group name this apps belongs to. It has no effect until Helmsman's flag `-group` is passed. Check this [doc](how_to/misc/limit-deployment-to-specific-group-of-apps.md) for more details.
 - **description** : a release metadata for human readers.
-- **valuesFile**  : a valid path (URL, cloud bucket, local file path) to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFiles together. Leaving it empty uses the default chart values.
-- **valuesFiles** : array of valid paths (URL, cloud bucket, local file path) to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFile together. Leaving it empty uses the default chart values.
+- **valuesFile**  : a valid path (URL, cloud bucket, local absolute/relative file path) to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFiles together. Leaving it empty uses the default chart values.
+- **valuesFiles** : array of valid paths (URL, cloud bucket, local absolute/relative file path) to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFile together. Leaving it empty uses the default chart values.
 > The values file(s) path is resolved when the DSF yaml/toml file is loaded, relative to the path that the dsf was loaded from.
-- **secretsFile**  : a valid path (URL, cloud bucket, local file path) to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFiles together. Leaving it empty uses the default chart secrets.
-- **secretsFiles** : array of valid paths (URL, cloud bucket, local file path) to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFile together. Leaving it empty uses the default chart secrets.
+- **secretsFile**  : a valid path (URL, cloud bucket, local absolute/relative file path) to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFiles together. Leaving it empty uses the default chart secrets.
+- **secretsFiles** : array of valid paths (URL, cloud bucket, local absolute/relative file path) to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFile together. Leaving it empty uses the default chart secrets.
 > The secrets file(s) path is resolved when the DSF yaml/toml file is loaded, relative to the path that the dsf was loaded from.
 > To use the secrets files you must have the helm-secrets plugin
 - **test**        : defines whether to run the chart tests whenever the release is installed. Default is false.
