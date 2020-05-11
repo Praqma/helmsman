@@ -29,8 +29,10 @@ func addNamespaces(s *state) {
 			createNamespace(name)
 			labelNamespace(name, cfg.Labels)
 			annotateNamespace(name, cfg.Annotations)
-			setLimits(name, cfg.Limits)
-			setQuotas(name, cfg.Quotas)
+			if !flags.dryRun {
+				setLimits(name, cfg.Limits)
+				setQuotas(name, cfg.Quotas)
+			}
 		}(nsName, ns, &wg)
 	}
 	wg.Wait()
@@ -53,6 +55,7 @@ func createNamespace(ns string) {
 		log.Verbose("Namespace [ " + ns + " ] exists")
 		return
 	}
+
 	cmd := kubectl([]string{"create", "namespace", ns}, "Creating namespace [ "+ns+" ]")
 	result := cmd.exec()
 	if result.code == 0 {
@@ -73,7 +76,7 @@ func labelNamespace(ns string, labels map[string]string) {
 		labelSlice = append(labelSlice, k+"="+v)
 	}
 
-	args := []string{"label", "--overwrite", "namespace/" + ns}
+	args := []string{"label", "--overwrite", "namespace/" + ns, flags.getKubeDryRunFlag("label")}
 	args = append(args, labelSlice...)
 
 	cmd := kubectl(args, "Labeling namespace [ "+ns+" ]")
@@ -94,7 +97,7 @@ func annotateNamespace(ns string, annotations map[string]string) {
 	for k, v := range annotations {
 		annotationSlice = append(annotationSlice, k+"="+v)
 	}
-	args := []string{"annotate", "--overwrite", "namespace/" + ns}
+	args := []string{"annotate", "--overwrite", "namespace/" + ns, flags.getKubeDryRunFlag("annotate")}
 	args = append(args, annotationSlice...)
 	cmd := kubectl(args, "Annotating namespace [ "+ns+" ]")
 
@@ -131,7 +134,7 @@ spec:
 		log.Fatal(err.Error())
 	}
 
-	cmd := kubectl([]string{"apply", "-f", targetFile, "-n", ns}, "Creating LimitRange in namespace [ "+ns+" ]")
+	cmd := kubectl([]string{"apply", "-f", targetFile, "-n", ns, flags.getKubeDryRunFlag("apply")}, "Creating LimitRange in namespace [ "+ns+" ]")
 	result := cmd.exec()
 
 	if result.code != 0 {
@@ -175,7 +178,7 @@ spec:
 		log.Fatal(err.Error())
 	}
 
-	cmd := kubectl([]string{"apply", "-f", "temp-ResourceQuota.yaml", "-n", ns}, "Creating ResourceQuota in namespace [ "+ns+" ]")
+	cmd := kubectl([]string{"apply", "-f", "temp-ResourceQuota.yaml", "-n", ns, flags.getKubeDryRunFlag("apply")}, "Creating ResourceQuota in namespace [ "+ns+" ]")
 	result := cmd.exec()
 
 	deleteFile("temp-ResourceQuota.yaml")
@@ -339,9 +342,14 @@ func getKubectlClientVersion() string {
 }
 
 // getKubeDryRunFlag returns kubectl dry-run flag if helmsman --dry-run flag is enabled
-func (c *cli) getKubeDryRunFlag() string {
+func (c *cli) getKubeDryRunFlag(action string) string {
 	if c.dryRun {
-		return "--server-dry-run"
+		switch action {
+		case "apply":
+			return "--server-dry-run"
+		default:
+			return "--dry-run"
+		}
 	}
 	return ""
 }
