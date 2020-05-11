@@ -36,6 +36,7 @@ type release struct {
 	NoHooks      bool                   `yaml:"noHooks"`
 	Timeout      int                    `yaml:"timeout"`
 	Hooks        map[string]interface{} `yaml:"hooks"`
+	MaxHistory   int                    `yaml:"maxHistory"`
 }
 
 type chartVersion struct {
@@ -307,7 +308,7 @@ func (r *release) uninstall(p *plan, optionalNamespace ...string) {
 
 	before, after := r.checkHooks("delete", p, ns)
 
-	cmd := helmCmd(concat(r.getHelmArgsFor("uninstall", ns), flags.getDryRunFlags()), "Delete release [ "+r.Name+" ] in namespace [ "+ns+" ]")
+	cmd := helmCmd(r.getHelmArgsFor("uninstall", ns), "Delete release [ "+r.Name+" ] in namespace [ "+ns+" ]")
 	p.addCommand(cmd, priority, r, before, after)
 
 }
@@ -340,14 +341,10 @@ func (r *release) diff() string {
 
 // upgradeRelease upgrades an existing release with the specified values.yaml
 func (r *release) upgrade(p *plan) {
-	var force string
-	if flags.forceUpgrades {
-		force = "--force"
-	}
 
 	before, after := r.checkHooks("upgrade", p)
 
-	cmd := helmCmd(concat(r.getHelmArgsFor("upgrade"), []string{force}, r.getWait(), r.getHelmFlags()), "Upgrade release [ "+r.Name+" ] to version [ "+r.Version+" ] in namespace [ "+r.Namespace+" ]")
+	cmd := helmCmd(r.getHelmArgsFor("upgrade"), "Upgrade release [ "+r.Name+" ] to version [ "+r.Version+" ] in namespace [ "+r.Namespace+" ]")
 
 	p.addCommand(cmd, r.Priority, r, before, after)
 
@@ -526,12 +523,24 @@ func (r *release) getDesiredNamespace() string {
 	return r.Namespace
 }
 
+// getMaxHistory returns the max-history flag for upgrade commands
+func (r *release) getMaxHistory() []string {
+	if r.MaxHistory != 0 {
+		return []string{"--history-max", strconv.Itoa(r.MaxHistory)}
+	}
+	return []string{}
+}
+
 // getHelmFlags returns helm flags
 func (r *release) getHelmFlags() []string {
 	var flgs []string
+	var force string
+	if flags.forceUpgrades {
+		force = "--force"
+	}
 
 	flgs = append(flgs, r.HelmFlags...)
-	return concat(r.getNoHooks(), r.getTimeout(), flags.getDryRunFlags(), flgs)
+	return concat(r.getNoHooks(), r.getWait(), r.getTimeout(), r.getMaxHistory(), flags.getDryRunFlags(), []string{force}, flgs)
 }
 
 // getHelmArgsFor returns helm arguments for a specific helm operation
@@ -542,9 +551,11 @@ func (r *release) getHelmArgsFor(action string, optionalNamespaceOverride ...str
 	}
 	switch action {
 	case "install", "upgrade":
-		return concat([]string{"upgrade", r.Name, r.Chart, "--install", "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getWait(), r.getHelmFlags())
+		return concat([]string{"upgrade", r.Name, r.Chart, "--install", "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getHelmFlags())
 	case "diff":
 		return concat([]string{"upgrade", r.Name, r.Chart, "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues())
+	case "uninstall":
+		return concat([]string{action, "--namespace", ns, r.Name}, flags.getDryRunFlags())
 	default:
 		return []string{action, "--namespace", ns, r.Name}
 	}
@@ -576,6 +587,15 @@ func (r *release) inheritHooks(s *state) {
 					r.Hooks[key] = s.Settings.GlobalHooks[key]
 				}
 			}
+		}
+	}
+}
+
+// inheritMaxHistory passes global max history from the state to the release if it is unset
+func (r *release) inheritMaxHistory(s *state) {
+	if s.Settings.GlobalMaxHistory != 0 {
+		if r.MaxHistory == 0 {
+			r.MaxHistory = s.Settings.GlobalMaxHistory
 		}
 	}
 }

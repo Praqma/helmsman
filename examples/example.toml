@@ -36,6 +36,7 @@ context= "test-infra"   # defaults to "default" if not provided
 #     successCondition= "Initialized"
 #     deleteOnSuccess= true
 #     postInstall= "job.yaml"
+  globalMaxHistory= 5
 
 
 
@@ -116,8 +117,8 @@ context= "test-infra"   # defaults to "default" if not provided
   # [apps.argo.setString] # values to override values from values.yaml with values from env vars or directly entered-- useful for passing secrets to charts
   #   AdminPassword="$SOME_PASSWORD" # $SOME_PASSWORD must exist in the environment
   #   MyLongIntVar="1234567890"
-  # [apps.argo.set]
-  #   installCRD="true"
+  [apps.argo.setString]
+    "images.tag"="v2.7.5"
 
 
   [apps.artifactory]
@@ -131,6 +132,10 @@ context= "test-infra"   # defaults to "default" if not provided
     priority= -2
     noHooks= false
     timeout= 300
-    helmFlags= [] # additional helm flags for this release
+    maxHistory = 4
+    # additional helm flags for this release
+    helmFlags= [
+      "--devel",
+    ] 
 
 # See https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md#apps for more apps options
