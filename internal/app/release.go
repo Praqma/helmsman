@@ -614,13 +614,13 @@ func (r *release) checkHooks(hookType string, p *plan, optionalNamespace ...stri
 	case "install":
 		{
 			if _, ok := r.Hooks["preInstall"]; ok {
-				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["preInstall"].(string), flags.getKubeDryRunFlag()}, "Apply pre-install manifest "+r.Hooks["preInstall"].(string)))
+				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["preInstall"].(string), flags.getKubeDryRunFlag("apply")}, "Apply pre-install manifest "+r.Hooks["preInstall"].(string)))
 				if wait, cmds := r.shouldWaitForHook(r.Hooks["preInstall"].(string), "pre-install", ns); wait {
 					beforeCommands = append(beforeCommands, cmds...)
 				}
 			}
 			if _, ok := r.Hooks["postInstall"]; ok {
-				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["postInstall"].(string), flags.getKubeDryRunFlag()}, "Apply post-install manifest "+r.Hooks["postInstall"].(string)))
+				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["postInstall"].(string), flags.getKubeDryRunFlag("apply")}, "Apply post-install manifest "+r.Hooks["postInstall"].(string)))
 				if wait, cmds := r.shouldWaitForHook(r.Hooks["postInstall"].(string), "post-install", ns); wait {
 					afterCommands = append(afterCommands, cmds...)
 				}
@@ -629,13 +629,13 @@ func (r *release) checkHooks(hookType string, p *plan, optionalNamespace ...stri
 	case "upgrade":
 		{
 			if _, ok := r.Hooks["preUpgrade"]; ok {
-				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["preUpgrade"].(string), flags.getKubeDryRunFlag()}, "Apply pre-upgrade manifest "+r.Hooks["preUpgrade"].(string)))
+				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["preUpgrade"].(string), flags.getKubeDryRunFlag("apply")}, "Apply pre-upgrade manifest "+r.Hooks["preUpgrade"].(string)))
 				if wait, cmds := r.shouldWaitForHook(r.Hooks["preUpgrade"].(string), "pre-upgrade", ns); wait {
 					beforeCommands = append(beforeCommands, cmds...)
 				}
 			}
 			if _, ok := r.Hooks["postUpgrade"]; ok {
-				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["postUpgrade"].(string), flags.getKubeDryRunFlag()}, "Apply post-upgrade manifest "+r.Hooks["postUpgrade"].(string)))
+				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["postUpgrade"].(string), flags.getKubeDryRunFlag("apply")}, "Apply post-upgrade manifest "+r.Hooks["postUpgrade"].(string)))
 				if wait, cmds := r.shouldWaitForHook(r.Hooks["postUpgrade"].(string), "post-upgrade", ns); wait {
 					afterCommands = append(afterCommands, cmds...)
 				}
@@ -644,13 +644,13 @@ func (r *release) checkHooks(hookType string, p *plan, optionalNamespace ...stri
 	case "delete":
 		{
 			if _, ok := r.Hooks["preDelete"]; ok {
-				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["preDelete"].(string), flags.getKubeDryRunFlag()}, "Apply pre-delete manifest "+r.Hooks["preDelete"].(string)))
+				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["preDelete"].(string), flags.getKubeDryRunFlag("apply")}, "Apply pre-delete manifest "+r.Hooks["preDelete"].(string)))
 				if wait, cmds := r.shouldWaitForHook(r.Hooks["preDelete"].(string), "pre-delete", ns); wait {
 					beforeCommands = append(beforeCommands, cmds...)
 				}
 			}
 			if _, ok := r.Hooks["postDelete"]; ok {
-				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["postDelete"].(string), flags.getKubeDryRunFlag()}, "Apply post-delete manifest "+r.Hooks["postDelete"].(string)))
+				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["postDelete"].(string), flags.getKubeDryRunFlag("apply")}, "Apply post-delete manifest "+r.Hooks["postDelete"].(string)))
 				if wait, cmds := r.shouldWaitForHook(r.Hooks["postDelete"].(string), "post-delete", ns); wait {
 					afterCommands = append(afterCommands, cmds...)
 				}
