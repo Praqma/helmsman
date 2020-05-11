@@ -134,7 +134,8 @@ kubeContext = "minikube"
 # [settings.globalHooks]
 #   successCondition= "Complete"
 #   deleteOnSuccess= true
-#   postInstall= "job.yaml"    
+#   postInstall= "job.yaml"  
+globalMaxHistory= 10  
 ```
 
 ```yaml
@@ -153,7 +154,8 @@ settings:
   # globalHooks:
   #   successCondition: "Complete"
   #   deleteOnSuccess: true
-  #   preInstall: "job.yaml"    
+  #   preInstall: "job.yaml"   
+  globalMaxHistory: 10 
 ```
 
 ## Namespaces
