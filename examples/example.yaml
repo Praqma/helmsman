@@ -1,4 +1,10 @@
 # version: v3.0.0
+
+# context defines the context of this Desired State File.
+# It is used to allow Helmsman identify which releases are managed by which DSF.
+# Therefore, it is important that each DSF uses a unique context.
+context: test-infra   # defaults to "default" if not provided
+
 # metadata -- add as many key/value pairs as you want
 metadata:
   org: "example.com/$ORG_PATH/"
@@ -13,18 +19,13 @@ metadata:
   #caCrt: "s3://mybucket/ca.crt" # S3 bucket path
   #caKey: "../ca.key" # valid local file relative path
 
-# context defines the context of this Desired State File.
-# It is used to allow Helmsman identify which releases are managed by which DSF.
-# Therefore, it is important that each DSF uses a unique context.
-context: test-infra   # defaults to "default" if not provided
-
 settings:
   kubeContext: "minikube" # will try connect to this context first, if it does not exist, it will be created using the details below
   #username: "admin"
   #password: "$K8S_PASSWORD" # the name of an environment variable containing the k8s password
   #clusterURI: "$SET_URI" # the name of an environment variable containing the cluster API
   #clusterURI: "https://192.168.99.100:8443" # equivalent to the above
-  storageBackend: "secret"
+  #storageBackend: "secret"
   #slackWebhook:  "$slack" # or your slack webhook url
   #reverseDelete: false # reverse the priorities on delete
   #### to use bearer token:
@@ -34,6 +35,7 @@ settings:
   #   successCondition: "Initialized"
   #   deleteOnSuccess: true
   #   postInstall: "job.yaml"
+  globalMaxHistory: 5
 
 # define your environments and their k8s namespaces
 namespaces:
@@ -51,9 +53,19 @@ namespaces:
         max:
           memory: "300Mi"
   staging:
-   # protected: false
-    # labels:
-    #   env: "staging"
+    protected: false
+    labels:
+      env: "staging"
+    quotas:
+      limits.cpu: "10"
+      limits.memory: "20Gi"
+      pods: 25
+      requests.cpu: "10"
+      requests.memory: "30Gi"
+      customQuotas:
+        - name: "requests.nvidia.com/gpu"  
+          value: "2"    
+
 
 
 # define any private/public helm charts repos you would like to get charts from
@@ -72,23 +84,22 @@ helmRepos:
 # each contains the following:
 
 apps:
-
     argo:
       namespace: "staging" # maps to the namespace as defined in namespaces above
       enabled: true # change to false if you want to delete this app release empty: false:
       chart: "argo/argo" # changing the chart name means delete and recreate this chart
-      version: "0.6.5" # chart version
+      version: "0.8.5" # chart version
       ### Optional values below
       valuesFile: "" # leaving it empty uses the default chart values
       test: false
       protected: true
       priority: -3
       wait: true
-      # hooks:
-      #   successCondition: "Complete"
-      #   successTimeout: "90s"
-      #   deleteOnSuccess: true
-      #   preInstall: "job.yaml"
+      hooks:
+        successCondition: "Complete"
+        successTimeout: "90s"
+        deleteOnSuccess: true
+        preInstall: "job.yaml"
       #   preInstall: "https://github.com/jetstack/cert-manager/releases/download/v0.14.0/cert-manager.crds.yaml"
       #   postInstall: "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml"
       #   postInstall: "job.yaml"
@@ -108,6 +119,9 @@ apps:
       priority: -2
       noHooks: false
       timeout: 300
-      helmFlags: [] # additional helm flags for this release
+      maxHistory: 4
+      # additional helm flags for this release
+      helmFlags: 
+        - "--devel"
 
 # See https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md#apps for more apps options

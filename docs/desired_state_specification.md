@@ -113,6 +113,7 @@ The following options can be skipped if your kubectl context is already created 
 - **eyamlPrivateKeyPath** : if set with path to the eyaml private key file, it will use it instead of looking for default one in ./keys directory relative to where Helmsman were run. It needs to be defined in conjunction with eyamlPublicKeyPath.
 - **eyamlPublicKeyPath** : if set with path to the eyaml public key file, it will use it instead of looking for default one in ./keys directory relative to where Helmsman were run. It needs to be defined in conjunction with eyamlPrivateKeyPath.
 - **globalHooks** : defines global lifecycle hooks to apply yaml manifest before and/or after different helmsman operations. Check [here](how_to/apps/lifecycle_hooks.md) for more details.
+- **globalMaxHistory** : defines the **global** maximum number of helm revisions state (secrets/configmap) to keep. Releases can override this global value by setting `maxHistory`. If both are not set or are set to `0`, it is defaulted to 10.
 
 
 Example:
@@ -370,6 +371,7 @@ Options:
 - **setFile**     : is used to override values from values.yaml or chart's defaults from provided file. This uses the `--set-file` flag in helm. This option is useful for embedding file contents in the values. The TOML stanza for this is `[apps.<app_name>.setFile]`
 - **helmFlags**   : array of `helm` upgrade flags, is used to pass flags to helm install/upgrade commands. **These flags are not passed to helm diff**. For setting values, use **set**, **setString** or **setFile** instead.
 - **hooks** : defines global lifecycle hooks to apply yaml manifest before and/or after different helmsman operations. Check [here](how_to/apps/lifecycle_hooks.md) for more details. Unset hooks for a release are inherited from `globalHooks` in the [settings](#Settings) stanza.
+- **maxHistory** : defines the maximum number of helm revisions state (secrets/configmap) to keep. If unset, it will inherit the value of `settings.globalMaxHistory`, if that's also unset, it defaults to 10.
 
 Example:
 
@@ -388,6 +390,7 @@ Example:
     version = "0.9.0"
     valuesFile = ""
     test = true
+    maxHistory = 4
     protected = false
     wait = true
     priority = -3
@@ -420,6 +423,7 @@ apps:
     version: "0.9.0"
     valuesFile: ""
     test: true
+    maxHistory: 4
     protected: false
     wait: true
     priority: -3
