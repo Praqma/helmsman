@@ -25,6 +25,7 @@ type config struct {
 	EyamlPrivateKeyPath string                 `yaml:"eyamlPrivateKeyPath"`
 	EyamlPublicKeyPath  string                 `yaml:"eyamlPublicKeyPath"`
 	GlobalHooks         map[string]interface{} `yaml:"globalHooks"`
+	GlobalMaxHistory    int                    `yaml:"globalMaxHistory"`
 }
 
 // state type represents the desired state of applications on a k8s cluster.

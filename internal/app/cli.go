@@ -289,6 +289,7 @@ func (c *cli) readState(s *state) {
 	// inherit globalHooks if local ones are not set
 	for _, r := range s.Apps {
 		r.inheritHooks(s)
+		r.inheritMaxHistory(s)
 	}
 
 	if c.debug {
