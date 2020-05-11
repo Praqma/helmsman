@@ -324,7 +324,7 @@ func (r *release) diff() string {
 		diffContextFlag = []string{"--context", strconv.Itoa(flags.diffContext)}
 	}
 
-	cmd := helmCmd(concat([]string{"diff", colorFlag, suppressDiffSecretsFlag}, diffContextFlag, r.getHelmArgsFor("upgrade")), "Diffing release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
+	cmd := helmCmd(concat([]string{"diff", colorFlag, suppressDiffSecretsFlag}, diffContextFlag, r.getHelmArgsFor("diff")), "Diffing release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
 	result := cmd.exec()
 	if result.code != 0 {
@@ -541,10 +541,10 @@ func (r *release) getHelmArgsFor(action string, optionalNamespaceOverride ...str
 		ns = optionalNamespaceOverride[0]
 	}
 	switch action {
-	case "install":
-		return concat([]string{action, r.Name, r.Chart, "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getWait(), r.getHelmFlags())
-	case "upgrade":
-		return concat([]string{action, "--namespace", r.Namespace, r.Name, r.Chart}, r.getValuesFiles(), []string{"--version", r.Version}, r.getSetValues(), r.getSetStringValues(), r.getSetFileValues())
+	case "install", "upgrade":
+		return concat([]string{"upgrade", r.Name, r.Chart, "--install", "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getWait(), r.getHelmFlags())
+	case "diff":
+		return concat([]string{"upgrade", r.Name, r.Chart, "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues())
 	default:
 		return []string{action, "--namespace", ns, r.Name}
 	}
