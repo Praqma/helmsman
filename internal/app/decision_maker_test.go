@@ -86,7 +86,7 @@ func Test_inspectUpgradeScenario(t *testing.T) {
 		want decisionType
 	}{
 		{
-			name: "makePlan() - local chart with different chart name should change",
+			name: "inspectUpgradeScenario() - local chart with different chart name should change",
 			args: args{
 				r: &release{
 					Name:      "release1",

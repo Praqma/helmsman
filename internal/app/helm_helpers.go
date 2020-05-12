@@ -26,7 +26,7 @@ func helmCmd(args []string, desc string) command {
 
 // extractChartName extracts the Helm chart name from full chart name in the desired state.
 func extractChartName(releaseChart string) string {
-	cmd := helmCmd([]string{"show", "chart", releaseChart}, "Caching chart information for [ "+releaseChart+" ].")
+	cmd := helmCmd([]string{"show", "chart", releaseChart}, "Extracting chart information for [ "+releaseChart+" ].")
 
 	result := cmd.exec()
 	if result.code != 0 {
@@ -54,7 +54,6 @@ func getHelmVersion() string {
 		log.Fatal("While checking helm version: " + result.errors)
 	}
 
-	log.Verbose("Helm version " + result.output)
 	return result.output
 }
 
