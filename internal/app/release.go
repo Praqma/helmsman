@@ -273,13 +273,13 @@ func getChartVersion(chart, version string) (string, string) {
 		return "", "Chart [ " + chart + " ] with version [ " + version + " ] is specified but not found in the helm repositories"
 	}
 
-	cv := make([]chartVersion, 0)
-	if err := json.Unmarshal([]byte(result.output), &cv); err != nil {
+	chartVersions := make([]chartVersion, 0)
+	if err := json.Unmarshal([]byte(result.output), &chartVersions); err != nil {
 		log.Fatal(fmt.Sprint(err))
 	}
 
 	filteredChartVersions := make([]chartVersion, 0)
-	for _, c := range cv {
+	for _, c := range chartVersions {
 		if c.Name == chart {
 			filteredChartVersions = append(filteredChartVersions, c)
 		}
