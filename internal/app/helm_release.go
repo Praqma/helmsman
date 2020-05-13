@@ -10,10 +10,13 @@ import (
 )
 
 const (
-	helmStatusDeployed = "deployed"
-	helmStatusDeleted  = "deleted"
-	helmStatusFailed   = "failed"
-	helmStatusPending  = "pending-upgrade"
+	helmStatusDeployed        = "deployed"
+	helmStatusUninstalled     = "uninstalled"
+	helmStatusFailed          = "failed"
+	helmStatusPendingUpgrade  = "pending-upgrade"
+	helmStatusPendingInstall  = "pending-install"
+	helmStatusPendingRollback = "pending-rollback"
+	helmStatusUninstalling    = "uninstalling"
 )
 
 // helmRelease represents the current state of a release
