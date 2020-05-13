@@ -117,7 +117,7 @@ func (cs *currentState) decide(r *release, s *state, p *plan) {
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 				"you remove its protection.", r.Priority, noop)
 		}
-	} else if ok := cs.releaseExists(r, helmStatusDeleted); ok {
+	} else if ok := cs.releaseExists(r, helmStatusUninstalled); ok {
 		if !r.isProtected(cs, s) {
 			r.rollback(cs, p) // rollback
 		} else {
@@ -132,9 +132,9 @@ func (cs *currentState) decide(r *release, s *state, p *plan) {
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 				"you remove its protection.", r.Priority, noop)
 		}
-	} else if ok := cs.releaseExists(r, helmStatusPending); ok {
-		log.Error("Release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ] is in pending-upgrade state. " +
-			"This means application is being upgraded outside of this Helmsman invocation's scope." +
+	} else if cs.releaseExists(r, helmStatusPendingInstall) || cs.releaseExists(r, helmStatusPendingUpgrade) || cs.releaseExists(r, helmStatusPendingRollback) || cs.releaseExists(r, helmStatusUninstalling) {
+		log.Error("Release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ] is in a pending (install/upgrade/rollback or uninstalling) state. " +
+			"This means application is being operated on outside of this Helmsman invocation's scope." +
 			"Exiting, as this may cause issues when continuing...")
 		os.Exit(1)
 	} else {
