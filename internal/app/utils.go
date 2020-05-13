@@ -340,20 +340,22 @@ func validateEnvVars(s string, filename string) (bool, string) {
 	if !flags.skipValidation {
 		log.Info("validating environment variables in " + filename)
 		var key string
-		r, _ := regexp.Compile("\\${([a-zA-Z_][a-zA-Z0-9_-]*)}|\\$([a-zA-Z_][a-zA-Z0-9_-]*)")
+		comment, _ := regexp.Compile("#(.*)$")
+		envVar, _ := regexp.Compile("\\${([a-zA-Z_][a-zA-Z0-9_-]*)}|\\$([a-zA-Z_][a-zA-Z0-9_-]*)")
 		scanner := bufio.NewScanner(strings.NewReader(s))
 		for scanner.Scan() {
-			text := strings.TrimSpace(scanner.Text())
-			if !strings.HasPrefix(text, "#") {
-				for _, v := range r.FindAllStringSubmatch(strings.ReplaceAll(text, "$$", "!?"), -1) {
-					if v[1] != "" {
-						key = v[1]
-					} else {
-						key = v[2]
-					}
-					if _, ok := os.LookupEnv(key); !ok {
-						return false, v[0] + " is used as an env variable but is currently unset. Either set it or escape it like so: $" + v[0]
-					}
+			// remove spaces from the single line, then replace $$ with !? to prevent it from matching the regex,
+			// then remove new line and inline comments from the text
+			text := comment.ReplaceAllString(strings.ReplaceAll(strings.TrimSpace(scanner.Text()), "$$", "!?"), "")
+			for _, v := range envVar.FindAllStringSubmatch(text, -1) {
+				// FindAllStringSubmatch may match the first (${MY_VAR}) or the second ($MY_VAR) group from the regex
+				if v[1] != "" {
+					key = v[1]
+				} else {
+					key = v[2]
+				}
+				if _, ok := os.LookupEnv(key); !ok {
+					return false, v[0] + " is used as an env variable but is currently unset. Either set it or escape it like so: $" + v[0]
 				}
 			}
 		}
