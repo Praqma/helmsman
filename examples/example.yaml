@@ -1,4 +1,4 @@
-# version: v3.0.0
+# version: v3.4.0
 
 # context defines the context of this Desired State File.
 # It is used to allow Helmsman identify which releases are managed by which DSF.
@@ -10,6 +10,7 @@ metadata:
   org: "example.com/$ORG_PATH/"
   maintainer: "k8s-admin (me@example.com)"
   description: "example Desired State File for demo purposes."
+  key: ${VALUE}
 
 # paths to the certificate for connecting to the cluster
 # You can skip this if you use Helmsman on a machine with kubectl already connected to your k8s cluster.
@@ -78,7 +79,7 @@ helmRepos:
   #incubator: "http://storage.googleapis.com/kubernetes-charts-incubator"
   #myS3repo: "s3://my-S3-private-repo/charts"
   #myGCSrepo: "gs://my-GCS-private-repo/charts"
-  #custom:  "https://user:pass@mycustomrepo.org"
+  #custom:  "https://$user:$pass@mycustomrepo.org"
 
 # define the desired state of your applications helm charts
 # each contains the following:
@@ -107,6 +108,8 @@ apps:
       #   postUpgrade: "job.yaml"
       #   preDelete: "job.yaml"
       #   postDelete: "job.yaml"
+      set:
+        "images.tag": $$TAG # $$ is escaped and $TAG is passed literally to images.tag (no env variable expansion)
 
     artifactory:
       namespace: "production" # maps to the namespace as defined in namespaces above
