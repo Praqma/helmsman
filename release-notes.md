@@ -1,12 +1,16 @@
-# v3.3.0
+# v3.4.0
 
 If you migrating from Helmsman v1.x, it is recommended you read the [migration guide](https://github.com/Praqma/helmsman/blob/master/docs/how_to/misc/migrate_to_3.md) before using this release.
 
 > Starting from Helmsman v3.0.0 GA release, support for Helmsman v1.x will be limited to bug fixes.
 
 # Fixes and improvements:
-- Add DRY-ed examples using appsTemplates; PR #425
+- Respect dry-run flag with kubectl commands; PR #462
+- Add gnupg to Docker image;  PR #449
+- Allow absolute paths for values/secrets/etc files; PR #459
+- Fix inconsistent helm args between install and upgrade; PR #458
 
 # New features:
-- Add `--p` flag to define parallel apps installation/upgrade for those with the same priority defined in DSF; PR #431
-- Add Namespace's resource quotas to DSF; PR #384
+- Add lifecycle hooks into Helmsman; PR #421
+- Support for using --history-max helm upgrade flag; PR #460
+- Support the Helm --set-file flag; PR #444
