@@ -281,9 +281,9 @@ func (cs *currentState) cleanUntrackedReleases(s *state, p *plan) {
 // - If the release is already in the same namespace specified in the input,
 // it will be upgraded using the values file specified in the release info.
 // - If the release is already in the same namespace specified in the input but is using a different chart,
-// it will be purge deleted and installed in the same namespace using the new chart.
+// it will be uninstalled and installed in the same namespace using the new chart.
 // - If the release is NOT in the same namespace specified in the input,
-// it will be purge deleted and installed in the new namespace.
+// it will be uninstalled and installed in the new namespace.
 func (cs *currentState) inspectUpgradeScenario(r *release, p *plan) {
 
 	rs, ok := cs.releases[r.key()]
@@ -300,13 +300,13 @@ func (cs *currentState) inspectUpgradeScenario(r *release, p *plan) {
 		}
 		r.Version = version
 
-		if extractChartName(r.Chart) == rs.getChartName() && r.Version != rs.getChartVersion() {
+		if extractChartName(r.Chart, r.Version) == rs.getChartName() && r.Version != rs.getChartVersion() {
 			// upgrade
 			r.diff()
 			r.upgrade(p)
-			p.addDecision("Release [ "+r.Name+" ] will be updated", r.Priority, change)
+			p.addDecision("Release [ "+r.Name+" ] will be upgraded", r.Priority, change)
 
-		} else if extractChartName(r.Chart) != rs.getChartName() {
+		} else if extractChartName(r.Chart, r.Version) != rs.getChartName() {
 			r.reInstall(p)
 			p.addDecision("Release [ "+r.Name+" ] is desired to use a new chart [ "+r.Chart+
 				" ]. Delete of the current release will be planned and new chart will be installed in namespace [ "+
