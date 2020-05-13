@@ -383,7 +383,7 @@ func downloadFile(file string, dir string, outfile string) string {
 
 	} else {
 
-		log.Info("" + file + " will be used from local file system.")
+		log.Verbose("" + file + " will be used from local file system.")
 		toCopy := file
 		if !filepath.IsAbs(file) {
 			toCopy, _ = filepath.Abs(filepath.Join(dir, file))
