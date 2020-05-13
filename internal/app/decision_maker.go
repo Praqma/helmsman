@@ -58,17 +58,10 @@ func buildState(s *state) *currentState {
 func (cs *currentState) makePlan(s *state) *plan {
 	p := createPlan()
 
-	var apps map[string]*release
-	if len(s.TargetMap) > 0 {
-		apps = s.TargetApps
-	} else {
-		apps = s.Apps
-	}
-
 	wg := sync.WaitGroup{}
 	sem := make(chan struct{}, resourcePool)
-	namesC := make(chan [2]string, len(apps))
-	versionsC := make(chan [4]string, len(apps))
+	namesC := make(chan [2]string, len(s.Apps))
+	versionsC := make(chan [4]string, len(s.Apps))
 
 	// We store the results of the helm commands
 	extractedChartNames := make(map[string]string)
@@ -83,7 +76,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 
 	// Initialize the rejigged data structures
 	charts := make(map[string]map[string]bool)
-	for _, r := range apps {
+	for _, r := range s.Apps {
 		if charts[r.Chart] == nil {
 			charts[r.Chart] = make(map[string]bool)
 		}
@@ -163,7 +156,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 	// Pass the extracted names and versions back to the apps to decide.
 	// We still have to run decide on all the apps, even the ones we previously filtered out when extracting names and versions.
 	// We can now proceed without trying lots of identical helm commands at the same time.
-	for _, r := range apps {
+	for _, r := range s.Apps {
 		// To be honest, the helmCmd function should probably pass back a channel at this point, making the resource pool "global", for all helm commands.
 		// It would make more sense than parallelising *some of the workload* like we do here with r.checkChartDepUpdate(), leaving some helm commands outside the concurrent part.
 		r.checkChartDepUpdate()
