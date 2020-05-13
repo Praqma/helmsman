@@ -10,6 +10,7 @@ context= "test-infra"   # defaults to "default" if not provided
   org = "example.com/${ORG_PATH}/"
   maintainer = "k8s-admin (me@example.com)"
   description = "example Desired State File for demo purposes."
+  key= "${VALUE}"
 
 
 # paths to the certificate for connecting to the cluster
@@ -85,7 +86,7 @@ context= "test-infra"   # defaults to "default" if not provided
   # incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
   # myS3repo = "s3://my-S3-private-repo/charts"
   # myGCSrepo = "gs://my-GCS-private-repo/charts"
-  # custom = "https://user:pass@mycustomrepo.org"
+  # custom = "https://$user:$pass@mycustomrepo.org"
 
 
 # define the desired state of your applications helm charts
@@ -117,8 +118,8 @@ context= "test-infra"   # defaults to "default" if not provided
   # [apps.argo.setString] # values to override values from values.yaml with values from env vars or directly entered-- useful for passing secrets to charts
   #   AdminPassword="$SOME_PASSWORD" # $SOME_PASSWORD must exist in the environment
   #   MyLongIntVar="1234567890"
-  [apps.argo.setString]
-    "images.tag"="v2.7.5"
+  [apps.argo.set]
+    "images.tag"="$$TAG" # $$ is escaped and $TAG is passed literally to images.tag (no env variable expansion)
 
 
   [apps.artifactory]

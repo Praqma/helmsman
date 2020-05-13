@@ -28,6 +28,8 @@ It is recommended that you also check the [DSF spec](../desired_state_specificat
 - Manipulating Apps
     - [Basic operations](apps/basic.md)
     - [Passing secrets to releases](apps/secrets.md)
+    - [Using environment variables in helmsman file and helm values files](apps/environment_vars.md)
+    - [Apply K8S manifest before/after Helmsman operations](apps/lifecycle_hooks.md)
     - [Use multiple values files for apps](apps/multiple_values_files.md)
     - [Protect releases (apps)](apps/protection.md)
     - [Moving releases (apps) across namespaces](apps/moving_across_namespaces.md)

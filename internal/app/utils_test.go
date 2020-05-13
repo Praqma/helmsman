@@ -32,6 +32,8 @@ func Test_fromTOML(t *testing.T) {
 			want: true,
 		},
 	}
+	os.Setenv("ORG_PATH", "sample")
+	os.Setenv("VALUE", "sample")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got, _ := fromTOML(tt.args.file, tt.args.s); got != tt.want {
@@ -39,6 +41,8 @@ func Test_fromTOML(t *testing.T) {
 			}
 		})
 	}
+	os.Unsetenv("ORG_PATH")
+	os.Unsetenv("VALUE")
 }
 func Test_fromTOML_Expand(t *testing.T) {
 	type args struct {
@@ -75,6 +79,7 @@ func Test_fromTOML_Expand(t *testing.T) {
 	}
 	os.Setenv("SET_URI", "https://192.168.99.100:8443")
 	os.Setenv("ORG_PATH", "sample")
+	os.Setenv("VALUE", "sample")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err, msg := fromTOML(tt.args.file, tt.args.s)
@@ -121,6 +126,9 @@ func Test_fromTOML_Expand(t *testing.T) {
 			}
 		})
 	}
+	os.Unsetenv("ORG_PATH")
+	os.Unsetenv("SET_URI")
+	os.Unsetenv("VALUE")
 }
 
 func Test_fromYAML(t *testing.T) {
@@ -149,12 +157,62 @@ func Test_fromYAML(t *testing.T) {
 			want: true,
 		},
 	}
+	os.Setenv("VALUE", "sample")
+	os.Setenv("ORG_PATH", "sample")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got, _ := fromYAML(tt.args.file, tt.args.s); got != tt.want {
 				t.Errorf("fromYaml() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+	os.Unsetenv("ORG_PATH")
+	os.Unsetenv("VALUE")
+}
+
+func Test_fromYAML_UnsetVars(t *testing.T) {
+	type args struct {
+		file string
+		s    *state
+	}
+	tests := []struct {
+		name      string
+		args      args
+		targetVar string
+		want      bool
+	}{
+		{
+			name: "test case 1 -- unset ORG_PATH env var",
+			args: args{
+				file: "../../examples/example.yaml",
+				s:    new(state),
+			},
+			targetVar: "ORG_PATH",
+			want:      false,
+		},
+		{
+			name: "test case 2 -- unset VALUE var",
+			args: args{
+				file: "../../examples/example.yaml",
+				s:    new(state),
+			},
+			targetVar: "VALUE",
+			want:      false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.targetVar == "ORG_PATH" {
+				os.Setenv("VALUE", "sample")
+			} else if tt.targetVar == "VALUE" {
+				os.Setenv("ORG_PATH", "sample")
+			}
+			if got, _ := fromYAML(tt.args.file, tt.args.s); got != tt.want {
+				t.Errorf("fromYaml() = %v, want %v", got, tt.want)
+			}
+		})
+		os.Unsetenv("ORG_PATH")
+		os.Unsetenv("VALUE")
 	}
 }
 
@@ -193,6 +251,7 @@ func Test_fromYAML_Expand(t *testing.T) {
 	}
 	os.Setenv("SET_URI", "https://192.168.99.100:8443")
 	os.Setenv("ORG_PATH", "sample")
+	os.Setenv("VALUE", "sample")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err, msg := fromYAML(tt.args.file, tt.args.s)
@@ -239,6 +298,9 @@ func Test_fromYAML_Expand(t *testing.T) {
 			}
 		})
 	}
+	os.Unsetenv("ORG_PATH")
+	os.Unsetenv("SET_URI")
+	os.Unsetenv("VALUE")
 }
 
 func Test_isOfType(t *testing.T) {
