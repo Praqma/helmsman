@@ -288,8 +288,12 @@ func resolvePaths(relativeToFile string, s *state) {
 // and downloads/fetches the file locally into helmsman temp directory and returns
 // its absolute path
 func resolveOnePath(file string, dir string, downloadDest string) (string, error) {
-	destFileName := filepath.Join(downloadDest, path.Base(file))
-	return filepath.Abs(downloadFile(file, dir, destFileName))
+	if destFile, err := ioutil.TempFile(downloadDest, fmt.Sprintf("*%s", path.Base(file))); err != nil {
+		return "", err
+	} else {
+		_ = destFile.Close()
+		return filepath.Abs(downloadFile(file, dir, destFile.Name()))
+	}
 }
 
 // createTempDir creates a temp directory in a specific location with a pattern
