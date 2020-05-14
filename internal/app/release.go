@@ -129,16 +129,6 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 	}
 	names[r.Name][r.Namespace] = true
 
-	// add $$ escaping for $ strings
-	os.Setenv("HELMSMAN_DOLLAR", "$")
-	for k, v := range r.Set {
-		if strings.Contains(v, "$") {
-			if os.ExpandEnv(strings.Replace(v, "$$", "${HELMSMAN_DOLLAR}", -1)) == "" {
-				return errors.New("env var [ " + v + " ] is not set, but is wanted to be passed for [ " + k + " ] in [[ " + r.Name + " ]]")
-			}
-		}
-	}
-
 	return nil
 }
 

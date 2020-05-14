@@ -6,7 +6,7 @@ import (
 
 const (
 	helmBin            = "helm"
-	appVersion         = "v3.3.0"
+	appVersion         = "v3.4.0"
 	tempFilesDir       = ".helmsman-tmp"
 	defaultContextName = "default"
 	resourcePool       = 10
