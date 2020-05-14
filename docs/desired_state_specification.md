@@ -371,6 +371,7 @@ Options:
 - **set**  : is used to override certain values from values.yaml with values from environment variables (or ,starting from v1.3.0-rc, directly provided in the Desired State File). This is particularly useful for passing secrets to charts. If the an environment variable with the same name as the provided value exists, the environment variable value will be used, otherwise, the provided value will be used as is. The TOML stanza for this is `[apps.<app_name>.set]`
 - **setString**   : is used to override String values from values.yaml or chart's defaults. This uses the `--set-string` flag in helm which is available only in helm >v2.9.0. This option is useful for image tags and the like. The TOML stanza for this is `[apps.<app_name>.setString]`
 - **setFile**     : is used to override values from values.yaml or chart's defaults from provided file. This uses the `--set-file` flag in helm. This option is useful for embedding file contents in the values. The TOML stanza for this is `[apps.<app_name>.setFile]`
+> set, setString and setFile can't take nested elements. If you need to provide nested values, you can combine them in one line with dots e.g. `TOML: "image.tag"=some_value` `YAML: "image.tag": some_value`
 - **helmFlags**   : array of `helm` upgrade flags, is used to pass flags to helm install/upgrade commands. **These flags are not passed to helm diff**. For setting values, use **set**, **setString** or **setFile** instead.
 - **hooks** : defines global lifecycle hooks to apply yaml manifest before and/or after different helmsman operations. Check [here](how_to/apps/lifecycle_hooks.md) for more details. Unset hooks for a release are inherited from `globalHooks` in the [settings](#Settings) stanza.
 - **maxHistory** : defines the maximum number of helm revisions state (secrets/configmap) to keep. If unset, it will inherit the value of `settings.globalMaxHistory`, if that's also unset, it defaults to 10.
@@ -437,8 +438,7 @@ apps:
       secret2: "$SECRET_ENV_VAR2"
     setString:
       longInt: "1234567890"
-      image:
-        tag: "1.0.0"
+      "image.tag": "1.0.0"
     hooks:
       successCondition: "Complete"
       successTimeout: "90s"
