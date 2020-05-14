@@ -43,7 +43,7 @@ For deployments, it is `Available`
 
 You can define two types of hooks in your desired state file:
 
-- **Gloabl** hooks: are defined in the `settings` stanza and are inherited by all releases in the DSF if they haven't defined their own.
+- **Global** hooks: are defined in the `settings` stanza and are inherited by all releases in the DSF if they haven't defined their own.
 
 These are defined as follows:
 ```toml
