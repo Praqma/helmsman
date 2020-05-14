@@ -251,27 +251,10 @@ func Test_validateRelease(t *testing.T) {
 			},
 			want: "",
 		}, {
-			name: "test case 14",
+			name: "test case 14 - non-existing hook file",
 			args: args{
 				r: &release{
 					Name:        "release14",
-					Description: "",
-					Namespace:   "namespace",
-					Enabled:     true,
-					Chart:       "repo/chartX",
-					Version:     "1.0",
-					ValuesFiles: []string{"./../../tests/values.yaml", "../../tests/values2.yaml"},
-					Test:        true,
-					Set:         map[string]string{"some_var": "$SOME_VAR"},
-				},
-				s: st,
-			},
-			want: "env var [ $SOME_VAR ] is not set, but is wanted to be passed for [ some_var ] in [[ release14 ]]",
-		}, {
-			name: "test case 15 - non-existing hook file",
-			args: args{
-				r: &release{
-					Name:        "release15",
 					Description: "",
 					Namespace:   "namespace",
 					Enabled:     true,
@@ -284,10 +267,10 @@ func Test_validateRelease(t *testing.T) {
 			},
 			want: "xyz.fake must be valid relative (from dsf file) file path.",
 		}, {
-			name: "test case 16 - invalid hook file type",
+			name: "test case 15 - invalid hook file type",
 			args: args{
 				r: &release{
-					Name:        "release16",
+					Name:        "release15",
 					Description: "",
 					Namespace:   "namespace",
 					Enabled:     true,
@@ -300,10 +283,10 @@ func Test_validateRelease(t *testing.T) {
 			},
 			want: "../../tests/values.xml must be of one the following file formats: .yaml, .yml",
 		}, {
-			name: "test case 17 - valid hook file type",
+			name: "test case 16 - valid hook file type",
 			args: args{
 				r: &release{
-					Name:        "release17",
+					Name:        "release16",
 					Description: "",
 					Namespace:   "namespace",
 					Enabled:     true,
@@ -316,10 +299,10 @@ func Test_validateRelease(t *testing.T) {
 			},
 			want: "",
 		}, {
-			name: "test case 18 - valid hook file URL",
+			name: "test case 17 - valid hook file URL",
 			args: args{
 				r: &release{
-					Name:        "release18",
+					Name:        "release17",
 					Description: "",
 					Namespace:   "namespace",
 					Enabled:     true,
@@ -332,10 +315,10 @@ func Test_validateRelease(t *testing.T) {
 			},
 			want: "",
 		}, {
-			name: "test case 19 - invalid hook file URL",
+			name: "test case 18 - invalid hook file URL",
 			args: args{
 				r: &release{
-					Name:        "release19",
+					Name:        "release18",
 					Description: "",
 					Namespace:   "namespace",
 					Enabled:     true,
@@ -348,10 +331,10 @@ func Test_validateRelease(t *testing.T) {
 			},
 			want: "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml must be valid URL path to a raw file.",
 		}, {
-			name: "test case 20 - invalid hook type 1",
+			name: "test case 19 - invalid hook type 1",
 			args: args{
 				r: &release{
-					Name:        "release20",
+					Name:        "release19",
 					Description: "",
 					Namespace:   "namespace",
 					Enabled:     true,
@@ -364,10 +347,10 @@ func Test_validateRelease(t *testing.T) {
 			},
 			want: "afterDelete is an Invalid hook type.",
 		}, {
-			name: "test case 21 - invalid hook type 2",
+			name: "test case 20 - invalid hook type 2",
 			args: args{
 				r: &release{
-					Name:        "release21",
+					Name:        "release20",
 					Description: "",
 					Namespace:   "namespace",
 					Enabled:     true,

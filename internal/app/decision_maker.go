@@ -214,7 +214,7 @@ func (cs *currentState) decide(r *release, s *state, p *plan, chartName, chartVe
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 				"you remove its protection.", r.Priority, noop)
 		}
-	} else if ok := cs.releaseExists(r, helmStatusDeleted); ok {
+	} else if ok := cs.releaseExists(r, helmStatusUninstalled); ok {
 		if !r.isProtected(cs, s) {
 			r.rollback(cs, p) // rollback
 		} else {
@@ -229,9 +229,9 @@ func (cs *currentState) decide(r *release, s *state, p *plan, chartName, chartVe
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 				"you remove its protection.", r.Priority, noop)
 		}
-	} else if ok := cs.releaseExists(r, helmStatusPending); ok {
-		log.Error("Release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ] is in pending-upgrade state. " +
-			"This means application is being upgraded outside of this Helmsman invocation's scope." +
+	} else if cs.releaseExists(r, helmStatusPendingInstall) || cs.releaseExists(r, helmStatusPendingUpgrade) || cs.releaseExists(r, helmStatusPendingRollback) || cs.releaseExists(r, helmStatusUninstalling) {
+		log.Error("Release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ] is in a pending (install/upgrade/rollback or uninstalling) state. " +
+			"This means application is being operated on outside of this Helmsman invocation's scope." +
 			"Exiting, as this may cause issues when continuing...")
 		os.Exit(1)
 	} else {
@@ -378,7 +378,7 @@ func (cs *currentState) cleanUntrackedReleases(s *state, p *plan) {
 // - If the release is already in the same namespace specified in the input,
 // it will be upgraded using the values file specified in the release info.
 // - If the release is already in the same namespace specified in the input but is using a different chart,
-// it will be purge deleted and installed in the same namespace using the new chart.
+// it will be uninstalled and installed in the same namespace using the new chart.
 // - If the release is NOT in the same namespace specified in the input,
 // it will be purge deleted and installed in the new namespace.
 func (cs *currentState) inspectUpgradeScenario(r *release, p *plan, chartName, chartVersion string) {
@@ -398,7 +398,7 @@ func (cs *currentState) inspectUpgradeScenario(r *release, p *plan, chartName, c
 			// upgrade
 			r.diff()
 			r.upgrade(p)
-			p.addDecision("Release [ "+r.Name+" ] will be updated", r.Priority, change)
+			p.addDecision("Release [ "+r.Name+" ] will be upgraded", r.Priority, change)
 
 		} else if chartName != rs.getChartName() {
 			r.reInstall(p)

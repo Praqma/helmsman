@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -48,6 +49,9 @@ func fromTOML(file string, s *state) (bool, string) {
 
 	tomlFile := string(rawTomlFile)
 	if !flags.noEnvSubst {
+		if ok, err := validateEnvVars(tomlFile, file); !ok {
+			return false, err
+		}
 		tomlFile = substituteEnv(tomlFile)
 	}
 	if !flags.noSSMSubst {
@@ -98,6 +102,9 @@ func fromYAML(file string, s *state) (bool, string) {
 
 	yamlFile := string(rawYamlFile)
 	if !flags.noEnvSubst {
+		if ok, err := validateEnvVars(yamlFile, file); !ok {
+			return false, err
+		}
 		yamlFile = substituteEnv(yamlFile)
 	}
 	if !flags.noSSMSubst {
@@ -183,6 +190,9 @@ func substituteVarsInYaml(file string) string {
 
 	yamlFile := string(rawYamlFile)
 	if !flags.noEnvSubst && flags.substEnvValues {
+		if ok, err := validateEnvVars(yamlFile, file); !ok {
+			log.Critical(err)
+		}
 		yamlFile = substituteEnv(yamlFile)
 	}
 	if !flags.noSSMSubst && flags.substSSMValues {
@@ -324,6 +334,38 @@ func substituteEnv(name string) string {
 	return name
 }
 
+// validateEnvVars parses a string line-by-line and detect env variables in
+// non-comment lines. It then checks that each env var found has a value.
+func validateEnvVars(s string, filename string) (bool, string) {
+	if !flags.skipValidation {
+		log.Info("validating environment variables in " + filename)
+		var key string
+		comment, _ := regexp.Compile("#(.*)$")
+		envVar, _ := regexp.Compile("\\${([a-zA-Z_][a-zA-Z0-9_-]*)}|\\$([a-zA-Z_][a-zA-Z0-9_-]*)")
+		scanner := bufio.NewScanner(strings.NewReader(s))
+		for scanner.Scan() {
+			// remove spaces from the single line, then replace $$ with !? to prevent it from matching the regex,
+			// then remove new line and inline comments from the text
+			text := comment.ReplaceAllString(strings.ReplaceAll(strings.TrimSpace(scanner.Text()), "$$", "!?"), "")
+			for _, v := range envVar.FindAllStringSubmatch(text, -1) {
+				// FindAllStringSubmatch may match the first (${MY_VAR}) or the second ($MY_VAR) group from the regex
+				if v[1] != "" {
+					key = v[1]
+				} else {
+					key = v[2]
+				}
+				if _, ok := os.LookupEnv(key); !ok {
+					return false, v[0] + " is used as an env variable but is currently unset. Either set it or escape it like so: $" + v[0]
+				}
+			}
+		}
+		if err := scanner.Err(); err != nil {
+			log.Critical(err.Error())
+		}
+	}
+	return true, ""
+}
+
 // substituteSSM checks if a string has an SSM parameter variable (contains '{{ssm: '), then it returns its value
 // if the env variable is empty or unset, an empty string is returned
 // if the string does not contain '$', it is returned as is.
@@ -383,7 +425,7 @@ func downloadFile(file string, dir string, outfile string) string {
 
 	} else {
 
-		log.Info("" + file + " will be used from local file system.")
+		log.Verbose("" + file + " will be used from local file system.")
 		toCopy := file
 		if !filepath.IsAbs(file) {
 			toCopy, _ = filepath.Abs(filepath.Join(dir, file))
