@@ -362,6 +362,40 @@ func Test_validateRelease(t *testing.T) {
 				s: st,
 			},
 			want: "PreDelete is an Invalid hook type.",
+		}, {
+			name: "test case 21",
+			args: args{
+				r: &release{
+					Name:         "release21",
+					Description:  "",
+					Namespace:    "namespace",
+					Enabled:      true,
+					Chart:        "repo/chartX",
+					Version:      "1.0",
+					ValuesFile:   "../../tests/values.yaml",
+					PostRenderer: "../../tests/post-renderer.sh",
+					Test:         true,
+				},
+				s: st,
+			},
+			want: "",
+		}, {
+			name: "test case 22",
+			args: args{
+				r: &release{
+					Name:         "release22",
+					Description:  "",
+					Namespace:    "namespace",
+					Enabled:      true,
+					Chart:        "repo/chartX",
+					Version:      "1.0",
+					ValuesFile:   "../../tests/values.yaml",
+					PostRenderer: "doesnt-exist.sh",
+					Test:         true,
+				},
+				s: st,
+			},
+			want: "doesnt-exist.sh must be valid relative (from dsf file) file path.",
 		},
 	}
 	names := make(map[string]map[string]bool)
@@ -462,6 +496,7 @@ func createFullReleasePointer(chart, version string) *release {
 		HelmFlags:    []string{},
 		NoHooks:      false,
 		Timeout:      0,
+		PostRenderer: "",
 	}
 }
 

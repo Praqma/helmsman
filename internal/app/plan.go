@@ -140,7 +140,7 @@ func releaseWithHooks(cmd orderedCommand, wg *sync.WaitGroup, sem chan struct{},
 			return
 		}
 	}
-	if err:= execOne(cmd.Command, cmd.targetRelease); err != nil {
+	if err := execOne(cmd.Command, cmd.targetRelease); err != nil {
 		errors <- err
 		log.Verbose(err.Error())
 		return
@@ -171,7 +171,7 @@ func execOne(cmd command, targetRelease *release) error {
 				targetRelease.Name, result.code, strings.TrimSpace(errorMsg))
 		} else {
 			return fmt.Errorf("%s returned [ %d ] exit code and error message [ %s ]",
-					cmd.Description, result.code, strings.TrimSpace(errorMsg))
+				cmd.Description, result.code, strings.TrimSpace(errorMsg))
 		}
 
 	} else {
