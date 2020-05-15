@@ -1,4 +1,4 @@
-[![GitHub version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=gh&type=6&v=v3.4.0&x2=0)](https://github.com/Praqma/helmsman/releases) [![CircleCI](https://circleci.com/gh/Praqma/helmsman/tree/master.svg?style=svg)](https://circleci.com/gh/Praqma/helmsman/tree/master)
+[![GitHub version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=gh&type=6&v=v3.4.1&x2=0)](https://github.com/Praqma/helmsman/releases) [![CircleCI](https://circleci.com/gh/Praqma/helmsman/tree/master.svg?style=svg)](https://circleci.com/gh/Praqma/helmsman/tree/master)
 
 ![helmsman-logo](docs/images/helmsman.png)
 
@@ -61,9 +61,9 @@ If you use private helm repos, you will need either `helm-gcs` or `helm-s3` plug
 Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the different versions.
 ```
 # on Linux
-curl -L https://github.com/Praqma/helmsman/releases/download/v3.2.0/helmsman_3.2.0_linux_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v3.4.1/helmsman_3.4.1_linux_amd64.tar.gz | tar zx
 # on MacOS
-curl -L https://github.com/Praqma/helmsman/releases/download/v3.2.0/helmsman_3.2.0_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v3.4.1/helmsman_3.4.1_darwin_amd64.tar.gz | tar zx
 
 mv helmsman /usr/local/bin/helmsman
 ```
