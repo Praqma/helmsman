@@ -341,7 +341,7 @@ func substituteEnv(name string) string {
 // validateEnvVars parses a string line-by-line and detect env variables in
 // non-comment lines. It then checks that each env var found has a value.
 func validateEnvVars(s string, filename string) (bool, string) {
-	if !flags.skipValidation {
+	if !flags.skipValidation && strings.Contains(s, "$") {
 		log.Info("validating environment variables in " + filename)
 		var key string
 		comment, _ := regexp.Compile("#(.*)$")
