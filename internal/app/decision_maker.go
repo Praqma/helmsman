@@ -137,7 +137,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 	for nameResult := range namesC {
 		// Is there a ... that can do this? I forget
 		c, n := nameResult[0], nameResult[1]
-		log.Info("Extracted chart name [ " + c + " ].")
+		log.Verbose("Extracted chart name [ " + c + " ].")
 		extractedChartNames[c] = n
 	}
 
@@ -148,7 +148,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 			// Better to fail early and return here?
 			log.Error(m)
 		} else {
-			log.Info("Extracted chart version from chart [ " + c + " ] with version [ " + v + " ]: '" + n + "'")
+			log.Verbose("Extracted chart version from chart [ " + c + " ] with version [ " + v + " ]: '" + n + "'")
 			extractedChartVersions[c][v] = n
 		}
 	}
