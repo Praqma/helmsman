@@ -163,17 +163,39 @@ func validateReleaseCharts(s *state) error {
 		apps = s.Apps
 	}
 	c := make(chan string, len(apps))
+
+	charts := make(map[string]map[string][]string)
 	for app, r := range apps {
-		sem <- struct{}{}
-		wg.Add(1)
-		go func(r *release, app string) {
-			defer func() {
-				wg.Done()
-				<-sem
-			}()
-			r.validateChart(app, s, c)
-		}(r, app)
+		if charts[r.Chart] == nil {
+			charts[r.Chart] = make(map[string][]string)
+		}
+
+		if charts[r.Chart][r.Version] == nil {
+			charts[r.Chart][r.Version] = make([]string, 0)
+		}
+
+		if r.isConsideredToRun(s) {
+			charts[r.Chart][r.Version] = append(charts[r.Chart][r.Version], app)
+		}
 	}
+
+	for chart, versions := range charts {
+		for version, apps := range versions {
+			concattedApps := strings.Join(apps, ", ")
+			ch := chart
+			v := version
+			sem <- struct{}{}
+			wg.Add(1)
+			go func(apps, chart, version string) {
+				defer func() {
+					wg.Done()
+					<-sem
+				}()
+				validateChart(concattedApps, chart, version, c)
+			}(concattedApps, ch, v)
+		}
+	}
+
 	wg.Wait()
 	close(c)
 	for err := range c {
@@ -191,60 +213,54 @@ func validateReleaseCharts(s *state) error {
 var versionExtractor = regexp.MustCompile(`[\n]version:\s?(.*)`)
 
 // validateChart validates if chart with the same name and version as specified in the DSF exists
-func (r *release) validateChart(app string, s *state, c chan string) {
+func validateChart(apps, chart, version string, c chan string) {
+	if isLocalChart(chart) {
+		cmd := helmCmd([]string{"inspect", "chart", chart}, "Validating [ "+chart+" ] chart's availability")
 
-	validateCurrentChart := true
-	if !r.isConsideredToRun(s) {
-		validateCurrentChart = false
-	}
-	if validateCurrentChart {
-		if isLocalChart(r.Chart) {
-			cmd := helmCmd([]string{"inspect", "chart", r.Chart}, "Validating [ "+r.Chart+" ] chart's availability")
-
-			result := cmd.exec()
-			if result.code != 0 {
-				maybeRepo := filepath.Base(filepath.Dir(r.Chart))
-				c <- "Chart [ " + r.Chart + " ] for app [" + app + "] can't be found. Inspection returned error: \"" +
-					strings.TrimSpace(result.errors) + "\" -- If this is not a local chart, add the repo [ " + maybeRepo + " ] in your helmRepos stanza."
+		result := cmd.exec()
+		if result.code != 0 {
+			maybeRepo := filepath.Base(filepath.Dir(chart))
+			c <- "Chart [ " + chart + " ] for apps [" + apps + "] can't be found. Inspection returned error: \"" +
+				strings.TrimSpace(result.errors) + "\" -- If this is not a local chart, add the repo [ " + maybeRepo + " ] in your helmRepos stanza."
+			return
+		}
+		matches := versionExtractor.FindStringSubmatch(result.output)
+		if len(matches) == 2 {
+			v := strings.Trim(matches[1], `'"`)
+			if strings.Trim(version, `'"`) != v {
+				c <- "Chart [ " + chart + " ] with version [ " + version + " ] is specified for " +
+					"apps [" + apps + "] but the chart found at that path has version [ " + v + " ] which does not match."
 				return
 			}
-			matches := versionExtractor.FindStringSubmatch(result.output)
-			if len(matches) == 2 {
-				version := strings.Trim(matches[1], `'"`)
-				if strings.Trim(r.Version, `'"`) != version {
-					c <- "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified for " +
-						"app [" + app + "] but the chart found at that path has version [ " + version + " ] which does not match."
-					return
-				}
-			}
+		}
+	} else {
+		v := version
+		if len(v) == 0 {
+			v = "*"
+		}
+		cmd := helmCmd([]string{"search", "repo", chart, "--version", v, "-l"}, "Validating [ "+chart+" ] chart's version [ "+version+" ] availability")
 
-		} else {
-			version := r.Version
-			if len(version) == 0 {
-				version = "*"
-			}
-			cmd := helmCmd([]string{"search", "repo", r.Chart, "--version", version, "-l"}, "Validating [ "+r.Chart+" ] chart's version [ "+r.Version+" ] availability")
-
-			if result := cmd.exec(); result.code != 0 || strings.Contains(result.output, "No results found") {
-				c <- "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified for " +
-					"app [" + app + "] but was not found. If this is not a local chart, define its helm repo in the helmRepo stanza in your DSF."
-				return
-			}
+		if result := cmd.exec(); result.code != 0 || strings.Contains(result.output, "No results found") {
+			c <- "Chart [ " + chart + " ] with version [ " + version + " ] is specified for " +
+				"apps [" + apps + "] but was not found. If this is not a local chart, define its helm repo in the helmRepo stanza in your DSF."
+			return
 		}
 	}
 }
 
 // getChartVersion fetches the lastest chart version matching the semantic versioning constraints.
 // If chart is local, returns the given release version
-func (r *release) getChartVersion() (string, string) {
-	if isLocalChart(r.Chart) {
-		return r.Version, ""
+func getChartVersion(chart, version string) (string, string) {
+	if isLocalChart(chart) {
+		log.Info("Chart [ " + chart + "] with version [ " + version + " ] was found locally.")
+		return version, ""
 	}
-	cmd := helmCmd([]string{"search", "repo", r.Chart, "--version", r.Version, "-o", "json"}, "Getting latest chart's version "+r.Chart+"-"+r.Version+"")
+
+	cmd := helmCmd([]string{"search", "repo", chart, "--version", version, "-o", "json"}, "Getting latest non-local chart's version "+chart+"-"+version+"")
 
 	result := cmd.exec()
 	if result.code != 0 {
-		return "", "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified but not found in the helm repositories"
+		return "", "Chart [ " + chart + " ] with version [ " + version + " ] is specified but not found in the helm repositories"
 	}
 
 	chartVersions := make([]chartVersion, 0)
@@ -253,17 +269,18 @@ func (r *release) getChartVersion() (string, string) {
 	}
 
 	filteredChartVersions := make([]chartVersion, 0)
-	for _, chart := range chartVersions {
-		if chart.Name == r.Chart {
-			filteredChartVersions = append(filteredChartVersions, chart)
+	for _, c := range chartVersions {
+		if c.Name == chart {
+			filteredChartVersions = append(filteredChartVersions, c)
 		}
 	}
 
 	if len(filteredChartVersions) < 1 {
-		return "", "Chart [ " + r.Chart + " ] with version [ " + r.Version + " ] is specified but not found in the helm repositories"
+		return "", "Chart [ " + chart + " ] with version [ " + version + " ] is specified but not found in the helm repositories"
 	} else if len(filteredChartVersions) > 1 {
-		return "", "Multiple versions of chart [ " + r.Chart + " ] with version [ " + r.Version + " ] found in the helm repositories"
+		return "", "Multiple versions of chart [ " + chart + " ] with version [ " + version + " ] found in the helm repositories"
 	}
+
 	return filteredChartVersions[0].Version, ""
 }
 
