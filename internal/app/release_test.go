@@ -440,10 +440,36 @@ func Test_inheritHooks(t *testing.T) {
 		})
 	}
 }
+
+func createFullReleasePointer(chart, version string) *release {
+	return &release{
+		Name:         "",
+		Description:  "",
+		Namespace:    "",
+		Enabled:      true,
+		Chart:        chart,
+		Version:      version,
+		ValuesFile:   "",
+		ValuesFiles:  []string{},
+		SecretsFile:  "",
+		SecretsFiles: []string{},
+		Test:         false,
+		Protected:    false,
+		Wait:         false,
+		Priority:     0,
+		Set:          make(map[string]string),
+		SetString:    make(map[string]string),
+		HelmFlags:    []string{},
+		NoHooks:      false,
+		Timeout:      0,
+	}
+}
+
 func Test_validateReleaseCharts(t *testing.T) {
 	type args struct {
 		apps map[string]*release
 	}
+
 	tests := []struct {
 		name       string
 		targetFlag []string
@@ -456,27 +482,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			targetFlag: []string{},
 			args: args{
 				apps: map[string]*release{
-					"app": &release{
-						Name:         "",
-						Description:  "",
-						Namespace:    "",
-						Enabled:      true,
-						Chart:        os.TempDir() + "/helmsman-tests/myapp",
-						Version:      "",
-						ValuesFile:   "",
-						ValuesFiles:  []string{},
-						SecretsFile:  "",
-						SecretsFiles: []string{},
-						Test:         false,
-						Protected:    false,
-						Wait:         false,
-						Priority:     0,
-						Set:          make(map[string]string),
-						SetString:    make(map[string]string),
-						HelmFlags:    []string{},
-						NoHooks:      false,
-						Timeout:      0,
-					},
+					"app": createFullReleasePointer(os.TempDir()+"/helmsman-tests/myapp", ""),
 				},
 			},
 			want: false,
@@ -485,27 +491,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			targetFlag: []string{},
 			args: args{
 				apps: map[string]*release{
-					"app": &release{
-						Name:         "",
-						Description:  "",
-						Namespace:    "",
-						Enabled:      true,
-						Chart:        os.TempDir() + "/does-not-exist/myapp",
-						Version:      "",
-						ValuesFile:   "",
-						ValuesFiles:  []string{},
-						SecretsFile:  "",
-						SecretsFiles: []string{},
-						Test:         false,
-						Protected:    false,
-						Wait:         false,
-						Priority:     0,
-						Set:          make(map[string]string),
-						SetString:    make(map[string]string),
-						HelmFlags:    []string{},
-						NoHooks:      false,
-						Timeout:      0,
-					},
+					"app": createFullReleasePointer(os.TempDir()+"/does-not-exist/myapp", ""),
 				},
 			},
 			want: false,
@@ -514,27 +500,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			targetFlag: []string{},
 			args: args{
 				apps: map[string]*release{
-					"app": &release{
-						Name:         "",
-						Description:  "",
-						Namespace:    "",
-						Enabled:      true,
-						Chart:        os.TempDir() + "/helmsman-tests/dir-with space/myapp",
-						Version:      "0.1.0",
-						ValuesFile:   "",
-						ValuesFiles:  []string{},
-						SecretsFile:  "",
-						SecretsFiles: []string{},
-						Test:         false,
-						Protected:    false,
-						Wait:         false,
-						Priority:     0,
-						Set:          make(map[string]string),
-						SetString:    make(map[string]string),
-						HelmFlags:    []string{},
-						NoHooks:      false,
-						Timeout:      0,
-					},
+					"app": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
 				},
 			},
 			want: true,
@@ -543,27 +509,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			targetFlag: []string{},
 			args: args{
 				apps: map[string]*release{
-					"app": &release{
-						Name:         "",
-						Description:  "",
-						Namespace:    "",
-						Enabled:      true,
-						Chart:        "stable/prometheus",
-						Version:      "9.5.2",
-						ValuesFile:   "",
-						ValuesFiles:  []string{},
-						SecretsFile:  "",
-						SecretsFiles: []string{},
-						Test:         false,
-						Protected:    false,
-						Wait:         false,
-						Priority:     0,
-						Set:          make(map[string]string),
-						SetString:    make(map[string]string),
-						HelmFlags:    []string{},
-						NoHooks:      false,
-						Timeout:      0,
-					},
+					"app": createFullReleasePointer("stable/prometheus", "9.5.2"),
 				},
 			},
 			want: true,
@@ -572,27 +518,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			targetFlag: []string{"notThisOne"},
 			args: args{
 				apps: map[string]*release{
-					"app": &release{
-						Name:         "app",
-						Description:  "",
-						Namespace:    "",
-						Enabled:      true,
-						Chart:        os.TempDir() + "/does-not-exist/myapp",
-						Version:      "",
-						ValuesFile:   "",
-						ValuesFiles:  []string{},
-						SecretsFile:  "",
-						SecretsFiles: []string{},
-						Test:         false,
-						Protected:    false,
-						Wait:         false,
-						Priority:     0,
-						Set:          make(map[string]string),
-						SetString:    make(map[string]string),
-						HelmFlags:    []string{},
-						NoHooks:      false,
-						Timeout:      0,
-					},
+					"app": createFullReleasePointer(os.TempDir()+"/does-not-exist/myapp", ""),
 				},
 			},
 			want: true,
@@ -601,30 +527,23 @@ func Test_validateReleaseCharts(t *testing.T) {
 			targetFlag: []string{"app"},
 			args: args{
 				apps: map[string]*release{
-					"app": &release{
-						Name:         "app",
-						Description:  "",
-						Namespace:    "",
-						Enabled:      true,
-						Chart:        os.TempDir() + "/does-not-exist/myapp",
-						Version:      "",
-						ValuesFile:   "",
-						ValuesFiles:  []string{},
-						SecretsFile:  "",
-						SecretsFiles: []string{},
-						Test:         false,
-						Protected:    false,
-						Wait:         false,
-						Priority:     0,
-						Set:          make(map[string]string),
-						SetString:    make(map[string]string),
-						HelmFlags:    []string{},
-						NoHooks:      false,
-						Timeout:      0,
-					},
+					"app": createFullReleasePointer(os.TempDir()+"/does-not-exist/myapp", ""),
 				},
 			},
 			want: false,
+		}, {
+			name:       "test case 7: multiple valid local apps with the same chart version",
+			targetFlag: []string{"app"},
+			args: args{
+				apps: map[string]*release{
+					"app1": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
+					"app2": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
+					"app3": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
+					"app4": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
+					"app5": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -798,7 +717,7 @@ func Test_getChartVersion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Log(tt.want)
-			got, _ := tt.args.r.getChartVersion()
+			got, _ := getChartVersion(tt.args.r.Chart, tt.args.r.Version)
 			if got != tt.want {
 				t.Errorf("getChartVersion() = %v, want %v", got, tt.want)
 			}
