@@ -9,6 +9,18 @@ import (
 
 type Logger struct {
 	*logger.Logger
+	LoggerInterface
+}
+
+type LoggerInterface interface {
+	Info(string)
+	Debug(string)
+	Verbose(string)
+	Error(string)
+	Warning(string)
+	Notice(string)
+	Critical(string)
+	Fatal(string)
 }
 
 var log *Logger
@@ -43,6 +55,13 @@ func (l *Logger) Warning(message string) {
 
 func (l *Logger) Notice(message string) {
 	baseLogger.Notice(message)
+}
+
+func (l *Logger) Critical(message string) {
+	if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
+		notifySlack(message, settings.SlackWebhook, true, flags.apply)
+	}
+	baseLogger.Critical(message)
 }
 
 func (l *Logger) Fatal(message string) {
