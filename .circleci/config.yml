@@ -47,10 +47,10 @@ jobs:
             TAG=$(git describe --abbrev=0 --tags)
             docker login -u $DOCKER_USER -p $DOCKER_PASS
 
-            docker build -t praqma/helmsman:$TAG-helm-v3.1.3 --build-arg HELM_VERSION=v3.1.3 . --no-cache
+            docker build -t praqma/helmsman:$TAG-helm-v3.1.3 --build-arg GLOBAL_HELM_VERSION=v3.1.3 . --no-cache
             docker push praqma/helmsman:$TAG-helm-v3.1.3
 
-            docker build -t praqma/helmsman:$TAG-helm-v3.2.1 --build-arg HELM_VERSION=v3.2.1 . --no-cache
+            docker build -t praqma/helmsman:$TAG-helm-v3.2.1 --build-arg GLOBAL_HELM_VERSION=v3.2.1 . --no-cache
             docker push praqma/helmsman:$TAG-helm-v3.2.1
 
 workflows:
