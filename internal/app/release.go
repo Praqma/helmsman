@@ -355,6 +355,10 @@ func (r *release) upgrade(p *plan) {
 
 	p.addCommand(cmd, r.Priority, r, before, after)
 
+	if r.Test {
+		r.test(p)
+	}
+
 }
 
 // reInstall uninstalls a release and reinstalls it.
