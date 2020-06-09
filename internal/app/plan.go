@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"sort"
@@ -104,46 +105,18 @@ func (p *plan) exec() {
 	sort.Ints(priorities)
 
 	for _, priority := range priorities {
-		c := make(chan string, len(pl[priority]))
+		errorsChan := make(chan error, len(pl[priority]))
 		for _, cmd := range pl[priority] {
 			sem <- struct{}{}
 			wg.Add(1)
-			go func(cmd orderedCommand) {
-				defer func() {
-					wg.Done()
-					<-sem
-				}()
-				for _, c := range cmd.beforeCommands {
-					execOne(c, cmd.targetRelease)
-				}
-				execOne(cmd.Command, cmd.targetRelease)
-				if cmd.targetRelease != nil && !flags.dryRun && !flags.destroy {
-					cmd.targetRelease.label()
-				}
-				for _, c := range cmd.afterCommands {
-					execOne(c, cmd.targetRelease)
-				}
-				// if result.code != 0 {
-				// 	errorMsg := result.errors
-				// 	if !flags.verbose {
-				// 		errorMsg = strings.Split(result.errors, "---")[0]
-				// 	}
-				// 	c <- fmt.Sprintf("Command for release [%s] returned [ %d ] exit code and error message [ %s ]", cmd.targetRelease.Name, result.code, strings.TrimSpace(errorMsg))
-				// } else {
-				// 	log.Notice(result.output)
-				// 	log.Notice("Finished: " + cmd.Command.Description)
-				// 	if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
-				// 		notifySlack(cmd.Command.Description+" ... SUCCESS!", settings.SlackWebhook, false, true)
-				// 	}
-				// }
-			}(cmd)
+			go releaseWithHooks(cmd, &wg, sem, errorsChan)
 		}
 		wg.Wait()
-		close(c)
-		for err := range c {
-			if err != "" {
+		close(errorsChan)
+		for err := range errorsChan {
+			if err != nil {
 				fail = true
-				log.Error(err)
+				log.Error(err.Error())
 			}
 		}
 		if fail {
@@ -156,28 +129,62 @@ func (p *plan) exec() {
 	}
 }
 
+func releaseWithHooks(cmd orderedCommand, wg *sync.WaitGroup, sem chan struct{}, errors chan error) {
+	defer func() {
+		wg.Done()
+		<-sem
+	}()
+	for _, c := range cmd.beforeCommands {
+		if err := execOne(c, cmd.targetRelease); err != nil {
+			errors <- err
+			log.Verbose(err.Error())
+			return
+		}
+	}
+	if err:= execOne(cmd.Command, cmd.targetRelease); err != nil {
+		errors <- err
+		log.Verbose(err.Error())
+		return
+	}
+	if cmd.targetRelease != nil && !flags.dryRun && !flags.destroy {
+		cmd.targetRelease.label()
+	}
+	for _, c := range cmd.afterCommands {
+		if err := execOne(c, cmd.targetRelease); err != nil {
+			errors <- err
+			log.Verbose(err.Error())
+			return
+		}
+	}
+}
+
 // execOne executes a single ordered command
-func execOne(cmd command, targetRelease *release) {
+func execOne(cmd command, targetRelease *release) error {
 	log.Notice(cmd.Description)
 	result := cmd.exec()
-
 	if result.code != 0 {
 		errorMsg := result.errors
 		if !flags.verbose {
 			errorMsg = strings.Split(result.errors, "---")[0]
 		}
 		if targetRelease != nil {
-			log.Fatal(fmt.Sprintf("Command for release [%s] returned [ %d ] exit code and error message [ %s ]", targetRelease.Name, result.code, strings.TrimSpace(errorMsg)))
+			return errors.New(
+				fmt.Sprintf("Command for release [%s] returned [ %d ] exit code and error message [ %s ]",
+					targetRelease.Name, result.code, strings.TrimSpace(errorMsg)))
 		} else {
-			log.Fatal(fmt.Sprintf("%s returned [ %d ] exit code and error message [ %s ]", cmd.Description, result.code, strings.TrimSpace(errorMsg)))
+			return errors.New(
+				fmt.Sprintf("%s returned [ %d ] exit code and error message [ %s ]",
+					cmd.Description, result.code, strings.TrimSpace(errorMsg)))
 		}
 
 	} else {
 		log.Notice(result.output)
-		log.Notice("Finished: " + cmd.Description)
+		successMsg := "Finished: " + cmd.Description
+		log.Notice(successMsg)
 		if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
 			notifySlack(cmd.Description+" ... SUCCESS!", settings.SlackWebhook, false, true)
 		}
+		return nil
 	}
 }
 
