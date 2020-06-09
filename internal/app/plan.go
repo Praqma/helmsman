@@ -114,14 +114,14 @@ func (p *plan) exec() {
 					<-sem
 				}()
 				for _, c := range cmd.beforeCommands {
-					execOne(c, cmd.targetRelease.Name)
+					execOne(c, cmd.targetRelease)
 				}
-				execOne(cmd.Command, cmd.targetRelease.Name)
+				execOne(cmd.Command, cmd.targetRelease)
 				if cmd.targetRelease != nil && !flags.dryRun && !flags.destroy {
 					cmd.targetRelease.label()
 				}
 				for _, c := range cmd.afterCommands {
-					execOne(c, cmd.targetRelease.Name)
+					execOne(c, cmd.targetRelease)
 				}
 				// if result.code != 0 {
 				// 	errorMsg := result.errors
@@ -157,7 +157,7 @@ func (p *plan) exec() {
 }
 
 // execOne executes a single ordered command
-func execOne(cmd command, targetRelease string) {
+func execOne(cmd command, targetRelease *release) {
 	log.Notice(cmd.Description)
 	result := cmd.exec()
 
@@ -166,7 +166,12 @@ func execOne(cmd command, targetRelease string) {
 		if !flags.verbose {
 			errorMsg = strings.Split(result.errors, "---")[0]
 		}
-		log.Fatal(fmt.Sprintf("Command for release [%s] returned [ %d ] exit code and error message [ %s ]", targetRelease, result.code, strings.TrimSpace(errorMsg)))
+		if targetRelease != nil {
+			log.Fatal(fmt.Sprintf("Command for release [%s] returned [ %d ] exit code and error message [ %s ]", targetRelease.Name, result.code, strings.TrimSpace(errorMsg)))
+		} else {
+			log.Fatal(fmt.Sprintf("%s returned [ %d ] exit code and error message [ %s ]", cmd.Description, result.code, strings.TrimSpace(errorMsg)))
+		}
+
 	} else {
 		log.Notice(result.output)
 		log.Notice("Finished: " + cmd.Description)
