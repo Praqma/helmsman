@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"sort"
@@ -168,13 +167,11 @@ func execOne(cmd command, targetRelease *release) error {
 			errorMsg = strings.Split(result.errors, "---")[0]
 		}
 		if targetRelease != nil {
-			return errors.New(
-				fmt.Sprintf("Command for release [%s] returned [ %d ] exit code and error message [ %s ]",
-					targetRelease.Name, result.code, strings.TrimSpace(errorMsg)))
+			return fmt.Errorf("command for release [%s] returned [ %d ] exit code and error message [ %s ]",
+				targetRelease.Name, result.code, strings.TrimSpace(errorMsg))
 		} else {
-			return errors.New(
-				fmt.Sprintf("%s returned [ %d ] exit code and error message [ %s ]",
-					cmd.Description, result.code, strings.TrimSpace(errorMsg)))
+			return fmt.Errorf("%s returned [ %d ] exit code and error message [ %s ]",
+					cmd.Description, result.code, strings.TrimSpace(errorMsg))
 		}
 
 	} else {
