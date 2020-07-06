@@ -41,7 +41,7 @@ COPY --from=helm-installer /root/.cache/helm/plugins/ /root/.cache/helm/plugins/
 COPY --from=helm-installer /root/.local/share/helm/plugins/ /root/.local/share/helm/plugins/
 
 WORKDIR /go/src/github.com/Praqma/helmsman
-  
+
 COPY . .
 RUN make test \
     && LastTag=$(git describe --abbrev=0 --tags) \
@@ -54,12 +54,13 @@ RUN make test \
 ### Final Image ###
 FROM alpine:${ALPINE_VERSION} as base
 
-RUN apk add --update --no-cache ca-certificates git openssh ruby curl bash
+RUN apk add --update --no-cache ca-certificates git openssh ruby curl bash gnupg
 RUN gem install hiera-eyaml --no-doc
 RUN update-ca-certificates
 
 COPY --from=helm-installer /usr/local/bin/kubectl /usr/local/bin/kubectl
 COPY --from=helm-installer /usr/local/bin/helm /usr/local/bin/helm
+COPY --from=helm-installer /usr/local/bin/sops /usr/local/bin/sops
 COPY --from=helm-installer /root/.cache/helm/plugins/ /root/.cache/helm/plugins/
 COPY --from=helm-installer /root/.local/share/helm/plugins/ /root/.local/share/helm/plugins/
 
