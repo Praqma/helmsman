@@ -128,7 +128,8 @@ func addHelmRepos(repos map[string]string) error {
 				log.Fatal("helm repo " + repoName + " has incomplete basic auth info. Missing the password!")
 			}
 			basicAuthArgs = append(basicAuthArgs, "--username", u.User.Username(), "--password", p)
-
+			u.User = nil
+			repoLink = u.String()
 		}
 
 		cmd := helmCmd(concat([]string{"repo", "add", repoName, repoLink}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
