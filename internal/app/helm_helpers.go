@@ -132,7 +132,7 @@ func addHelmRepos(repos map[string]string) error {
 			repoLink = u.String()
 		}
 
-		cmd := helmCmd(concat([]string{"repo", "add", repoName, repoLink}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
+		cmd := helmCmd(concat([]string{"repo", "add", "--force-update", repoName, repoLink}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
 		// check current repository against existing repositories map in order to make sure it's missing and needs to be added
 		if existingRepoUrl, ok := existingRepos[repoName]; ok {
 			if repoLink == existingRepoUrl {
