@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/go-version"
 	"net/url"
 	"strings"
 
@@ -55,6 +56,20 @@ func getHelmVersion() string {
 	}
 
 	return result.output
+}
+
+func checkHelmVersion(constraint string) bool {
+	helmVersion := strings.TrimSpace(getHelmVersion())
+	extractedHelmVersion := helmVersion
+	if !strings.HasPrefix(helmVersion, "v") {
+		extractedHelmVersion = strings.TrimSpace(strings.Split(helmVersion, ":")[1])
+	}
+	v, _ := version.NewVersion(extractedHelmVersion)
+	jsonConstraint, _ := version.NewConstraint(constraint)
+	if jsonConstraint.Check(v) {
+		return true
+	}
+	return false
 }
 
 // helmPluginExists returns true if the plugin is present in the environment and false otherwise.
@@ -132,7 +147,11 @@ func addHelmRepos(repos map[string]string) error {
 			repoLink = u.String()
 		}
 
-		cmd := helmCmd(concat([]string{"repo", "add", repoName, repoLink}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
+		repoAddFlags := ""
+		if checkHelmVersion(">=3.3.2") {
+			repoAddFlags += "--force-update"
+		}
+		cmd := helmCmd(concat([]string{"repo", "add", repoAddFlags, repoName, repoLink}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
 		// check current repository against existing repositories map in order to make sure it's missing and needs to be added
 		if existingRepoUrl, ok := existingRepos[repoName]; ok {
 			if repoLink == existingRepoUrl {
