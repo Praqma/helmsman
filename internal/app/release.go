@@ -25,6 +25,7 @@ type release struct {
 	ValuesFiles  []string               `yaml:"valuesFiles"`
 	SecretsFile  string                 `yaml:"secretsFile"`
 	SecretsFiles []string               `yaml:"secretsFiles"`
+	PostRenderer string                 `yaml:"postRenderer"`
 	Test         bool                   `yaml:"test"`
 	Protected    bool                   `yaml:"protected"`
 	Wait         bool                   `yaml:"wait"`
@@ -111,6 +112,12 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 			if err := isValidFile(filePath, []string{".yaml", ".yml", ".json"}); err != nil {
 				return fmt.Errorf(err.Error())
 			}
+		}
+	}
+
+	if r.PostRenderer != "" {
+		if _, err := os.Stat(r.PostRenderer); err != nil {
+			return fmt.Errorf(r.PostRenderer + " must be valid relative (from dsf file) file path.")
 		}
 	}
 
@@ -252,7 +259,7 @@ func validateChart(apps, chart, version string, c chan string) {
 // If chart is local, returns the given release version
 func getChartVersion(chart, version string) (string, string) {
 	if isLocalChart(chart) {
-		log.Info("Chart [ " + chart + "] with version [ " + version + " ] was found locally.")
+		log.Info("Chart [ " + chart + " ] with version [ " + version + " ] was found locally.")
 		return version, ""
 	}
 
@@ -554,6 +561,15 @@ func (r *release) getHelmFlags() []string {
 	return concat(r.getNoHooks(), r.getWait(), r.getTimeout(), r.getMaxHistory(), flags.getDryRunFlags(), []string{force}, flgs)
 }
 
+// getPostRenderer returns the post-renderer Helm flag
+func (r *release) getPostRenderer() []string {
+	result := []string{}
+	if r.PostRenderer != "" {
+		result = append(result, "--post-renderer", r.PostRenderer)
+	}
+	return result
+}
+
 // getHelmArgsFor returns helm arguments for a specific helm operation
 func (r *release) getHelmArgsFor(action string, optionalNamespaceOverride ...string) []string {
 	ns := r.Namespace
@@ -562,9 +578,9 @@ func (r *release) getHelmArgsFor(action string, optionalNamespaceOverride ...str
 	}
 	switch action {
 	case "install", "upgrade":
-		return concat([]string{"upgrade", r.Name, r.Chart, "--install", "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getHelmFlags())
+		return concat([]string{"upgrade", r.Name, r.Chart, "--install", "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getHelmFlags(), r.getPostRenderer())
 	case "diff":
-		return concat([]string{"upgrade", r.Name, r.Chart, "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues())
+		return concat([]string{"upgrade", r.Name, r.Chart, "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getPostRenderer())
 	case "uninstall":
 		return concat([]string{action, "--namespace", ns, r.Name}, flags.getDryRunFlags())
 	default:
@@ -694,29 +710,30 @@ func (r *release) shouldWaitForHook(hookFile string, hookType string, namespace 
 // print prints the details of the release
 func (r release) print() {
 	fmt.Println("")
-	fmt.Println("\tname : ", r.Name)
-	fmt.Println("\tdescription : ", r.Description)
-	fmt.Println("\tnamespace : ", r.Namespace)
-	fmt.Println("\tenabled : ", r.Enabled)
-	fmt.Println("\tchart : ", r.Chart)
-	fmt.Println("\tversion : ", r.Version)
-	fmt.Println("\tvaluesFile : ", r.ValuesFile)
-	fmt.Println("\tvaluesFiles : ", strings.Join(r.ValuesFiles, ","))
-	fmt.Println("\ttest : ", r.Test)
-	fmt.Println("\tprotected : ", r.Protected)
-	fmt.Println("\twait : ", r.Wait)
-	fmt.Println("\tpriority : ", r.Priority)
-	fmt.Println("\tSuccessCondition : ", r.Hooks["successCondition"])
-	fmt.Println("\tSuccessTimeout : ", r.Hooks["successTimeout"])
-	fmt.Println("\tDeleteOnSuccess : ", r.Hooks["deleteOnSuccess"])
-	fmt.Println("\tpreInstall : ", r.Hooks["preInstall"])
-	fmt.Println("\tpostInstall : ", r.Hooks["postInstall"])
-	fmt.Println("\tpreUpgrade : ", r.Hooks["preUpgrade"])
-	fmt.Println("\tpostUpgrade : ", r.Hooks["postUpgrade"])
-	fmt.Println("\tpreDelete : ", r.Hooks["preDelete"])
-	fmt.Println("\tpostDelete : ", r.Hooks["postDelete"])
-	fmt.Println("\tno-hooks : ", r.NoHooks)
-	fmt.Println("\ttimeout : ", r.Timeout)
+	fmt.Println("\tname: ", r.Name)
+	fmt.Println("\tdescription: ", r.Description)
+	fmt.Println("\tnamespace: ", r.Namespace)
+	fmt.Println("\tenabled: ", r.Enabled)
+	fmt.Println("\tchart: ", r.Chart)
+	fmt.Println("\tversion: ", r.Version)
+	fmt.Println("\tvaluesFile: ", r.ValuesFile)
+	fmt.Println("\tvaluesFiles: ", strings.Join(r.ValuesFiles, ","))
+	fmt.Println("\tpostRenderer: ", r.PostRenderer)
+	fmt.Println("\ttest: ", r.Test)
+	fmt.Println("\tprotected: ", r.Protected)
+	fmt.Println("\twait: ", r.Wait)
+	fmt.Println("\tpriority: ", r.Priority)
+	fmt.Println("\tSuccessCondition: ", r.Hooks["successCondition"])
+	fmt.Println("\tSuccessTimeout: ", r.Hooks["successTimeout"])
+	fmt.Println("\tDeleteOnSuccess: ", r.Hooks["deleteOnSuccess"])
+	fmt.Println("\tpreInstall: ", r.Hooks["preInstall"])
+	fmt.Println("\tpostInstall: ", r.Hooks["postInstall"])
+	fmt.Println("\tpreUpgrade: ", r.Hooks["preUpgrade"])
+	fmt.Println("\tpostUpgrade: ", r.Hooks["postUpgrade"])
+	fmt.Println("\tpreDelete: ", r.Hooks["preDelete"])
+	fmt.Println("\tpostDelete: ", r.Hooks["postDelete"])
+	fmt.Println("\tno-hooks: ", r.NoHooks)
+	fmt.Println("\ttimeout: ", r.Timeout)
 	fmt.Println("\tvalues to override from env:")
 	printMap(r.Set, 2)
 	fmt.Println("------------------- ")

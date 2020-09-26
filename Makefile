@@ -64,7 +64,7 @@ generate:
 .PHONY: generate
 
 repo:
-	@helm repo add stable https://kubernetes-charts.storage.googleapis.com
+	@helm repo list | grep -q "^stable " || helm repo add stable https://kubernetes-charts.storage.googleapis.com
 .PHONY: repo
 
 test: deps vet repo ## Run unit tests
