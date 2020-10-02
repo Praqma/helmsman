@@ -292,21 +292,21 @@ func getChartVersion(chart, version string) (string, string) {
 }
 
 // testRelease creates a Helm command to test a particular release.
-func (r *release) test(p *plan) {
+func (r *release) test(afterCommands *[]command) {
 	cmd := helmCmd(r.getHelmArgsFor("test"), "Running tests for release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-	p.addCommand(cmd, r.Priority, r, []command{}, []command{})
+	*afterCommands = append(*afterCommands, cmd)
 }
 
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
 func (r *release) install(p *plan) {
-
 	before, after := r.checkHooks("install", p)
-	cmd := helmCmd(r.getHelmArgsFor("install"), "Install release [ "+r.Name+" ] version [ "+r.Version+" ] in namespace [ "+r.Namespace+" ]")
-	p.addCommand(cmd, r.Priority, r, before, after)
 
 	if r.Test {
-		r.test(p)
+		r.test(&after)
 	}
+
+	cmd := helmCmd(r.getHelmArgsFor("install"), "Install release [ "+r.Name+" ] version [ "+r.Version+" ] in namespace [ "+r.Namespace+" ]")
+	p.addCommand(cmd, r.Priority, r, before, after)
 }
 
 // uninstall uninstalls a release
@@ -358,13 +358,13 @@ func (r *release) upgrade(p *plan) {
 
 	before, after := r.checkHooks("upgrade", p)
 
+	if r.Test {
+		r.test(&after)
+	}
+
 	cmd := helmCmd(r.getHelmArgsFor("upgrade"), "Upgrade release [ "+r.Name+" ] to version [ "+r.Version+" ] in namespace [ "+r.Namespace+" ]")
 
 	p.addCommand(cmd, r.Priority, r, before, after)
-
-	if r.Test {
-		r.test(p)
-	}
 
 }
 
