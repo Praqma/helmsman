@@ -56,7 +56,7 @@ update-deps: ## Update depdendencies. Runs `go get -u` internally.
 	@GOFLAGS="" go mod tidy
 	@GOFLAGS="" go mod vendor
 
-build: vet deps ## Build the package
+build: deps vet ## Build the package
 	@go build -o helmsman -ldflags '-X main.version="${TAG}-${DATE}" -extldflags "-static"' cmd/helmsman/main.go
 
 generate:
@@ -65,6 +65,7 @@ generate:
 
 repo:
 	@helm repo list | grep -q "^stable " || helm repo add stable https://kubernetes-charts.storage.googleapis.com
+	@helm repo update
 .PHONY: repo
 
 test: deps vet repo ## Run unit tests
