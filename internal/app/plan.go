@@ -133,6 +133,12 @@ func releaseWithHooks(cmd orderedCommand, wg *sync.WaitGroup, sem chan struct{},
 		wg.Done()
 		<-sem
 	}()
+	if cmd.targetRelease == nil && !flags.destroy {
+		err := fmt.Errorf("nil target release")
+		errors <- err
+		log.Verbose(err.Error())
+		return
+	}
 	for _, c := range cmd.beforeCommands {
 		if err := execOne(c, cmd.targetRelease); err != nil {
 			errors <- err
@@ -145,15 +151,14 @@ func releaseWithHooks(cmd orderedCommand, wg *sync.WaitGroup, sem chan struct{},
 		log.Verbose(err.Error())
 		return
 	}
-	if cmd.targetRelease != nil && !flags.dryRun && !flags.destroy {
-		cmd.targetRelease.label()
-	}
 	for _, c := range cmd.afterCommands {
 		if err := execOne(c, cmd.targetRelease); err != nil {
 			errors <- err
 			log.Verbose(err.Error())
-			return
 		}
+	}
+	if !flags.dryRun && !flags.destroy {
+		cmd.targetRelease.label()
 	}
 }
 
