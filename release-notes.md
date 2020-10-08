@@ -1,4 +1,4 @@
-# v3.4.5
+# v3.4.6
 
 If you migrating from Helmsman v1.x, it is recommended you read the [migration guide](https://github.com/Praqma/helmsman/blob/master/docs/how_to/misc/migrate_to_3.md) before using this release.
 
@@ -6,14 +6,10 @@ If you migrating from Helmsman v1.x, it is recommended you read the [migration g
 
 # Fixes and improvements:
 
-- Added `--force-update` to the `helm repo add` command to support helm v3.3.3+
-- Removed duplicated user and password when adding helm repos.
-- Added missing packages to the final docker image.
-- Updated some dependencies versions.
-- Helm tests are now execurted as the last command after the hooks.
+- Fixed an issue that would prevent Helmsman from recognizing releases after helm tests were executed.
 
 # New features:
 
-- Added post-render option.
+Bug fix release, not new features
 
 None.
