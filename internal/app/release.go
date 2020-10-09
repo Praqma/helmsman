@@ -63,12 +63,8 @@ func (r *release) isConsideredToRun(s *state) bool {
 }
 
 // validate validates if a release inside a desired state meets the specifications or not.
-// check the full specification @ https://github.com/Praqma/helmsman/docs/desired_state_spec.md
+// check the full specification @ https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md
 func (r *release) validate(appLabel string, names map[string]map[string]bool, s *state) error {
-	if r.Name == "" {
-		r.Name = appLabel
-	}
-
 	if names[r.Name][r.Namespace] {
 		return errors.New("release name must be unique within a given namespace")
 	}

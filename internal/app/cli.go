@@ -240,6 +240,13 @@ func (c *cli) readState(s *state) {
 		}
 	}
 
+	// Default app.Name to state name when unset
+	for appName, app := range s.Apps {
+		if app.Name == "" {
+			app.Name = appName
+		}
+	}
+
 	if len(c.target) > 0 {
 		s.TargetMap = map[string]bool{}
 		for _, v := range c.target {
