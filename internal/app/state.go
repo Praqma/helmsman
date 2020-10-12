@@ -67,7 +67,7 @@ func (s *state) toFile(file string) {
 }
 
 // validate validates that the values specified in the desired state are valid according to the desired state spec.
-// check https://github.com/Praqma/Helmsman/docs/desired_state_spec.md for the detailed specification
+// check https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md for the detailed specification
 func (s *state) validate() error {
 
 	// apps
