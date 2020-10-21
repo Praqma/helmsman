@@ -60,6 +60,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 
 	wg := sync.WaitGroup{}
 	sem := make(chan struct{}, resourcePool)
+
 	namesC := make(chan [2]string, len(s.Apps))
 	versionsC := make(chan [4]string, len(s.Apps))
 
@@ -94,21 +95,22 @@ func (cs *currentState) makePlan(s *state) *plan {
 	// I'm not fond of this concurrency pattern, it's just a continuation of what's already there.
 	// This seems like overkill somehow. Is it necessary to run all the helm commands concurrently? Does that speed it up? (Quick sanity check says: yes, it does)
 	for chart, versions := range charts {
-		sem <- struct{}{}
-		wg.Add(1)
-		go func(chart string) {
-			defer func() {
-				wg.Done()
-				<-sem
-			}()
-
-			namesC <- [2]string{chart, extractChartName(chart)}
-		}(chart)
-
+		// log.Notice("Availiable versions: " + versions[0])
 		for version, shouldRun := range versions {
 			if !shouldRun {
 				continue
 			}
+
+			sem <- struct{}{}
+			wg.Add(1)
+			go func(chart string, version string) {
+				defer func() {
+					wg.Done()
+					<-sem
+				}()
+
+				namesC <- [2]string{chart, extractChartName(chart, version)}
+			}(chart, version)
 
 			sem <- struct{}{}
 			wg.Add(1)
