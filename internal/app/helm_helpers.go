@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/go-version"
 	"net/url"
 	"strings"
+
+	"github.com/hashicorp/go-version"
 
 	"github.com/Praqma/helmsman/internal/gcs"
 )
@@ -27,7 +28,7 @@ func helmCmd(args []string, desc string) command {
 
 // extractChartName extracts the Helm chart name from full chart name in the desired state.
 func extractChartName(releaseChart string) string {
-	cmd := helmCmd([]string{"show", "chart", releaseChart}, "Extracting chart information for [ "+releaseChart+" ]")
+	cmd := helmCmd([]string{"show", "chart", "--devel", releaseChart}, "Extracting chart information for [ "+releaseChart+" ]")
 
 	result := cmd.exec()
 	if result.code != 0 {
