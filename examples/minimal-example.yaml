@@ -2,7 +2,8 @@
 ## It will use your current kube context and will deploy Tiller without RBAC service account.
 ## For the full config spec and options, check https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md
 helmRepos:
-  stable: https://kubernetes-charts.storage.googleapis.com
+  jenkins = https://charts.jenkins.io
+  center = https://repo.chartcenter.io
 
 namespaces:
   staging:
@@ -11,11 +12,11 @@ apps:
   jenkins:
     namespace: staging
     enabled: true
-    chart: stable/jenkins
-    version: 1.9.12
+    chart: jenkins/jenkins
+    version: 2.15.1
 
   artifactory:
     namespace: staging
     enabled: true
-    chart: stable/artifactory
-    version: 7.3.1
+    chart: center/jfrog/artifactory
+    version: 11.4.2

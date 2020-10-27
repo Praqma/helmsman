@@ -47,7 +47,7 @@ helmRepos:
 
 ```
 
-This example would have `stable` defined with a Google stable repo:
+This example would have `stable` defined with a Google deprecated stable repo:
 
 ```toml
 ...
