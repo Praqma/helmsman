@@ -13,7 +13,7 @@ namespaces:
   production: "default"
 
 helmRepos:
-  stable: "https://kubernetes-charts.storage.googleapis.com"
-  incubator: "http://storage.googleapis.com/kubernetes-charts-incubator"
+  jenkins: "https://charts.jenkins.io"
+  center: "https://repo.chartcenter.io"
 
 apps:

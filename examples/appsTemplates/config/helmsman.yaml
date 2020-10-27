@@ -37,7 +37,9 @@ namespaces:
           memory: "400Mi"
 
 helmRepos:
-  stable: "https://kubernetes-charts.storage.googleapis.com"
+  jenkins: "https://charts.jenkins.io"
+  center: "https://repo.chartcenter.io"
+  bitnami: "https://charts.bitnami.com/bitnami"
   puppet: "https://puppetlabs.github.io/puppetserver-helm-chart"
 
 appsTemplates:
@@ -66,8 +68,8 @@ appsTemplates:
   tomcat: &tomcat
     enabled: true
     priority: -2
-    chart: "stable/tomcat"
-    version: "0.4.0"   # chart version
+    chart: "bitnami/tomcat"
+    version: "6.5.3"   # chart version
     valuesFiles: [
         "../apps/tomcat/common-values.yaml",
     ]

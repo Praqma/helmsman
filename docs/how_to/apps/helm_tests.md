@@ -16,8 +16,8 @@ You can specify that you would like a chart to be tested whenever it is installe
     description = "jenkins"
     namespace = "staging"
     enabled = true
-    chart = "stable/jenkins"
-    version = "0.9.1"
+    chart = "jenkins/jenkins"
+    version = "2.15.1"
     valuesFile = ""
     test = true  # setting this to true, means you want the charts tests to be run on this release when it is installed.
 
@@ -33,8 +33,8 @@ apps:
     description: "jenkins"
     namespace: "staging"
     enabled: true
-    chart: "stable/jenkins"
-    version: "0.9.1"
+    chart: "jenkins/jenkins"
+    version: "2.15.1"
     valuesFile: ""
     test: true  # setting this to true, means you want the charts tests to be run on this release when it is installed.
 

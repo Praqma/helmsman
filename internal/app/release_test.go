@@ -544,7 +544,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			targetFlag: []string{},
 			args: args{
 				apps: map[string]*release{
-					"app": createFullReleasePointer("stable/prometheus", "9.5.2"),
+					"app": createFullReleasePointer("prometheus-community/prometheus", "11.16.5"),
 				},
 			},
 			want: true,
