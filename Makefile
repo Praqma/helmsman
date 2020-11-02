@@ -64,7 +64,7 @@ generate:
 .PHONY: generate
 
 repo:
-	@helm repo list | grep -q "^stable " || helm repo add stable https://kubernetes-charts.storage.googleapis.com
+	@helm repo list | grep -q "^prometheus-community " || helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 	@helm repo update
 .PHONY: repo
 

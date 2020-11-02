@@ -28,16 +28,16 @@ If you want your apps to be deleted in the reverse order as they where created, 
     protected = true
 
 [helmRepos]
-stable = "https://kubernetes-charts.storage.googleapis.com"
-incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
+jenkins = https://charts.jenkins.io
+center = https://repo.chartcenter.io
 
 [apps]
   [apps.jenkins]
     description = "jenkins"
     namespace = "staging" # maps to the namespace as defined in environments above
     enabled = true # change to false if you want to delete this app release [empty = false]
-    chart = "stable/jenkins" # changing the chart name means delete and recreate this chart
-    version = "0.14.3" # chart version
+    chart = "jenkins/jenkins" # changing the chart name means delete and recreate this chart
+    version = "2.15.1" # chart version
     valuesFile = "" # leaving it empty uses the default chart values
     priority= -2
 
@@ -45,8 +45,8 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     description = "jenkins"
     namespace = "staging" # maps to the namespace as defined in environments above
     enabled = true # change to false if you want to delete this app release [empty = false]
-    chart = "stable/jenkins" # changing the chart name means delete and recreate this chart
-    version = "0.14.3" # chart version
+    chart = "jenkins/jenkins" # changing the chart name means delete and recreate this chart
+    version = "2.15.1" # chart version
     valuesFile = "" # leaving it empty uses the default chart values
 
 
@@ -54,8 +54,8 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     description = "jenkins"
     namespace = "production" # maps to the namespace as defined in environments above
     enabled = true # change to false if you want to delete this app release [empty = false]
-    chart = "stable/jenkins" # changing the chart name means delete and recreate this chart
-    version = "0.14.3" # chart version
+    chart = "jenkins/jenkins" # changing the chart name means delete and recreate this chart
+    version = "2.15.1" # chart version
     valuesFile = "" # leaving it empty uses the default chart values
     priority= -3
 
@@ -63,8 +63,8 @@ incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
     description = "artifactory"
     namespace = "staging" # maps to the namespace as defined in environments above
     enabled = true # change to false if you want to delete this app release [empty = false]
-    chart = "stable/artifactory" # changing the chart name means delete and recreate this chart
-    version = "7.0.6" # chart version
+    chart = "center/jfrog/artifactory" # changing the chart name means delete and recreate this chart
+    version = "11.4.2" # chart version
     valuesFile = "" # leaving it empty uses the default chart values
     priority= -2
 ```

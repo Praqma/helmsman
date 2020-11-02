@@ -27,8 +27,8 @@ You can test 3rd party charts in designated namespaces (e.g, staging) within the
     protected = true
 
 [helmRepos]
-  stable = "https://kubernetes-charts.storage.googleapis.com"
-  incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
+  jenkins = https://charts.jenkins.io
+  center = https://repo.chartcenter.io
 
 [apps]
 
@@ -37,8 +37,8 @@ You can test 3rd party charts in designated namespaces (e.g, staging) within the
     description = "production jenkins"
     namespace = "production"
     enabled = true
-    chart = "stable/jenkins"
-    version = "0.9.1" # chart version
+    chart = "jenkins/jenkins"
+    version = "2.15.1" # chart version
     valuesFiles = [ "../my-jenkins-common-values.yaml", "../my-jenkins-production-values.yaml" ]
 
 
@@ -47,8 +47,8 @@ You can test 3rd party charts in designated namespaces (e.g, staging) within the
     description = "production artifactory"
     namespace = "production"
     enabled = true
-    chart = "stable/artifactory"
-    version = "6.2.0" # chart version
+    chart = "center/jfrog/artifactory"
+    version = "11.4.2" # chart version
     valuesFile = "../my-artificatory-production-values.yaml"
 
 
@@ -58,8 +58,8 @@ You can test 3rd party charts in designated namespaces (e.g, staging) within the
     description = "test release of jenkins, testing xyz feature"
     namespace = "staging"
     enabled = true
-    chart = "stable/jenkins"
-    version = "0.9.1" # chart version
+    chart = "jenkins/jenkins"
+    version = "2.15.1" # chart version
     valuesFiles = [ "../my-jenkins-common-values.yaml", "../my-jenkins-testing-values.yaml" ]
 ```
 
@@ -78,8 +78,8 @@ namespaces:
     protected: true
 
 helmRepos:
-  stable: "https://kubernetes-charts.storage.googleapis.com"
-  incubator: "http://storage.googleapis.com/kubernetes-charts-incubator"
+  jenkins: https://charts.jenkins.io
+  center: https://repo.chartcenter.io
 
 apps:
   jenkins:
@@ -87,8 +87,8 @@ apps:
     description: "production jenkins"
     namespace: "production"
     enabled: true
-    chart: "stable/jenkins"
-    version: "0.9.1" # chart version
+    chart: "jenkins/jenkins"
+    version: "2.15.1" # chart version
     valuesFile: "../my-jenkins-production-values.yaml"
 
   artifactory:
@@ -96,8 +96,8 @@ apps:
     description: "production artifactory"
     namespace: "production"
     enabled: true
-    chart: "stable/artifactory"
-    version: "6.2.0" # chart version
+    chart: "center/jfrog/artifactory"
+    version: "11.4.2" # chart version
     valuesFile: "../my-artifactory-production-values.yaml"
 
   # the jenkins release below is being tested in the staging namespace
@@ -106,8 +106,8 @@ apps:
     description: "test release of jenkins, testing xyz feature"
     namespace: "staging"
     enabled: true
-    chart: "stable/jenkins"
-    version: "0.9.1" # chart version
+    chart: "jenkins/jenkins"
+    version: "2.15.1" # chart version
     valuesFile: "../my-jenkins-testing-values.yaml"
 
 ```

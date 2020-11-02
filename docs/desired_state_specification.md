@@ -240,8 +240,8 @@ Synopsis: defines the Helm repos where your charts can be found. You can add as 
 Authenticating to private cloud helm repos:
 - **For S3 repos**: you need to have valid AWS access keys in your environment variables. See [here](https://github.com/hypnoglow/helm-s3#note-on-aws-authentication) for more details.
 - **For GCS repos**: check [here](https://www.terraform.io/docs/providers/google/index.html#authentication-json-file) for getting the required authentication file. Once you have the file, you have two options, either:
-    - set `GOOGLE_APPLICATION_CREDENTIALS` environment variable to contain the absolute path to your Google cloud credentials.json file.
-    - Or, set `GCLOUD_CREDENTIALS` environment variable to contain the content of the credentials.json file.
+    - set `GOOGLE\_APPLICATION\_CREDENTIALS` environment variable to contain the absolute path to your Google cloud credentials.json file.
+    - Or, set `GCLOUD\_CREDENTIALS` environment variable to contain the content of the credentials.json file.
 
 > You can also provide basic auth to access private repos that support basic auth. See the example below.
 
@@ -252,8 +252,8 @@ Example:
 
 ```toml
 [helmRepos]
-stable = "https://kubernetes-charts.storage.googleapis.com"
-incubator = "http://storage.googleapis.com/kubernetes-charts-incubator"
+autoscaler = https://kubernetes.github.io/autoscaler
+grafana = https://grafana.github.io/helm-charts
 myS3repo = "s3://my-S3-private-repo/charts"
 myGCSrepo = "gs://my-GCS-private-repo/charts"
 myPrivateRepo = "https://user:$TOP_SECRET_PASSWORD@mycustomprivaterepo.org"
@@ -261,8 +261,8 @@ myPrivateRepo = "https://user:$TOP_SECRET_PASSWORD@mycustomprivaterepo.org"
 
 ```yaml
 helmRepos:
-  stable: "https://kubernetes-charts.storage.googleapis.com"
-  incubator: "http://storage.googleapis.com/kubernetes-charts-incubator"
+  autoscaler: https://kubernetes.github.io/autoscaler
+  grafana: https://grafana.github.io/helm-charts
   myS3repo: "s3://my-S3-private-repo/charts"
   myGCSrepo: "gs://my-GCS-private-repo/charts"
   myPrivateRepo: "https://user:$TOP_SECRET_PASSWORD@mycustomprivaterepo.org"
@@ -301,6 +301,9 @@ Synopsis: allows for YAML (TOML has no variable reference support) object creati
 Examples:
 
 ```yaml
+helmRepos:
+  jenkins: https://charts.jenkins.io
+
 appsTemplates:
 
   default: &template
@@ -322,7 +325,7 @@ apps:
     <<: *template
     name: "jenkins-stage"
     namespace: "staging"
-    chart: "stable/jenkins"
+    chart: "jenkins/jenkins"
     version: "0.9.2"
     priority: -3
 
@@ -330,7 +333,7 @@ apps:
     <<: *template_custom
     name: "jenkins-prod"
     namespace: "production"
-    chart: "stable/jenkins"
+    chart: "jenkins/jenkins"
     version: "0.9.0"
     priority: -2
 
@@ -390,7 +393,7 @@ Example:
     namespace = "staging"
     enabled = true
     group = "critical"
-    chart = "stable/jenkins"
+    chart = "jenkins/jenkins"
     version = "0.9.0"
     valuesFile = ""
     test = true
@@ -423,7 +426,7 @@ apps:
     namespace: "staging"
     enabled: true
     group: "critical"
-    chart: "stable/jenkins"
+    chart: "jenkins/jenkins"
     version: "0.9.0"
     valuesFile: ""
     test: true
