@@ -14,8 +14,8 @@ Here is an example of a protected app:
     [apps.jenkins]
     namespace = "staging"
     enabled = true
-    chart = "stable/jenkins"
-    version = "0.9.1"
+    chart = "jenkins/jenkins"
+    version = "2.15.1"
     protected = true # defining this release to be protected.
 ```
 
@@ -25,7 +25,7 @@ apps:
   jenkins:
     namespace: "staging"
     enabled: true
-    chart: "stable/jenkins"
-    version: "0.9.1"
+    chart: "jenkins/jenkins"
+    version: "2.15.1"
     protected: true # defining this release to be protected.
 ```

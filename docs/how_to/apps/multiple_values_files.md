@@ -16,8 +16,8 @@ You can include multiple yaml value files to separate configuration for differen
     description = "production jenkins"
     namespace = "production"
     enabled = true
-    chart = "stable/jenkins"
-    version = "0.9.1" # chart version
+    chart = "jenkins/jenkins"
+    version = "2.15.1" # chart version
     valuesFiles = [
         "../my-jenkins-common-values.yaml",
         "../my-jenkins-production-values.yaml"
@@ -28,8 +28,8 @@ You can include multiple yaml value files to separate configuration for differen
     description = "test release of jenkins, testing xyz feature"
     namespace = "staging"
     enabled = true
-    chart = "stable/jenkins"
-    version = "0.9.1" # chart version
+    chart = "jenkins/jenkins"
+    version = "2.15.1" # chart version
     valuesFiles = [
         "../my-jenkins-common-values.yaml",
         "../my-jenkins-testing-values.yaml"
@@ -47,8 +47,8 @@ apps:
     description: "production jenkins"
     namespace: "production"
     enabled: true
-    chart: "stable/jenkins"
-    version: "0.9.1" # chart version
+    chart: "jenkins/jenkins"
+    version: "2.15.1" # chart version
     valuesFiles:
       - "../my-jenkins-common-values.yaml"
       - "../my-jenkins-production-values.yaml"
@@ -59,8 +59,8 @@ apps:
     description: "test release of jenkins, testing xyz feature"
     namespace: "staging"
     enabled: true
-    chart: "stable/jenkins"
-    version: "0.9.1" # chart version
+    chart: "jenkins/jenkins"
+    version: "2.15.1" # chart version
     valuesFiles:
       - "../my-jenkins-common-values.yaml"
       - "../my-jenkins-testing-values.yaml"

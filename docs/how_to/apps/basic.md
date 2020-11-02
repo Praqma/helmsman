@@ -65,8 +65,8 @@ apps:
     description: "jenkins"
     namespace: "staging"
     enabled: false # this tells helmsman to delete it
-    chart: "stable/jenkins"
-    version: "0.9.1"
+    chart: "jenkins/jenkins"
+    version: "2.15.1"
     valuesFile: ""
     test: false
 

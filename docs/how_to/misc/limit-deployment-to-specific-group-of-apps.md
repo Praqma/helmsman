@@ -20,15 +20,15 @@ apps:
       namespace: "staging" # maps to the namespace as defined in namespaces above
       group: "critical" # group name
       enabled: true # change to false if you want to delete this app release empty: false:
-      chart: "stable/jenkins" # changing the chart name means delete and recreate this chart
-      version: "0.14.3" # chart version
+      chart: "jenkins/jenkins" # changing the chart name means delete and recreate this chart
+      version: "2.15.1" # chart version
 
     artifactory:
       namespace: "production" # maps to the namespace as defined in namespaces above
       group: "sidecar" # group name
       enabled: true # change to false if you want to delete this app release empty: false:
-      chart: "stable/artifactory" # changing the chart name means delete and recreate this chart
-      version: "7.0.6" # chart version
+      chart: "center/jfrog/artifactory" # changing the chart name means delete and recreate this chart
+      version: "11.4.2" # chart version
 # ...
 ```
 
