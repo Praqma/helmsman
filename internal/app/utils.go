@@ -682,3 +682,21 @@ func isValidFile(filePath string, allowedFileTypes []string) error {
 	}
 	return nil
 }
+
+func retry(attempts int, sleep time.Duration, callback func() error) (err error) {
+	for i := 0; ; i++ {
+		err = callback()
+		if err == nil {
+			return
+		}
+
+		if i >= (attempts - 1) {
+			break
+		}
+
+		time.Sleep(sleep)
+
+		log.Info(fmt.Sprintf("Retrying %s", err))
+	}
+	return fmt.Errorf("after %d attempts of %s", attempts, err)
+}

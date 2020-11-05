@@ -85,7 +85,7 @@ func (p *plan) addDecision(decision string, priority int, decisionType decisionT
 func (p *plan) exec() {
 	p.sort()
 	if len(p.Commands) > 0 {
-		log.Info("Executing plan... ")
+		log.Info("Executing plan")
 	} else {
 		log.Info("Nothing to execute")
 	}

@@ -2,9 +2,11 @@ package app
 
 import (
 	"bytes"
+	"fmt"
 	"os/exec"
 	"strings"
 	"syscall"
+	"time"
 )
 
 // command type representing all executable commands Helmsman needs
@@ -23,6 +25,27 @@ type exitStatus struct {
 
 func (c *command) String() string {
 	return c.Cmd + " " + strings.Join(c.Args, " ")
+}
+
+// runs exec command with retry
+func (c *command) retryExec(attempts int) exitStatus {
+	var result exitStatus
+	var errMsg string
+	err := retry(attempts, 2*time.Second, func() (err error) {
+		result = c.exec()
+		if result.code != 0 {
+			return fmt.Errorf("%s, it failed with: %s", c.Description, result.errors)
+		}
+		return
+	})
+	if errMsg = ""; err != nil {
+		errMsg = err.Error()
+	}
+	return exitStatus{
+		code:   result.code,
+		output: result.output,
+		errors: errMsg,
+	}
 }
 
 // exec executes the executable command and returns the exit code and execution result
