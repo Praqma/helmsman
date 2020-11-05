@@ -146,6 +146,9 @@ func releaseWithHooks(cmd orderedCommand, wg *sync.WaitGroup, sem chan struct{},
 			return
 		}
 	}
+	if !flags.dryRun && !flags.destroy {
+		defer cmd.targetRelease.label()
+	}
 	if err := execOne(cmd.Command, cmd.targetRelease); err != nil {
 		errors <- err
 		log.Verbose(err.Error())
@@ -156,9 +159,6 @@ func releaseWithHooks(cmd orderedCommand, wg *sync.WaitGroup, sem chan struct{},
 			errors <- err
 			log.Verbose(err.Error())
 		}
-	}
-	if !flags.dryRun && !flags.destroy {
-		cmd.targetRelease.label()
 	}
 }
 
