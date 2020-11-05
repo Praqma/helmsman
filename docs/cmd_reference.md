@@ -8,6 +8,9 @@ This lists available CMD options in Helmsman:
 
 > you can find the CMD options for the version you are using by typing: `helmsman -h` or `helmsman --help`
 
+  `--always-upgrade`
+        upgrade release even if no changes are found.
+
   `--apply`
         apply the plan directly.
 
