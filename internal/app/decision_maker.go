@@ -406,7 +406,10 @@ func (cs *currentState) inspectUpgradeScenario(r *release, p *plan, chartName, c
 				" ]. Delete of the current release will be planned and new chart will be installed in namespace [ "+
 				r.Namespace+" ]", r.Priority, change)
 		} else {
-			if diff := r.diff(); diff != "" {
+			if flags.alwaysUpgrade {
+				r.upgrade(p)
+				p.addDecision("Release [ "+r.Name+" ] will be updated (forced)", r.Priority, change)
+			} else if diff := r.diff(); diff != "" {
 				r.upgrade(p)
 				p.addDecision("Release [ "+r.Name+" ] will be updated", r.Priority, change)
 			} else {
