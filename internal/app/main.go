@@ -37,7 +37,7 @@ func Main() {
 	if len(s.GroupMap) > 0 {
 		s.TargetMap = s.getAppsInGroupsAsTargetMap()
 		if len(s.TargetMap) == 0 {
-			log.Info("No apps defined with -group flag were found, exiting...")
+			log.Info("No apps defined with -group flag were found, exiting")
 			os.Exit(0)
 		}
 	}
@@ -45,7 +45,7 @@ func Main() {
 		s.TargetApps = s.getAppsInTargetsOnly()
 		s.TargetNamespaces = s.getNamespacesInTargetsOnly()
 		if len(s.TargetApps) == 0 {
-			log.Info("No apps defined with -target flag were found, exiting...")
+			log.Info("No apps defined with -target flag were found, exiting")
 			os.Exit(0)
 		}
 	}
@@ -53,7 +53,7 @@ func Main() {
 	curContext = s.Context
 
 	// set the kubecontext to be used Or create it if it does not exist
-	log.Info("Setting up kubectl...")
+	log.Info("Setting up kubectl")
 	if !setKubeContext(settings.KubeContext) {
 		if err := createContext(&s); err != nil {
 			log.Fatal(err.Error())
@@ -61,7 +61,7 @@ func Main() {
 	}
 
 	// add repos -- fails if they are not valid
-	log.Info("Setting up helm...")
+	log.Info("Setting up helm")
 	if err := addHelmRepos(s.HelmRepos); err != nil && !flags.destroy {
 		log.Fatal(err.Error())
 	}
@@ -69,7 +69,7 @@ func Main() {
 	if flags.apply || flags.dryRun || flags.destroy {
 		// add/validate namespaces
 		if !flags.noNs {
-			log.Info("Setting up namespaces...")
+			log.Info("Setting up namespaces")
 			if flags.nsOverride == "" {
 				addNamespaces(&s)
 			} else {
@@ -80,7 +80,7 @@ func Main() {
 	}
 
 	if !flags.skipValidation {
-		log.Info("Validating charts...")
+		log.Info("Validating charts")
 		// validate charts-versions exist in defined repos
 		if err := validateReleaseCharts(&s); err != nil {
 			log.Fatal(err.Error())
@@ -98,7 +98,7 @@ func Main() {
 		s.updateContextLabels()
 	}
 
-	log.Info("Preparing plan...")
+	log.Info("Preparing plan")
 	cs := buildState(&s)
 	p := cs.makePlan(&s)
 	if !flags.keepUntrackedReleases {

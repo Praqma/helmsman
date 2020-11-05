@@ -21,7 +21,7 @@ func newCurrentState() *currentState {
 
 // buildState builds the currentState map containing information about all releases existing in a k8s cluster
 func buildState(s *state) *currentState {
-	log.Info("Acquiring current Helm state from cluster...")
+	log.Info("Acquiring current Helm state from cluster")
 
 	cs := newCurrentState()
 	rel := getHelmReleases(s)
@@ -298,8 +298,8 @@ func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool
 				<-sem
 			}()
 
-			cmd := kubectl([]string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN", "-o", outputFmt, "--no-headers"}, "Getting Helmsman-managed releases")
-			result := cmd.exec()
+			cmd := kubectl([]string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN", "-o", outputFmt, "--no-headers"}, "Getting Helmsman-managed releases from namespace [ " + ns + " ]")
+			result := cmd.retryExec(3)
 			if result.code != 0 {
 				log.Fatal(result.errors)
 			}

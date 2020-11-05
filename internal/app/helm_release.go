@@ -50,10 +50,10 @@ func getHelmReleases(s *state) []helmRelease {
 			var releases []helmRelease
 			var targetReleases []helmRelease
 			defer wg.Done()
-			cmd := helmCmd([]string{"list", "--all", "--max", "0", "--output", "json", "-n", ns}, "Listing all existing releases in [ "+ns+" ] namespace...")
-			result := cmd.exec()
+			cmd := helmCmd([]string{"list", "--all", "--max", "0", "--output", "json", "-n", ns}, "Listing all existing releases in [ "+ns+" ] namespace")
+			result := cmd.retryExec(3)
 			if result.code != 0 {
-				log.Fatal("Failed to list all releases: " + result.errors)
+				log.Fatal(result.errors)
 			}
 			if err := json.Unmarshal([]byte(result.output), &releases); err != nil {
 				log.Fatal(fmt.Sprintf("failed to unmarshal Helm CLI output: %s", err))
