@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -30,21 +31,23 @@ func (c *command) String() string {
 // runs exec command with retry
 func (c *command) retryExec(attempts int) exitStatus {
 	var result exitStatus
-	var errMsg string
-	err := retry(attempts, 2*time.Second, func() (err error) {
+
+	for i := 0; ; i++ {
 		result = c.exec()
-		if result.code != 0 {
-			return fmt.Errorf("%s, it failed with: %s", c.Description, result.errors)
+		if result.code == 0 {
+			return result
 		}
-		return
-	})
-	if errMsg = ""; err != nil {
-		errMsg = err.Error()
+		if i >= (attempts - 1) {
+			break
+		}
+		time.Sleep(time.Duration(math.Pow(2, float64(2+i))) * time.Second)
+		log.Info(fmt.Sprintf("Retrying %s due to error: %s", c.Description, result.errors))
 	}
+
 	return exitStatus{
 		code:   result.code,
 		output: result.output,
-		errors: errMsg,
+		errors: fmt.Sprintf("After %d attempts of %s, it failed with: %s", attempts, c.Description, result.errors),
 	}
 }
 
