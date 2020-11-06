@@ -32,16 +32,15 @@ func (c *command) String() string {
 func (c *command) retryExec(attempts int) exitStatus {
 	var result exitStatus
 
-	for i := 0; ; i++ {
+	for i := 0; i < attempts; i++ {
 		result = c.exec()
 		if result.code == 0 {
 			return result
 		}
-		if i >= (attempts - 1) {
-			break
+		if i < (attempts - 1) {
+			time.Sleep(time.Duration(math.Pow(2, float64(2+i))) * time.Second)
+			log.Info(fmt.Sprintf("Retrying %s due to error: %s", c.Description, result.errors))
 		}
-		time.Sleep(time.Duration(math.Pow(2, float64(2+i))) * time.Second)
-		log.Info(fmt.Sprintf("Retrying %s due to error: %s", c.Description, result.errors))
 	}
 
 	return exitStatus{
