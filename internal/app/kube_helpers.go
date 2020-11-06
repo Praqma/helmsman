@@ -50,7 +50,7 @@ func kubectl(args []string, desc string) command {
 // createNamespace creates a namespace in the k8s cluster
 func createNamespace(ns string) {
 	checkCmd := kubectl([]string{"get", "namespace", ns}, "Looking for namespace [ "+ns+" ]")
-	checkResult := checkCmd.exec()
+	checkResult := checkCmd.retryExec(3)
 	if checkResult.code == 0 {
 		log.Verbose("Namespace [ " + ns + " ] exists")
 		return
