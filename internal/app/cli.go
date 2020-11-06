@@ -266,7 +266,7 @@ func (c *cli) readState(s *state) {
 	if !c.skipValidation {
 		// validate the desired state content
 		if len(c.files) > 0 {
-			log.Info("Validating desired state definition...")
+			log.Info("Validating desired state definition")
 			if err := s.validate(); err != nil { // syntax validation
 				log.Fatal(err.Error())
 			}
