@@ -16,15 +16,12 @@ import (
 // If --ns-override flag is used, it only creates the provided namespace in that flag
 func addNamespaces(s *state) {
 	var wg sync.WaitGroup
-	var namespaces map[string]namespace
-	if len(s.TargetMap) > 0 {
-		namespaces = s.TargetNamespaces
-	} else {
-		namespaces = s.Namespaces
-	}
-	for nsName, ns := range namespaces {
+	for nsName, ns := range s.Namespaces {
+		if ns.disabled {
+			continue
+		}
 		wg.Add(1)
-		go func(name string, cfg namespace, wg *sync.WaitGroup) {
+		go func(name string, cfg *namespace, wg *sync.WaitGroup) {
 			defer wg.Done()
 			createNamespace(name)
 			labelNamespace(name, cfg.Labels)
@@ -39,8 +36,8 @@ func addNamespaces(s *state) {
 }
 
 // kubectl prepares a kubectl command to be executed
-func kubectl(args []string, desc string) command {
-	return command{
+func kubectl(args []string, desc string) Command {
+	return Command{
 		Cmd:         "kubectl",
 		Args:        args,
 		Description: desc,
@@ -50,14 +47,14 @@ func kubectl(args []string, desc string) command {
 // createNamespace creates a namespace in the k8s cluster
 func createNamespace(ns string) {
 	checkCmd := kubectl([]string{"get", "namespace", ns}, "Looking for namespace [ "+ns+" ]")
-	checkResult := checkCmd.retryExec(3)
+	checkResult := checkCmd.RetryExec(3)
 	if checkResult.code == 0 {
 		log.Verbose("Namespace [ " + ns + " ] exists")
 		return
 	}
 
 	cmd := kubectl([]string{"create", "namespace", ns}, "Creating namespace [ "+ns+" ]")
-	result := cmd.exec()
+	result := cmd.Exec()
 	if result.code == 0 {
 		log.Info("Namespace [ " + ns + " ] created")
 	} else {
@@ -81,7 +78,7 @@ func labelNamespace(ns string, labels map[string]string) {
 
 	cmd := kubectl(args, "Labeling namespace [ "+ns+" ]")
 
-	result := cmd.exec()
+	result := cmd.Exec()
 	if result.code != 0 && flags.verbose {
 		log.Warning(fmt.Sprintf("Could not label namespace [ %s with %v ]. Error message: %s", ns, labelSlice, result.errors))
 	}
@@ -101,7 +98,7 @@ func annotateNamespace(ns string, annotations map[string]string) {
 	args = append(args, annotationSlice...)
 	cmd := kubectl(args, "Annotating namespace [ "+ns+" ]")
 
-	result := cmd.exec()
+	result := cmd.Exec()
 	if result.code != 0 && flags.verbose {
 		log.Info(fmt.Sprintf("Could not annotate namespace [ %s with %v ]. Error message: %s", ns, annotationSlice, result.errors))
 	}
@@ -135,7 +132,7 @@ spec:
 	}
 
 	cmd := kubectl([]string{"apply", "-f", targetFile, "-n", ns, flags.getKubeDryRunFlag("apply")}, "Creating LimitRange in namespace [ "+ns+" ]")
-	result := cmd.exec()
+	result := cmd.Exec()
 
 	if result.code != 0 {
 		log.Fatal("Failed to create LimitRange in namespace [ " + ns + " ] with error: " + result.errors)
@@ -179,7 +176,7 @@ spec:
 	}
 
 	cmd := kubectl([]string{"apply", "-f", "temp-ResourceQuota.yaml", "-n", ns, flags.getKubeDryRunFlag("apply")}, "Creating ResourceQuota in namespace [ "+ns+" ]")
-	result := cmd.exec()
+	result := cmd.Exec()
 
 	deleteFile("temp-ResourceQuota.yaml")
 
@@ -254,19 +251,19 @@ func createContext(s *state) error {
 	}
 	cmd := kubectl(setCredentialsCmdArgs, "Creating kubectl context - setting credentials")
 
-	if result := cmd.exec(); result.code != 0 {
+	if result := cmd.Exec(); result.code != 0 {
 		return errors.New("failed to create context [ " + s.Settings.KubeContext + " ]:  " + result.errors)
 	}
 
 	cmd = kubectl([]string{"config", "set-cluster", s.Settings.KubeContext, "--server=" + s.Settings.ClusterURI, "--certificate-authority=" + caCrt}, "Creating kubectl context - setting cluster")
 
-	if result := cmd.exec(); result.code != 0 {
+	if result := cmd.Exec(); result.code != 0 {
 		return errors.New("failed to create context [ " + s.Settings.KubeContext + " ]: " + result.errors)
 	}
 
 	cmd = kubectl([]string{"config", "set-context", s.Settings.KubeContext, "--cluster=" + s.Settings.KubeContext, "--user=" + s.Settings.Username}, "Creating kubectl context - setting context")
 
-	if result := cmd.exec(); result.code != 0 {
+	if result := cmd.Exec(); result.code != 0 {
 		return errors.New("failed to create context [ " + s.Settings.KubeContext + " ]: " + result.errors)
 	}
 
@@ -286,7 +283,7 @@ func setKubeContext(kctx string) bool {
 
 	cmd := kubectl([]string{"config", "use-context", kctx}, "Setting kube context to [ "+kctx+" ]")
 
-	result := cmd.exec()
+	result := cmd.Exec()
 
 	if result.code != 0 {
 		log.Info("Kubectl context [ " + kctx + " ] does not exist. Attempting to create it...")
@@ -301,7 +298,7 @@ func setKubeContext(kctx string) bool {
 func getKubeContext() bool {
 	cmd := kubectl([]string{"config", "current-context"}, "Getting kubectl context")
 
-	result := cmd.exec()
+	result := cmd.Exec()
 
 	if result.code != 0 || result.output == "" {
 		log.Info("Kubectl context is not set")
@@ -312,14 +309,13 @@ func getKubeContext() bool {
 }
 
 // getReleaseContext extracts the Helmsman release context from the helm storage driver objects (secret or configmap) labels
-func getReleaseContext(releaseName string, namespace string) string {
-	storageBackend := settings.StorageBackend
+func getReleaseContext(releaseName, namespace, storageBackend string) string {
 	// kubectl get secrets -n test1 -l MANAGED-BY=HELMSMAN -o=jsonpath='{.items[0].metadata.labels.HELMSMAN_CONTEXT}'
 	// kubectl get secret sh.helm.release.v1.argo.v1  -n test1  -o=jsonpath='{.metadata.labels.HELMSMAN_CONTEXT}'
 	// kubectl get secret -l owner=helm,name=argo -n test1 -o=jsonpath='{.items[-1].metadata.labels.HELMSMAN_CONTEXT}'
 	cmd := kubectl([]string{"get", storageBackend, "-n", namespace, "-l", "owner=helm", "-l", "name=" + releaseName, "-o", "jsonpath='{.items[-1].metadata.labels.HELMSMAN_CONTEXT}'"}, "Getting Helmsman context for [ "+releaseName+" ] release")
 
-	result := cmd.exec()
+	result := cmd.Exec()
 	if result.code != 0 {
 		log.Fatal(result.errors)
 	}
@@ -334,7 +330,7 @@ func getReleaseContext(releaseName string, namespace string) string {
 func getKubectlClientVersion() string {
 	cmd := kubectl([]string{"version", "--client", "--short"}, "Checking kubectl version")
 
-	result := cmd.exec()
+	result := cmd.Exec()
 	if result.code != 0 {
 		log.Fatal("While checking kubectl version: " + result.errors)
 	}

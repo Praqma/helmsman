@@ -1,3 +1,4 @@
+// Package app contains the main logic for the application.
 package app
 
 import (
@@ -14,7 +15,7 @@ const (
 
 var (
 	flags      cli
-	settings   config
+	settings   *config
 	curContext string
 )
 
@@ -34,27 +35,14 @@ func Main() {
 	}
 
 	flags.readState(&s)
-	if len(s.GroupMap) > 0 {
-		s.TargetMap = s.getAppsInGroupsAsTargetMap()
-		if len(s.TargetMap) == 0 {
-			log.Info("No apps defined with -group flag were found, exiting")
-			os.Exit(0)
-		}
-	}
-	if len(s.TargetMap) > 0 {
-		s.TargetApps = s.getAppsInTargetsOnly()
-		s.TargetNamespaces = s.getNamespacesInTargetsOnly()
-		if len(s.TargetApps) == 0 {
-			log.Info("No apps defined with -target flag were found, exiting")
-			os.Exit(0)
-		}
-	}
-	settings = s.Settings
+	log.SlackWebhook = s.Settings.SlackWebhook
+
+	settings = &s.Settings
 	curContext = s.Context
 
 	// set the kubecontext to be used Or create it if it does not exist
 	log.Info("Setting up kubectl")
-	if !setKubeContext(settings.KubeContext) {
+	if !setKubeContext(s.Settings.KubeContext) {
 		if err := createContext(&s); err != nil {
 			log.Fatal(err.Error())
 		}
@@ -82,7 +70,7 @@ func Main() {
 	if !flags.skipValidation {
 		log.Info("Validating charts")
 		// validate charts-versions exist in defined repos
-		if err := validateReleaseCharts(&s); err != nil {
+		if err := s.validateReleaseCharts(); err != nil {
 			log.Fatal(err.Error())
 		}
 	} else {

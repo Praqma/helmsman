@@ -10,7 +10,7 @@ func Test_state_validate(t *testing.T) {
 		Metadata     map[string]string
 		Certificates map[string]string
 		Settings     config
-		Namespaces   map[string]namespace
+		Namespaces   map[string]*namespace
 		HelmRepos    map[string]string
 		Apps         map[string]*release
 	}
@@ -33,8 +33,8 @@ func Test_state_validate(t *testing.T) {
 					Password:    "$K8S_PASSWORD",
 					ClusterURI:  "https://192.168.99.100:8443",
 				},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}},
+				Namespaces: map[string]*namespace{
+					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
@@ -57,8 +57,8 @@ func Test_state_validate(t *testing.T) {
 					Password:    "$K8S_PASSWORD",
 					ClusterURI:  "https://192.168.99.100:8443",
 				},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}},
+				Namespaces: map[string]*namespace{
+					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
@@ -78,8 +78,8 @@ func Test_state_validate(t *testing.T) {
 				Settings: config{
 					KubeContext: "minikube",
 				},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}},
+				Namespaces: map[string]*namespace{
+					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
@@ -102,8 +102,8 @@ func Test_state_validate(t *testing.T) {
 					Password:    "K8S_PASSWORD",
 					ClusterURI:  "https://192.168.99.100:8443",
 				},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}},
+				Namespaces: map[string]*namespace{
+					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
@@ -126,8 +126,8 @@ func Test_state_validate(t *testing.T) {
 					Password:    "K8S_PASSWORD",
 					ClusterURI:  "$URI", // unset env
 				},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}},
+				Namespaces: map[string]*namespace{
+					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
@@ -150,8 +150,8 @@ func Test_state_validate(t *testing.T) {
 					Password:    "K8S_PASSWORD",
 					ClusterURI:  "https//192.168.99.100:8443", // invalid url
 				},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}},
+				Namespaces: map[string]*namespace{
+					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
@@ -173,8 +173,8 @@ func Test_state_validate(t *testing.T) {
 					Password:    "$K8S_PASSWORD",
 					ClusterURI:  "https://192.168.99.100:8443",
 				},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}},
+				Namespaces: map[string]*namespace{
+					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
@@ -194,8 +194,8 @@ func Test_state_validate(t *testing.T) {
 					Password:    "$K8S_PASSWORD",
 					ClusterURI:  "https://192.168.99.100:8443",
 				},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}},
+				Namespaces: map[string]*namespace{
+					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
@@ -218,8 +218,8 @@ func Test_state_validate(t *testing.T) {
 					Password:    "$K8S_PASSWORD",
 					ClusterURI:  "https://192.168.99.100:8443",
 				},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}},
+				Namespaces: map[string]*namespace{
+					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
@@ -236,8 +236,8 @@ func Test_state_validate(t *testing.T) {
 				Settings: config{
 					KubeContext: "minikube",
 				},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}},
+				Namespaces: map[string]*namespace{
+					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
@@ -270,7 +270,7 @@ func Test_state_validate(t *testing.T) {
 				Settings: config{
 					KubeContext: "minikube",
 				},
-				Namespaces: map[string]namespace{},
+				Namespaces: map[string]*namespace{},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo":            "s3://my-repo/charts",
@@ -286,8 +286,8 @@ func Test_state_validate(t *testing.T) {
 				Settings: config{
 					KubeContext: "minikube",
 				},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}},
+				Namespaces: map[string]*namespace{
+					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
 				},
 				HelmRepos: nil,
 				Apps:      make(map[string]*release),
@@ -301,8 +301,8 @@ func Test_state_validate(t *testing.T) {
 				Settings: config{
 					KubeContext: "minikube",
 				},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}},
+				Namespaces: map[string]*namespace{
+					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
 				},
 				HelmRepos: map[string]string{},
 				Apps:      make(map[string]*release),
@@ -316,8 +316,8 @@ func Test_state_validate(t *testing.T) {
 				Settings: config{
 					KubeContext: "minikube",
 				},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}},
+				Namespaces: map[string]*namespace{
+					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
@@ -334,8 +334,8 @@ func Test_state_validate(t *testing.T) {
 				Settings: config{
 					KubeContext: "minikube",
 				},
-				Namespaces: map[string]namespace{
-					"staging": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}},
+				Namespaces: map[string]*namespace{
+					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",

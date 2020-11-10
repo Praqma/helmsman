@@ -1,15 +1,11 @@
 package app
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 // release type representing Helm releases which are described in the desired state
@@ -38,6 +34,7 @@ type release struct {
 	Timeout      int                    `yaml:"timeout"`
 	Hooks        map[string]interface{} `yaml:"hooks"`
 	MaxHistory   int                    `yaml:"maxHistory"`
+	disabled     bool
 }
 
 type chartVersion struct {
@@ -51,21 +48,19 @@ func (r *release) key() string {
 	return fmt.Sprintf("%s-%s", r.Name, r.Namespace)
 }
 
+func (r *release) Disable() {
+	r.disabled = true
+}
+
 // isReleaseConsideredToRun checks if a release is being targeted for operations as specified by user cmd flags (--group or --target)
-func (r *release) isConsideredToRun(s *state) bool {
-	if len(s.TargetMap) > 0 {
-		if _, ok := s.TargetMap[r.Name]; ok {
-			return true
-		}
-		return false
-	}
-	return true
+func (r *release) isConsideredToRun() bool {
+	return !r.disabled
 }
 
 // validate validates if a release inside a desired state meets the specifications or not.
 // check the full specification @ https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md
-func (r *release) validate(appLabel string, names map[string]map[string]bool, s *state) error {
-	if names[r.Name][r.Namespace] {
+func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *state) error {
+	if seen[r.Name][r.Namespace] {
 		return errors.New("release name must be unique within a given namespace")
 	}
 
@@ -127,10 +122,10 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 		}
 	}
 
-	if names[r.Name] == nil {
-		names[r.Name] = make(map[string]bool)
+	if seen[r.Name] == nil {
+		seen[r.Name] = make(map[string]bool)
 	}
-	names[r.Name][r.Namespace] = true
+	seen[r.Name][r.Namespace] = true
 
 	return nil
 }
@@ -152,143 +147,8 @@ func validateHooks(hooks map[string]interface{}) (bool, string) {
 	return true, ""
 }
 
-// validateReleaseCharts validates if the charts defined in a release are valid.
-// Valid charts are the ones that can be found in the defined repos.
-// This function uses Helm search to verify if the chart can be found or not.
-func validateReleaseCharts(s *state) error {
-	var fail bool
-	var apps map[string]*release
-	wg := sync.WaitGroup{}
-	sem := make(chan struct{}, resourcePool)
-	if len(s.TargetMap) > 0 {
-		apps = s.TargetApps
-	} else {
-		apps = s.Apps
-	}
-	c := make(chan string, len(apps))
-
-	charts := make(map[string]map[string][]string)
-	for app, r := range apps {
-		if charts[r.Chart] == nil {
-			charts[r.Chart] = make(map[string][]string)
-		}
-
-		if charts[r.Chart][r.Version] == nil {
-			charts[r.Chart][r.Version] = make([]string, 0)
-		}
-
-		if r.isConsideredToRun(s) {
-			charts[r.Chart][r.Version] = append(charts[r.Chart][r.Version], app)
-		}
-	}
-
-	for chart, versions := range charts {
-		for version, apps := range versions {
-			concattedApps := strings.Join(apps, ", ")
-			ch := chart
-			v := version
-			sem <- struct{}{}
-			wg.Add(1)
-			go func(apps, chart, version string) {
-				defer func() {
-					wg.Done()
-					<-sem
-				}()
-				validateChart(concattedApps, chart, version, c)
-			}(concattedApps, ch, v)
-		}
-	}
-
-	wg.Wait()
-	close(c)
-	for err := range c {
-		if err != "" {
-			fail = true
-			log.Error(err)
-		}
-	}
-	if fail {
-		return errors.New("chart validation failed")
-	}
-	return nil
-}
-
-var versionExtractor = regexp.MustCompile(`[\n]version:\s?(.*)`)
-
-// validateChart validates if chart with the same name and version as specified in the DSF exists
-func validateChart(apps, chart, version string, c chan string) {
-	if isLocalChart(chart) {
-		cmd := helmCmd([]string{"inspect", "chart", chart}, "Validating [ "+chart+" ] chart's availability")
-
-		result := cmd.exec()
-		if result.code != 0 {
-			maybeRepo := filepath.Base(filepath.Dir(chart))
-			c <- "Chart [ " + chart + " ] for apps [" + apps + "] can't be found. Inspection returned error: \"" +
-				strings.TrimSpace(result.errors) + "\" -- If this is not a local chart, add the repo [ " + maybeRepo + " ] in your helmRepos stanza."
-			return
-		}
-		matches := versionExtractor.FindStringSubmatch(result.output)
-		if len(matches) == 2 {
-			v := strings.Trim(matches[1], `'"`)
-			if strings.Trim(version, `'"`) != v {
-				c <- "Chart [ " + chart + " ] with version [ " + version + " ] is specified for " +
-					"apps [" + apps + "] but the chart found at that path has version [ " + v + " ] which does not match."
-				return
-			}
-		}
-	} else {
-		v := version
-		if len(v) == 0 {
-			v = "*"
-		}
-		cmd := helmCmd([]string{"search", "repo", chart, "--version", v, "-l"}, "Validating [ "+chart+" ] chart's version [ "+version+" ] availability")
-
-		if result := cmd.exec(); result.code != 0 || strings.Contains(result.output, "No results found") {
-			c <- "Chart [ " + chart + " ] with version [ " + version + " ] is specified for " +
-				"apps [" + apps + "] but was not found. If this is not a local chart, define its helm repo in the helmRepo stanza in your DSF."
-			return
-		}
-	}
-}
-
-// getChartVersion fetches the lastest chart version matching the semantic versioning constraints.
-// If chart is local, returns the given release version
-func getChartVersion(chart, version string) (string, string) {
-	if isLocalChart(chart) {
-		log.Info("Chart [ " + chart + " ] with version [ " + version + " ] was found locally.")
-		return version, ""
-	}
-
-	cmd := helmCmd([]string{"search", "repo", chart, "--version", version, "-o", "json"}, "Getting latest non-local chart's version "+chart+"-"+version+"")
-
-	result := cmd.exec()
-	if result.code != 0 {
-		return "", "Chart [ " + chart + " ] with version [ " + version + " ] is specified but not found in the helm repositories"
-	}
-
-	chartVersions := make([]chartVersion, 0)
-	if err := json.Unmarshal([]byte(result.output), &chartVersions); err != nil {
-		log.Fatal(fmt.Sprint(err))
-	}
-
-	filteredChartVersions := make([]chartVersion, 0)
-	for _, c := range chartVersions {
-		if c.Name == chart {
-			filteredChartVersions = append(filteredChartVersions, c)
-		}
-	}
-
-	if len(filteredChartVersions) < 1 {
-		return "", "Chart [ " + chart + " ] with version [ " + version + " ] is specified but not found in the helm repositories"
-	} else if len(filteredChartVersions) > 1 {
-		return "", "Multiple versions of chart [ " + chart + " ] with version [ " + version + " ] found in the helm repositories"
-	}
-
-	return filteredChartVersions[0].Version, ""
-}
-
 // testRelease creates a Helm command to test a particular release.
-func (r *release) test(afterCommands *[]command) {
+func (r *release) test(afterCommands *[]Command) {
 	cmd := helmCmd(r.getHelmArgsFor("test"), "Running tests for release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 	*afterCommands = append(*afterCommands, cmd)
 }
@@ -312,7 +172,7 @@ func (r *release) uninstall(p *plan, optionalNamespace ...string) {
 		ns = optionalNamespace[0]
 	}
 	priority := r.Priority
-	if settings.ReverseDelete {
+	if p.ReverseDelete {
 		priority = priority * -1
 	}
 
@@ -337,7 +197,7 @@ func (r *release) diff() string {
 
 	cmd := helmCmd(concat([]string{"diff", colorFlag, suppressDiffSecretsFlag}, diffContextFlag, r.getHelmArgsFor("diff")), "Diffing release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
-	result := cmd.retryExec(3)
+	result := cmd.RetryExec(3)
 	if result.code != 0 {
 		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors))
 	} else {
@@ -389,7 +249,7 @@ func (r *release) rollback(cs *currentState, p *plan) {
 	if r.Namespace == rs.Namespace {
 
 		cmd := helmCmd(concat([]string{"rollback", r.Name, rs.getRevision()}, r.getWait(), r.getTimeout(), r.getNoHooks(), flags.getDryRunFlags()), "Rolling back release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-		p.addCommand(cmd, r.Priority, r, []command{}, []command{})
+		p.addCommand(cmd, r.Priority, r, []Command{}, []Command{})
 		r.upgrade(p) // this is to reflect any changes in values file(s)
 		p.addDecision("Release [ "+r.Name+" ] was deleted and is desired to be rolled back to "+
 			"namespace [ "+r.Namespace+" ]", r.Priority, create)
@@ -404,13 +264,12 @@ func (r *release) rollback(cs *currentState, p *plan) {
 }
 
 // label applies Helmsman specific labels to Helm's state resources (secrets/configmaps)
-func (r *release) label() {
+func (r *release) label(storageBackend string) {
 	if r.Enabled {
-		storageBackend := settings.StorageBackend
 
 		cmd := kubectl([]string{"label", storageBackend, "-n", r.Namespace, "-l", "owner=helm,name=" + r.Name, "MANAGED-BY=HELMSMAN", "NAMESPACE=" + r.Namespace, "HELMSMAN_CONTEXT=" + curContext, "--overwrite"}, "Applying Helmsman labels to [ "+r.Name+" ] release")
 
-		result := cmd.exec()
+		result := cmd.Exec()
 		if result.code != 0 {
 			log.Fatal(result.errors)
 		}
@@ -460,7 +319,7 @@ func (r *release) getValuesFiles() []string {
 
 	if r.SecretsFile != "" || len(r.SecretsFiles) > 0 {
 		if settings.EyamlEnabled {
-			if !toolExists("eyaml") {
+			if !ToolExists("eyaml") {
 				log.Fatal("hiera-eyaml is not installed/configured correctly. Aborting!")
 			}
 		} else {
@@ -626,13 +485,13 @@ func (r *release) inheritMaxHistory(s *state) {
 // checkHooks checks if a hook of certain type exists and creates its command
 // if success condition for the hook is defined, a "kubectl wait" command is created
 // returns two slices of before and after commands
-func (r *release) checkHooks(hookType string, p *plan, optionalNamespace ...string) ([]command, []command) {
+func (r *release) checkHooks(hookType string, p *plan, optionalNamespace ...string) ([]Command, []Command) {
 	ns := r.Namespace
 	if len(optionalNamespace) > 0 {
 		ns = optionalNamespace[0]
 	}
-	var beforeCommands []command
-	var afterCommands []command
+	var beforeCommands []Command
+	var afterCommands []Command
 	switch hookType {
 	case "install":
 		{
@@ -685,8 +544,8 @@ func (r *release) checkHooks(hookType string, p *plan, optionalNamespace ...stri
 
 // shouldWaitForHook checks if there is a success condition to wait for after applying a hook
 // returns a boolean and the wait command if applicable
-func (r *release) shouldWaitForHook(hookFile string, hookType string, namespace string) (bool, []command) {
-	var cmds []command
+func (r *release) shouldWaitForHook(hookFile string, hookType string, namespace string) (bool, []Command) {
+	var cmds []Command
 	if flags.dryRun {
 		return false, cmds
 	} else if _, ok := r.Hooks["successCondition"]; ok {

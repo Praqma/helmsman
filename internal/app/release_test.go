@@ -12,7 +12,7 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 	os.MkdirAll(os.TempDir()+"/helmsman-tests/myapp", os.ModePerm)
 	os.MkdirAll(os.TempDir()+"/helmsman-tests/dir-with space/myapp", os.ModePerm)
 	cmd := helmCmd([]string{"create", os.TempDir() + "/helmsman-tests/dir-with space/myapp"}, "creating an empty local chart directory")
-	if result := cmd.exec(); result.code != 0 {
+	if result := cmd.Exec(); result.code != 0 {
 		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors))
 	}
 
@@ -27,7 +27,7 @@ func Test_validateRelease(t *testing.T) {
 		Metadata:     make(map[string]string),
 		Certificates: make(map[string]string),
 		Settings:     (config{}),
-		Namespaces:   map[string]namespace{"namespace": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}}},
+		Namespaces:   map[string]*namespace{"namespace": &namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false}},
 		HelmRepos:    make(map[string]string),
 		Apps:         make(map[string]*release),
 	}
@@ -424,7 +424,7 @@ func Test_inheritHooks(t *testing.T) {
 				"successTimeout":   "60s",
 			},
 		},
-		Namespaces: map[string]namespace{"namespace": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}}},
+		Namespaces: map[string]*namespace{"namespace": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false}},
 		HelmRepos:  make(map[string]string),
 		Apps:       make(map[string]*release),
 	}
@@ -513,17 +513,15 @@ func Test_validateReleaseCharts(t *testing.T) {
 		want       bool
 	}{
 		{
-			name:       "test case 1: valid local path with no chart",
-			targetFlag: []string{},
+			name: "test case 1: valid local path with no chart",
 			args: args{
 				apps: map[string]*release{
 					"app": createFullReleasePointer(os.TempDir()+"/helmsman-tests/myapp", ""),
 				},
 			},
-			want: false,
+			want: true,
 		}, {
-			name:       "test case 2: invalid local path",
-			targetFlag: []string{},
+			name: "test case 2: invalid local path",
 			args: args{
 				apps: map[string]*release{
 					"app": createFullReleasePointer(os.TempDir()+"/does-not-exist/myapp", ""),
@@ -531,8 +529,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name:       "test case 3: valid chart local path with whitespace",
-			targetFlag: []string{},
+			name: "test case 3: valid chart local path with whitespace",
 			args: args{
 				apps: map[string]*release{
 					"app": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
@@ -540,8 +537,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			},
 			want: true,
 		}, {
-			name:       "test case 4: valid chart from repo",
-			targetFlag: []string{},
+			name: "test case 4: valid chart from repo",
 			args: args{
 				apps: map[string]*release{
 					"app": createFullReleasePointer("prometheus-community/prometheus", "11.16.5"),
@@ -586,23 +582,10 @@ func Test_validateReleaseCharts(t *testing.T) {
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			stt := &state{}
-			stt.Apps = tt.args.apps
-			stt.TargetMap = make(map[string]bool)
-			stt.GroupMap = make(map[string]bool)
-			stt.TargetApps = make(map[string]*release)
-			for _, target := range tt.targetFlag {
-				stt.TargetMap[target] = true
-			}
-			for name, use := range stt.TargetMap {
-				if value, ok := stt.Apps[name]; ok && use {
-					stt.TargetApps[name] = value
-				}
-			}
-			for _, group := range tt.groupFlag {
-				stt.GroupMap[group] = true
-			}
-			err := validateReleaseCharts(stt)
+			stt := &state{Apps: tt.args.apps}
+			stt.makeTargetMap(tt.groupFlag, tt.targetFlag)
+			stt.disableUntargettedApps()
+			err := stt.validateReleaseCharts()
 			switch err.(type) {
 			case nil:
 				if tt.want != true {

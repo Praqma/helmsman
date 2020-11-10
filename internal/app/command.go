@@ -10,30 +10,30 @@ import (
 	"time"
 )
 
-// command type representing all executable commands Helmsman needs
+// Command type representing all executable commands Helmsman needs
 // to execute in order to inspect the environment/ releases/ charts etc.
-type command struct {
+type Command struct {
 	Cmd         string
 	Args        []string
 	Description string
 }
 
-type exitStatus struct {
+type ExitStatus struct {
 	code   int
 	errors string
 	output string
 }
 
-func (c *command) String() string {
+func (c *Command) String() string {
 	return c.Cmd + " " + strings.Join(c.Args, " ")
 }
 
-// runs exec command with retry
-func (c *command) retryExec(attempts int) exitStatus {
-	var result exitStatus
+// RetryExec runs exec command with retry
+func (c *Command) RetryExec(attempts int) ExitStatus {
+	var result ExitStatus
 
 	for i := 0; i < attempts; i++ {
-		result = c.exec()
+		result = c.Exec()
 		if result.code == 0 {
 			return result
 		}
@@ -43,15 +43,15 @@ func (c *command) retryExec(attempts int) exitStatus {
 		}
 	}
 
-	return exitStatus{
+	return ExitStatus{
 		code:   result.code,
 		output: result.output,
 		errors: fmt.Sprintf("After %d attempts of %s, it failed with: %s", attempts, c.Description, result.errors),
 	}
 }
 
-// exec executes the executable command and returns the exit code and execution result
-func (c *command) exec() exitStatus {
+// Exec executes the executable command and returns the exit code and execution result
+func (c *Command) Exec() ExitStatus {
 	// Only use non-empty string args
 	args := []string{}
 	for _, str := range c.Args {
@@ -70,7 +70,7 @@ func (c *command) exec() exitStatus {
 
 	if err := cmd.Start(); err != nil {
 		log.Info("cmd.Start: " + err.Error())
-		return exitStatus{
+		return ExitStatus{
 			code:   1,
 			errors: err.Error(),
 		}
@@ -79,7 +79,7 @@ func (c *command) exec() exitStatus {
 	if err := cmd.Wait(); err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				return exitStatus{
+				return ExitStatus{
 					code:   status.ExitStatus(),
 					output: stdout.String(),
 					errors: stderr.String(),
@@ -89,23 +89,23 @@ func (c *command) exec() exitStatus {
 			log.Fatal("cmd.Wait: " + err.Error())
 		}
 	}
-	return exitStatus{
+	return ExitStatus{
 		code:   0,
 		output: stdout.String(),
 		errors: stderr.String(),
 	}
 }
 
-// toolExists returns true if the tool is present in the environment and false otherwise.
+// ToolExists returns true if the tool is present in the environment and false otherwise.
 // It takes as input the tool's command to check if it is recognizable or not. e.g. helm or kubectl
-func toolExists(tool string) bool {
-	cmd := command{
+func ToolExists(tool string) bool {
+	cmd := Command{
 		Cmd:         tool,
 		Args:        []string{},
 		Description: "Validating that [ " + tool + " ] is installed",
 	}
 
-	result := cmd.exec()
+	result := cmd.Exec()
 
 	return result.code == 0
 }

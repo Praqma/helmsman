@@ -42,7 +42,7 @@ func buildState(s *state) *currentState {
 				<-sem
 			}()
 			if flags.contextOverride == "" {
-				r.HelmsmanContext = getReleaseContext(r.Name, r.Namespace)
+				r.HelmsmanContext = getReleaseContext(r.Name, r.Namespace, s.Settings.StorageBackend)
 			} else {
 				r.HelmsmanContext = flags.contextOverride
 				log.Info("Overwrote Helmsman context for release [ " + r.Name + " ] to " + flags.contextOverride)
@@ -57,6 +57,8 @@ func buildState(s *state) *currentState {
 // makePlan creates a plan of the actions needed to make the desired state come true.
 func (cs *currentState) makePlan(s *state) *plan {
 	p := createPlan()
+	p.StorageBackend = s.Settings.StorageBackend
+	p.ReverseDelete = s.Settings.ReverseDelete
 
 	wg := sync.WaitGroup{}
 	sem := make(chan struct{}, resourcePool)
@@ -85,7 +87,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 			extractedChartVersions[r.Chart] = make(map[string]string)
 		}
 
-		if r.isConsideredToRun(s) {
+		if r.isConsideredToRun() {
 			charts[r.Chart][r.Version] = true
 		}
 	}
@@ -179,7 +181,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 // to make a release section of the desired state come true.
 func (cs *currentState) decide(r *release, s *state, p *plan, chartName, chartVersion string) {
 	// check for presence in defined targets or groups
-	if !r.isConsideredToRun(s) {
+	if !r.isConsideredToRun() {
 		p.addDecision("Release [ "+r.Name+" ] ignored", r.Priority, ignored)
 		return
 	}
@@ -272,21 +274,18 @@ var releaseNameExtractor = regexp.MustCompile(`sh\.helm\.release\.v\d+\.`)
 func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool {
 	const outputFmt = "custom-columns=NAME:.metadata.name,CTX:.metadata.labels.HELMSMAN_CONTEXT"
 	var (
-		wg         sync.WaitGroup
-		mutex      = &sync.Mutex{}
-		namespaces map[string]namespace
+		wg    sync.WaitGroup
+		mutex = &sync.Mutex{}
 	)
 	releases := make(map[string]map[string]bool)
 	sem := make(chan struct{}, resourcePool)
 
-	if len(s.TargetMap) > 0 {
-		namespaces = s.TargetNamespaces
-	} else {
-		namespaces = s.Namespaces
-	}
 	storageBackend := s.Settings.StorageBackend
 
-	for ns := range namespaces {
+	for ns, cfg := range s.Namespaces {
+		if cfg.disabled {
+			continue
+		}
 		// acquire
 		sem <- struct{}{}
 		wg.Add(1)
@@ -298,8 +297,8 @@ func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool
 				<-sem
 			}()
 
-			cmd := kubectl([]string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN", "-o", outputFmt, "--no-headers"}, "Getting Helmsman-managed releases from namespace [ " + ns + " ]")
-			result := cmd.retryExec(3)
+			cmd := kubectl([]string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN", "-o", outputFmt, "--no-headers"}, "Getting Helmsman-managed releases from namespace [ "+ns+" ]")
+			result := cmd.RetryExec(3)
 			if result.code != 0 {
 				log.Fatal(result.errors)
 			}

@@ -32,7 +32,7 @@ func Test_plan_addCommand(t *testing.T) {
 		Created   time.Time
 	}
 	type args struct {
-		c command
+		c Command
 	}
 	tests := []struct {
 		name   string
@@ -47,7 +47,7 @@ func Test_plan_addCommand(t *testing.T) {
 				Created:   time.Now(),
 			},
 			args: args{
-				c: command{
+				c: Command{
 					Cmd:         "bash",
 					Args:        []string{"-c", "echo this is fun"},
 					Description: "A bash command execution test with echo.",
@@ -63,7 +63,7 @@ func Test_plan_addCommand(t *testing.T) {
 				Created:   tt.fields.Created,
 			}
 			r := &release{}
-			p.addCommand(tt.args.c, 0, r, []command{}, []command{})
+			p.addCommand(tt.args.c, 0, r, []Command{}, []Command{})
 			if got := len(p.Commands); got != 1 {
 				t.Errorf("addCommand(): got  %v, want 1", got)
 			}

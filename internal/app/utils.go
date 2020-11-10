@@ -33,7 +33,7 @@ func printMap(m map[string]string, indent int) {
 }
 
 // printObjectMap prints to the console any map of string keys and object values.
-func printNamespacesMap(m map[string]namespace) {
+func printNamespacesMap(m map[string]*namespace) {
 	for key, value := range m {
 		fmt.Println(key, " : protected = ", value)
 	}
@@ -634,13 +634,13 @@ func decryptSecret(name string) error {
 		}
 	}
 
-	command := command{
+	command := Command{
 		Cmd:         cmd,
 		Args:        args,
 		Description: "Decrypting " + name,
 	}
 
-	result := command.exec()
+	result := command.Exec()
 	if !settings.EyamlEnabled {
 		_, fileNotFound := os.Stat(name + ".dec")
 		if fileNotFound != nil && !isOfType(name, []string{".dec"}) {
