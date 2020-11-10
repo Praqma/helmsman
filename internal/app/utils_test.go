@@ -446,8 +446,7 @@ func Test_eyamlSecrets(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Log(tt.want)
-			defaultSettings := settings
-			defer func() { settings = defaultSettings }()
+			settings = &config{}
 			settings.EyamlEnabled = tt.args.s.EyamlEnabled
 			settings.EyamlPublicKeyPath = tt.args.s.EyamlPublicKeyPath
 			settings.EyamlPrivateKeyPath = tt.args.s.EyamlPrivateKeyPath

@@ -127,7 +127,7 @@ func Test_inspectUpgradeScenario(t *testing.T) {
 
 func Test_decide(t *testing.T) {
 	type args struct {
-		r *release
+		r string
 		s *state
 	}
 	tests := []struct {
@@ -140,25 +140,33 @@ func Test_decide(t *testing.T) {
 			name:       "decide() - targetMap does not contain this service - skip",
 			targetFlag: []string{"someOtherRelease"},
 			args: args{
-				r: &release{
-					Name:      "release1",
-					Namespace: "namespace",
-					Enabled:   true,
+				r: "release1",
+				s: &state{
+					Apps: map[string]*release{
+						"release1": {
+							Name:      "release1",
+							Namespace: "namespace",
+							Enabled:   true,
+						},
+					},
 				},
-				s: &state{},
 			},
 			want: ignored,
 		},
 		{
-			name:       "decide() - targetMap does not contain this service - skip",
+			name:       "decide() - targetMap does not contain this service either - skip",
 			targetFlag: []string{"someOtherRelease", "norThisOne"},
 			args: args{
-				r: &release{
-					Name:      "release1",
-					Namespace: "namespace",
-					Enabled:   true,
+				r: "release1",
+				s: &state{
+					Apps: map[string]*release{
+						"release1": {
+							Name:      "release1",
+							Namespace: "namespace",
+							Enabled:   true,
+						},
+					},
 				},
-				s: &state{},
 			},
 			want: ignored,
 		},
@@ -166,12 +174,16 @@ func Test_decide(t *testing.T) {
 			name:       "decide() - targetMap is empty - will install",
 			targetFlag: []string{},
 			args: args{
-				r: &release{
-					Name:      "release4",
-					Namespace: "namespace",
-					Enabled:   true,
+				r: "release4",
+				s: &state{
+					Apps: map[string]*release{
+						"release4": {
+							Name:      "release4",
+							Namespace: "namespace",
+							Enabled:   true,
+						},
+					},
 				},
-				s: &state{},
 			},
 			want: create,
 		},
@@ -179,12 +191,16 @@ func Test_decide(t *testing.T) {
 			name:       "decide() - targetMap is exactly this service - will install",
 			targetFlag: []string{"thisRelease"},
 			args: args{
-				r: &release{
-					Name:      "thisRelease",
-					Namespace: "namespace",
-					Enabled:   true,
+				r: "thisRelease",
+				s: &state{
+					Apps: map[string]*release{
+						"thisRelease": {
+							Name:      "thisRelease",
+							Namespace: "namespace",
+							Enabled:   true,
+						},
+					},
 				},
-				s: &state{},
 			},
 			want: create,
 		},
@@ -192,12 +208,16 @@ func Test_decide(t *testing.T) {
 			name:       "decide() - targetMap contains this service - will install",
 			targetFlag: []string{"notThisOne", "thisRelease"},
 			args: args{
-				r: &release{
-					Name:      "thisRelease",
-					Namespace: "namespace",
-					Enabled:   true,
+				r: "thisRelease",
+				s: &state{
+					Apps: map[string]*release{
+						"thisRelease": {
+							Name:      "thisRelease",
+							Namespace: "namespace",
+							Enabled:   true,
+						},
+					},
 				},
-				s: &state{},
 			},
 			want: create,
 		},
@@ -206,14 +226,11 @@ func Test_decide(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cs := newCurrentState()
-			tt.args.s.TargetMap = make(map[string]bool)
-
-			for _, target := range tt.targetFlag {
-				tt.args.s.TargetMap[target] = true
-			}
+			tt.args.s.makeTargetMap([]string{}, tt.targetFlag)
+			tt.args.s.disableUntargettedApps()
 			outcome := plan{}
 			// Act
-			cs.decide(tt.args.r, tt.args.s, &outcome, "", "")
+			cs.decide(tt.args.s.Apps[tt.args.r], tt.args.s, &outcome, "", "")
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
 
@@ -244,7 +261,7 @@ func Test_decide_group(t *testing.T) {
 						"release1": {
 							Name:      "release1",
 							Namespace: "namespace",
-							Group:     "run-me",
+							Group:     "run-me-not",
 							Enabled:   true,
 						},
 					},
@@ -264,6 +281,18 @@ func Test_decide_group(t *testing.T) {
 							Group:     "run-me",
 							Enabled:   true,
 						},
+						"release2": {
+							Name:      "release2",
+							Namespace: "namespace",
+							Group:     "run-me-not",
+							Enabled:   true,
+						},
+						"release3": {
+							Name:      "release3",
+							Namespace: "namespace2",
+							Group:     "run-me-not",
+							Enabled:   true,
+						},
 					},
 				},
 			},
@@ -275,11 +304,7 @@ func Test_decide_group(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.args.s.GroupMap = make(map[string]bool)
-			for _, group := range tt.groupFlag {
-				tt.args.s.GroupMap[group] = true
-			}
-			tt.args.s.TargetMap = tt.args.s.getAppsInGroupsAsTargetMap()
+			tt.args.s.makeTargetMap(tt.groupFlag, []string{})
 			if len(tt.args.s.TargetMap) != len(tt.want) {
 				t.Errorf("decide() = %d, want %d", len(tt.args.s.TargetMap), len(tt.want))
 			}

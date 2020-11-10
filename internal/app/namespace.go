@@ -43,10 +43,15 @@ type namespace struct {
 	Labels      map[string]string `yaml:"labels"`
 	Annotations map[string]string `yaml:"annotations"`
 	Quotas      *quotas           `yaml:"quotas,omitempty"`
+	disabled    bool
+}
+
+func (n *namespace) Disable() {
+	n.disabled = true
 }
 
 // print prints the namespace
-func (n namespace) print() {
+func (n *namespace) print() {
 	fmt.Println("")
 	fmt.Println("\tprotected : ", n.Protected)
 	fmt.Println("\tlabels : ")

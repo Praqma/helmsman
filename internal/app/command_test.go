@@ -39,12 +39,12 @@ func Test_command_exec(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := command{
+			c := Command{
 				Cmd:         tt.fields.Cmd,
 				Args:        tt.fields.Args,
 				Description: tt.fields.Description,
 			}
-			got := c.exec()
+			got := c.Exec()
 			if got.code != tt.want {
 				t.Errorf("command.exec() got = %v, want %v", got.code, tt.want)
 			}
