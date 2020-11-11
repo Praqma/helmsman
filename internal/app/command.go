@@ -99,13 +99,6 @@ func (c *Command) Exec() ExitStatus {
 // ToolExists returns true if the tool is present in the environment and false otherwise.
 // It takes as input the tool's command to check if it is recognizable or not. e.g. helm or kubectl
 func ToolExists(tool string) bool {
-	cmd := Command{
-		Cmd:         tool,
-		Args:        []string{},
-		Description: "Validating that [ " + tool + " ] is installed",
-	}
-
-	result := cmd.Exec()
-
-	return result.code == 0
+	_, err := exec.LookPath(tool)
+	return err == nil
 }

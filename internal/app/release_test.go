@@ -281,7 +281,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "../../tests/values.xml must be of one the following file formats: .yaml, .yml",
+			want: "../../tests/values.xml must be of one the following file formats: .yaml, .yml, .json",
 		}, {
 			name: "test case 16 - valid hook file type",
 			args: args{
@@ -396,6 +396,22 @@ func Test_validateRelease(t *testing.T) {
 				s: st,
 			},
 			want: "doesnt-exist.sh must be valid relative (from dsf file) file path.",
+		}, {
+			name: "test case 23 - executable hook type",
+			args: args{
+				r: &release{
+					Name:        "release20",
+					Description: "",
+					Namespace:   "namespace",
+					Enabled:     true,
+					Chart:       "repo/chartX",
+					Version:     "1.0",
+					ValuesFile:  "../../tests/values.yaml",
+					Hooks:       map[string]interface{}{"preDelete": "../../tests/post-renderer.sh"},
+				},
+				s: st,
+			},
+			want: "",
 		},
 	}
 	names := make(map[string]map[string]bool)

@@ -107,7 +107,7 @@ func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *
 	}
 
 	if r.PostRenderer != "" {
-		if _, err := os.Stat(r.PostRenderer); err != nil {
+		if !ToolExists(r.PostRenderer) {
 			return fmt.Errorf(r.PostRenderer + " must be valid relative (from dsf file) file path.")
 		}
 	}
@@ -135,8 +135,11 @@ func validateHooks(hooks map[string]interface{}) (bool, string) {
 	for key, value := range hooks {
 		switch key {
 		case "preInstall", "postInstall", "preUpgrade", "postUpgrade", "preDelete", "postDelete":
-			if err := isValidFile(value.(string), []string{".yaml", ".yml"}); err != nil {
-				return false, err.Error()
+			hook := value.(string)
+			if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err != nil {
+				if !ToolExists(strings.Fields(hook)[0]) {
+					return false, err.Error()
+				}
 			}
 		case "successCondition", "successTimeout", "deleteOnSuccess":
 			continue
@@ -155,7 +158,7 @@ func (r *release) test(afterCommands *[]Command) {
 
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
 func (r *release) install(p *plan) {
-	before, after := r.checkHooks("install", p)
+	before, after := r.checkHooks("install")
 
 	if r.Test {
 		r.test(&after)
@@ -176,7 +179,7 @@ func (r *release) uninstall(p *plan, optionalNamespace ...string) {
 		priority = priority * -1
 	}
 
-	before, after := r.checkHooks("delete", p, ns)
+	before, after := r.checkHooks("delete", ns)
 
 	cmd := helmCmd(r.getHelmArgsFor("uninstall", ns), "Delete release [ "+r.Name+" ] in namespace [ "+ns+" ]")
 	p.addCommand(cmd, priority, r, before, after)
@@ -212,7 +215,7 @@ func (r *release) diff() string {
 // upgradeRelease upgrades an existing release with the specified values.yaml
 func (r *release) upgrade(p *plan) {
 
-	before, after := r.checkHooks("upgrade", p)
+	before, after := r.checkHooks("upgrade")
 
 	if r.Test {
 		r.test(&after)
@@ -485,61 +488,66 @@ func (r *release) inheritMaxHistory(s *state) {
 // checkHooks checks if a hook of certain type exists and creates its command
 // if success condition for the hook is defined, a "kubectl wait" command is created
 // returns two slices of before and after commands
-func (r *release) checkHooks(hookType string, p *plan, optionalNamespace ...string) ([]Command, []Command) {
+func (r *release) checkHooks(action string, optionalNamespace ...string) ([]Command, []Command) {
 	ns := r.Namespace
 	if len(optionalNamespace) > 0 {
 		ns = optionalNamespace[0]
 	}
-	var beforeCommands []Command
-	var afterCommands []Command
-	switch hookType {
+	var (
+		beforeCmds []Command
+		afterCmds  []Command
+	)
+	switch action {
 	case "install":
 		{
 			if _, ok := r.Hooks["preInstall"]; ok {
-				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["preInstall"].(string), flags.getKubeDryRunFlag("apply")}, "Apply pre-install manifest "+r.Hooks["preInstall"].(string)))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks["preInstall"].(string), "pre-install", ns); wait {
-					beforeCommands = append(beforeCommands, cmds...)
-				}
+				beforeCmds = append(beforeCmds, r.getHookCommands("preInstall", ns)...)
 			}
 			if _, ok := r.Hooks["postInstall"]; ok {
-				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["postInstall"].(string), flags.getKubeDryRunFlag("apply")}, "Apply post-install manifest "+r.Hooks["postInstall"].(string)))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks["postInstall"].(string), "post-install", ns); wait {
-					afterCommands = append(afterCommands, cmds...)
-				}
+				afterCmds = append(afterCmds, r.getHookCommands("postInstall", ns)...)
 			}
 		}
 	case "upgrade":
 		{
 			if _, ok := r.Hooks["preUpgrade"]; ok {
-				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["preUpgrade"].(string), flags.getKubeDryRunFlag("apply")}, "Apply pre-upgrade manifest "+r.Hooks["preUpgrade"].(string)))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks["preUpgrade"].(string), "pre-upgrade", ns); wait {
-					beforeCommands = append(beforeCommands, cmds...)
-				}
+				beforeCmds = append(beforeCmds, r.getHookCommands("preUpgrade", ns)...)
 			}
 			if _, ok := r.Hooks["postUpgrade"]; ok {
-				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["postUpgrade"].(string), flags.getKubeDryRunFlag("apply")}, "Apply post-upgrade manifest "+r.Hooks["postUpgrade"].(string)))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks["postUpgrade"].(string), "post-upgrade", ns); wait {
-					afterCommands = append(afterCommands, cmds...)
-				}
+				afterCmds = append(afterCmds, r.getHookCommands("postUpgrade", ns)...)
 			}
 		}
 	case "delete":
 		{
 			if _, ok := r.Hooks["preDelete"]; ok {
-				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["preDelete"].(string), flags.getKubeDryRunFlag("apply")}, "Apply pre-delete manifest "+r.Hooks["preDelete"].(string)))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks["preDelete"].(string), "pre-delete", ns); wait {
-					beforeCommands = append(beforeCommands, cmds...)
-				}
+				beforeCmds = append(beforeCmds, r.getHookCommands("preDelete", ns)...)
 			}
 			if _, ok := r.Hooks["postDelete"]; ok {
-				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["postDelete"].(string), flags.getKubeDryRunFlag("apply")}, "Apply post-delete manifest "+r.Hooks["postDelete"].(string)))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks["postDelete"].(string), "post-delete", ns); wait {
-					afterCommands = append(afterCommands, cmds...)
-				}
+				afterCmds = append(afterCmds, r.getHookCommands("postDelete", ns)...)
 			}
 		}
 	}
-	return beforeCommands, afterCommands
+	return beforeCmds, afterCmds
+}
+
+func (r *release) getHookCommands(hookType, ns string) []Command {
+	var cmds []Command
+	if _, ok := r.Hooks[hookType]; ok {
+		hook := r.Hooks[hookType].(string)
+		if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err != nil {
+			cmds = append(cmds, kubectl([]string{"apply", "-n", ns, "-f", hook, flags.getKubeDryRunFlag("apply")}, "Apply "+hookType+" manifest "+r.Hooks["preInstall"].(string)))
+			if wait, waitCmds := r.shouldWaitForHook(hook, hookType, ns); wait {
+				cmds = append(cmds, waitCmds...)
+			}
+		} else {
+			args := strings.Fields(hook)
+			cmds = append(cmds, Command{
+				Cmd:         args[0],
+				Args:        args[1:],
+				Description: hookType + "hook",
+			})
+		}
+	}
+	return cmds
 }
 
 // shouldWaitForHook checks if there is a success condition to wait for after applying a hook

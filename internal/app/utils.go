@@ -158,7 +158,10 @@ func substituteVarsInStaticFiles(s *state) {
 		if len(v.Hooks) != 0 {
 			for key, val := range v.Hooks {
 				if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
-					v.Hooks[key] = substituteVarsInYaml(val.(string))
+					hook := val.(string)
+					if err := isValidFile(hook, []string{".yaml", ".yml"}); err != nil {
+						v.Hooks[key] = substituteVarsInYaml(hook)
+					}
 				}
 			}
 		}
@@ -166,7 +169,10 @@ func substituteVarsInStaticFiles(s *state) {
 		if len(s.Settings.GlobalHooks) != 0 {
 			for key, val := range s.Settings.GlobalHooks {
 				if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
-					s.Settings.GlobalHooks[key] = substituteVarsInYaml(val.(string))
+					hook := val.(string)
+					if err := isValidFile(hook, []string{".yaml", ".yml"}); err != nil {
+						s.Settings.GlobalHooks[key] = substituteVarsInYaml(hook)
+					}
 				}
 			}
 		}
@@ -224,7 +230,7 @@ func stringInSlice(a string, list []string) bool {
 func resolvePaths(relativeToFile string, s *state) {
 	dir := filepath.Dir(relativeToFile)
 	downloadDest, _ := filepath.Abs(createTempDir(tempFilesDir, "tmp"))
-	for k, v := range s.Apps {
+	for _, v := range s.Apps {
 		if v.ValuesFile != "" {
 			v.ValuesFile, _ = resolveOnePath(v.ValuesFile, dir, downloadDest)
 		}
@@ -235,7 +241,10 @@ func resolvePaths(relativeToFile string, s *state) {
 		if len(v.Hooks) != 0 {
 			for key, val := range v.Hooks {
 				if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
-					v.Hooks[key], _ = resolveOnePath(val.(string), dir, downloadDest)
+					hook := val.(string)
+					if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err != nil {
+						v.Hooks[key], _ = resolveOnePath(hook, dir, downloadDest)
+					}
 				}
 			}
 		}
@@ -262,7 +271,6 @@ func resolvePaths(relativeToFile string, s *state) {
 				}
 			}
 		}
-		s.Apps[k] = v
 	}
 	// resolving paths for Bearer Token path in settings
 	if s.Settings.BearerTokenPath != "" {
@@ -272,7 +280,10 @@ func resolvePaths(relativeToFile string, s *state) {
 	if len(s.Settings.GlobalHooks) != 0 {
 		for key, val := range s.Settings.GlobalHooks {
 			if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
-				s.Settings.GlobalHooks[key], _ = resolveOnePath(val.(string), dir, downloadDest)
+				hook := val.(string)
+				if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err != nil {
+					s.Settings.GlobalHooks[key], _ = resolveOnePath(hook, dir, downloadDest)
+				}
 			}
 		}
 	}
