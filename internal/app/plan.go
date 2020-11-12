@@ -33,8 +33,8 @@ type orderedCommand struct {
 	Command        Command
 	Priority       int
 	targetRelease  *release
-	beforeCommands []Command
-	afterCommands  []Command
+	beforeCommands []hookCmd
+	afterCommands  []hookCmd
 }
 
 // plan type representing the plan of actions to make the desired state come true.
@@ -57,7 +57,7 @@ func createPlan() *plan {
 }
 
 // addCommand adds a command type to the plan
-func (p *plan) addCommand(cmd Command, priority int, r *release, beforeCommands []Command, afterCommands []Command) {
+func (p *plan) addCommand(cmd Command, priority int, r *release, beforeCommands []hookCmd, afterCommands []hookCmd) {
 	p.Lock()
 	defer p.Unlock()
 	oc := orderedCommand{
@@ -141,15 +141,25 @@ func releaseWithHooks(cmd orderedCommand, storageBackend string, wg *sync.WaitGr
 		log.Verbose(err.Error())
 		return
 	}
+	var annotations []string
 	for _, c := range cmd.beforeCommands {
-		if err := execOne(c, cmd.targetRelease); err != nil {
+		if err := execOne(c.Command, cmd.targetRelease); err != nil {
 			errors <- err
+			if c.Type != "" {
+				annotations = append(annotations, "helmsman/"+c.Type+"=failed")
+			}
 			log.Verbose(err.Error())
 			return
 		}
+		if c.Type != "" {
+			annotations = append(annotations, "helmsman/"+c.Type+"=ok")
+		}
 	}
 	if !flags.dryRun && !flags.destroy {
-		defer cmd.targetRelease.label(storageBackend)
+		defer func() {
+			cmd.targetRelease.mark(storageBackend)
+			cmd.targetRelease.annotate(storageBackend, annotations...)
+		}()
 	}
 	if err := execOne(cmd.Command, cmd.targetRelease); err != nil {
 		errors <- err
@@ -157,9 +167,16 @@ func releaseWithHooks(cmd orderedCommand, storageBackend string, wg *sync.WaitGr
 		return
 	}
 	for _, c := range cmd.afterCommands {
-		if err := execOne(c, cmd.targetRelease); err != nil {
+		if err := execOne(c.Command, cmd.targetRelease); err != nil {
 			errors <- err
+			if c.Type != "" {
+				annotations = append(annotations, "helmsman/"+c.Type+"=failed")
+			}
 			log.Verbose(err.Error())
+		} else {
+			if c.Type != "" {
+				annotations = append(annotations, "helmsman/"+c.Type+"=ok")
+			}
 		}
 	}
 }

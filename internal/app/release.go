@@ -134,7 +134,7 @@ func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *
 func validateHooks(hooks map[string]interface{}) (bool, string) {
 	for key, value := range hooks {
 		switch key {
-		case "preInstall", "postInstall", "preUpgrade", "postUpgrade", "preDelete", "postDelete":
+		case preInstall, postInstall, preUpgrade, postUpgrade, preDelete, postDelete:
 			hook := value.(string)
 			if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err != nil {
 				if !ToolExists(strings.Fields(hook)[0]) {
@@ -151,9 +151,9 @@ func validateHooks(hooks map[string]interface{}) (bool, string) {
 }
 
 // testRelease creates a Helm command to test a particular release.
-func (r *release) test(afterCommands *[]Command) {
+func (r *release) test(afterCommands *[]hookCmd) {
 	cmd := helmCmd(r.getHelmArgsFor("test"), "Running tests for release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-	*afterCommands = append(*afterCommands, cmd)
+	*afterCommands = append(*afterCommands, hookCmd{Command: cmd, Type: test})
 }
 
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
@@ -252,7 +252,7 @@ func (r *release) rollback(cs *currentState, p *plan) {
 	if r.Namespace == rs.Namespace {
 
 		cmd := helmCmd(concat([]string{"rollback", r.Name, rs.getRevision()}, r.getWait(), r.getTimeout(), r.getNoHooks(), flags.getDryRunFlags()), "Rolling back release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-		p.addCommand(cmd, r.Priority, r, []Command{}, []Command{})
+		p.addCommand(cmd, r.Priority, r, []hookCmd{}, []hookCmd{})
 		r.upgrade(p) // this is to reflect any changes in values file(s)
 		p.addDecision("Release [ "+r.Name+" ] was deleted and is desired to be rolled back to "+
 			"namespace [ "+r.Namespace+" ]", r.Priority, create)
@@ -266,11 +266,39 @@ func (r *release) rollback(cs *currentState, p *plan) {
 	}
 }
 
-// label applies Helmsman specific labels to Helm's state resources (secrets/configmaps)
-func (r *release) label(storageBackend string) {
+// mark applies Helmsman specific labels to Helm's state resources (secrets/configmaps)
+func (r *release) mark(storageBackend string) {
+	r.label(storageBackend, "MANAGED-BY=HELMSMAN", "NAMESPACE="+r.Namespace, "HELMSMAN_CONTEXT="+curContext)
+}
+
+// label labels Helm's state resources (secrets/configmaps)
+func (r *release) label(storageBackend string, labels ...string) {
+	if len(labels) == 0 {
+		return
+	}
 	if r.Enabled {
 
-		cmd := kubectl([]string{"label", storageBackend, "-n", r.Namespace, "-l", "owner=helm,name=" + r.Name, "MANAGED-BY=HELMSMAN", "NAMESPACE=" + r.Namespace, "HELMSMAN_CONTEXT=" + curContext, "--overwrite"}, "Applying Helmsman labels to [ "+r.Name+" ] release")
+		args := []string{"label", "--overwrite", storageBackend, "-n", r.Namespace, "-l", "owner=helm,name=" + r.Name}
+		args = append(args, labels...)
+		cmd := kubectl(args, "Applying Helmsman labels to [ "+r.Name+" ] release")
+
+		result := cmd.Exec()
+		if result.code != 0 {
+			log.Fatal(result.errors)
+		}
+	}
+}
+
+// annotate annotates Helm's state resources (secrets/configmaps)
+func (r *release) annotate(storageBackend string, annotations ...string) {
+	if len(annotations) == 0 {
+		return
+	}
+	if r.Enabled {
+
+		args := []string{"annotate", "--overwrite", storageBackend, "-n", r.Namespace, "-l", "owner=helm,name=" + r.Name}
+		args = append(args, annotations...)
+		cmd := kubectl(args, "Applying Helmsman annotations to [ "+r.Name+" ] release")
 
 		result := cmd.Exec()
 		if result.code != 0 {
@@ -441,62 +469,66 @@ func (r *release) inheritMaxHistory(s *state) {
 // checkHooks checks if a hook of certain type exists and creates its command
 // if success condition for the hook is defined, a "kubectl wait" command is created
 // returns two slices of before and after commands
-func (r *release) checkHooks(action string, optionalNamespace ...string) ([]Command, []Command) {
+func (r *release) checkHooks(action string, optionalNamespace ...string) ([]hookCmd, []hookCmd) {
 	ns := r.Namespace
 	if len(optionalNamespace) > 0 {
 		ns = optionalNamespace[0]
 	}
 	var (
-		beforeCmds []Command
-		afterCmds  []Command
+		beforeCmds []hookCmd
+		afterCmds  []hookCmd
 	)
 	switch action {
 	case "install":
 		{
-			if _, ok := r.Hooks["preInstall"]; ok {
-				beforeCmds = append(beforeCmds, r.getHookCommands("preInstall", ns)...)
+			if _, ok := r.Hooks[preInstall]; ok {
+				beforeCmds = append(beforeCmds, r.getHookCommands(preInstall, ns)...)
 			}
-			if _, ok := r.Hooks["postInstall"]; ok {
-				afterCmds = append(afterCmds, r.getHookCommands("postInstall", ns)...)
+			if _, ok := r.Hooks[postInstall]; ok {
+				afterCmds = append(afterCmds, r.getHookCommands(postInstall, ns)...)
 			}
 		}
 	case "upgrade":
 		{
-			if _, ok := r.Hooks["preUpgrade"]; ok {
-				beforeCmds = append(beforeCmds, r.getHookCommands("preUpgrade", ns)...)
+			if _, ok := r.Hooks[preUpgrade]; ok {
+				beforeCmds = append(beforeCmds, r.getHookCommands(preUpgrade, ns)...)
 			}
-			if _, ok := r.Hooks["postUpgrade"]; ok {
-				afterCmds = append(afterCmds, r.getHookCommands("postUpgrade", ns)...)
+			if _, ok := r.Hooks[postUpgrade]; ok {
+				afterCmds = append(afterCmds, r.getHookCommands(postUpgrade, ns)...)
 			}
 		}
 	case "delete":
 		{
-			if _, ok := r.Hooks["preDelete"]; ok {
-				beforeCmds = append(beforeCmds, r.getHookCommands("preDelete", ns)...)
+			if _, ok := r.Hooks[preDelete]; ok {
+				beforeCmds = append(beforeCmds, r.getHookCommands(preDelete, ns)...)
 			}
-			if _, ok := r.Hooks["postDelete"]; ok {
-				afterCmds = append(afterCmds, r.getHookCommands("postDelete", ns)...)
+			if _, ok := r.Hooks[postDelete]; ok {
+				afterCmds = append(afterCmds, r.getHookCommands(postDelete, ns)...)
 			}
 		}
 	}
 	return beforeCmds, afterCmds
 }
 
-func (r *release) getHookCommands(hookType, ns string) []Command {
-	var cmds []Command
+func (r *release) getHookCommands(hookType, ns string) []hookCmd {
+	var cmds []hookCmd
 	if _, ok := r.Hooks[hookType]; ok {
 		hook := r.Hooks[hookType].(string)
 		if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err != nil {
-			cmds = append(cmds, kubectl([]string{"apply", "-n", ns, "-f", hook, flags.getKubeDryRunFlag("apply")}, "Apply "+hookType+" manifest "+r.Hooks["preInstall"].(string)))
+			cmd := kubectl([]string{"apply", "-n", ns, "-f", hook, flags.getKubeDryRunFlag("apply")}, "Apply "+hook+" manifest "+hookType)
+			cmds = append(cmds, hookCmd{Command: cmd, Type: hookType})
 			if wait, waitCmds := r.shouldWaitForHook(hook, hookType, ns); wait {
 				cmds = append(cmds, waitCmds...)
 			}
 		} else {
 			args := strings.Fields(hook)
-			cmds = append(cmds, Command{
-				Cmd:         args[0],
-				Args:        args[1:],
-				Description: hookType,
+			cmds = append(cmds, hookCmd{
+				Command: Command{
+					Cmd:         args[0],
+					Args:        args[1:],
+					Description: hookType + "Hook",
+				},
+				Type: hookType,
 			})
 		}
 	}
@@ -505,8 +537,8 @@ func (r *release) getHookCommands(hookType, ns string) []Command {
 
 // shouldWaitForHook checks if there is a success condition to wait for after applying a hook
 // returns a boolean and the wait command if applicable
-func (r *release) shouldWaitForHook(hookFile string, hookType string, namespace string) (bool, []Command) {
-	var cmds []Command
+func (r *release) shouldWaitForHook(hookFile string, hookType string, namespace string) (bool, []hookCmd) {
+	var cmds []hookCmd
 	if flags.dryRun {
 		return false, cmds
 	} else if _, ok := r.Hooks["successCondition"]; ok {
@@ -514,9 +546,11 @@ func (r *release) shouldWaitForHook(hookFile string, hookType string, namespace 
 		if _, ok := r.Hooks["successTimeout"]; ok {
 			timeoutFlag = "--timeout=" + r.Hooks["successTimeout"].(string)
 		}
-		cmds = append(cmds, kubectl([]string{"wait", "-n", namespace, "-f", hookFile, "--for=condition=" + r.Hooks["successCondition"].(string), timeoutFlag}, "Wait for "+hookType+" : "+hookFile))
+		cmd := kubectl([]string{"wait", "-n", namespace, "-f", hookFile, "--for=condition=" + r.Hooks["successCondition"].(string), timeoutFlag}, "Wait for "+hookType+" : "+hookFile)
+		cmds = append(cmds, hookCmd{Command: cmd})
 		if _, ok := r.Hooks["deleteOnSuccess"]; ok && r.Hooks["deleteOnSuccess"].(bool) {
-			cmds = append(cmds, kubectl([]string{"delete", "-n", namespace, "-f", hookFile}, "Delete "+hookType+" : "+hookFile))
+			cmd = kubectl([]string{"delete", "-n", namespace, "-f", hookFile}, "Delete "+hookType+" : "+hookFile)
+			cmds = append(cmds, hookCmd{Command: cmd})
 		}
 		return true, cmds
 	}
@@ -542,12 +576,12 @@ func (r release) print() {
 	fmt.Println("\tSuccessCondition: ", r.Hooks["successCondition"])
 	fmt.Println("\tSuccessTimeout: ", r.Hooks["successTimeout"])
 	fmt.Println("\tDeleteOnSuccess: ", r.Hooks["deleteOnSuccess"])
-	fmt.Println("\tpreInstall: ", r.Hooks["preInstall"])
-	fmt.Println("\tpostInstall: ", r.Hooks["postInstall"])
-	fmt.Println("\tpreUpgrade: ", r.Hooks["preUpgrade"])
-	fmt.Println("\tpostUpgrade: ", r.Hooks["postUpgrade"])
-	fmt.Println("\tpreDelete: ", r.Hooks["preDelete"])
-	fmt.Println("\tpostDelete: ", r.Hooks["postDelete"])
+	fmt.Println("\tpreInstall: ", r.Hooks[preInstall])
+	fmt.Println("\tpostInstall: ", r.Hooks[postInstall])
+	fmt.Println("\tpreUpgrade: ", r.Hooks[preUpgrade])
+	fmt.Println("\tpostUpgrade: ", r.Hooks[postUpgrade])
+	fmt.Println("\tpreDelete: ", r.Hooks[preDelete])
+	fmt.Println("\tpostDelete: ", r.Hooks[postDelete])
 	fmt.Println("\tno-hooks: ", r.NoHooks)
 	fmt.Println("\ttimeout: ", r.Timeout)
 	fmt.Println("\tvalues to override from env:")
