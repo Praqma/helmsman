@@ -226,8 +226,7 @@ func Test_decide(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cs := newCurrentState()
-			tt.args.s.makeTargetMap([]string{}, tt.targetFlag)
-			tt.args.s.disableUntargettedApps()
+			tt.args.s.disableUntargettedApps([]string{}, tt.targetFlag)
 			outcome := plan{}
 			// Act
 			cs.decide(tt.args.s.Apps[tt.args.r], tt.args.s, &outcome, "", "")
@@ -304,7 +303,7 @@ func Test_decide_group(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.args.s.makeTargetMap(tt.groupFlag, []string{})
+			tt.args.s.disableUntargettedApps(tt.groupFlag, []string{})
 			if len(tt.args.s.TargetMap) != len(tt.want) {
 				t.Errorf("decide() = %d, want %d", len(tt.args.s.TargetMap), len(tt.want))
 			}

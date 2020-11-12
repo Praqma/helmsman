@@ -310,53 +310,6 @@ func (r *release) getTimeout() []string {
 	return []string{}
 }
 
-// getValuesFiles return partial install/upgrade release command to substitute the -f flag in Helm.
-func (r *release) getValuesFiles() []string {
-	var fileList []string
-
-	if r.ValuesFile != "" {
-		fileList = append(fileList, r.ValuesFile)
-	} else if len(r.ValuesFiles) > 0 {
-		fileList = append(fileList, r.ValuesFiles...)
-	}
-
-	if r.SecretsFile != "" || len(r.SecretsFiles) > 0 {
-		if settings.EyamlEnabled {
-			if !ToolExists("eyaml") {
-				log.Fatal("hiera-eyaml is not installed/configured correctly. Aborting!")
-			}
-		} else {
-			if !helmPluginExists("secrets") {
-				log.Fatal("helm secrets plugin is not installed/configured correctly. Aborting!")
-			}
-		}
-	}
-	if r.SecretsFile != "" {
-		if err := decryptSecret(r.SecretsFile); err != nil {
-			log.Fatal(err.Error())
-		}
-		fileList = append(fileList, r.SecretsFile+".dec")
-	} else if len(r.SecretsFiles) > 0 {
-		for i := 0; i < len(r.SecretsFiles); i++ {
-			if err := decryptSecret(r.SecretsFiles[i]); err != nil {
-				log.Fatal(err.Error())
-			}
-			// if .dec extension is added before to the secret filename, don't add it again.
-			// This happens at upgrade time (where diff and upgrade both call this function)
-			if !isOfType(r.SecretsFiles[i], []string{".dec"}) {
-				r.SecretsFiles[i] = r.SecretsFiles[i] + ".dec"
-			}
-		}
-		fileList = append(fileList, r.SecretsFiles...)
-	}
-
-	fileListArgs := []string{}
-	for _, file := range fileList {
-		fileListArgs = append(fileListArgs, "-f", file)
-	}
-	return fileListArgs
-}
-
 // getSetValues returns --set params to be used with helm install/upgrade commands
 func (r *release) getSetValues() []string {
 	result := []string{}
@@ -543,7 +496,7 @@ func (r *release) getHookCommands(hookType, ns string) []Command {
 			cmds = append(cmds, Command{
 				Cmd:         args[0],
 				Args:        args[1:],
-				Description: hookType + "hook",
+				Description: hookType,
 			})
 		}
 	}

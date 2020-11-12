@@ -43,27 +43,6 @@ type state struct {
 	TargetMap              map[string]bool
 }
 
-// invokes either yaml or toml parser considering file extension
-func (s *state) fromFile(file string) (bool, string) {
-	if isOfType(file, []string{".toml"}) {
-		return fromTOML(file, s)
-	} else if isOfType(file, []string{".yaml", ".yml"}) {
-		return fromYAML(file, s)
-	} else {
-		return false, "State file does not have toml/yaml extension."
-	}
-}
-
-func (s *state) toFile(file string) {
-	if isOfType(file, []string{".toml"}) {
-		toTOML(file, s)
-	} else if isOfType(file, []string{".yaml", ".yml"}) {
-		toYAML(file, s)
-	} else {
-		log.Fatal("State file does not have toml/yaml extension.")
-	}
-}
-
 func (s *state) setDefaults() {
 	if s.Settings.StorageBackend != "" {
 		os.Setenv("HELM_DRIVER", s.Settings.StorageBackend)
@@ -286,39 +265,37 @@ func (s *state) overrideAppsNamespace(newNs string) {
 	}
 }
 
-func (s *state) makeTargetMap(groups, targets []string) {
+// get only those Apps that exist in TargetMap
+func (s *state) disableUntargettedApps(groups, targets []string) {
 	if s.TargetMap == nil {
 		s.TargetMap = make(map[string]bool)
 	}
-	groupMap := map[string]bool{}
-	for _, v := range groups {
-		groupMap[v] = true
-	}
-	for appName, data := range s.Apps {
-		if use, ok := groupMap[data.Group]; ok && use {
-			s.TargetMap[appName] = true
-		}
-	}
-	for _, v := range targets {
-		s.TargetMap[v] = true
-	}
-}
-
-// get only those Apps that exist in TargetMap
-func (s *state) disableUntargettedApps() {
-	if len(s.TargetMap) == 0 {
+	if len(targets) == 0 && len(groups) == 0 {
 		return
 	}
-	namespaces := make(map[string]bool)
+	for _, t := range targets {
+		s.TargetMap[t] = true
+	}
+	groupMap := make(map[string]struct{})
+	namespaces := make(map[string]struct{})
+	for _, g := range groups {
+		groupMap[g] = struct{}{}
+	}
 	for appName, app := range s.Apps {
-		if use, ok := s.TargetMap[appName]; !use || !ok {
-			app.Disable()
+		if _, ok := s.TargetMap[appName]; ok {
+			namespaces[app.Namespace] = struct{}{}
+			continue
+		}
+		if _, ok := groupMap[app.Group]; ok {
+			s.TargetMap[appName] = true
+			namespaces[app.Namespace] = struct{}{}
 		} else {
-			namespaces[app.Namespace] = true
+			app.Disable()
 		}
 	}
+
 	for nsName, ns := range s.Namespaces {
-		if use, ok := namespaces[nsName]; !use || !ok {
+		if _, ok := namespaces[nsName]; !ok {
 			ns.Disable()
 		}
 	}

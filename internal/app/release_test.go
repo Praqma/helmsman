@@ -535,7 +535,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 					"app": createFullReleasePointer(os.TempDir()+"/helmsman-tests/myapp", ""),
 				},
 			},
-			want: true,
+			want: false,
 		}, {
 			name: "test case 2: invalid local path",
 			args: args{
@@ -599,8 +599,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			stt := &state{Apps: tt.args.apps}
-			stt.makeTargetMap(tt.groupFlag, tt.targetFlag)
-			stt.disableUntargettedApps()
+			stt.disableUntargettedApps(tt.groupFlag, tt.targetFlag)
 			err := stt.validateReleaseCharts()
 			switch err.(type) {
 			case nil:
