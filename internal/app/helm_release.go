@@ -81,7 +81,7 @@ func (r *helmRelease) key() string {
 func (r *helmRelease) uninstall(p *plan) {
 	cmd := helmCmd(concat([]string{"uninstall", r.Name, "--namespace", r.Namespace}, flags.getDryRunFlags()), "Delete untracked release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
-	p.addCommand(cmd, -800, nil, []Command{}, []Command{})
+	p.addCommand(cmd, -800, nil, []hookCmd{}, []hookCmd{})
 }
 
 // getRevision returns the revision number for an existing helm release

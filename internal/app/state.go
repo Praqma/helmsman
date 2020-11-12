@@ -306,7 +306,7 @@ func (s *state) updateContextLabels() {
 	for _, r := range s.Apps {
 		if r.isConsideredToRun() {
 			log.Info("Updating context and reapplying Helmsman labels for release [ " + r.Name + " ]")
-			r.label(s.Settings.StorageBackend)
+			r.mark(s.Settings.StorageBackend)
 		} else {
 			log.Warning(r.Name + " is not in the target group and therefore context and labels are not changed.")
 		}
