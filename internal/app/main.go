@@ -17,6 +17,7 @@ var (
 	flags      cli
 	settings   *config
 	curContext string
+	log        = &Logger{}
 )
 
 func init() {
@@ -102,38 +103,5 @@ func Main() {
 
 	if flags.apply || flags.dryRun || flags.destroy {
 		p.exec()
-	}
-}
-
-// cleanup deletes the k8s certificates and keys files
-// It also deletes any Tiller TLS certs and keys
-// and secret files
-func (s *state) cleanup() {
-	log.Verbose("Cleaning up sensitive and temp files")
-	if _, err := os.Stat("ca.crt"); err == nil {
-		deleteFile("ca.crt")
-	}
-
-	if _, err := os.Stat("ca.key"); err == nil {
-		deleteFile("ca.key")
-	}
-
-	if _, err := os.Stat("client.crt"); err == nil {
-		deleteFile("client.crt")
-	}
-
-	if _, err := os.Stat("bearer.token"); err == nil {
-		deleteFile("bearer.token")
-	}
-
-	for _, app := range s.Apps {
-		if _, err := os.Stat(app.SecretsFile + ".dec"); err == nil {
-			deleteFile(app.SecretsFile + ".dec")
-		}
-		for _, secret := range app.SecretsFiles {
-			if _, err := os.Stat(secret + ".dec"); err == nil {
-				deleteFile(secret + ".dec")
-			}
-		}
 	}
 }

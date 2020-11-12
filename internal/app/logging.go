@@ -12,8 +12,6 @@ type Logger struct {
 	baseLogger   *logger.Logger
 }
 
-var log = &Logger{}
-
 func (l *Logger) Info(message string) {
 	l.baseLogger.Info(message)
 }

@@ -243,23 +243,17 @@ func (c *cli) readState(s *state) {
 	}
 
 	s.setDefaults()
-	s.makeTargetMap(c.group, c.target)
+	s.disableUntargettedApps(c.group, c.target)
 
-	if len(c.target) > 0 {
-		if len(s.TargetMap) == 0 {
-			log.Info("No apps defined with -target flag were found, exiting")
-			os.Exit(0)
-		}
+	if len(c.target) > 0 && len(s.TargetMap) == 0 {
+		log.Info("No apps defined with -target flag were found, exiting")
+		os.Exit(0)
 	}
 
-	if len(c.group) > 0 {
-		if len(s.TargetMap) == 0 {
-			log.Info("No apps defined with -group flag were found, exiting")
-			os.Exit(0)
-		}
+	if len(c.group) > 0 && len(s.TargetMap) == 0 {
+		log.Info("No apps defined with -group flag were found, exiting")
+		os.Exit(0)
 	}
-
-	s.disableUntargettedApps()
 
 	if !c.skipValidation {
 		// validate the desired state content
