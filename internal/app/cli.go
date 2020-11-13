@@ -243,7 +243,7 @@ func (c *cli) readState(s *state) {
 	}
 
 	s.setDefaults()
-	s.disableUntargettedApps(c.group, c.target)
+	s.disableUntargetedApps(c.group, c.target)
 
 	if len(c.target) > 0 && len(s.TargetMap) == 0 {
 		log.Info("No apps defined with -target flag were found, exiting")

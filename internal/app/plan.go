@@ -145,14 +145,14 @@ func releaseWithHooks(cmd orderedCommand, storageBackend string, wg *sync.WaitGr
 	for _, c := range cmd.beforeCommands {
 		if err := execOne(c.Command, cmd.targetRelease); err != nil {
 			errors <- err
-			if c.Type != "" {
-				annotations = append(annotations, "helmsman/"+c.Type+"=failed")
+			if key, err := c.getAnnotationKey(); err != nil {
+				annotations = append(annotations, key+"=failed")
 			}
 			log.Verbose(err.Error())
 			return
 		}
-		if c.Type != "" {
-			annotations = append(annotations, "helmsman/"+c.Type+"=ok")
+		if key, err := c.getAnnotationKey(); err != nil {
+			annotations = append(annotations, key+"=ok")
 		}
 	}
 	if !flags.dryRun && !flags.destroy {
@@ -169,13 +169,13 @@ func releaseWithHooks(cmd orderedCommand, storageBackend string, wg *sync.WaitGr
 	for _, c := range cmd.afterCommands {
 		if err := execOne(c.Command, cmd.targetRelease); err != nil {
 			errors <- err
-			if c.Type != "" {
-				annotations = append(annotations, "helmsman/"+c.Type+"=failed")
+			if key, err := c.getAnnotationKey(); err != nil {
+				annotations = append(annotations, key+"=failed")
 			}
 			log.Verbose(err.Error())
 		} else {
-			if c.Type != "" {
-				annotations = append(annotations, "helmsman/"+c.Type+"=ok")
+			if key, err := c.getAnnotationKey(); err != nil {
+				annotations = append(annotations, key+"=ok")
 			}
 		}
 	}

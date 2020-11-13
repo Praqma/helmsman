@@ -68,19 +68,15 @@ func labelNamespace(ns string, labels map[string]string) {
 		return
 	}
 
-	var labelSlice []string
-	for k, v := range labels {
-		labelSlice = append(labelSlice, k+"="+v)
-	}
-
 	args := []string{"label", "--overwrite", "namespace/" + ns, flags.getKubeDryRunFlag("label")}
-	args = append(args, labelSlice...)
-
+	for k, v := range labels {
+		args = append(args, k+"="+v)
+	}
 	cmd := kubectl(args, "Labeling namespace [ "+ns+" ]")
 
 	result := cmd.Exec()
 	if result.code != 0 && flags.verbose {
-		log.Warning(fmt.Sprintf("Could not label namespace [ %s with %v ]. Error message: %s", ns, labelSlice, result.errors))
+		log.Warning(fmt.Sprintf("Could not label namespace [ %s with %v ]. Error message: %s", ns, strings.Join(args[4:], ","), result.errors))
 	}
 }
 
@@ -90,17 +86,15 @@ func annotateNamespace(ns string, annotations map[string]string) {
 		return
 	}
 
-	var annotationSlice []string
-	for k, v := range annotations {
-		annotationSlice = append(annotationSlice, k+"="+v)
-	}
 	args := []string{"annotate", "--overwrite", "namespace/" + ns, flags.getKubeDryRunFlag("annotate")}
-	args = append(args, annotationSlice...)
+	for k, v := range annotations {
+		args = append(args, k+"="+v)
+	}
 	cmd := kubectl(args, "Annotating namespace [ "+ns+" ]")
 
 	result := cmd.Exec()
 	if result.code != 0 && flags.verbose {
-		log.Info(fmt.Sprintf("Could not annotate namespace [ %s with %v ]. Error message: %s", ns, annotationSlice, result.errors))
+		log.Info(fmt.Sprintf("Could not annotate namespace [ %s with %v ]. Error message: %s", ns, strings.Join(args[4:], ","), result.errors))
 	}
 }
 

@@ -226,10 +226,10 @@ func Test_decide(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cs := newCurrentState()
-			tt.args.s.disableUntargettedApps([]string{}, tt.targetFlag)
+			tt.args.s.disableUntargetedApps([]string{}, tt.targetFlag)
 			outcome := plan{}
 			// Act
-			cs.decide(tt.args.s.Apps[tt.args.r], tt.args.s, &outcome, "", "")
+			cs.decide(tt.args.s.Apps[tt.args.r], tt.args.s.Namespaces[tt.args.s.Apps[tt.args.r].Namespace], &outcome, "", "")
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
 
@@ -303,7 +303,7 @@ func Test_decide_group(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.args.s.disableUntargettedApps(tt.groupFlag, []string{})
+			tt.args.s.disableUntargetedApps(tt.groupFlag, []string{})
 			if len(tt.args.s.TargetMap) != len(tt.want) {
 				t.Errorf("decide() = %d, want %d", len(tt.args.s.TargetMap), len(tt.want))
 			}

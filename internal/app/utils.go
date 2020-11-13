@@ -46,8 +46,8 @@ func substituteVarsInYaml(file string) string {
 
 	yamlFile := string(rawYamlFile)
 	if !flags.noEnvSubst && flags.substEnvValues {
-		if ok, err := validateEnvVars(yamlFile, file); !ok {
-			log.Critical(err)
+		if err := validateEnvVars(yamlFile, file); err != nil {
+			log.Critical(err.Error())
 		}
 		yamlFile = substituteEnv(yamlFile)
 	}
@@ -133,12 +133,12 @@ func substituteEnv(name string) string {
 
 // validateEnvVars parses a string line-by-line and detect env variables in
 // non-comment lines. It then checks that each env var found has a value.
-func validateEnvVars(s string, filename string) (bool, string) {
+func validateEnvVars(s string, filename string) error {
 	if !flags.skipValidation && strings.Contains(s, "$") {
 		log.Info("validating environment variables in " + filename)
 		var key string
 		comment, _ := regexp.Compile("#(.*)$")
-		envVar, _ := regexp.Compile("\\${([a-zA-Z_][a-zA-Z0-9_-]*)}|\\$([a-zA-Z_][a-zA-Z0-9_-]*)")
+		envVar, _ := regexp.Compile(`\${([a-zA-Z_][a-zA-Z0-9_-]*)}|\$([a-zA-Z_][a-zA-Z0-9_-]*)`)
 		scanner := bufio.NewScanner(strings.NewReader(s))
 		for scanner.Scan() {
 			// remove spaces from the single line, then replace $$ with !? to prevent it from matching the regex,
@@ -152,7 +152,7 @@ func validateEnvVars(s string, filename string) (bool, string) {
 					key = v[2]
 				}
 				if _, ok := os.LookupEnv(key); !ok {
-					return false, v[0] + " is used as an env variable but is currently unset. Either set it or escape it like so: $" + v[0]
+					return fmt.Errorf("%s is used as an env variable but is currently unset. Either set it or escape it like so: $%s", v[0], v[0])
 				}
 			}
 		}
@@ -160,7 +160,7 @@ func validateEnvVars(s string, filename string) (bool, string) {
 			log.Critical(err.Error())
 		}
 	}
-	return true, ""
+	return nil
 }
 
 // substituteSSM checks if a string has an SSM parameter variable (contains '{{ssm: '), then it returns its value
@@ -385,12 +385,6 @@ func Indent(s, prefix string) string {
 	return string(res)
 }
 
-// isLocalChart checks if a chart specified in the DSF is a local directory or not
-func isLocalChart(chart string) bool {
-	_, err := os.Stat(chart)
-	return err == nil
-}
-
 // concat appends all slices to a single slice
 func concat(slices ...[]string) []string {
 	slice := []string{}
@@ -462,16 +456,33 @@ func decryptSecret(name string) error {
 	return nil
 }
 
+// isLocalChart checks if a chart specified in the DSF is a local directory or not
+func isLocalChart(chart string) bool {
+	_, err := os.Stat(chart)
+	return err == nil
+}
+
+// isValidCert checks if a certificate/key path/URI is valid
+func isValidCert(value string) bool {
+	if _, err := os.Stat(value); err != nil {
+		_, err1 := url.ParseRequestURI(value)
+		if err1 != nil || (!strings.HasPrefix(value, "s3://") && !strings.HasPrefix(value, "gs://") && !strings.HasPrefix(value, "az://")) {
+			return false
+		}
+	}
+	return true
+}
+
 // isValidFile checks if the file exists in the given path or accessible via http and is of allowed file extension (e.g. yaml, json ...)
 func isValidFile(filePath string, allowedFileTypes []string) error {
 	if strings.HasPrefix(filePath, "http") {
 		if _, err := url.ParseRequestURI(filePath); err != nil {
-			return errors.New(filePath + " must be valid URL path to a raw file.")
+			return fmt.Errorf("%s must be valid URL path to a raw file", filePath)
 		}
 	} else if _, pathErr := os.Stat(filePath); pathErr != nil {
-		return errors.New(filePath + " must be valid relative (from dsf file) file path.")
+		return fmt.Errorf("%s must be valid relative (from dsf file) file path", filePath)
 	} else if !isOfType(filePath, allowedFileTypes) {
-		return errors.New(filePath + " must be of one the following file formats: " + strings.Join(allowedFileTypes, ", "))
+		return fmt.Errorf("%s must be of one the following file formats: %s", filePath, strings.Join(allowedFileTypes, ", "))
 	}
 	return nil
 }
