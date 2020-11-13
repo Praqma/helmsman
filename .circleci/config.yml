@@ -16,10 +16,10 @@ jobs:
     docker:
       - image: goreleaser/goreleaser
         entrypoint: /bin/bash
-    working_directory: "/go/src/github.com/Praqma/helmsman"  
+    working_directory: "/go/src/github.com/Praqma/helmsman"
     steps:
       - run:
-          name: install git 
+          name: install git
           command: apk update && apk add --no-cache git openssh
       - checkout
       - run:
@@ -76,4 +76,4 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /v[0-9]+(\.[0-9]+)*(-.*)*/        
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
