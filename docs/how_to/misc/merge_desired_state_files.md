@@ -11,7 +11,8 @@ to do the merging, and is subject to the limitations described there.
 
 For example:
 
-* `common.toml`:
+`common.toml`:
+
 ```toml
 [metadata]
 org = "Organization Name"
@@ -24,7 +25,8 @@ storageBackend = "secret"
 ...
 ```
 
-* `nonprod.toml`:
+`nonprod.toml`:
+
 ```toml
 [settings]
 kubeContext = "cluster-nonprod"
@@ -39,8 +41,9 @@ kubeContext = "cluster-nonprod"
 ```
 
 One can then run the following to use the merged config of the above files, with later files override values of earlier ones:
+
 ```shell
-$ helmsman -f common.toml -f nonprod.toml ...
+helmsman -f common.toml -f nonprod.toml ...
 ```
 
 ## Distinguishing releases deployed from different Desired State Files
@@ -51,7 +54,8 @@ Starting from Helmsman v3.0.0-beta5, `context` is introduced to define the conte
 
 Here is how it is used:
 
-* `infra.yaml`:
+`infra.yaml`:
+
 ```yaml
 context: infra-apps
 settings:
@@ -75,7 +79,8 @@ apps:
 ...
 ```
 
-* `prod.yaml`:
+`prod.yaml`:
+
 ```yaml
 context: prod-apps
 settings:
@@ -98,8 +103,8 @@ apps:
 
 ### Limitations
 
-- If no context is provided in DSF (or merged DSFs), `default` is applied as a default context. This means any set of DSFs that don't define custom contexts can still operate on each other's releases (same behavior as in Helmsman 1.x).
+* If no context is provided in DSF (or merged DSFs), `default` is applied as a default context. This means any set of DSFs that don't define custom contexts can still operate on each other's releases (same behavior as in Helmsman 1.x).
 
-- When merging multiple DSFs, context from the firs DSF in the list gets overridden by the context in the last DSF.
+* When merging multiple DSFs, context from the firs DSF in the list gets overridden by the context in the last DSF.
 
-- If multiple DSFs use the same context name, they will mess up each other's releases. You can use `--keep-untracked-releases` to avoid that. However, it is recommended to avoid having multiple DSFs using the same context name.
+* If multiple DSFs use the same context name, they will mess up each other's releases. You can use `--keep-untracked-releases` to avoid that. However, it is recommended to avoid having multiple DSFs using the same context name.

@@ -2,12 +2,13 @@
 version: v3.0.0-beta5
 ---
 
-# Install releases
+# Basics
+
+## Install releases
 
 You can run helmsman with the [example.toml](https://github.com/Praqma/helmsman/blob/master/example.toml) or [example.yaml](https://github.com/Praqma/helmsman/blob/master/example.yaml) file.
 
 ```shell
-
 $ helmsman --apply -f example.toml
 2017/11/19 18:17:57 Parsed [[ example.toml ]] successfully and found [ 2 ] apps.
 2017/11/19 18:17:59 WARN: I could not create namespace [staging ]. It already exists. I am skipping this.
@@ -19,7 +20,6 @@ DECISION: release [ jenkins ] is not present in the current k8s context. Will in
 DECISION: release [ artifactory ] is not present in the current k8s context. Will install it in namespace [[ staging ]]
 2017/11/19 18:18:02 INFO: attempting: --   installing release [ jenkins ] in namespace [[ staging ]]
 2017/11/19 18:18:05 INFO: attempting: --   installing release [ artifactory ] in namespace [[ staging ]]
-
 ```
 
 ```shell
@@ -29,7 +29,7 @@ artifactory	1       	Sun Nov 19 18:18:06 2017	DEPLOYED	artifactory-6.2.0	staging
 jenkins    	1       	Sun Nov 19 18:18:03 2017	DEPLOYED	jenkins-0.9.1    	staging
 ```
 
-# Delete releases
+## Delete releases
 
 You can then change your desire, for example to disable the Jenkins release that was created above by setting `enabled = false` :
 
@@ -56,7 +56,6 @@ $ helm list --namespace staging
 NAME       	REVISION	UPDATED                 	STATUS  	CHART            	NAMESPACE
 artifactory	2       	Sun Nov 19 18:29:11 2017	DEPLOYED	artifactory-6.2.0	staging
 ```
-
 
 ```yaml
 # ...
@@ -92,10 +91,9 @@ DECISION: release [ artifactory ] is desired to be upgraded. Planning this for y
 2017/11/19 18:30:50 INFO: attempting: --   upgrading release [ artifactory ]
 ```
 
-# Upgrade releases
+## Upgrade releases
 
 Every time you run Helmsman, (unless the release is [protected or deployed in a protected namespace](../misc/protect_namespaces_and_releases.md)) it will check if upgrade is necessary (using the helm-diff plugin) and only upgrade if there are changes.
 
 If you change the chart, the existing release will be deleted and a new one with the same name will be created using the new chart.
-
 
