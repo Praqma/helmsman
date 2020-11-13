@@ -12,7 +12,8 @@ Thanks to this one can deploy specific applications among all defined for an env
 
 Having environment defined with such apps:
 
-* example.yaml:
+example.yaml:
+
 ```yaml
 # ...
 apps:
@@ -37,7 +38,7 @@ running Helmsman with `-f example.yaml` would result in checking state and invok
 With `--group` flag in command like
 
 ```shell
-$ helmsman -f example.yaml --group critical ...
+helmsman -f example.yaml --group critical ...
 ```
 
 one can execute Helmsman's environment defined with example.yaml limited to only one `jenkins` app, since its group is `critical`.
@@ -46,5 +47,5 @@ Others are ignored until the flag is defined.
 Multiple applications can be set with `--group`, like
 
 ```shell
-$ helmsman -f example.yaml --group critical --group sidecar ...
+helmsman -f example.yaml --group critical --group sidecar ...
 ```

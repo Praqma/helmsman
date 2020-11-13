@@ -12,7 +12,8 @@ Thanks to this one can deploy specific applications among all defined for an env
 
 Having environment defined with such apps:
 
-* example.yaml:
+example.yaml:
+
 ```yaml
 # ...
 apps:
@@ -35,7 +36,7 @@ running Helmsman with `-f example.yaml` would result in checking state and invok
 With `--target` flag in command like
 
 ```shell
-$ helmsman -f example.yaml --target artifactory ...
+helmsman -f example.yaml --target artifactory ...
 ```
 
 one can execute Helmsman's environment defined with example.yaml limited to only one `artifactory` app. Others are ignored until the flag is defined.
@@ -43,5 +44,5 @@ one can execute Helmsman's environment defined with example.yaml limited to only
 Multiple applications can be set with `--target`, like
 
 ```shell
-$ helmsman -f example.yaml --target artifactory --target jenkins ...
+helmsman -f example.yaml --target artifactory --target jenkins ...
 ```

@@ -2,7 +2,9 @@
 version: v3.0.0-beta5
 ---
 
-# Passing secrets from env variables:
+# Secrets
+
+## Passing secrets from env variables
 
 Starting from v0.1.3, Helmsman allows you to pass secrets and other user input to helm charts from environment variables as follows:
 
@@ -22,7 +24,6 @@ Starting from v0.1.3, Helmsman allows you to pass secrets and other user input t
     db_username= "$JIRA_DB_USERNAME" # pass any number of key/value pairs where the key is the input expected by the helm charts and the value is an env variable name starting with $
     db_password= "$JIRA_DB_PASSWORD"
 # ...
-
 ```
 
 ```yaml
@@ -46,7 +47,8 @@ apps:
 
 These input variables will be passed to the chart when it is deployed/upgraded using helm's `--set <<var_name>>=<<var_value_read_from_env_var>>`
 
-# Passing secrets from env files
+## Passing secrets from env files
+
 You can also keep these environment variables in files, by default Helmsman will load variables from a `.env` file but you can also specify files by using the `-e` option:
 
 ```shell
@@ -61,6 +63,7 @@ SOME_VAR=someval
 FOO=BAR # comments at line end are OK too
 export BAR=BAZ
 ```
+
 Or you can do YAML(ish) style
 
 ```yaml
@@ -68,10 +71,11 @@ FOO: bar
 BAR: baz
 ```
 
-# Passing secrets using helm secrets plugin
+## Passing secrets using helm secrets plugin
 
 You can also use the [helm secrets plugin](https://github.com/futuresimple/helm-secrets) to pass your secrets.
 
-# Passing secrets using hiera eyaml
+## Passing secrets using hiera eyaml
 
 An alternative method is to use heira eyaml as described in [this guide](../settings/use-hiera-eyaml-as-secrets-encryption.md).
+

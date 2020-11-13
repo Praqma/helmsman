@@ -8,9 +8,10 @@ If you use different release branches for your releasing/managing your applicati
 
 This flag overrides all namespaces defined in your DSF with the single one you pass from command line.
 
-# Example
+## Example
 
 `dsf.toml`:
+
 ```toml
 [metadata]
 org = "example.com"
@@ -29,7 +30,6 @@ kubeContext = "minikube"
 [helmRepos]
 jenkins = https://charts.jenkins.io
 center = https://repo.chartcenter.io
-
 
 [apps]
 
@@ -51,6 +51,7 @@ center = https://repo.chartcenter.io
 ```
 
 `dsf.yaml`:
+
 ```yaml
 metadata:
   org: "example.com"
@@ -69,7 +70,6 @@ namespaces:
 helmRepos:
   jenkins: https://charts.jenkins.io
   center: https://repo.chartcenter.io
-
 
 apps:
 
@@ -98,7 +98,7 @@ helmsman -f dsf.toml --debug --ns-override testing
 
 This will override the `staging` and `production` namespaces defined in `dsf.toml` :
 
-```
+```console
 2018/03/31 17:38:12 INFO: Plan generated at: Sat Mar 31 2018 17:37:57
 DECISION: release [ jenkins ] is not present in the current k8s context. Will install it in namespace [[ testing ]] -- priority: 0
 DECISION: release [ artifactory ] is not present in the current k8s context. Will install it in namespace [[ testing ]] -- priority: 0
