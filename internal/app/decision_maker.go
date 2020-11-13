@@ -34,9 +34,7 @@ func buildState(s *state) *currentState {
 		sem <- struct{}{}
 		wg.Add(1)
 		go func(r helmRelease) {
-			cs.Lock()
 			defer func() {
-				cs.Unlock()
 				wg.Done()
 				// release
 				<-sem
@@ -47,7 +45,9 @@ func buildState(s *state) *currentState {
 				r.HelmsmanContext = flags.contextOverride
 				log.Info("Overwrote Helmsman context for release [ " + r.Name + " ] to " + flags.contextOverride)
 			}
+			cs.Lock()
 			cs.releases[r.key()] = r
+			cs.Unlock()
 		}(r)
 	}
 	wg.Wait()
