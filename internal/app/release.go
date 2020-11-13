@@ -78,16 +78,18 @@ func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *
 		return errors.New("version can't be empty")
 	}
 
+	validFiles := []string{".yaml", ".yml", ".json"}
+
 	if r.ValuesFile != "" && len(r.ValuesFiles) > 0 {
 		return errors.New("valuesFile and valuesFiles should not be used together")
 	} else if r.ValuesFile != "" {
-		if err := isValidFile(r.ValuesFile, []string{".yaml", ".yml", ".json"}); err != nil {
-			return fmt.Errorf(err.Error())
+		if err := isValidFile(r.ValuesFile, validFiles); err != nil {
+			return err
 		}
 	} else if len(r.ValuesFiles) > 0 {
 		for _, filePath := range r.ValuesFiles {
-			if err := isValidFile(filePath, []string{".yaml", ".yml", ".json"}); err != nil {
-				return fmt.Errorf(err.Error())
+			if err := isValidFile(filePath, validFiles); err != nil {
+				return err
 			}
 		}
 	}
@@ -95,21 +97,19 @@ func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *
 	if r.SecretsFile != "" && len(r.SecretsFiles) > 0 {
 		return errors.New("secretsFile and secretsFiles should not be used together")
 	} else if r.SecretsFile != "" {
-		if err := isValidFile(r.SecretsFile, []string{".yaml", ".yml", ".json"}); err != nil {
-			return fmt.Errorf(err.Error())
+		if err := isValidFile(r.SecretsFile, validFiles); err != nil {
+			return err
 		}
 	} else if len(r.SecretsFiles) > 0 {
 		for _, filePath := range r.SecretsFiles {
-			if err := isValidFile(filePath, []string{".yaml", ".yml", ".json"}); err != nil {
-				return fmt.Errorf(err.Error())
+			if err := isValidFile(filePath, validFiles); err != nil {
+				return err
 			}
 		}
 	}
 
-	if r.PostRenderer != "" {
-		if !ToolExists(r.PostRenderer) {
-			return fmt.Errorf(r.PostRenderer + " must be valid relative (from dsf file) file path.")
-		}
+	if r.PostRenderer != "" && !ToolExists(r.PostRenderer) {
+		return fmt.Errorf("%s must be valid relative (from dsf file) file path", r.PostRenderer)
 	}
 
 	if r.Priority != 0 && r.Priority > 0 {
@@ -117,8 +117,8 @@ func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *
 	}
 
 	if (len(r.Hooks)) != 0 {
-		if ok, errorMsg := validateHooks(r.Hooks); !ok {
-			return fmt.Errorf(errorMsg)
+		if err := validateHooks(r.Hooks); err != nil {
+			return err
 		}
 	}
 
@@ -128,26 +128,6 @@ func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *
 	seen[r.Name][r.Namespace] = true
 
 	return nil
-}
-
-// validateHooks validates that hook files exist and of YAML type
-func validateHooks(hooks map[string]interface{}) (bool, string) {
-	for key, value := range hooks {
-		switch key {
-		case preInstall, postInstall, preUpgrade, postUpgrade, preDelete, postDelete:
-			hook := value.(string)
-			if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err != nil {
-				if !ToolExists(strings.Fields(hook)[0]) {
-					return false, err.Error()
-				}
-			}
-		case "successCondition", "successTimeout", "deleteOnSuccess":
-			continue
-		default:
-			return false, key + " is an Invalid hook type."
-		}
-	}
-	return true, ""
 }
 
 // testRelease creates a Helm command to test a particular release.
@@ -311,12 +291,12 @@ func (r *release) annotate(storageBackend string, annotations ...string) {
 // A protected is release is either: a) deployed in a protected namespace b) flagged as protected in the desired state file
 // Any release in a protected namespace is protected by default regardless of its flag
 // returns true if a release is protected, false otherwise
-func (r *release) isProtected(cs *currentState, s *state) bool {
+func (r *release) isProtected(cs *currentState, n *namespace) bool {
 	// if the release does not exist in the cluster, it is not protected
 	if ok := cs.releaseExists(r, ""); !ok {
 		return false
 	}
-	if s.Namespaces[r.Namespace].Protected || r.Protected {
+	if n.Protected || r.Protected {
 		return true
 	}
 	return false
@@ -474,10 +454,8 @@ func (r *release) checkHooks(action string, optionalNamespace ...string) ([]hook
 	if len(optionalNamespace) > 0 {
 		ns = optionalNamespace[0]
 	}
-	var (
-		beforeCmds []hookCmd
-		afterCmds  []hookCmd
-	)
+	var beforeCmds, afterCmds []hookCmd
+
 	switch action {
 	case "install":
 		{
@@ -526,7 +504,7 @@ func (r *release) getHookCommands(hookType, ns string) []hookCmd {
 				Command: Command{
 					Cmd:         args[0],
 					Args:        args[1:],
-					Description: hookType + "Hook",
+					Description: fmt.Sprintf("%s shell hook", hookType),
 				},
 				Type: hookType,
 			})

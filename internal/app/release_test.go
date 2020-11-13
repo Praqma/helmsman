@@ -72,7 +72,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "xyz.yaml must be valid relative (from dsf file) file path.",
+			want: "xyz.yaml must be valid relative (from dsf file) file path",
 		}, {
 			name: "test case 3",
 			args: args{
@@ -233,7 +233,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "xyz.yaml must be valid relative (from dsf file) file path.",
+			want: "xyz.yaml must be valid relative (from dsf file) file path",
 		}, {
 			name: "test case 13",
 			args: args{
@@ -265,7 +265,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "xyz.fake must be valid relative (from dsf file) file path.",
+			want: "xyz.fake must be valid relative (from dsf file) file path",
 		}, {
 			name: "test case 15 - invalid hook file type",
 			args: args{
@@ -329,7 +329,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml must be valid URL path to a raw file.",
+			want: "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml must be valid URL path to a raw file",
 		}, {
 			name: "test case 19 - invalid hook type 1",
 			args: args{
@@ -345,7 +345,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "afterDelete is an Invalid hook type.",
+			want: "afterDelete is an Invalid hook type",
 		}, {
 			name: "test case 20 - invalid hook type 2",
 			args: args{
@@ -361,7 +361,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "PreDelete is an Invalid hook type.",
+			want: "PreDelete is an Invalid hook type",
 		}, {
 			name: "test case 21",
 			args: args{
@@ -395,7 +395,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "doesnt-exist.sh must be valid relative (from dsf file) file path.",
+			want: "doesnt-exist.sh must be valid relative (from dsf file) file path",
 		}, {
 			name: "test case 23 - executable hook type",
 			args: args{
@@ -599,7 +599,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			stt := &state{Apps: tt.args.apps}
-			stt.disableUntargettedApps(tt.groupFlag, tt.targetFlag)
+			stt.disableUntargetedApps(tt.groupFlag, tt.targetFlag)
 			err := stt.validateReleaseCharts()
 			switch err.(type) {
 			case nil:

@@ -108,8 +108,8 @@ func (s *state) validate() error {
 
 	// lifecycle hooks validation
 	if len(s.Settings.GlobalHooks) != 0 {
-		if ok, errorMsg := validateHooks(s.Settings.GlobalHooks); !ok {
-			return fmt.Errorf(errorMsg)
+		if err := validateHooks(s.Settings.GlobalHooks); err != nil {
+			return err
 		}
 	}
 
@@ -124,11 +124,9 @@ func (s *state) validate() error {
 	if s.Certificates != nil && len(s.Certificates) != 0 {
 
 		for key, value := range s.Certificates {
-			r, path := isValidCert(value)
-			if !r {
+			if !isValidCert(value) {
 				return errors.New("certifications validation failed -- [ " + key + " ] must be a valid S3, GCS, AZ bucket/container URL or a valid relative file path")
 			}
-			s.Certificates[key] = path
 		}
 
 		_, caCrt := s.Certificates["caCrt"]
@@ -241,16 +239,6 @@ func (s *state) validateReleaseCharts() error {
 	return nil
 }
 
-// isValidCert checks if a certificate/key path/URI is valid
-func isValidCert(value string) (bool, string) {
-	_, err1 := url.ParseRequestURI(value)
-	_, err2 := os.Stat(value)
-	if err2 != nil && (err1 != nil || (!strings.HasPrefix(value, "s3://") && !strings.HasPrefix(value, "gs://") && !strings.HasPrefix(value, "az://"))) {
-		return false, ""
-	}
-	return true, value
-}
-
 // isNamespaceDefined checks if a given namespace is defined in the namespaces section of the desired state file
 func (s *state) isNamespaceDefined(ns string) bool {
 	_, ok := s.Namespaces[ns]
@@ -266,7 +254,7 @@ func (s *state) overrideAppsNamespace(newNs string) {
 }
 
 // get only those Apps that exist in TargetMap
-func (s *state) disableUntargettedApps(groups, targets []string) {
+func (s *state) disableUntargetedApps(groups, targets []string) {
 	if s.TargetMap == nil {
 		s.TargetMap = make(map[string]bool)
 	}

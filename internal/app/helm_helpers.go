@@ -89,17 +89,17 @@ func validateChart(apps, chart, version string, c chan string) {
 
 // getChartVersion fetches the lastest chart version matching the semantic versioning constraints.
 // If chart is local, returns the given release version
-func getChartVersion(chart, version string) (string, string) {
+func getChartVersion(chart, version string) (string, error) {
 	if isLocalChart(chart) {
 		log.Info("Chart [ " + chart + " ] with version [ " + version + " ] was found locally.")
-		return version, ""
+		return version, nil
 	}
 
 	cmd := helmCmd([]string{"search", "repo", chart, "--version", version, "-o", "json"}, "Getting latest non-local chart's version "+chart+"-"+version+"")
 
 	result := cmd.Exec()
 	if result.code != 0 {
-		return "", "Chart [ " + chart + " ] with version [ " + version + " ] is specified but not found in the helm repositories"
+		return "", fmt.Errorf("Chart [ %s ] with version [ %s ] is specified but not found in the helm repositories", chart, version)
 	}
 
 	chartVersions := make([]chartVersion, 0)
@@ -115,12 +115,12 @@ func getChartVersion(chart, version string) (string, string) {
 	}
 
 	if len(filteredChartVersions) < 1 {
-		return "", "Chart [ " + chart + " ] with version [ " + version + " ] is specified but not found in the helm repositories"
+		return "", fmt.Errorf("Chart [ %s ] with version [ %s ] is specified but not found in the helm repositories", chart, version)
 	} else if len(filteredChartVersions) > 1 {
-		return "", "Multiple versions of chart [ " + chart + " ] with version [ " + version + " ] found in the helm repositories"
+		return "", fmt.Errorf("Multiple versions of chart [ %s ] with version [ %s ] found in the helm repositories", chart, version)
 	}
 
-	return filteredChartVersions[0].Version, ""
+	return filteredChartVersions[0].Version, nil
 }
 
 // getHelmClientVersion returns Helm client Version

@@ -43,8 +43,8 @@ func (s *state) fromTOML(file string) (bool, string) {
 
 	tomlFile := string(rawTomlFile)
 	if !flags.noEnvSubst {
-		if ok, err := validateEnvVars(tomlFile, file); !ok {
-			return false, err
+		if err := validateEnvVars(tomlFile, file); err != nil {
+			return false, err.Error()
 		}
 		tomlFile = substituteEnv(tomlFile)
 	}
@@ -95,8 +95,8 @@ func (s *state) fromYAML(file string) (bool, string) {
 
 	yamlFile := string(rawYamlFile)
 	if !flags.noEnvSubst {
-		if ok, err := validateEnvVars(yamlFile, file); !ok {
-			return false, err
+		if err := validateEnvVars(yamlFile, file); err != nil {
+			return false, err.Error()
 		}
 		yamlFile = substituteEnv(yamlFile)
 	}
