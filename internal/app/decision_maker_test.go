@@ -111,9 +111,8 @@ func Test_inspectUpgradeScenario(t *testing.T) {
 			cs := currentState{releases: *tt.args.s}
 
 			// Act
-			chartName := extractChartName(tt.args.r.Chart)
-			chartVersion, _ := getChartVersion(tt.args.r.Chart, tt.args.r.Version)
-			cs.inspectUpgradeScenario(tt.args.r, &outcome, chartName, chartVersion)
+			c, _ := getChartInfo(tt.args.r.Chart, tt.args.r.Version)
+			cs.inspectUpgradeScenario(tt.args.r, &outcome, c.Name, c.Version)
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
 

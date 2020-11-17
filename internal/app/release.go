@@ -37,11 +37,11 @@ type release struct {
 	disabled     bool
 }
 
-type chartVersion struct {
-	Name        string `json:"name"`
-	Version     string `json:"version"`
-	AppVersion  string `json:"app_version"`
-	Description string `json:"description"`
+type chartInfo struct {
+	Name        string `yaml:"name"`
+	Version     string `yaml:"version"`
+	AppVersion  string `yaml:"appVersion"`
+	Description string `yaml:"description"`
 }
 
 func (r *release) key() string {

@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/google/go-cmp/cmp"
 	"os"
 	"testing"
 )
@@ -710,7 +711,7 @@ func Test_getReleaseChartVersion(t *testing.T) {
 	}
 }
 
-func Test_getChartVersion(t *testing.T) {
+func Test_getChartInfo(t *testing.T) {
 	// version string = the first semver-valid string after the last hypen in the chart string.
 	type args struct {
 		r *release
@@ -718,10 +719,10 @@ func Test_getChartVersion(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want string
+		want *chartInfo
 	}{
 		{
-			name: "getChartVersion - local chart should return given release version",
+			name: "getChartInfo - local chart should return given release info",
 			args: args{
 				r: &release{
 					Name:      "release1",
@@ -731,10 +732,23 @@ func Test_getChartVersion(t *testing.T) {
 					Enabled:   true,
 				},
 			},
-			want: "1.0.0",
+			want: &chartInfo{Name: "chart-test", Version: "1.0.0"},
 		},
 		{
-			name: "getChartVersion - unknown chart should error",
+			name: "getChartInfo - local chart semver should return latest matching release",
+			args: args{
+				r: &release{
+					Name:      "release1",
+					Namespace: "namespace",
+					Version:   "1.0.*",
+					Chart:     "./../../tests/chart-test",
+					Enabled:   true,
+				},
+			},
+			want: &chartInfo{Name: "chart-test", Version: "1.0.0"},
+		},
+		{
+			name: "getChartInfo - unknown chart should error",
 			args: args{
 				r: &release{
 					Name:      "release1",
@@ -744,15 +758,15 @@ func Test_getChartVersion(t *testing.T) {
 					Enabled:   true,
 				},
 			},
-			want: "",
+			want: nil,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Log(tt.want)
-			got, _ := getChartVersion(tt.args.r.Chart, tt.args.r.Version)
-			if got != tt.want {
-				t.Errorf("getChartVersion() = %v, want %v", got, tt.want)
+			got, _ := getChartInfo(tt.args.r.Chart, tt.args.r.Version)
+			if !cmp.Equal(got, tt.want) {
+				t.Errorf("getChartInfo() = %v, want %v", got, tt.want)
 			}
 		})
 	}
