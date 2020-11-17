@@ -10,7 +10,7 @@ Priority is an optional flag and has a default value of 0 (zero). If set, it can
 
 If you want your apps to be deleted in the reverse order as they where created, you can also use the optional `Settings` flag `reverseDelete`, to achieve this, set it to `true`
 
-# Example
+## Example
 
 ```toml
 [metadata]
@@ -49,7 +49,6 @@ center = https://repo.chartcenter.io
     version = "2.15.1" # chart version
     valuesFile = "" # leaving it empty uses the default chart values
 
-
   [apps.jenkins2]
     description = "jenkins"
     namespace = "production" # maps to the namespace as defined in environments above
@@ -71,10 +70,9 @@ center = https://repo.chartcenter.io
 
 The above example will generate the following plan:
 
-```
+```console
 DECISION: release [ jenkins2 ] is not present in the current k8s context. Will install it in namespace [[ production ]] -- priority: -3
 DECISION: release [ jenkins ] is not present in the current k8s context. Will install it in namespace [[ staging ]] -- priority: -2
 DECISION: release [ artifactory ] is not present in the current k8s context. Will install it in namespace [[ staging ]] -- priority: -2
 DECISION: release [ jenkins1 ] is not present in the current k8s context. Will install it in namespace [[ staging ]] -- priority: 0
-
 ```

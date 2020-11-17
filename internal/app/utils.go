@@ -17,9 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/yaml.v2"
-
-	"github.com/BurntSushi/toml"
 	"github.com/Praqma/helmsman/internal/aws"
 	"github.com/Praqma/helmsman/internal/azure"
 	"github.com/Praqma/helmsman/internal/gcs"
@@ -33,150 +30,9 @@ func printMap(m map[string]string, indent int) {
 }
 
 // printObjectMap prints to the console any map of string keys and object values.
-func printNamespacesMap(m map[string]namespace) {
+func printNamespacesMap(m map[string]*namespace) {
 	for key, value := range m {
 		fmt.Println(key, " : protected = ", value)
-	}
-}
-
-// fromTOML reads a toml file and decodes it to a state type.
-// It uses the BurntSuchi TOML parser which throws an error if the TOML file is not valid.
-func fromTOML(file string, s *state) (bool, string) {
-	rawTomlFile, err := ioutil.ReadFile(file)
-	if err != nil {
-		return false, err.Error()
-	}
-
-	tomlFile := string(rawTomlFile)
-	if !flags.noEnvSubst {
-		if ok, err := validateEnvVars(tomlFile, file); !ok {
-			return false, err
-		}
-		tomlFile = substituteEnv(tomlFile)
-	}
-	if !flags.noSSMSubst {
-		tomlFile = substituteSSM(tomlFile)
-	}
-	if _, err := toml.Decode(tomlFile, s); err != nil {
-		return false, err.Error()
-	}
-	resolvePaths(file, s)
-	substituteVarsInStaticFiles(s)
-
-	return true, "Parsed TOML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps"
-}
-
-// toTOML encodes a state type into a TOML file.
-// It uses the BurntSuchi TOML parser.
-func toTOML(file string, s *state) {
-	log.Info("Printing generated toml ... ")
-	var buff bytes.Buffer
-	var (
-		newFile *os.File
-		err     error
-	)
-
-	if err := toml.NewEncoder(&buff).Encode(s); err != nil {
-		log.Fatal(err.Error())
-		os.Exit(1)
-	}
-	newFile, err = os.Create(file)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	bytesWritten, err := newFile.Write(buff.Bytes())
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	log.Info(fmt.Sprintf("Wrote %d bytes.\n", bytesWritten))
-	newFile.Close()
-}
-
-// fromYAML reads a yaml file and decodes it to a state type.
-// parser which throws an error if the YAML file is not valid.
-func fromYAML(file string, s *state) (bool, string) {
-	rawYamlFile, err := ioutil.ReadFile(file)
-	if err != nil {
-		return false, err.Error()
-	}
-
-	yamlFile := string(rawYamlFile)
-	if !flags.noEnvSubst {
-		if ok, err := validateEnvVars(yamlFile, file); !ok {
-			return false, err
-		}
-		yamlFile = substituteEnv(yamlFile)
-	}
-	if !flags.noSSMSubst {
-		yamlFile = substituteSSM(yamlFile)
-	}
-
-	if err = yaml.UnmarshalStrict([]byte(yamlFile), s); err != nil {
-		return false, err.Error()
-	}
-	resolvePaths(file, s)
-	substituteVarsInStaticFiles(s)
-
-	return true, "Parsed YAML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps"
-}
-
-// toYaml encodes a state type into a YAML file
-func toYAML(file string, s *state) {
-	log.Info("Printing generated yaml ... ")
-	var buff bytes.Buffer
-	var (
-		newFile *os.File
-		err     error
-	)
-
-	if err := yaml.NewEncoder(&buff).Encode(s); err != nil {
-		log.Fatal(err.Error())
-		os.Exit(1)
-	}
-	newFile, err = os.Create(file)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	bytesWritten, err := newFile.Write(buff.Bytes())
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	log.Info(fmt.Sprintf("Wrote %d bytes.\n", bytesWritten))
-	newFile.Close()
-}
-
-// substituteVarsInStaticFiles loops through the values/secrets files and substitutes variables into them.
-func substituteVarsInStaticFiles(s *state) {
-	for _, v := range s.Apps {
-		if v.ValuesFile != "" {
-			v.ValuesFile = substituteVarsInYaml(v.ValuesFile)
-		}
-		if v.SecretsFile != "" {
-			v.SecretsFile = substituteVarsInYaml(v.SecretsFile)
-		}
-
-		if len(v.Hooks) != 0 {
-			for key, val := range v.Hooks {
-				if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
-					v.Hooks[key] = substituteVarsInYaml(val.(string))
-				}
-			}
-		}
-
-		if len(s.Settings.GlobalHooks) != 0 {
-			for key, val := range s.Settings.GlobalHooks {
-				if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
-					s.Settings.GlobalHooks[key] = substituteVarsInYaml(val.(string))
-				}
-			}
-		}
-
-		for i := range v.ValuesFiles {
-			v.ValuesFiles[i] = substituteVarsInYaml(v.ValuesFiles[i])
-		}
-		for i := range v.SecretsFiles {
-			v.SecretsFiles[i] = substituteVarsInYaml(v.SecretsFiles[i])
-		}
 	}
 }
 
@@ -190,8 +46,8 @@ func substituteVarsInYaml(file string) string {
 
 	yamlFile := string(rawYamlFile)
 	if !flags.noEnvSubst && flags.substEnvValues {
-		if ok, err := validateEnvVars(yamlFile, file); !ok {
-			log.Critical(err)
+		if err := validateEnvVars(yamlFile, file); err != nil {
+			log.Critical(err.Error())
 		}
 		yamlFile = substituteEnv(yamlFile)
 	}
@@ -218,69 +74,6 @@ func stringInSlice(a string, list []string) bool {
 		}
 	}
 	return false
-}
-
-// resolvePaths resolves relative paths of certs/keys/chart/value file/secret files/etc and replace them with a absolute paths
-func resolvePaths(relativeToFile string, s *state) {
-	dir := filepath.Dir(relativeToFile)
-	downloadDest, _ := filepath.Abs(createTempDir(tempFilesDir, "tmp"))
-	for k, v := range s.Apps {
-		if v.ValuesFile != "" {
-			v.ValuesFile, _ = resolveOnePath(v.ValuesFile, dir, downloadDest)
-		}
-		if v.SecretsFile != "" {
-			v.SecretsFile, _ = resolveOnePath(v.SecretsFile, dir, downloadDest)
-		}
-
-		if len(v.Hooks) != 0 {
-			for key, val := range v.Hooks {
-				if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
-					v.Hooks[key], _ = resolveOnePath(val.(string), dir, downloadDest)
-				}
-			}
-		}
-
-		for i := range v.ValuesFiles {
-			v.ValuesFiles[i], _ = resolveOnePath(v.ValuesFiles[i], dir, downloadDest)
-		}
-		for i := range v.SecretsFiles {
-			v.SecretsFiles[i], _ = resolveOnePath(v.SecretsFiles[i], dir, downloadDest)
-		}
-
-		if v.Chart != "" {
-			var repoOrDir = filepath.Dir(v.Chart)
-			_, isRepo := s.HelmRepos[repoOrDir]
-			isRepo = isRepo || stringInSlice(repoOrDir, s.PreconfiguredHelmRepos)
-			if !isRepo {
-				// if there is no repo for the chart, we assume it's intended to be a local path
-
-				// support env vars in path
-				v.Chart = os.ExpandEnv(v.Chart)
-				// respect absolute paths to charts but resolve relative paths
-				if !filepath.IsAbs(v.Chart) {
-					v.Chart, _ = filepath.Abs(filepath.Join(dir, v.Chart))
-				}
-			}
-		}
-		s.Apps[k] = v
-	}
-	// resolving paths for Bearer Token path in settings
-	if s.Settings.BearerTokenPath != "" {
-		s.Settings.BearerTokenPath, _ = resolveOnePath(s.Settings.BearerTokenPath, dir, downloadDest)
-	}
-	// resolve paths for global hooks
-	if len(s.Settings.GlobalHooks) != 0 {
-		for key, val := range s.Settings.GlobalHooks {
-			if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
-				s.Settings.GlobalHooks[key], _ = resolveOnePath(val.(string), dir, downloadDest)
-			}
-		}
-	}
-	// resolving paths for k8s certificate files
-	for k := range s.Certificates {
-		s.Certificates[k], _ = resolveOnePath(s.Certificates[k], "", downloadDest)
-	}
-
 }
 
 // resolveOnePath takes the input file (URL, cloud bucket, or local file relative path),
@@ -340,12 +133,12 @@ func substituteEnv(name string) string {
 
 // validateEnvVars parses a string line-by-line and detect env variables in
 // non-comment lines. It then checks that each env var found has a value.
-func validateEnvVars(s string, filename string) (bool, string) {
+func validateEnvVars(s string, filename string) error {
 	if !flags.skipValidation && strings.Contains(s, "$") {
 		log.Info("validating environment variables in " + filename)
 		var key string
 		comment, _ := regexp.Compile("#(.*)$")
-		envVar, _ := regexp.Compile("\\${([a-zA-Z_][a-zA-Z0-9_-]*)}|\\$([a-zA-Z_][a-zA-Z0-9_-]*)")
+		envVar, _ := regexp.Compile(`\${([a-zA-Z_][a-zA-Z0-9_-]*)}|\$([a-zA-Z_][a-zA-Z0-9_-]*)`)
 		scanner := bufio.NewScanner(strings.NewReader(s))
 		for scanner.Scan() {
 			// remove spaces from the single line, then replace $$ with !? to prevent it from matching the regex,
@@ -359,7 +152,7 @@ func validateEnvVars(s string, filename string) (bool, string) {
 					key = v[2]
 				}
 				if _, ok := os.LookupEnv(key); !ok {
-					return false, v[0] + " is used as an env variable but is currently unset. Either set it or escape it like so: $" + v[0]
+					return fmt.Errorf("%s is used as an env variable but is currently unset. Either set it or escape it like so: $%s", v[0], v[0])
 				}
 			}
 		}
@@ -367,7 +160,7 @@ func validateEnvVars(s string, filename string) (bool, string) {
 			log.Critical(err.Error())
 		}
 	}
-	return true, ""
+	return nil
 }
 
 // substituteSSM checks if a string has an SSM parameter variable (contains '{{ssm: '), then it returns its value
@@ -592,12 +385,6 @@ func Indent(s, prefix string) string {
 	return string(res)
 }
 
-// isLocalChart checks if a chart specified in the DSF is a local directory or not
-func isLocalChart(chart string) bool {
-	_, err := os.Stat(chart)
-	return err == nil
-}
-
 // concat appends all slices to a single slice
 func concat(slices ...[]string) []string {
 	slice := []string{}
@@ -634,13 +421,13 @@ func decryptSecret(name string) error {
 		}
 	}
 
-	command := command{
+	command := Command{
 		Cmd:         cmd,
 		Args:        args,
 		Description: "Decrypting " + name,
 	}
 
-	result := command.exec()
+	result := command.Exec()
 	if !settings.EyamlEnabled {
 		_, fileNotFound := os.Stat(name + ".dec")
 		if fileNotFound != nil && !isOfType(name, []string{".dec"}) {
@@ -669,16 +456,33 @@ func decryptSecret(name string) error {
 	return nil
 }
 
+// isLocalChart checks if a chart specified in the DSF is a local directory or not
+func isLocalChart(chart string) bool {
+	_, err := os.Stat(chart)
+	return err == nil
+}
+
+// isValidCert checks if a certificate/key path/URI is valid
+func isValidCert(value string) bool {
+	if _, err := os.Stat(value); err != nil {
+		_, err1 := url.ParseRequestURI(value)
+		if err1 != nil || (!strings.HasPrefix(value, "s3://") && !strings.HasPrefix(value, "gs://") && !strings.HasPrefix(value, "az://")) {
+			return false
+		}
+	}
+	return true
+}
+
 // isValidFile checks if the file exists in the given path or accessible via http and is of allowed file extension (e.g. yaml, json ...)
 func isValidFile(filePath string, allowedFileTypes []string) error {
 	if strings.HasPrefix(filePath, "http") {
 		if _, err := url.ParseRequestURI(filePath); err != nil {
-			return errors.New(filePath + " must be valid URL path to a raw file.")
+			return fmt.Errorf("%s must be valid URL path to a raw file", filePath)
 		}
 	} else if _, pathErr := os.Stat(filePath); pathErr != nil {
-		return errors.New(filePath + " must be valid relative (from dsf file) file path.")
+		return fmt.Errorf("%s must be valid relative (from dsf file) file path", filePath)
 	} else if !isOfType(filePath, allowedFileTypes) {
-		return errors.New(filePath + " must be of one the following file formats: " + strings.Join(allowedFileTypes, ", "))
+		return fmt.Errorf("%s must be of one the following file formats: %s", filePath, strings.Join(allowedFileTypes, ", "))
 	}
 	return nil
 }

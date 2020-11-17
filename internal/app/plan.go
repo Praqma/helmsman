@@ -30,19 +30,21 @@ type orderedDecision struct {
 
 // orderedCommand type representing a Command and it's priority weight and the targeted release from the desired state
 type orderedCommand struct {
-	Command        command
+	Command        Command
 	Priority       int
 	targetRelease  *release
-	beforeCommands []command
-	afterCommands  []command
+	beforeCommands []hookCmd
+	afterCommands  []hookCmd
 }
 
 // plan type representing the plan of actions to make the desired state come true.
 type plan struct {
 	sync.Mutex
-	Commands  []orderedCommand
-	Decisions []orderedDecision
-	Created   time.Time
+	Commands       []orderedCommand
+	Decisions      []orderedDecision
+	Created        time.Time
+	StorageBackend string
+	ReverseDelete  bool
 }
 
 // createPlan initializes an empty plan
@@ -55,7 +57,7 @@ func createPlan() *plan {
 }
 
 // addCommand adds a command type to the plan
-func (p *plan) addCommand(cmd command, priority int, r *release, beforeCommands []command, afterCommands []command) {
+func (p *plan) addCommand(cmd Command, priority int, r *release, beforeCommands []hookCmd, afterCommands []hookCmd) {
 	p.Lock()
 	defer p.Unlock()
 	oc := orderedCommand{
@@ -108,7 +110,7 @@ func (p *plan) exec() {
 		for _, cmd := range pl[priority] {
 			sem <- struct{}{}
 			wg.Add(1)
-			go releaseWithHooks(cmd, &wg, sem, errorsChan)
+			go releaseWithHooks(cmd, p.StorageBackend, &wg, sem, errorsChan)
 		}
 		wg.Wait()
 		close(errorsChan)
@@ -128,7 +130,7 @@ func (p *plan) exec() {
 	}
 }
 
-func releaseWithHooks(cmd orderedCommand, wg *sync.WaitGroup, sem chan struct{}, errors chan error) {
+func releaseWithHooks(cmd orderedCommand, storageBackend string, wg *sync.WaitGroup, sem chan struct{}, errors chan error) {
 	defer func() {
 		wg.Done()
 		<-sem
@@ -139,15 +141,25 @@ func releaseWithHooks(cmd orderedCommand, wg *sync.WaitGroup, sem chan struct{},
 		log.Verbose(err.Error())
 		return
 	}
+	var annotations []string
 	for _, c := range cmd.beforeCommands {
-		if err := execOne(c, cmd.targetRelease); err != nil {
+		if err := execOne(c.Command, cmd.targetRelease); err != nil {
 			errors <- err
+			if key, err := c.getAnnotationKey(); err != nil {
+				annotations = append(annotations, key+"=failed")
+			}
 			log.Verbose(err.Error())
 			return
 		}
+		if key, err := c.getAnnotationKey(); err != nil {
+			annotations = append(annotations, key+"=ok")
+		}
 	}
 	if !flags.dryRun && !flags.destroy {
-		defer cmd.targetRelease.label()
+		defer func() {
+			cmd.targetRelease.mark(storageBackend)
+			cmd.targetRelease.annotate(storageBackend, annotations...)
+		}()
 	}
 	if err := execOne(cmd.Command, cmd.targetRelease); err != nil {
 		errors <- err
@@ -155,17 +167,24 @@ func releaseWithHooks(cmd orderedCommand, wg *sync.WaitGroup, sem chan struct{},
 		return
 	}
 	for _, c := range cmd.afterCommands {
-		if err := execOne(c, cmd.targetRelease); err != nil {
+		if err := execOne(c.Command, cmd.targetRelease); err != nil {
 			errors <- err
+			if key, err := c.getAnnotationKey(); err != nil {
+				annotations = append(annotations, key+"=failed")
+			}
 			log.Verbose(err.Error())
+		} else {
+			if key, err := c.getAnnotationKey(); err != nil {
+				annotations = append(annotations, key+"=ok")
+			}
 		}
 	}
 }
 
 // execOne executes a single ordered command
-func execOne(cmd command, targetRelease *release) error {
+func execOne(cmd Command, targetRelease *release) error {
 	log.Notice(cmd.Description)
-	result := cmd.exec()
+	result := cmd.Exec()
 	if result.code != 0 {
 		errorMsg := result.errors
 		if !flags.verbose {
@@ -183,8 +202,8 @@ func execOne(cmd command, targetRelease *release) error {
 		log.Notice(result.output)
 		successMsg := "Finished: " + cmd.Description
 		log.Notice(successMsg)
-		if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
-			notifySlack(cmd.Description+" ... SUCCESS!", settings.SlackWebhook, false, true)
+		if _, err := url.ParseRequestURI(log.SlackWebhook); err == nil {
+			notifySlack(cmd.Description+" ... SUCCESS!", log.SlackWebhook, false, true)
 		}
 		return nil
 	}
@@ -221,12 +240,12 @@ func (p *plan) print() {
 
 // sendPlanToSlack sends the description of plan commands to slack if a webhook is provided.
 func (p *plan) sendToSlack() {
-	if _, err := url.ParseRequestURI(settings.SlackWebhook); err == nil {
+	if _, err := url.ParseRequestURI(log.SlackWebhook); err == nil {
 		str := ""
 		for _, c := range p.Commands {
 			str = str + c.Command.Description + "\n"
 		}
-		notifySlack(strings.TrimRight(str, "\n"), settings.SlackWebhook, false, false)
+		notifySlack(strings.TrimRight(str, "\n"), log.SlackWebhook, false, false)
 	}
 }
 

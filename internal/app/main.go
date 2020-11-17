@@ -1,3 +1,4 @@
+// Package app contains the main logic for the application.
 package app
 
 import (
@@ -14,8 +15,9 @@ const (
 
 var (
 	flags      cli
-	settings   config
+	settings   *config
 	curContext string
+	log        = &Logger{}
 )
 
 func init() {
@@ -34,27 +36,14 @@ func Main() {
 	}
 
 	flags.readState(&s)
-	if len(s.GroupMap) > 0 {
-		s.TargetMap = s.getAppsInGroupsAsTargetMap()
-		if len(s.TargetMap) == 0 {
-			log.Info("No apps defined with -group flag were found, exiting")
-			os.Exit(0)
-		}
-	}
-	if len(s.TargetMap) > 0 {
-		s.TargetApps = s.getAppsInTargetsOnly()
-		s.TargetNamespaces = s.getNamespacesInTargetsOnly()
-		if len(s.TargetApps) == 0 {
-			log.Info("No apps defined with -target flag were found, exiting")
-			os.Exit(0)
-		}
-	}
-	settings = s.Settings
+	log.SlackWebhook = s.Settings.SlackWebhook
+
+	settings = &s.Settings
 	curContext = s.Context
 
 	// set the kubecontext to be used Or create it if it does not exist
 	log.Info("Setting up kubectl")
-	if !setKubeContext(settings.KubeContext) {
+	if !setKubeContext(s.Settings.KubeContext) {
 		if err := createContext(&s); err != nil {
 			log.Fatal(err.Error())
 		}
@@ -82,7 +71,7 @@ func Main() {
 	if !flags.skipValidation {
 		log.Info("Validating charts")
 		// validate charts-versions exist in defined repos
-		if err := validateReleaseCharts(&s); err != nil {
+		if err := s.validateReleaseCharts(); err != nil {
 			log.Fatal(err.Error())
 		}
 	} else {
@@ -114,38 +103,5 @@ func Main() {
 
 	if flags.apply || flags.dryRun || flags.destroy {
 		p.exec()
-	}
-}
-
-// cleanup deletes the k8s certificates and keys files
-// It also deletes any Tiller TLS certs and keys
-// and secret files
-func (s *state) cleanup() {
-	log.Verbose("Cleaning up sensitive and temp files")
-	if _, err := os.Stat("ca.crt"); err == nil {
-		deleteFile("ca.crt")
-	}
-
-	if _, err := os.Stat("ca.key"); err == nil {
-		deleteFile("ca.key")
-	}
-
-	if _, err := os.Stat("client.crt"); err == nil {
-		deleteFile("client.crt")
-	}
-
-	if _, err := os.Stat("bearer.token"); err == nil {
-		deleteFile("bearer.token")
-	}
-
-	for _, app := range s.Apps {
-		if _, err := os.Stat(app.SecretsFile + ".dec"); err == nil {
-			deleteFile(app.SecretsFile + ".dec")
-		}
-		for _, secret := range app.SecretsFiles {
-			if _, err := os.Stat(secret + ".dec"); err == nil {
-				deleteFile(secret + ".dec")
-			}
-		}
 	}
 }
