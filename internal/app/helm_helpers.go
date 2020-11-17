@@ -161,6 +161,11 @@ func addHelmRepos(repos map[string]string) error {
 		}
 	}
 
+	repoAddFlags := ""
+	if checkHelmVersion(">=3.3.2") {
+		repoAddFlags += "--force-update"
+	}
+
 	for repoName, repoLink := range repos {
 		basicAuthArgs := []string{}
 		// check if repo is in GCS, then perform GCS auth -- needed for private GCS helm repos
@@ -189,10 +194,6 @@ func addHelmRepos(repos map[string]string) error {
 			repoLink = u.String()
 		}
 
-		repoAddFlags := ""
-		if checkHelmVersion(">=3.3.2") {
-			repoAddFlags += "--force-update"
-		}
 		cmd := helmCmd(concat([]string{"repo", "add", repoAddFlags, repoName, repoLink}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
 		// check current repository against existing repositories map in order to make sure it's missing and needs to be added
 		if existingRepoUrl, ok := existingRepos[repoName]; ok {
