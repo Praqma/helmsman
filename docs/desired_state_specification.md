@@ -14,7 +14,6 @@ This document describes the specification for how to write your Helm charts' des
 - [Helm Repos](#helm-repos) [Optional] -- defines the repos where you want to get Helm charts from.
 - [Apps](#apps) -- defines the applications/charts you want to manage in your cluster.
 
-
 > You can use environment variables in the desired state files. The environment variable name should start with "$", or encapsulated in "${", "}". "$" characters can be escaped like "$$".
 
 > Starting from v1.9.0, you can also use environment variables in your helm values/secrets files.
@@ -26,6 +25,7 @@ Optional : Yes.
 Synopsis: Metadata is used for the human reader of the desired state file. While it is optional, we recommend having a maintainer and scope/cluster metadata.
 
 Options:
+
 - you can define any key/value pairs.
 
 Example:
@@ -49,10 +49,10 @@ Optional : Yes, only needed if you want Helmsman to connect kubectl to your clus
 Synopsis: defines where to find the certificates needed for connecting kubectl to a k8s cluster. If connection settings (username/password/clusterAPI) are provided in the Settings section below, then you need **AT LEAST** to provide caCrt and caKey. You can optionally provide a client certificate (caClient) depending on your cluster connection setup.
 
 Options:
+
 - **caCrt** : a valid URL/S3/GCS/Azure bucket or local relative file path to a certificate file.
 - **caKey** : a valid URL/S3/GCS/Azure bucket or local relative file path to a client key file.
 - **caClient**: a valid URL/S3/GCS/Azure bucket or local relative file path to a client certificate file.
-
 
 > bucket format is: [s3 or gs or az]://bucket-name/dir1/dir2/.../file.extension
 
@@ -75,6 +75,7 @@ certificates:
   caClient: "../path/to/my/local/client-certificate.crt"
   #caClient: "$CA_CLIENT"
 ```
+
 ## Context
 
 Optional : Yes.
@@ -97,6 +98,7 @@ Synopsis: provides settings for connecting to your k8s cluster.
 > If you don't provide the `settings` stanza, helmsman would use your current kube context.
 
 Options:
+
 - **kubeContext** : the kube context you want Helmsman to use or create. Helmsman will try connect to this context first, if it does not exist, it will try to create it (i.e. connect to a k8s cluster) using the options below.
 
 The following options can be skipped if your kubectl context is already created and you don't want Helmsman to connect kubectl to your cluster for you.
@@ -114,7 +116,6 @@ The following options can be skipped if your kubectl context is already created 
 - **eyamlPublicKeyPath** : if set with path to the eyaml public key file, it will use it instead of looking for default one in ./keys directory relative to where Helmsman were run. It needs to be defined in conjunction with eyamlPrivateKeyPath.
 - **globalHooks** : defines global lifecycle hooks to apply yaml manifest before and/or after different helmsman operations. Check [here](how_to/apps/lifecycle_hooks.md) for more details.
 - **globalMaxHistory** : defines the **global** maximum number of helm revisions state (secrets/configmap) to keep. Releases can override this global value by setting `maxHistory`. If both are not set or are set to `0`, it is defaulted to 10.
-
 
 Example:
 
@@ -134,8 +135,8 @@ kubeContext = "minikube"
 # [settings.globalHooks]
 #   successCondition= "Complete"
 #   deleteOnSuccess= true
-#   postInstall= "job.yaml"  
-globalMaxHistory= 10  
+#   postInstall= "job.yaml"
+globalMaxHistory= 10
 ```
 
 ```yaml
@@ -154,8 +155,8 @@ settings:
   # globalHooks:
   #   successCondition: "Complete"
   #   deleteOnSuccess: true
-  #   preInstall: "job.yaml"   
-  globalMaxHistory: 10 
+  #   preInstall: "job.yaml"
+  globalMaxHistory: 10
 ```
 
 ## Namespaces
@@ -166,7 +167,9 @@ Synopsis: defines the namespaces to be used/created in your k8s cluster and whet
 If a namespace does not already exist, Helmsman will create it.
 
 Options:
+
 - **protected** : defines if a namespace is protected (true or false). Default false.
+
 > For the definition of what a protected namespace means, check the [protection guide](how_to/misc/protect_namespaces_and_releases.md)
 
 - **labels** : defines labels to be added to the namespace, doesn't remove existing labels but updates them if the label key exists with any other different value. You can define any key/value pairs. Default is empty.
@@ -174,7 +177,6 @@ Options:
 - **annotations** : defines annotations to be added to the namespace. It behaves the same way as the labels option.
 
 - **limits** : defines a [LimitRange](https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/memory-default-namespace/) to be configured on the namespace
-
 
 Example:
 
@@ -238,14 +240,16 @@ Synopsis: defines the Helm repos where your charts can be found. You can add as 
 > As of version v1.8.0, you can use private repos with basic auth and you can use pre-configured helm repos.
 
 Authenticating to private cloud helm repos:
+
 - **For S3 repos**: you need to have valid AWS access keys in your environment variables. See [here](https://github.com/hypnoglow/helm-s3#note-on-aws-authentication) for more details.
 - **For GCS repos**: check [here](https://www.terraform.io/docs/providers/google/index.html#authentication-json-file) for getting the required authentication file. Once you have the file, you have two options, either:
-    - set `GOOGLE\_APPLICATION\_CREDENTIALS` environment variable to contain the absolute path to your Google cloud credentials.json file.
-    - Or, set `GCLOUD\_CREDENTIALS` environment variable to contain the content of the credentials.json file.
+  - set `GOOGLE\_APPLICATION\_CREDENTIALS` environment variable to contain the absolute path to your Google cloud credentials.json file.
+  - Or, set `GCLOUD\_CREDENTIALS` environment variable to contain the content of the credentials.json file.
 
 > You can also provide basic auth to access private repos that support basic auth. See the example below.
 
 Options:
+
 - you can define any key/value pair where the key is the repo name and value is a valid URI for the repo. Basic auth info can be added in the repo URL as in the example below.
 
 Example:
@@ -350,12 +354,14 @@ Releases must have unique names which are defined under `apps`. Example: in `[ap
 Options:
 
 **Required**
+
 - **namespace**    : the namespace where the release should be deployed. The namespace should map to one of the ones defined in [namespaces](#namespaces).
 - **enabled**      : describes the required state of the release (true for enabled, false for disabled). Once a release is deployed, you can change it to false if you want to delete this release [default is false].
 - **chart**        : the chart name. It should contain the repo name as well. Example: repoName/chartName. Changing the chart name means delete and reinstall this release using the new Chart.
 - **version**      : the chart version.
 
 **Optional**
+
 - **group**        : group name this apps belongs to. It has no effect until Helmsman's flag `-group` is passed. Check this [doc](how_to/misc/limit-deployment-to-specific-group-of-apps.md) for more details.
 - **description**  : a release metadata for human readers.
 - **valuesFile**   : a valid path (URL, cloud bucket, local absolute/relative file path) to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFiles together. Leaving it empty uses the default chart values.
@@ -415,7 +421,7 @@ Example:
     successTimeout= "90s"
     deleteOnSuccess= true
     postInstall="job.yaml"
-    preInstall="https://github.com/jetstack/cert-manager/releases/download/v0.14.0/cert-manager.crds.yaml"  
+    preInstall="https://github.com/jetstack/cert-manager/releases/download/v0.14.0/cert-manager.crds.yaml"
 ```
 
 ```yaml
@@ -448,5 +454,5 @@ apps:
       successTimeout: "90s"
       deleteOnSuccess: true
       postInstall: "job.yaml"
-      preInstall: "https://github.com/jetstack/cert-manager/releases/download/v0.14.0/cert-manager.crds.yaml"    
+      preInstall: "https://github.com/jetstack/cert-manager/releases/download/v0.14.0/cert-manager.crds.yaml"
 ```

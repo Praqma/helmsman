@@ -57,9 +57,9 @@ Please make sure the following are installed prior to using `helmsman` as a bina
 
 If you use private helm repos, you will need either `helm-gcs` or `helm-s3` plugin or you can use basic auth to authenticate to your repos. See the [docs](https://github.com/Praqma/helmsman/blob/master/docs/how_to/helm_repos) for details.
 
-
 Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the different versions.
-```
+
+```sh
 # on Linux
 curl -L https://github.com/Praqma/helmsman/releases/download/v3.4.2/helmsman_3.4.2_linux_amd64.tar.gz | tar zx
 # on MacOS
@@ -69,9 +69,11 @@ mv helmsman /usr/local/bin/helmsman
 ```
 
 ## As a docker image
+
 Check the images on [dockerhub](https://hub.docker.com/r/praqma/helmsman/tags/)
 
 ## As a package
+
 Helmsman has been packaged in Archlinux under `helmsman-bin` for the latest binary release, and `helmsman-git` for master.
 
 # Documentation
@@ -84,7 +86,6 @@ Helmsman has been packaged in Archlinux under `helmsman-bin` for the latest bina
 
 - [CMD reference](https://github.com/Praqma/helmsman/blob/master/docs/cmd_reference.md)
 
-
 ## Usage
 
 Helmsman can be used in three different settings:
@@ -92,7 +93,6 @@ Helmsman can be used in three different settings:
 - [As a binary with a hosted cluster](https://github.com/Praqma/helmsman/blob/master/docs/how_to/settings).
 - [As a docker image in a CI system or local machine](https://github.com/Praqma/helmsman/blob/master/docs/how_to/deployments/ci.md) Always use a tagged docker image from [dockerhub](https://hub.docker.com/r/praqma/helmsman/) as the `latest` image can (at times) be unstable.
 - [As a docker image inside a k8s cluster](https://github.com/Praqma/helmsman/blob/master/docs/how_to/deployments/inside_k8s.md)
-
 
 # Contributing
 

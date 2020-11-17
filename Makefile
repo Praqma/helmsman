@@ -45,6 +45,10 @@ vet: fmt
 	@go vet ./...
 .PHONY: vet
 
+imports: ## Ensure imports are present and formatted
+	@goimports -w $(shell find . -type f -name '*.go' -not -path './vendor/*')
+.PHONY: goimports
+
 deps: ## Install depdendencies. Runs `go get` internally.
 	@GOFLAGS="" go get -t -d -v ./...
 	@GOFLAGS="" go mod tidy

@@ -14,17 +14,12 @@ You need to provide one of the following env variables:
 Helmsman uses the [helm GCS](https://github.com/nouney/helm-gcs) plugin to work with GCS helm repos.
 
 ```toml
-
-
 [helmRepos]
   gcsRepo = "gs://myrepobucket/charts"
-
 ```
 
 ```yaml
-
 helmRepos:
   gcsRepo: "gs://myrepobucket/charts"
-
-
 ```
+

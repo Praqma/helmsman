@@ -162,11 +162,11 @@ func (c *cli) parse() {
 		os.Setenv("KUBECONFIG", c.kubeconfig)
 	}
 
-	if !toolExists("kubectl") {
+	if !ToolExists("kubectl") {
 		log.Fatal("kubectl is not installed/configured correctly. Aborting!")
 	}
 
-	if !toolExists(helmBin) {
+	if !ToolExists(helmBin) {
 		log.Fatal("" + helmBin + " is not installed/configured correctly. Aborting!")
 	}
 
@@ -242,25 +242,17 @@ func (c *cli) readState(s *state) {
 		}
 	}
 
-	// Default app.Name to state name when unset
-	for appName, app := range s.Apps {
-		if app.Name == "" {
-			app.Name = appName
-		}
+	s.setDefaults()
+	s.disableUntargetedApps(c.group, c.target)
+
+	if len(c.target) > 0 && len(s.TargetMap) == 0 {
+		log.Info("No apps defined with -target flag were found, exiting")
+		os.Exit(0)
 	}
 
-	if len(c.target) > 0 {
-		s.TargetMap = map[string]bool{}
-		for _, v := range c.target {
-			s.TargetMap[v] = true
-		}
-	}
-
-	if len(c.group) > 0 {
-		s.GroupMap = map[string]bool{}
-		for _, v := range c.group {
-			s.GroupMap[v] = true
-		}
+	if len(c.group) > 0 && len(s.TargetMap) == 0 {
+		log.Info("No apps defined with -group flag were found, exiting")
+		os.Exit(0)
 	}
 
 	if !c.skipValidation {
@@ -273,24 +265,6 @@ func (c *cli) readState(s *state) {
 		}
 	} else {
 		log.Info("Desired state validation is skipped.")
-	}
-
-	if s.Settings.StorageBackend != "" {
-		os.Setenv("HELM_DRIVER", s.Settings.StorageBackend)
-	} else {
-		// set default storage background to secret if not set by user
-		s.Settings.StorageBackend = "secret"
-	}
-
-	// if there is no user-defined context name in the DSF(s), use the default context name
-	if s.Context == "" {
-		s.Context = defaultContextName
-	}
-
-	// inherit globalHooks if local ones are not set
-	for _, r := range s.Apps {
-		r.inheritHooks(s)
-		r.inheritMaxHistory(s)
 	}
 
 	if c.debug {

@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 )
 
 // config type represents the settings fields
@@ -30,39 +31,39 @@ type config struct {
 
 // state type represents the desired state of applications on a k8s cluster.
 type state struct {
-	Metadata               map[string]string    `yaml:"metadata"`
-	Certificates           map[string]string    `yaml:"certificates"`
-	Settings               config               `yaml:"settings"`
-	Context                string               `yaml:"context"`
-	Namespaces             map[string]namespace `yaml:"namespaces"`
-	HelmRepos              map[string]string    `yaml:"helmRepos"`
-	PreconfiguredHelmRepos []string             `yaml:"preconfiguredHelmRepos"`
-	Apps                   map[string]*release  `yaml:"apps"`
-	AppsTemplates          map[string]*release  `yaml:"appsTemplates,omitempty"`
+	Metadata               map[string]string     `yaml:"metadata"`
+	Certificates           map[string]string     `yaml:"certificates"`
+	Settings               config                `yaml:"settings"`
+	Context                string                `yaml:"context"`
+	Namespaces             map[string]*namespace `yaml:"namespaces"`
+	HelmRepos              map[string]string     `yaml:"helmRepos"`
+	PreconfiguredHelmRepos []string              `yaml:"preconfiguredHelmRepos"`
+	Apps                   map[string]*release   `yaml:"apps"`
+	AppsTemplates          map[string]*release   `yaml:"appsTemplates,omitempty"`
 	TargetMap              map[string]bool
-	GroupMap               map[string]bool
-	TargetApps             map[string]*release
-	TargetNamespaces       map[string]namespace
 }
 
-// invokes either yaml or toml parser considering file extension
-func (s *state) fromFile(file string) (bool, string) {
-	if isOfType(file, []string{".toml"}) {
-		return fromTOML(file, s)
-	} else if isOfType(file, []string{".yaml", ".yml"}) {
-		return fromYAML(file, s)
+func (s *state) setDefaults() {
+	if s.Settings.StorageBackend != "" {
+		os.Setenv("HELM_DRIVER", s.Settings.StorageBackend)
 	} else {
-		return false, "State file does not have toml/yaml extension."
+		// set default storage background to secret if not set by user
+		s.Settings.StorageBackend = "secret"
 	}
-}
 
-func (s *state) toFile(file string) {
-	if isOfType(file, []string{".toml"}) {
-		toTOML(file, s)
-	} else if isOfType(file, []string{".yaml", ".yml"}) {
-		toYAML(file, s)
-	} else {
-		log.Fatal("State file does not have toml/yaml extension.")
+	// if there is no user-defined context name in the DSF(s), use the default context name
+	if s.Context == "" {
+		s.Context = defaultContextName
+	}
+
+	for name, r := range s.Apps {
+		// Default app.Name to state name when unset
+		if r.Name == "" {
+			r.Name = name
+		}
+		// inherit globalHooks if local ones are not set
+		r.inheritHooks(s)
+		r.inheritMaxHistory(s)
 	}
 }
 
@@ -107,8 +108,8 @@ func (s *state) validate() error {
 
 	// lifecycle hooks validation
 	if len(s.Settings.GlobalHooks) != 0 {
-		if ok, errorMsg := validateHooks(s.Settings.GlobalHooks); !ok {
-			return fmt.Errorf(errorMsg)
+		if err := validateHooks(s.Settings.GlobalHooks); err != nil {
+			return err
 		}
 	}
 
@@ -123,11 +124,9 @@ func (s *state) validate() error {
 	if s.Certificates != nil && len(s.Certificates) != 0 {
 
 		for key, value := range s.Certificates {
-			r, path := isValidCert(value)
-			if !r {
+			if !isValidCert(value) {
 				return errors.New("certifications validation failed -- [ " + key + " ] must be a valid S3, GCS, AZ bucket/container URL or a valid relative file path")
 			}
-			s.Certificates[key] = path
 		}
 
 		_, caCrt := s.Certificates["caCrt"]
@@ -184,14 +183,60 @@ func (s *state) validate() error {
 	return nil
 }
 
-// isValidCert checks if a certificate/key path/URI is valid
-func isValidCert(value string) (bool, string) {
-	_, err1 := url.ParseRequestURI(value)
-	_, err2 := os.Stat(value)
-	if err2 != nil && (err1 != nil || (!strings.HasPrefix(value, "s3://") && !strings.HasPrefix(value, "gs://") && !strings.HasPrefix(value, "az://"))) {
-		return false, ""
+// validateReleaseCharts validates if the charts defined in a release are valid.
+// Valid charts are the ones that can be found in the defined repos.
+// This function uses Helm search to verify if the chart can be found or not.
+func (s *state) validateReleaseCharts() error {
+	var fail bool
+	wg := sync.WaitGroup{}
+	sem := make(chan struct{}, resourcePool)
+	c := make(chan string, len(s.Apps))
+
+	charts := make(map[string]map[string][]string)
+	for app, r := range s.Apps {
+		if !r.isConsideredToRun() {
+			continue
+		}
+		if charts[r.Chart] == nil {
+			charts[r.Chart] = make(map[string][]string)
+		}
+
+		if charts[r.Chart][r.Version] == nil {
+			charts[r.Chart][r.Version] = make([]string, 0)
+		}
+
+		charts[r.Chart][r.Version] = append(charts[r.Chart][r.Version], app)
 	}
-	return true, value
+
+	for chart, versions := range charts {
+		for version, apps := range versions {
+			concattedApps := strings.Join(apps, ", ")
+			ch := chart
+			v := version
+			sem <- struct{}{}
+			wg.Add(1)
+			go func(apps, chart, version string) {
+				defer func() {
+					wg.Done()
+					<-sem
+				}()
+				validateChart(concattedApps, chart, version, c)
+			}(concattedApps, ch, v)
+		}
+	}
+
+	wg.Wait()
+	close(c)
+	for err := range c {
+		if err != "" {
+			fail = true
+			log.Error(err)
+		}
+	}
+	if fail {
+		return errors.New("chart validation failed")
+	}
+	return nil
 }
 
 // isNamespaceDefined checks if a given namespace is defined in the namespaces section of the desired state file
@@ -208,47 +253,48 @@ func (s *state) overrideAppsNamespace(newNs string) {
 	}
 }
 
-func (s *state) getAppsInGroupsAsTargetMap() map[string]bool {
-	targetApps := make(map[string]bool)
-	for appName, data := range s.Apps {
-		if use, ok := s.GroupMap[data.Group]; ok && use {
-			targetApps[appName] = true
-		}
-	}
-	return targetApps
-}
-
 // get only those Apps that exist in TargetMap
-func (s *state) getAppsInTargetsOnly() map[string]*release {
-	targetApps := make(map[string]*release)
-	for appName, use := range s.TargetMap {
-		if use {
-			if value, ok := s.Apps[appName]; ok {
-				targetApps[appName] = value
-			}
+func (s *state) disableUntargetedApps(groups, targets []string) {
+	if s.TargetMap == nil {
+		s.TargetMap = make(map[string]bool)
+	}
+	if len(targets) == 0 && len(groups) == 0 {
+		return
+	}
+	for _, t := range targets {
+		s.TargetMap[t] = true
+	}
+	groupMap := make(map[string]struct{})
+	namespaces := make(map[string]struct{})
+	for _, g := range groups {
+		groupMap[g] = struct{}{}
+	}
+	for appName, app := range s.Apps {
+		if _, ok := s.TargetMap[appName]; ok {
+			namespaces[app.Namespace] = struct{}{}
+			continue
+		}
+		if _, ok := groupMap[app.Group]; ok {
+			s.TargetMap[appName] = true
+			namespaces[app.Namespace] = struct{}{}
+		} else {
+			app.Disable()
 		}
 	}
-	return targetApps
-}
 
-func (s *state) getNamespacesInTargetsOnly() map[string]namespace {
-	targetNamespaces := make(map[string]namespace)
-	for appName, use := range s.TargetMap {
-		if use {
-			if value, ok := s.Apps[appName]; ok {
-				targetNamespaces[value.Namespace] = s.Namespaces[value.Namespace]
-			}
+	for nsName, ns := range s.Namespaces {
+		if _, ok := namespaces[nsName]; !ok {
+			ns.Disable()
 		}
 	}
-	return targetNamespaces
 }
 
 // updateContextLabels applies Helmsman labels including overriding any previously-set context with the one found in the DSF
 func (s *state) updateContextLabels() {
 	for _, r := range s.Apps {
-		if r.isConsideredToRun(s) {
+		if r.isConsideredToRun() {
 			log.Info("Updating context and reapplying Helmsman labels for release [ " + r.Name + " ]")
-			r.label()
+			r.mark(s.Settings.StorageBackend)
 		} else {
 			log.Warning(r.Name + " is not in the target group and therefore context and labels are not changed.")
 		}
@@ -285,10 +331,5 @@ func (s *state) print() {
 	fmt.Println("--------------- ")
 	for t := range s.TargetMap {
 		fmt.Println(t)
-	}
-	fmt.Println("\nGroups: ")
-	fmt.Println("--------------- ")
-	for g := range s.GroupMap {
-		fmt.Println(g)
 	}
 }

@@ -37,21 +37,18 @@ func getHelmReleases(s *state) []helmRelease {
 		allReleases []helmRelease
 		wg          sync.WaitGroup
 		mutex       = &sync.Mutex{}
-		namespaces  map[string]namespace
 	)
-	if len(s.TargetMap) > 0 {
-		namespaces = s.TargetNamespaces
-	} else {
-		namespaces = s.Namespaces
-	}
-	for ns := range namespaces {
+	for ns, cfg := range s.Namespaces {
+		if cfg.disabled {
+			continue
+		}
 		wg.Add(1)
 		go func(ns string) {
 			var releases []helmRelease
 			var targetReleases []helmRelease
 			defer wg.Done()
 			cmd := helmCmd([]string{"list", "--all", "--max", "0", "--output", "json", "-n", ns}, "Listing all existing releases in [ "+ns+" ] namespace")
-			result := cmd.retryExec(3)
+			result := cmd.RetryExec(3)
 			if result.code != 0 {
 				log.Fatal(result.errors)
 			}
@@ -84,7 +81,7 @@ func (r *helmRelease) key() string {
 func (r *helmRelease) uninstall(p *plan) {
 	cmd := helmCmd(concat([]string{"uninstall", r.Name, "--namespace", r.Namespace}, flags.getDryRunFlags()), "Delete untracked release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
-	p.addCommand(cmd, -800, nil, []command{}, []command{})
+	p.addCommand(cmd, -800, nil, []hookCmd{}, []hookCmd{})
 }
 
 // getRevision returns the revision number for an existing helm release

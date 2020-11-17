@@ -1,5 +1,5 @@
 ---
-version: v3.4.0
+version: v3.5.2
 ---
 
 # Helmsman Lifecycle hooks
@@ -10,12 +10,15 @@ Another useful use-case is if you are using a 3rd party chart which does not def
 
 ## Prerequisites
 
-- Hook operations must be defined in a Kubernetes manifest. They can be any kubernetes resource(s) (jobs, cron jobs, deployments, pods, etc).
-- You can only define one manifest file for each lifecycle hook. So make sure all your needed resources are in this manifest.
+- Hook operations can be defined in a Kubernetes manifest. They can be any kubernetes resource(s) (jobs, cron jobs, deployments, pods, etc).
+  - You can only define one manifest file for each lifecycle hook. So make sure all your needed resources are in this manifest.
+- Hook operations can also be a script or a command.
+- Script or manifest paths must be either absolute or relative to the DSF.
+- Hook k8s manifests can also be defined as an URL.
 
 ## Supported lifecycle stages
 
-> hook types are case sensitive. Also, note the camleCase. 
+> hook types are case sensitive. Also, note the camleCase.
 
 - `preInstall` : before installing a release.
 - `postInstall`: after installing a release.
@@ -27,28 +30,44 @@ Another useful use-case is if you are using a 3rd party chart which does not def
 ## Hooks stanza details
 
 The following items can be defined in the hooks stanza:
-- pre/postInstall, pre/postUpgrade, pre/postDelete : a valid path (URL, cloud bucket, local file path) to your hook's k8s manifest.
-- `successCondition` the Kubernetes status condition that indicates that your resources have finished their job successfully. You can find out what the status conditions are for different k8s resources with a kubectl command similar to: `kubectl get job -o=jsonpath='{range .items[*]}{.status.conditions[0].type}{"\n"}{end}'` 
 
-For jobs, it is `Complete`
-For pods, it is `Initialized`
-For deployments, it is `Available`
+**pre/postInstall, pre/postUpgrade, pre/postDelete**:
 
-- `successTimeout` (default 30s) how much time to wait for the `successCondition`
-- `deleteOnSuccess` (true/false) indicates if you wish to delete the hook's manifest after the hook succeeds. This is only used if you define `successCondition`
+A valid path (URL, cloud bucket, local file path) to your hook's k8s manifest or a valid path to a script or a shell command.
 
-> Note: successCondition, deleteOnSuccess and successTimeout are ignored when the `--dry-run` flag is used. 
+The following options only apply to kubernetes manifest type of hooks.
+
+**successCondition**:
+
+The Kubernetes status condition that indicates that your resources have finished their job successfully. You can find out what the status conditions are for different k8s resources with a kubectl command similar to: `kubectl get job -o=jsonpath='{range .items[*]}{.status.conditions[0].type}{"\n"}{end}'`
+
+- For jobs, it is `Complete`
+- For pods, it is `Initialized`
+- For deployments, it is `Available`
+
+**successTimeout**: (default 30s)
+
+How much time to wait for the `successCondition`
+
+**deleteOnSuccess**: (true/false)
+
+Indicates if you wish to delete the hook's manifest after the hook succeeds. This is only used if you define `successCondition`
+
+> Note: successCondition, deleteOnSuccess and successTimeout are ignored when the `--dry-run` flag is used.
 
 ## Global vs App-specific hooks
 
 You can define two types of hooks in your desired state file:
 
-- **Global** hooks: are defined in the `settings` stanza and are inherited by all releases in the DSF if they haven't defined their own.
+**Global** hooks:
+
+Are defined in the `settings` stanza and are inherited by all releases in the DSF if they haven't defined their own.
 
 These are defined as follows:
+
 ```toml
 [settings]
-  ...
+ #...
  [settings.globalHooks]
     successCondition= "Initialized"
     deleteOnSuccess= true
@@ -57,15 +76,17 @@ These are defined as follows:
 
 ```yaml
 settings:
-  ...
+  #...
   globalHooks:
     successCondition: "Initialized"
     deleteOnSuccess: true
     postInstall: "job.yaml"
-    ...
+    #...
 ```
 
-- **App-specific** hooks: each app (release) can define its own hooks which **override any global ones**.
+**App-specific** hooks:
+
+Each app (release) can define its own hooks which **override any global ones**.
 
 These are defined as follows:
 
@@ -124,10 +145,8 @@ You can expand variables/parameters in the hook manifests at run time in one of 
 
 - Pass encrypted values with [hiera-eyaml](https://github.com/Praqma/helmsman/blob/master/docs/how_to/settings/use-hiera-eyaml-as-secrets-encryption.md)
 
-
 ## Limitations
 
 - You can only have one manifest file per lifecycle.
-- Your arbitrary tasks must run within a k8s resource (example inside a pod). You can't use a plain bash script as a hook manifest for example.
-- If you have multiple k8s resources in your hook manifest file, `successCondition` may not work. 
+- If you have multiple k8s resources in your hook manifest file, `successCondition` may not work.
 - pre/postDelete hooks are not respected before/after deleting untracked releases (releases which are no longer defined in your desired state file).

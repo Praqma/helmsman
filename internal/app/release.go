@@ -1,15 +1,11 @@
 package app
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 // release type representing Helm releases which are described in the desired state
@@ -38,6 +34,7 @@ type release struct {
 	Timeout      int                    `yaml:"timeout"`
 	Hooks        map[string]interface{} `yaml:"hooks"`
 	MaxHistory   int                    `yaml:"maxHistory"`
+	disabled     bool
 }
 
 type chartVersion struct {
@@ -51,21 +48,19 @@ func (r *release) key() string {
 	return fmt.Sprintf("%s-%s", r.Name, r.Namespace)
 }
 
+func (r *release) Disable() {
+	r.disabled = true
+}
+
 // isReleaseConsideredToRun checks if a release is being targeted for operations as specified by user cmd flags (--group or --target)
-func (r *release) isConsideredToRun(s *state) bool {
-	if len(s.TargetMap) > 0 {
-		if _, ok := s.TargetMap[r.Name]; ok {
-			return true
-		}
-		return false
-	}
-	return true
+func (r *release) isConsideredToRun() bool {
+	return !r.disabled
 }
 
 // validate validates if a release inside a desired state meets the specifications or not.
 // check the full specification @ https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md
-func (r *release) validate(appLabel string, names map[string]map[string]bool, s *state) error {
-	if names[r.Name][r.Namespace] {
+func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *state) error {
+	if seen[r.Name][r.Namespace] {
 		return errors.New("release name must be unique within a given namespace")
 	}
 
@@ -83,16 +78,18 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 		return errors.New("version can't be empty")
 	}
 
+	validFiles := []string{".yaml", ".yml", ".json"}
+
 	if r.ValuesFile != "" && len(r.ValuesFiles) > 0 {
 		return errors.New("valuesFile and valuesFiles should not be used together")
 	} else if r.ValuesFile != "" {
-		if err := isValidFile(r.ValuesFile, []string{".yaml", ".yml", ".json"}); err != nil {
-			return fmt.Errorf(err.Error())
+		if err := isValidFile(r.ValuesFile, validFiles); err != nil {
+			return err
 		}
 	} else if len(r.ValuesFiles) > 0 {
 		for _, filePath := range r.ValuesFiles {
-			if err := isValidFile(filePath, []string{".yaml", ".yml", ".json"}); err != nil {
-				return fmt.Errorf(err.Error())
+			if err := isValidFile(filePath, validFiles); err != nil {
+				return err
 			}
 		}
 	}
@@ -100,21 +97,19 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 	if r.SecretsFile != "" && len(r.SecretsFiles) > 0 {
 		return errors.New("secretsFile and secretsFiles should not be used together")
 	} else if r.SecretsFile != "" {
-		if err := isValidFile(r.SecretsFile, []string{".yaml", ".yml", ".json"}); err != nil {
-			return fmt.Errorf(err.Error())
+		if err := isValidFile(r.SecretsFile, validFiles); err != nil {
+			return err
 		}
 	} else if len(r.SecretsFiles) > 0 {
 		for _, filePath := range r.SecretsFiles {
-			if err := isValidFile(filePath, []string{".yaml", ".yml", ".json"}); err != nil {
-				return fmt.Errorf(err.Error())
+			if err := isValidFile(filePath, validFiles); err != nil {
+				return err
 			}
 		}
 	}
 
-	if r.PostRenderer != "" {
-		if _, err := os.Stat(r.PostRenderer); err != nil {
-			return fmt.Errorf(r.PostRenderer + " must be valid relative (from dsf file) file path.")
-		}
+	if r.PostRenderer != "" && !ToolExists(r.PostRenderer) {
+		return fmt.Errorf("%s must be valid relative (from dsf file) file path", r.PostRenderer)
 	}
 
 	if r.Priority != 0 && r.Priority > 0 {
@@ -122,180 +117,28 @@ func (r *release) validate(appLabel string, names map[string]map[string]bool, s 
 	}
 
 	if (len(r.Hooks)) != 0 {
-		if ok, errorMsg := validateHooks(r.Hooks); !ok {
-			return fmt.Errorf(errorMsg)
+		if err := validateHooks(r.Hooks); err != nil {
+			return err
 		}
 	}
 
-	if names[r.Name] == nil {
-		names[r.Name] = make(map[string]bool)
+	if seen[r.Name] == nil {
+		seen[r.Name] = make(map[string]bool)
 	}
-	names[r.Name][r.Namespace] = true
+	seen[r.Name][r.Namespace] = true
 
 	return nil
-}
-
-// validateHooks validates that hook files exist and of YAML type
-func validateHooks(hooks map[string]interface{}) (bool, string) {
-	for key, value := range hooks {
-		switch key {
-		case "preInstall", "postInstall", "preUpgrade", "postUpgrade", "preDelete", "postDelete":
-			if err := isValidFile(value.(string), []string{".yaml", ".yml"}); err != nil {
-				return false, err.Error()
-			}
-		case "successCondition", "successTimeout", "deleteOnSuccess":
-			continue
-		default:
-			return false, key + " is an Invalid hook type."
-		}
-	}
-	return true, ""
-}
-
-// validateReleaseCharts validates if the charts defined in a release are valid.
-// Valid charts are the ones that can be found in the defined repos.
-// This function uses Helm search to verify if the chart can be found or not.
-func validateReleaseCharts(s *state) error {
-	var fail bool
-	var apps map[string]*release
-	wg := sync.WaitGroup{}
-	sem := make(chan struct{}, resourcePool)
-	if len(s.TargetMap) > 0 {
-		apps = s.TargetApps
-	} else {
-		apps = s.Apps
-	}
-	c := make(chan string, len(apps))
-
-	charts := make(map[string]map[string][]string)
-	for app, r := range apps {
-		if charts[r.Chart] == nil {
-			charts[r.Chart] = make(map[string][]string)
-		}
-
-		if charts[r.Chart][r.Version] == nil {
-			charts[r.Chart][r.Version] = make([]string, 0)
-		}
-
-		if r.isConsideredToRun(s) {
-			charts[r.Chart][r.Version] = append(charts[r.Chart][r.Version], app)
-		}
-	}
-
-	for chart, versions := range charts {
-		for version, apps := range versions {
-			concattedApps := strings.Join(apps, ", ")
-			ch := chart
-			v := version
-			sem <- struct{}{}
-			wg.Add(1)
-			go func(apps, chart, version string) {
-				defer func() {
-					wg.Done()
-					<-sem
-				}()
-				validateChart(concattedApps, chart, version, c)
-			}(concattedApps, ch, v)
-		}
-	}
-
-	wg.Wait()
-	close(c)
-	for err := range c {
-		if err != "" {
-			fail = true
-			log.Error(err)
-		}
-	}
-	if fail {
-		return errors.New("chart validation failed")
-	}
-	return nil
-}
-
-var versionExtractor = regexp.MustCompile(`[\n]version:\s?(.*)`)
-
-// validateChart validates if chart with the same name and version as specified in the DSF exists
-func validateChart(apps, chart, version string, c chan string) {
-	if isLocalChart(chart) {
-		cmd := helmCmd([]string{"inspect", "chart", chart}, "Validating [ "+chart+" ] chart's availability")
-
-		result := cmd.exec()
-		if result.code != 0 {
-			maybeRepo := filepath.Base(filepath.Dir(chart))
-			c <- "Chart [ " + chart + " ] for apps [" + apps + "] can't be found. Inspection returned error: \"" +
-				strings.TrimSpace(result.errors) + "\" -- If this is not a local chart, add the repo [ " + maybeRepo + " ] in your helmRepos stanza."
-			return
-		}
-		matches := versionExtractor.FindStringSubmatch(result.output)
-		if len(matches) == 2 {
-			v := strings.Trim(matches[1], `'"`)
-			if strings.Trim(version, `'"`) != v {
-				c <- "Chart [ " + chart + " ] with version [ " + version + " ] is specified for " +
-					"apps [" + apps + "] but the chart found at that path has version [ " + v + " ] which does not match."
-				return
-			}
-		}
-	} else {
-		v := version
-		if len(v) == 0 {
-			v = "*"
-		}
-		cmd := helmCmd([]string{"search", "repo", chart, "--version", v, "-l"}, "Validating [ "+chart+" ] chart's version [ "+version+" ] availability")
-
-		if result := cmd.exec(); result.code != 0 || strings.Contains(result.output, "No results found") {
-			c <- "Chart [ " + chart + " ] with version [ " + version + " ] is specified for " +
-				"apps [" + apps + "] but was not found. If this is not a local chart, define its helm repo in the helmRepo stanza in your DSF."
-			return
-		}
-	}
-}
-
-// getChartVersion fetches the lastest chart version matching the semantic versioning constraints.
-// If chart is local, returns the given release version
-func getChartVersion(chart, version string) (string, string) {
-	if isLocalChart(chart) {
-		log.Info("Chart [ " + chart + " ] with version [ " + version + " ] was found locally.")
-		return version, ""
-	}
-
-	cmd := helmCmd([]string{"search", "repo", chart, "--version", version, "-o", "json"}, "Getting latest non-local chart's version "+chart+"-"+version+"")
-
-	result := cmd.exec()
-	if result.code != 0 {
-		return "", "Chart [ " + chart + " ] with version [ " + version + " ] is specified but not found in the helm repositories"
-	}
-
-	chartVersions := make([]chartVersion, 0)
-	if err := json.Unmarshal([]byte(result.output), &chartVersions); err != nil {
-		log.Fatal(fmt.Sprint(err))
-	}
-
-	filteredChartVersions := make([]chartVersion, 0)
-	for _, c := range chartVersions {
-		if c.Name == chart {
-			filteredChartVersions = append(filteredChartVersions, c)
-		}
-	}
-
-	if len(filteredChartVersions) < 1 {
-		return "", "Chart [ " + chart + " ] with version [ " + version + " ] is specified but not found in the helm repositories"
-	} else if len(filteredChartVersions) > 1 {
-		return "", "Multiple versions of chart [ " + chart + " ] with version [ " + version + " ] found in the helm repositories"
-	}
-
-	return filteredChartVersions[0].Version, ""
 }
 
 // testRelease creates a Helm command to test a particular release.
-func (r *release) test(afterCommands *[]command) {
+func (r *release) test(afterCommands *[]hookCmd) {
 	cmd := helmCmd(r.getHelmArgsFor("test"), "Running tests for release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-	*afterCommands = append(*afterCommands, cmd)
+	*afterCommands = append(*afterCommands, hookCmd{Command: cmd, Type: test})
 }
 
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
 func (r *release) install(p *plan) {
-	before, after := r.checkHooks("install", p)
+	before, after := r.checkHooks("install")
 
 	if r.Test {
 		r.test(&after)
@@ -312,11 +155,11 @@ func (r *release) uninstall(p *plan, optionalNamespace ...string) {
 		ns = optionalNamespace[0]
 	}
 	priority := r.Priority
-	if settings.ReverseDelete {
+	if p.ReverseDelete {
 		priority = priority * -1
 	}
 
-	before, after := r.checkHooks("delete", p, ns)
+	before, after := r.checkHooks("delete", ns)
 
 	cmd := helmCmd(r.getHelmArgsFor("uninstall", ns), "Delete release [ "+r.Name+" ] in namespace [ "+ns+" ]")
 	p.addCommand(cmd, priority, r, before, after)
@@ -337,7 +180,7 @@ func (r *release) diff() string {
 
 	cmd := helmCmd(concat([]string{"diff", colorFlag, suppressDiffSecretsFlag}, diffContextFlag, r.getHelmArgsFor("diff")), "Diffing release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
-	result := cmd.retryExec(3)
+	result := cmd.RetryExec(3)
 	if result.code != 0 {
 		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors))
 	} else {
@@ -352,7 +195,7 @@ func (r *release) diff() string {
 // upgradeRelease upgrades an existing release with the specified values.yaml
 func (r *release) upgrade(p *plan) {
 
-	before, after := r.checkHooks("upgrade", p)
+	before, after := r.checkHooks("upgrade")
 
 	if r.Test {
 		r.test(&after)
@@ -389,7 +232,7 @@ func (r *release) rollback(cs *currentState, p *plan) {
 	if r.Namespace == rs.Namespace {
 
 		cmd := helmCmd(concat([]string{"rollback", r.Name, rs.getRevision()}, r.getWait(), r.getTimeout(), r.getNoHooks(), flags.getDryRunFlags()), "Rolling back release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-		p.addCommand(cmd, r.Priority, r, []command{}, []command{})
+		p.addCommand(cmd, r.Priority, r, []hookCmd{}, []hookCmd{})
 		r.upgrade(p) // this is to reflect any changes in values file(s)
 		p.addDecision("Release [ "+r.Name+" ] was deleted and is desired to be rolled back to "+
 			"namespace [ "+r.Namespace+" ]", r.Priority, create)
@@ -403,14 +246,41 @@ func (r *release) rollback(cs *currentState, p *plan) {
 	}
 }
 
-// label applies Helmsman specific labels to Helm's state resources (secrets/configmaps)
-func (r *release) label() {
+// mark applies Helmsman specific labels to Helm's state resources (secrets/configmaps)
+func (r *release) mark(storageBackend string) {
+	r.label(storageBackend, "MANAGED-BY=HELMSMAN", "NAMESPACE="+r.Namespace, "HELMSMAN_CONTEXT="+curContext)
+}
+
+// label labels Helm's state resources (secrets/configmaps)
+func (r *release) label(storageBackend string, labels ...string) {
+	if len(labels) == 0 {
+		return
+	}
 	if r.Enabled {
-		storageBackend := settings.StorageBackend
 
-		cmd := kubectl([]string{"label", storageBackend, "-n", r.Namespace, "-l", "owner=helm,name=" + r.Name, "MANAGED-BY=HELMSMAN", "NAMESPACE=" + r.Namespace, "HELMSMAN_CONTEXT=" + curContext, "--overwrite"}, "Applying Helmsman labels to [ "+r.Name+" ] release")
+		args := []string{"label", "--overwrite", storageBackend, "-n", r.Namespace, "-l", "owner=helm,name=" + r.Name}
+		args = append(args, labels...)
+		cmd := kubectl(args, "Applying Helmsman labels to [ "+r.Name+" ] release")
 
-		result := cmd.exec()
+		result := cmd.Exec()
+		if result.code != 0 {
+			log.Fatal(result.errors)
+		}
+	}
+}
+
+// annotate annotates Helm's state resources (secrets/configmaps)
+func (r *release) annotate(storageBackend string, annotations ...string) {
+	if len(annotations) == 0 {
+		return
+	}
+	if r.Enabled {
+
+		args := []string{"annotate", "--overwrite", storageBackend, "-n", r.Namespace, "-l", "owner=helm,name=" + r.Name}
+		args = append(args, annotations...)
+		cmd := kubectl(args, "Applying Helmsman annotations to [ "+r.Name+" ] release")
+
+		result := cmd.Exec()
 		if result.code != 0 {
 			log.Fatal(result.errors)
 		}
@@ -421,12 +291,12 @@ func (r *release) label() {
 // A protected is release is either: a) deployed in a protected namespace b) flagged as protected in the desired state file
 // Any release in a protected namespace is protected by default regardless of its flag
 // returns true if a release is protected, false otherwise
-func (r *release) isProtected(cs *currentState, s *state) bool {
+func (r *release) isProtected(cs *currentState, n *namespace) bool {
 	// if the release does not exist in the cluster, it is not protected
 	if ok := cs.releaseExists(r, ""); !ok {
 		return false
 	}
-	if s.Namespaces[r.Namespace].Protected || r.Protected {
+	if n.Protected || r.Protected {
 		return true
 	}
 	return false
@@ -446,53 +316,6 @@ func (r *release) getTimeout() []string {
 		return []string{"--timeout", strconv.Itoa(r.Timeout) + "s"}
 	}
 	return []string{}
-}
-
-// getValuesFiles return partial install/upgrade release command to substitute the -f flag in Helm.
-func (r *release) getValuesFiles() []string {
-	var fileList []string
-
-	if r.ValuesFile != "" {
-		fileList = append(fileList, r.ValuesFile)
-	} else if len(r.ValuesFiles) > 0 {
-		fileList = append(fileList, r.ValuesFiles...)
-	}
-
-	if r.SecretsFile != "" || len(r.SecretsFiles) > 0 {
-		if settings.EyamlEnabled {
-			if !toolExists("eyaml") {
-				log.Fatal("hiera-eyaml is not installed/configured correctly. Aborting!")
-			}
-		} else {
-			if !helmPluginExists("secrets") {
-				log.Fatal("helm secrets plugin is not installed/configured correctly. Aborting!")
-			}
-		}
-	}
-	if r.SecretsFile != "" {
-		if err := decryptSecret(r.SecretsFile); err != nil {
-			log.Fatal(err.Error())
-		}
-		fileList = append(fileList, r.SecretsFile+".dec")
-	} else if len(r.SecretsFiles) > 0 {
-		for i := 0; i < len(r.SecretsFiles); i++ {
-			if err := decryptSecret(r.SecretsFiles[i]); err != nil {
-				log.Fatal(err.Error())
-			}
-			// if .dec extension is added before to the secret filename, don't add it again.
-			// This happens at upgrade time (where diff and upgrade both call this function)
-			if !isOfType(r.SecretsFiles[i], []string{".dec"}) {
-				r.SecretsFiles[i] = r.SecretsFiles[i] + ".dec"
-			}
-		}
-		fileList = append(fileList, r.SecretsFiles...)
-	}
-
-	fileListArgs := []string{}
-	for _, file := range fileList {
-		fileListArgs = append(fileListArgs, "-f", file)
-	}
-	return fileListArgs
 }
 
 // getSetValues returns --set params to be used with helm install/upgrade commands
@@ -626,67 +449,74 @@ func (r *release) inheritMaxHistory(s *state) {
 // checkHooks checks if a hook of certain type exists and creates its command
 // if success condition for the hook is defined, a "kubectl wait" command is created
 // returns two slices of before and after commands
-func (r *release) checkHooks(hookType string, p *plan, optionalNamespace ...string) ([]command, []command) {
+func (r *release) checkHooks(action string, optionalNamespace ...string) ([]hookCmd, []hookCmd) {
 	ns := r.Namespace
 	if len(optionalNamespace) > 0 {
 		ns = optionalNamespace[0]
 	}
-	var beforeCommands []command
-	var afterCommands []command
-	switch hookType {
+	var beforeCmds, afterCmds []hookCmd
+
+	switch action {
 	case "install":
 		{
-			if _, ok := r.Hooks["preInstall"]; ok {
-				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["preInstall"].(string), flags.getKubeDryRunFlag("apply")}, "Apply pre-install manifest "+r.Hooks["preInstall"].(string)))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks["preInstall"].(string), "pre-install", ns); wait {
-					beforeCommands = append(beforeCommands, cmds...)
-				}
+			if _, ok := r.Hooks[preInstall]; ok {
+				beforeCmds = append(beforeCmds, r.getHookCommands(preInstall, ns)...)
 			}
-			if _, ok := r.Hooks["postInstall"]; ok {
-				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["postInstall"].(string), flags.getKubeDryRunFlag("apply")}, "Apply post-install manifest "+r.Hooks["postInstall"].(string)))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks["postInstall"].(string), "post-install", ns); wait {
-					afterCommands = append(afterCommands, cmds...)
-				}
+			if _, ok := r.Hooks[postInstall]; ok {
+				afterCmds = append(afterCmds, r.getHookCommands(postInstall, ns)...)
 			}
 		}
 	case "upgrade":
 		{
-			if _, ok := r.Hooks["preUpgrade"]; ok {
-				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["preUpgrade"].(string), flags.getKubeDryRunFlag("apply")}, "Apply pre-upgrade manifest "+r.Hooks["preUpgrade"].(string)))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks["preUpgrade"].(string), "pre-upgrade", ns); wait {
-					beforeCommands = append(beforeCommands, cmds...)
-				}
+			if _, ok := r.Hooks[preUpgrade]; ok {
+				beforeCmds = append(beforeCmds, r.getHookCommands(preUpgrade, ns)...)
 			}
-			if _, ok := r.Hooks["postUpgrade"]; ok {
-				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["postUpgrade"].(string), flags.getKubeDryRunFlag("apply")}, "Apply post-upgrade manifest "+r.Hooks["postUpgrade"].(string)))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks["postUpgrade"].(string), "post-upgrade", ns); wait {
-					afterCommands = append(afterCommands, cmds...)
-				}
+			if _, ok := r.Hooks[postUpgrade]; ok {
+				afterCmds = append(afterCmds, r.getHookCommands(postUpgrade, ns)...)
 			}
 		}
 	case "delete":
 		{
-			if _, ok := r.Hooks["preDelete"]; ok {
-				beforeCommands = append(beforeCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["preDelete"].(string), flags.getKubeDryRunFlag("apply")}, "Apply pre-delete manifest "+r.Hooks["preDelete"].(string)))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks["preDelete"].(string), "pre-delete", ns); wait {
-					beforeCommands = append(beforeCommands, cmds...)
-				}
+			if _, ok := r.Hooks[preDelete]; ok {
+				beforeCmds = append(beforeCmds, r.getHookCommands(preDelete, ns)...)
 			}
-			if _, ok := r.Hooks["postDelete"]; ok {
-				afterCommands = append(afterCommands, kubectl([]string{"apply", "-n", ns, "-f", r.Hooks["postDelete"].(string), flags.getKubeDryRunFlag("apply")}, "Apply post-delete manifest "+r.Hooks["postDelete"].(string)))
-				if wait, cmds := r.shouldWaitForHook(r.Hooks["postDelete"].(string), "post-delete", ns); wait {
-					afterCommands = append(afterCommands, cmds...)
-				}
+			if _, ok := r.Hooks[postDelete]; ok {
+				afterCmds = append(afterCmds, r.getHookCommands(postDelete, ns)...)
 			}
 		}
 	}
-	return beforeCommands, afterCommands
+	return beforeCmds, afterCmds
+}
+
+func (r *release) getHookCommands(hookType, ns string) []hookCmd {
+	var cmds []hookCmd
+	if _, ok := r.Hooks[hookType]; ok {
+		hook := r.Hooks[hookType].(string)
+		if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err != nil {
+			cmd := kubectl([]string{"apply", "-n", ns, "-f", hook, flags.getKubeDryRunFlag("apply")}, "Apply "+hook+" manifest "+hookType)
+			cmds = append(cmds, hookCmd{Command: cmd, Type: hookType})
+			if wait, waitCmds := r.shouldWaitForHook(hook, hookType, ns); wait {
+				cmds = append(cmds, waitCmds...)
+			}
+		} else {
+			args := strings.Fields(hook)
+			cmds = append(cmds, hookCmd{
+				Command: Command{
+					Cmd:         args[0],
+					Args:        args[1:],
+					Description: fmt.Sprintf("%s shell hook", hookType),
+				},
+				Type: hookType,
+			})
+		}
+	}
+	return cmds
 }
 
 // shouldWaitForHook checks if there is a success condition to wait for after applying a hook
 // returns a boolean and the wait command if applicable
-func (r *release) shouldWaitForHook(hookFile string, hookType string, namespace string) (bool, []command) {
-	var cmds []command
+func (r *release) shouldWaitForHook(hookFile string, hookType string, namespace string) (bool, []hookCmd) {
+	var cmds []hookCmd
 	if flags.dryRun {
 		return false, cmds
 	} else if _, ok := r.Hooks["successCondition"]; ok {
@@ -694,9 +524,11 @@ func (r *release) shouldWaitForHook(hookFile string, hookType string, namespace 
 		if _, ok := r.Hooks["successTimeout"]; ok {
 			timeoutFlag = "--timeout=" + r.Hooks["successTimeout"].(string)
 		}
-		cmds = append(cmds, kubectl([]string{"wait", "-n", namespace, "-f", hookFile, "--for=condition=" + r.Hooks["successCondition"].(string), timeoutFlag}, "Wait for "+hookType+" : "+hookFile))
+		cmd := kubectl([]string{"wait", "-n", namespace, "-f", hookFile, "--for=condition=" + r.Hooks["successCondition"].(string), timeoutFlag}, "Wait for "+hookType+" : "+hookFile)
+		cmds = append(cmds, hookCmd{Command: cmd})
 		if _, ok := r.Hooks["deleteOnSuccess"]; ok && r.Hooks["deleteOnSuccess"].(bool) {
-			cmds = append(cmds, kubectl([]string{"delete", "-n", namespace, "-f", hookFile}, "Delete "+hookType+" : "+hookFile))
+			cmd = kubectl([]string{"delete", "-n", namespace, "-f", hookFile}, "Delete "+hookType+" : "+hookFile)
+			cmds = append(cmds, hookCmd{Command: cmd})
 		}
 		return true, cmds
 	}
@@ -722,12 +554,12 @@ func (r release) print() {
 	fmt.Println("\tSuccessCondition: ", r.Hooks["successCondition"])
 	fmt.Println("\tSuccessTimeout: ", r.Hooks["successTimeout"])
 	fmt.Println("\tDeleteOnSuccess: ", r.Hooks["deleteOnSuccess"])
-	fmt.Println("\tpreInstall: ", r.Hooks["preInstall"])
-	fmt.Println("\tpostInstall: ", r.Hooks["postInstall"])
-	fmt.Println("\tpreUpgrade: ", r.Hooks["preUpgrade"])
-	fmt.Println("\tpostUpgrade: ", r.Hooks["postUpgrade"])
-	fmt.Println("\tpreDelete: ", r.Hooks["preDelete"])
-	fmt.Println("\tpostDelete: ", r.Hooks["postDelete"])
+	fmt.Println("\tpreInstall: ", r.Hooks[preInstall])
+	fmt.Println("\tpostInstall: ", r.Hooks[postInstall])
+	fmt.Println("\tpreUpgrade: ", r.Hooks[preUpgrade])
+	fmt.Println("\tpostUpgrade: ", r.Hooks[postUpgrade])
+	fmt.Println("\tpreDelete: ", r.Hooks[preDelete])
+	fmt.Println("\tpostDelete: ", r.Hooks[postDelete])
 	fmt.Println("\tno-hooks: ", r.NoHooks)
 	fmt.Println("\ttimeout: ", r.Timeout)
 	fmt.Println("\tvalues to override from env:")

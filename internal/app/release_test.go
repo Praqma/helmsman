@@ -12,7 +12,7 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 	os.MkdirAll(os.TempDir()+"/helmsman-tests/myapp", os.ModePerm)
 	os.MkdirAll(os.TempDir()+"/helmsman-tests/dir-with space/myapp", os.ModePerm)
 	cmd := helmCmd([]string{"create", os.TempDir() + "/helmsman-tests/dir-with space/myapp"}, "creating an empty local chart directory")
-	if result := cmd.exec(); result.code != 0 {
+	if result := cmd.Exec(); result.code != 0 {
 		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors))
 	}
 
@@ -27,7 +27,7 @@ func Test_validateRelease(t *testing.T) {
 		Metadata:     make(map[string]string),
 		Certificates: make(map[string]string),
 		Settings:     (config{}),
-		Namespaces:   map[string]namespace{"namespace": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}}},
+		Namespaces:   map[string]*namespace{"namespace": &namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false}},
 		HelmRepos:    make(map[string]string),
 		Apps:         make(map[string]*release),
 	}
@@ -72,7 +72,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "xyz.yaml must be valid relative (from dsf file) file path.",
+			want: "xyz.yaml must be valid relative (from dsf file) file path",
 		}, {
 			name: "test case 3",
 			args: args{
@@ -233,7 +233,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "xyz.yaml must be valid relative (from dsf file) file path.",
+			want: "xyz.yaml must be valid relative (from dsf file) file path",
 		}, {
 			name: "test case 13",
 			args: args{
@@ -261,11 +261,11 @@ func Test_validateRelease(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks:       map[string]interface{}{"preInstall": "xyz.fake"},
+					Hooks:       map[string]interface{}{preInstall: "xyz.fake"},
 				},
 				s: st,
 			},
-			want: "xyz.fake must be valid relative (from dsf file) file path.",
+			want: "xyz.fake must be valid relative (from dsf file) file path",
 		}, {
 			name: "test case 15 - invalid hook file type",
 			args: args{
@@ -277,11 +277,11 @@ func Test_validateRelease(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks:       map[string]interface{}{"preInstall": "../../tests/values.xml"},
+					Hooks:       map[string]interface{}{preInstall: "../../tests/values.xml"},
 				},
 				s: st,
 			},
-			want: "../../tests/values.xml must be of one the following file formats: .yaml, .yml",
+			want: "../../tests/values.xml must be of one the following file formats: .yaml, .yml, .json",
 		}, {
 			name: "test case 16 - valid hook file type",
 			args: args{
@@ -293,7 +293,7 @@ func Test_validateRelease(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks:       map[string]interface{}{"preDelete": "../../tests/values.yaml"},
+					Hooks:       map[string]interface{}{preDelete: "../../tests/values.yaml"},
 				},
 				s: st,
 			},
@@ -309,7 +309,7 @@ func Test_validateRelease(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks:       map[string]interface{}{"postUpgrade": "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml"},
+					Hooks:       map[string]interface{}{postUpgrade: "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml"},
 				},
 				s: st,
 			},
@@ -325,11 +325,11 @@ func Test_validateRelease(t *testing.T) {
 					Chart:       "repo/chartX",
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
-					Hooks:       map[string]interface{}{"preDelete": "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml"},
+					Hooks:       map[string]interface{}{preDelete: "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml"},
 				},
 				s: st,
 			},
-			want: "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml must be valid URL path to a raw file.",
+			want: "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml must be valid URL path to a raw file",
 		}, {
 			name: "test case 19 - invalid hook type 1",
 			args: args{
@@ -345,7 +345,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "afterDelete is an Invalid hook type.",
+			want: "afterDelete is an Invalid hook type",
 		}, {
 			name: "test case 20 - invalid hook type 2",
 			args: args{
@@ -361,7 +361,7 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "PreDelete is an Invalid hook type.",
+			want: "PreDelete is an Invalid hook type",
 		}, {
 			name: "test case 21",
 			args: args{
@@ -395,7 +395,23 @@ func Test_validateRelease(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "doesnt-exist.sh must be valid relative (from dsf file) file path.",
+			want: "doesnt-exist.sh must be valid relative (from dsf file) file path",
+		}, {
+			name: "test case 23 - executable hook type",
+			args: args{
+				r: &release{
+					Name:        "release20",
+					Description: "",
+					Namespace:   "namespace",
+					Enabled:     true,
+					Chart:       "repo/chartX",
+					Version:     "1.0",
+					ValuesFile:  "../../tests/values.yaml",
+					Hooks:       map[string]interface{}{preDelete: "../../tests/post-renderer.sh"},
+				},
+				s: st,
+			},
+			want: "",
 		},
 	}
 	names := make(map[string]map[string]bool)
@@ -418,13 +434,13 @@ func Test_inheritHooks(t *testing.T) {
 		Certificates: make(map[string]string),
 		Settings: config{
 			GlobalHooks: map[string]interface{}{
-				"preInstall":       "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
-				"postInstall":      "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
+				preInstall:         "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
+				postInstall:        "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
 				"successCondition": "Complete",
 				"successTimeout":   "60s",
 			},
 		},
-		Namespaces: map[string]namespace{"namespace": namespace{false, limits{}, make(map[string]string), make(map[string]string), &quotas{}}},
+		Namespaces: map[string]*namespace{"namespace": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false}},
 		HelmRepos:  make(map[string]string),
 		Apps:       make(map[string]*release),
 	}
@@ -450,8 +466,8 @@ func Test_inheritHooks(t *testing.T) {
 					Version:     "1.0",
 					ValuesFile:  "../../tests/values.yaml",
 					Hooks: map[string]interface{}{
-						"postInstall":    "../../tests/values.yaml",
-						"preDelete":      "../../tests/values.yaml",
+						postInstall:      "../../tests/values.yaml",
+						preDelete:        "../../tests/values.yaml",
 						"successTimeout": "360s",
 					},
 				},
@@ -466,7 +482,7 @@ func Test_inheritHooks(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.args.r.inheritHooks(&tt.args.s)
-			got := tt.args.r.Hooks["preInstall"].(string) + " -- " + tt.args.r.Hooks["postInstall"].(string) + " -- " + tt.args.r.Hooks["preDelete"].(string) +
+			got := tt.args.r.Hooks[preInstall].(string) + " -- " + tt.args.r.Hooks[postInstall].(string) + " -- " + tt.args.r.Hooks[preDelete].(string) +
 				" -- " + tt.args.r.Hooks["successCondition"].(string) + " -- " + tt.args.r.Hooks["successTimeout"].(string)
 			if got != tt.want {
 				t.Errorf("inheritHooks() got = %v, want %v", got, tt.want)
@@ -513,8 +529,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 		want       bool
 	}{
 		{
-			name:       "test case 1: valid local path with no chart",
-			targetFlag: []string{},
+			name: "test case 1: valid local path with no chart",
 			args: args{
 				apps: map[string]*release{
 					"app": createFullReleasePointer(os.TempDir()+"/helmsman-tests/myapp", ""),
@@ -522,8 +537,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name:       "test case 2: invalid local path",
-			targetFlag: []string{},
+			name: "test case 2: invalid local path",
 			args: args{
 				apps: map[string]*release{
 					"app": createFullReleasePointer(os.TempDir()+"/does-not-exist/myapp", ""),
@@ -531,8 +545,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			},
 			want: false,
 		}, {
-			name:       "test case 3: valid chart local path with whitespace",
-			targetFlag: []string{},
+			name: "test case 3: valid chart local path with whitespace",
 			args: args{
 				apps: map[string]*release{
 					"app": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
@@ -540,8 +553,7 @@ func Test_validateReleaseCharts(t *testing.T) {
 			},
 			want: true,
 		}, {
-			name:       "test case 4: valid chart from repo",
-			targetFlag: []string{},
+			name: "test case 4: valid chart from repo",
 			args: args{
 				apps: map[string]*release{
 					"app": createFullReleasePointer("prometheus-community/prometheus", "11.16.5"),
@@ -586,23 +598,9 @@ func Test_validateReleaseCharts(t *testing.T) {
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			stt := &state{}
-			stt.Apps = tt.args.apps
-			stt.TargetMap = make(map[string]bool)
-			stt.GroupMap = make(map[string]bool)
-			stt.TargetApps = make(map[string]*release)
-			for _, target := range tt.targetFlag {
-				stt.TargetMap[target] = true
-			}
-			for name, use := range stt.TargetMap {
-				if value, ok := stt.Apps[name]; ok && use {
-					stt.TargetApps[name] = value
-				}
-			}
-			for _, group := range tt.groupFlag {
-				stt.GroupMap[group] = true
-			}
-			err := validateReleaseCharts(stt)
+			stt := &state{Apps: tt.args.apps}
+			stt.disableUntargetedApps(tt.groupFlag, tt.targetFlag)
+			err := stt.validateReleaseCharts()
 			switch err.(type) {
 			case nil:
 				if tt.want != true {

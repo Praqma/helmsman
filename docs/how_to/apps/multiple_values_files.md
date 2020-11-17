@@ -35,8 +35,7 @@ You can include multiple yaml value files to separate configuration for differen
         "../my-jenkins-testing-values.yaml"
     ]
 
-...
-
+#...
 ```
 
 ```yaml
@@ -65,5 +64,4 @@ apps:
       - "../my-jenkins-common-values.yaml"
       - "../my-jenkins-testing-values.yaml"
 # ...
-
 ```

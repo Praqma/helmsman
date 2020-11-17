@@ -11,17 +11,14 @@ For such repos, you need to add the basic auth information in the repo URL as in
 > Be aware that some special characters in the username or password can make the URL invalid.
 
 ```toml
-
 [helmRepos]
 # PASS is an env var containing the password
 myPrivateRepo = "https://user:$PASS@myprivaterepo.org"
-
 ```
 
 ```yaml
-
 helmRepos:
   # PASS is an env var containing the password
   myPrivateRepo: "https://user:$PASS@myprivaterepo.org"
-
 ```
+
