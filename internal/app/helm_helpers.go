@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"net/url"
 	"path/filepath"
 	"regexp"
@@ -26,27 +27,6 @@ func helmCmd(args []string, desc string) Command {
 		Args:        args,
 		Description: desc,
 	}
-}
-
-// extractChartName extracts the Helm chart name from full chart name in the desired state.
-func extractChartName(releaseChart string) string {
-	cmd := helmCmd([]string{"show", "chart", "--devel", releaseChart}, "Extracting chart information for [ "+releaseChart+" ]")
-
-	result := cmd.Exec()
-	if result.code != 0 {
-		log.Fatal("While getting chart information: " + result.errors)
-	}
-
-	name := ""
-	for _, v := range strings.Split(result.output, "\n") {
-		split := strings.Split(v, ":")
-		if len(split) == 2 && split[0] == "name" {
-			name = strings.Trim(split[1], `"' `)
-			break
-		}
-	}
-
-	return name
 }
 
 var versionExtractor = regexp.MustCompile(`[\n]version:\s?(.*)`)
@@ -87,40 +67,25 @@ func validateChart(apps, chart, version string, c chan string) {
 	}
 }
 
-// getChartVersion fetches the lastest chart version matching the semantic versioning constraints.
-// If chart is local, returns the given release version
-func getChartVersion(chart, version string) (string, error) {
+// getChartInfo fetches the latest chart information (name, version) matching the semantic versioning constraints.
+func getChartInfo(chart, version string) (*chartInfo, error) {
 	if isLocalChart(chart) {
 		log.Info("Chart [ " + chart + " ] with version [ " + version + " ] was found locally.")
-		return version, nil
 	}
 
-	cmd := helmCmd([]string{"search", "repo", chart, "--version", version, "-o", "json"}, "Getting latest non-local chart's version "+chart+"-"+version+"")
+	cmd := helmCmd([]string{"show", "chart", chart, "--version", version}, "Getting latest non-local chart's version "+chart+"-"+version+"")
 
 	result := cmd.Exec()
 	if result.code != 0 {
-		return "", fmt.Errorf("Chart [ %s ] with version [ %s ] is specified but not found in the helm repositories", chart, version)
+		return nil, fmt.Errorf("Chart [ %s ] with version [ %s ] is specified but not found in the helm repositories", chart, version)
 	}
 
-	chartVersions := make([]chartVersion, 0)
-	if err := json.Unmarshal([]byte(result.output), &chartVersions); err != nil {
+	c := &chartInfo{}
+	if err := yaml.Unmarshal([]byte(result.output), &c); err != nil {
 		log.Fatal(fmt.Sprint(err))
 	}
 
-	filteredChartVersions := make([]chartVersion, 0)
-	for _, c := range chartVersions {
-		if c.Name == chart {
-			filteredChartVersions = append(filteredChartVersions, c)
-		}
-	}
-
-	if len(filteredChartVersions) < 1 {
-		return "", fmt.Errorf("Chart [ %s ] with version [ %s ] is specified but not found in the helm repositories", chart, version)
-	} else if len(filteredChartVersions) > 1 {
-		return "", fmt.Errorf("Multiple versions of chart [ %s ] with version [ %s ] found in the helm repositories", chart, version)
-	}
-
-	return filteredChartVersions[0].Version, nil
+	return c, nil
 }
 
 // getHelmClientVersion returns Helm client Version

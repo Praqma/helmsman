@@ -62,12 +62,15 @@ func (cs *currentState) makePlan(s *state) *plan {
 
 	wg := sync.WaitGroup{}
 	sem := make(chan struct{}, resourcePool)
-	namesC := make(chan [2]string, len(s.Apps))
-	versionsC := make(chan [4]string, len(s.Apps))
+	infoC := make(chan struct {
+		c string
+		v string
+		i *chartInfo
+		e error
+	}, len(s.Apps))
 
 	// We store the results of the helm commands
-	extractedChartNames := make(map[string]string)
-	extractedChartVersions := make(map[string]map[string]string)
+	extractedChartInfo := make(map[string]map[string]chartInfo)
 
 	// We get the charts and versions with the expensive helm commands first.
 	// We can probably DRY this concurrency stuff up somehow.
@@ -84,8 +87,8 @@ func (cs *currentState) makePlan(s *state) *plan {
 			charts[r.Chart] = make(map[string]bool)
 		}
 
-		if extractedChartVersions[r.Chart] == nil {
-			extractedChartVersions[r.Chart] = make(map[string]string)
+		if extractedChartInfo[r.Chart] == nil {
+			extractedChartInfo[r.Chart] = make(map[string]chartInfo)
 		}
 
 		if r.isConsideredToRun() {
@@ -97,17 +100,6 @@ func (cs *currentState) makePlan(s *state) *plan {
 	// I'm not fond of this concurrency pattern, it's just a continuation of what's already there.
 	// This seems like overkill somehow. Is it necessary to run all the helm commands concurrently? Does that speed it up? (Quick sanity check says: yes, it does)
 	for chart, versions := range charts {
-		sem <- struct{}{}
-		wg.Add(1)
-		go func(chart string) {
-			defer func() {
-				wg.Done()
-				<-sem
-			}()
-
-			namesC <- [2]string{chart, extractChartName(chart)}
-		}(chart)
-
 		for version, shouldRun := range versions {
 			if !shouldRun {
 				continue
@@ -124,39 +116,30 @@ func (cs *currentState) makePlan(s *state) *plan {
 				// even though I wrote it, lines like this are a code smell to me -- we need to rethink the concurrency as i mentioned above.
 				// ideally you just process all helm commands "in a background pool", they return channels,
 				// and we would be looping over select statements until we had the results of the helm commands we wanted.
-				n, e := getChartVersion(chart, version)
-				m := ""
-				if e != nil {
-					m = e.Error()
-				}
-				versionsC <- [4]string{chart, version, n, m}
+				i, e := getChartInfo(chart, version)
+				infoC <- struct {
+					c string
+					v string
+					i *chartInfo
+					e error
+				}{chart, version, i, e}
 			}(chart, version)
 		}
 	}
 
 	wg.Wait()
-	close(namesC)
-	close(versionsC)
+	close(infoC)
 
 	// One thing we could do here instead would be:
 	// instead of waiting for everything to come back, just start deciding for releases as their chart names and versions come through.
 
-	for nameResult := range namesC {
-		// Is there a ... that can do this? I forget
-		c, n := nameResult[0], nameResult[1]
-		log.Verbose("Extracted chart name [ " + c + " ].")
-		extractedChartNames[c] = n
-	}
-
-	for versionResult := range versionsC {
-		// Is there a ... that can do this? I forget
-		c, v, n, m := versionResult[0], versionResult[1], versionResult[2], versionResult[3]
-		if m != "" {
+	for info := range infoC {
+		if info.e != nil {
 			// Better to fail early and return here?
-			log.Error(m)
+			log.Error(info.e.Error())
 		} else {
-			log.Verbose("Extracted chart version from chart [ " + c + " ] with version [ " + v + " ]: '" + n + "'")
-			extractedChartVersions[c][v] = n
+			log.Verbose("Extracted chart information from chart [ " + info.c + " ] with version [ " + info.v + " ]: '" + info.i.Version + "'")
+			extractedChartInfo[info.c][info.v] = *info.i
 		}
 	}
 
@@ -169,13 +152,13 @@ func (cs *currentState) makePlan(s *state) *plan {
 		r.checkChartDepUpdate()
 		sem <- struct{}{}
 		wg.Add(1)
-		go func(r *release, chartName, chartVersion string) {
+		go func(r *release, c chartInfo) {
 			defer func() {
 				wg.Done()
 				<-sem
 			}()
-			cs.decide(r, s.Namespaces[r.Namespace], p, chartName, chartVersion)
-		}(r, extractedChartNames[r.Chart], extractedChartVersions[r.Chart][r.Version])
+			cs.decide(r, s.Namespaces[r.Namespace], p, c.Name, c.Version)
+		}(r, extractedChartInfo[r.Chart][r.Version])
 	}
 	wg.Wait()
 
