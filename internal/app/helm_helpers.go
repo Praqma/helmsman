@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	"github.com/hashicorp/go-version"
@@ -44,7 +45,10 @@ func getChartInfo(chart, version string) (*chartInfo, error) {
 
 	result := cmd.Exec()
 	if result.code != 0 {
-		return nil, fmt.Errorf("Chart [ %s ] with version [ %s ] is specified but not found in the helm repositories", chart, version)
+		maybeRepo := filepath.Base(filepath.Dir(chart))
+		message := strings.TrimSpace(result.errors)
+
+		return nil, fmt.Errorf("Chart [ %s ] version [ %s ] can't be found. Inspection returned error: \"%s\" -- If this is not a local chart, add the repo [ %s ] in your helmRepos stanza.", chart, version, message, maybeRepo)
 	}
 
 	c := &chartInfo{}
