@@ -7,10 +7,10 @@ require (
 	github.com/Azure/azure-pipeline-go v0.1.9
 	github.com/Azure/azure-storage-blob-go v0.0.0-20181022225951-5152f14ace1c
 	github.com/BurntSushi/toml v0.3.1
+	github.com/Masterminds/semver/v3 v3.1.0
 	github.com/apsdehal/go-logger v0.0.0-20190515211354-1abdf898e024
 	github.com/aws/aws-sdk-go v1.26.2
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
-	github.com/google/go-cmp v0.3.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/imdario/mergo v0.3.8
 	github.com/joho/godotenv v1.3.0
