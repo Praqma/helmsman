@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"net/url"
-	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/hashicorp/go-version"
@@ -31,44 +29,6 @@ func helmCmd(args []string, desc string) Command {
 		Cmd:         helmBin,
 		Args:        args,
 		Description: desc,
-	}
-}
-
-var versionExtractor = regexp.MustCompile(`[\n]version:\s?(.*)`)
-
-// validateChart validates if chart with the same name and version as specified in the DSF exists
-func validateChart(apps, chart, version string, c chan string) {
-	if isLocalChart(chart) {
-		cmd := helmCmd([]string{"inspect", "chart", chart}, "Validating [ "+chart+" ] chart's availability")
-
-		result := cmd.Exec()
-		if result.code != 0 {
-			maybeRepo := filepath.Base(filepath.Dir(chart))
-			c <- "Chart [ " + chart + " ] for apps [" + apps + "] can't be found. Inspection returned error: \"" +
-				strings.TrimSpace(result.errors) + "\" -- If this is not a local chart, add the repo [ " + maybeRepo + " ] in your helmRepos stanza."
-			return
-		}
-		matches := versionExtractor.FindStringSubmatch(result.output)
-		if len(matches) == 2 {
-			v := strings.Trim(matches[1], `'"`)
-			if strings.Trim(version, `'"`) != v {
-				c <- "Chart [ " + chart + " ] with version [ " + version + " ] is specified for " +
-					"apps [" + apps + "] but the chart found at that path has version [ " + v + " ] which does not match."
-				return
-			}
-		}
-	} else {
-		v := version
-		if len(v) == 0 {
-			v = "*"
-		}
-		cmd := helmCmd([]string{"search", "repo", chart, "--version", v, "-l"}, "Validating [ "+chart+" ] chart's version [ "+version+" ] availability")
-
-		if result := cmd.Exec(); result.code != 0 || strings.Contains(result.output, "No results found") {
-			c <- "Chart [ " + chart + " ] with version [ " + version + " ] is specified for " +
-				"apps [" + apps + "] but was not found. If this is not a local chart, define its helm repo in the helmRepo stanza in your DSF."
-			return
-		}
 	}
 }
 

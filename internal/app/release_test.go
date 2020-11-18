@@ -517,7 +517,7 @@ func createFullReleasePointer(chart, version string) *release {
 	}
 }
 
-func Test_validateReleaseCharts(t *testing.T) {
+func Test_getReleaseChartsInfo(t *testing.T) {
 	type args struct {
 		apps map[string]*release
 	}
@@ -601,15 +601,15 @@ func Test_validateReleaseCharts(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			stt := &state{Apps: tt.args.apps}
 			stt.disableUntargetedApps(tt.groupFlag, tt.targetFlag)
-			err := stt.validateReleaseCharts()
+			err := stt.getReleaseChartsInfo()
 			switch err.(type) {
 			case nil:
 				if tt.want != true {
-					t.Errorf("validateReleaseCharts() = %v, want error", err)
+					t.Errorf("getReleaseChartsInfo() = %v, want error", err)
 				}
 			case error:
 				if tt.want != false {
-					t.Errorf("validateReleaseCharts() = %v, want nil", err)
+					t.Errorf("getReleaseChartsInfo() = %v, want nil", err)
 				}
 			}
 		})
@@ -618,7 +618,6 @@ func Test_validateReleaseCharts(t *testing.T) {
 
 func Test_getReleaseChartVersion(t *testing.T) {
 	// version string = the first semver-valid string after the last hypen in the chart string.
-
 	type args struct {
 		r helmRelease
 	}
