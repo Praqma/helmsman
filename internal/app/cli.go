@@ -60,6 +60,7 @@ type cli struct {
 	substSSMValues        bool
 	updateDeps            bool
 	forceUpgrades         bool
+	renameReplace         bool
 	version               bool
 	noCleanup             bool
 	migrateContext        bool
@@ -107,6 +108,7 @@ func (c *cli) parse() {
 	flag.BoolVar(&c.substSSMValues, "subst-ssm-values", false, "turn on SSM parameter substitution in values files.")
 	flag.BoolVar(&c.updateDeps, "update-deps", false, "run 'helm dep up' for local chart")
 	flag.BoolVar(&c.forceUpgrades, "force-upgrades", false, "use --force when upgrading helm releases. May cause resources to be recreated.")
+	flag.BoolVar(&c.renameReplace, "replace-on-rename", false, "Uninstall the existing release when a chart with a different name is used.")
 	flag.BoolVar(&c.noCleanup, "no-cleanup", false, "keeps any credentials files that has been downloaded on the host where helmsman runs.")
 	flag.BoolVar(&c.migrateContext, "migrate-context", false, "updates the context name for all apps defined in the DSF and applies Helmsman labels. Using this flag is required if you want to change context name after it has been set.")
 	flag.BoolVar(&c.alwaysUpgrade, "always-upgrade", false, "upgrade release even if no changes are found")
