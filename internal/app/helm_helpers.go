@@ -20,6 +20,11 @@ type helmRepo struct {
 	Url  string `json:"url"`
 }
 
+type chartInfo struct {
+	Name    string `yaml:"name"`
+	Version string `yaml:"version"`
+}
+
 // helmCmd prepares a helm command to be executed
 func helmCmd(args []string, desc string) Command {
 	return Command{
