@@ -11,6 +11,8 @@ import (
 	"github.com/hashicorp/go-version"
 
 	"github.com/Praqma/helmsman/internal/gcs"
+
+	"github.com/Masterminds/semver/v3"
 )
 
 type helmRepo struct {
@@ -48,6 +50,13 @@ func getChartInfo(chart, version string) (*chartInfo, error) {
 	c := &chartInfo{}
 	if err := yaml.Unmarshal([]byte(result.output), &c); err != nil {
 		log.Fatal(fmt.Sprint(err))
+	}
+
+	constraint, _ := semver.NewConstraint(version)
+	found, _ := semver.NewVersion(c.Version)
+
+	if !constraint.Check(found) {
+		return nil, fmt.Errorf("Chart [ %s ] with version [ %s ] was found with a mismatched version: %s", chart, version, c.Version)
 	}
 
 	return c, nil
