@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 	"sync"
@@ -55,72 +54,13 @@ func buildState(s *state) *currentState {
 }
 
 // makePlan creates a plan of the actions needed to make the desired state come true.
-// TODO: this code needs to be simplified
 func (cs *currentState) makePlan(s *state) *plan {
 	p := createPlan()
 	p.StorageBackend = s.Settings.StorageBackend
 	p.ReverseDelete = s.Settings.ReverseDelete
 
 	wg := sync.WaitGroup{}
-	mutex := sync.Mutex{}
 	sem := make(chan struct{}, resourcePool)
-
-	// We store the results of the helm commands
-	extractedChartInfo := make(map[string]map[string]*chartInfo)
-
-	// We get the charts and versions with the expensive helm commands first.
-	// We can probably DRY this concurrency stuff up somehow.
-	// We can also definitely DRY this with validateReleaseChart.
-	// We should probably have a data structure earlier on that sorts this out properly.
-	// Ideally we'd have a pipeline of helm command tasks with several stages that can all come home if one of them fails.
-	// Is it better to fail early here? I am not sure.
-
-	// Unique chart names and versions in the DSF
-	charts := make(map[string]map[string]bool)
-	// Initialize the rejigged data structures
-	for _, r := range s.Apps {
-		if charts[r.Chart] == nil {
-			charts[r.Chart] = make(map[string]bool)
-		}
-
-		if extractedChartInfo[r.Chart] == nil {
-			extractedChartInfo[r.Chart] = make(map[string]*chartInfo)
-		}
-
-		if r.isConsideredToRun() {
-			charts[r.Chart][r.Version] = true
-		}
-	}
-
-	// Concurrently extract chart names and versions
-	for chart, versions := range charts {
-		for version, shouldRun := range versions {
-			if !shouldRun {
-				continue
-			}
-
-			sem <- struct{}{}
-			wg.Add(1)
-			go func(chart, version string) {
-				defer func() {
-					wg.Done()
-					<-sem
-				}()
-
-				info, err := getChartInfo(chart, version)
-				if err != nil {
-					log.Error(err.Error())
-				} else {
-					mutex.Lock()
-					log.Verbose(fmt.Sprintf("Extracted chart information from chart [ %s ] with version [ %s ]: %s %s", chart, version, info.Name, info.Version))
-					extractedChartInfo[chart][version] = info
-					mutex.Unlock()
-				}
-			}(chart, version)
-		}
-	}
-
-	wg.Wait()
 
 	// Pass the extracted names and versions back to the apps to decide.
 	// We still have to run decide on all the apps, even the ones we previously filtered out when extracting names and versions.
@@ -137,7 +77,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 				<-sem
 			}()
 			cs.decide(r, s.Namespaces[r.Namespace], p, c)
-		}(r, extractedChartInfo[r.Chart][r.Version])
+		}(r, s.ChartInfo[r.Chart][r.Version])
 	}
 	wg.Wait()
 

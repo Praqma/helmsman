@@ -41,6 +41,7 @@ type state struct {
 	Apps                   map[string]*release   `yaml:"apps"`
 	AppsTemplates          map[string]*release   `yaml:"appsTemplates,omitempty"`
 	TargetMap              map[string]bool
+	ChartInfo              map[string]map[string]*chartInfo
 }
 
 func (s *state) setDefaults() {
@@ -183,20 +184,23 @@ func (s *state) validate() error {
 	return nil
 }
 
-// validateReleaseCharts validates if the charts defined in a release are valid.
+// getReleaseChartsInfo retrieves valid chart information.
 // Valid charts are the ones that can be found in the defined repos.
-// This function uses Helm search to verify if the chart can be found or not.
-func (s *state) validateReleaseCharts() error {
+func (s *state) getReleaseChartsInfo() error {
 	var fail bool
 	wg := sync.WaitGroup{}
+	mutex := sync.Mutex{}
 	sem := make(chan struct{}, resourcePool)
-	c := make(chan string, len(s.Apps))
+	chartErrors := make(chan error, len(s.Apps))
 
 	charts := make(map[string]map[string][]string)
+	s.ChartInfo = make(map[string]map[string]*chartInfo)
+
 	for app, r := range s.Apps {
 		if !r.isConsideredToRun() {
 			continue
 		}
+
 		if charts[r.Chart] == nil {
 			charts[r.Chart] = make(map[string][]string)
 		}
@@ -205,14 +209,17 @@ func (s *state) validateReleaseCharts() error {
 			charts[r.Chart][r.Version] = make([]string, 0)
 		}
 
+		if s.ChartInfo[r.Chart] == nil {
+			s.ChartInfo[r.Chart] = make(map[string]*chartInfo)
+		}
+
 		charts[r.Chart][r.Version] = append(charts[r.Chart][r.Version], app)
 	}
 
 	for chart, versions := range charts {
 		for version, apps := range versions {
 			concattedApps := strings.Join(apps, ", ")
-			ch := chart
-			v := version
+
 			sem <- struct{}{}
 			wg.Add(1)
 			go func(apps, chart, version string) {
@@ -220,17 +227,28 @@ func (s *state) validateReleaseCharts() error {
 					wg.Done()
 					<-sem
 				}()
-				validateChart(concattedApps, chart, version, c)
-			}(concattedApps, ch, v)
+
+				info, err := getChartInfo(chart, version)
+				if err != nil {
+					chartErrors <- err
+				} else {
+					log.Verbose(fmt.Sprintf("Extracted chart information from chart [ %s ] with version [ %s ]: %s %s", chart, version, info.Name, info.Version))
+					mutex.Lock()
+					s.ChartInfo[chart][version] = info
+					mutex.Unlock()
+				}
+
+				//validateChart(concattedApps, chart, version, chartErrors)
+			}(concattedApps, chart, version)
 		}
 	}
 
 	wg.Wait()
-	close(c)
-	for err := range c {
-		if err != "" {
+	close(chartErrors)
+	for err := range chartErrors {
+		if err != nil {
 			fail = true
-			log.Error(err)
+			log.Error(err.Error())
 		}
 	}
 	if fail {

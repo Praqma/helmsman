@@ -68,14 +68,15 @@ func Main() {
 		}
 	}
 
-	if !flags.skipValidation {
-		log.Info("Validating charts")
-		// validate charts-versions exist in defined repos
-		if err := s.validateReleaseCharts(); err != nil {
-			log.Fatal(err.Error())
-		}
-	} else {
+	log.Info("Getting chart information")
+
+	err := s.getReleaseChartsInfo()
+	if flags.skipValidation {
 		log.Info("Skipping charts' validation.")
+	} else if err != nil {
+		log.Fatal(err.Error())
+	} else {
+		log.Info("Charts validated.")
 	}
 
 	if flags.destroy {
