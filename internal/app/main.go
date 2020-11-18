@@ -18,6 +18,7 @@ var (
 	settings   *config
 	curContext string
 	log        = &Logger{}
+	plugins    map[string]bool
 )
 
 func init() {

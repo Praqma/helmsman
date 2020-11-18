@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -103,15 +104,25 @@ func checkHelmVersion(constraint string) bool {
 // helmPluginExists returns true if the plugin is present in the environment and false otherwise.
 // It takes as input the plugin's name to check if it is recognizable or not. e.g. diff
 func helmPluginExists(plugin string) bool {
-	cmd := helmCmd([]string{"plugin", "list"}, "Validating that [ "+plugin+" ] is installed")
-
-	result := cmd.Exec()
-
-	if result.code != 0 {
-		return false
+	if plugins == nil {
+		pluginNameRegex := regexp.MustCompile(`^[^\s]+`)
+		plugins = make(map[string]bool)
+		cmd := helmCmd([]string{"plugin", "list"}, "Listing installed plugins")
+		result := cmd.Exec()
+		if result.code != 0 {
+			log.Fatal("Couldn't get helm plugins: " + result.errors)
+		}
+		for i, line := range strings.Split(result.output, "\n") {
+			if i > 0 {
+				if name := pluginNameRegex.FindString(line); name != "" {
+					plugins[name] = true
+				}
+			}
+		}
 	}
 
-	return strings.Contains(result.output, plugin)
+	log.Debug(fmt.Sprintf("Validating that plugin [ %s ] is installed", plugin))
+	return plugins[plugin] == true
 }
 
 // updateChartDep updates dependencies for a local chart
