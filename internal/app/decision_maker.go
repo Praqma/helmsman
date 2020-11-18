@@ -296,32 +296,8 @@ func (cs *currentState) inspectUpgradeScenario(r *release, p *plan, c *chartInfo
 		return
 	}
 
-	if r.Namespace == rs.Namespace {
-		r.Version = c.Version
-
-		if c.Name == rs.getChartName() && r.Version != rs.getChartVersion() {
-			// upgrade
-			r.diff()
-			r.upgrade(p)
-			p.addDecision("Release [ "+r.Name+" ] will be upgraded", r.Priority, change)
-
-		} else if c.Name != rs.getChartName() {
-			r.reInstall(p)
-			p.addDecision("Release [ "+r.Name+" ] is desired to use a new chart [ "+r.Chart+
-				" ]. Delete of the current release will be planned and new chart will be installed in namespace [ "+
-				r.Namespace+" ]", r.Priority, change)
-		} else {
-			if flags.alwaysUpgrade {
-				r.upgrade(p)
-				p.addDecision("Release [ "+r.Name+" ] will be updated (forced)", r.Priority, change)
-			} else if diff := r.diff(); diff != "" {
-				r.upgrade(p)
-				p.addDecision("Release [ "+r.Name+" ] will be updated", r.Priority, change)
-			} else {
-				p.addDecision("Release [ "+r.Name+" ] installed and up-to-date", r.Priority, noop)
-			}
-		}
-	} else {
+	if r.Namespace != rs.Namespace {
+		// Namespace changed
 		r.reInstall(p, rs.Namespace)
 		p.addDecision("Release [ "+r.Name+" ] is desired to be enabled in a new namespace [ "+r.Namespace+
 			" ]. Uninstall of the current release from namespace [ "+rs.Namespace+" ] will be performed "+
@@ -329,5 +305,31 @@ func (cs *currentState) inspectUpgradeScenario(r *release, p *plan, c *chartInfo
 		p.addDecision("WARNING: moving release [ "+r.Name+" ] from [ "+rs.Namespace+" ] to [ "+r.Namespace+
 			" ] might not correctly connect existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/apps/moving_across_namespaces.md#note-on-persistent-volumes"+
 			" for details if this release uses PV and PVC.", r.Priority, change)
+		return
 	}
+
+	r.Version = c.Version
+
+	if c.Name != rs.getChartName() && flags.renameReplace {
+		// Chart changed
+		rs.uninstall(p)
+		r.install(p)
+		p.addDecision("Release [ "+r.Name+" ] is desired to use a new chart [ "+r.Chart+
+			" ]. Delete of the current release will be planned and new chart will be installed in namespace [ "+
+			r.Namespace+" ]", r.Priority, change)
+		return
+	}
+
+	if flags.alwaysUpgrade || r.Version != rs.getChartVersion() || c.Name != rs.getChartName() {
+		// Version changed
+		r.upgrade(p)
+		p.addDecision("Release [ "+r.Name+" ] will be upgraded", r.Priority, change)
+		return
+	}
+	if diff := r.diff(); diff != "" {
+		r.upgrade(p)
+		p.addDecision("Release [ "+r.Name+" ] will be updated", r.Priority, change)
+		return
+	}
+	p.addDecision("Release [ "+r.Name+" ] installed and up-to-date", r.Priority, noop)
 }
