@@ -66,7 +66,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 	sem := make(chan struct{}, resourcePool)
 
 	// We store the results of the helm commands
-	extractedChartInfo := make(map[string]map[string]chartInfo)
+	extractedChartInfo := make(map[string]map[string]*chartInfo)
 
 	// We get the charts and versions with the expensive helm commands first.
 	// We can probably DRY this concurrency stuff up somehow.
@@ -84,7 +84,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 		}
 
 		if extractedChartInfo[r.Chart] == nil {
-			extractedChartInfo[r.Chart] = make(map[string]chartInfo)
+			extractedChartInfo[r.Chart] = make(map[string]*chartInfo)
 		}
 
 		if r.isConsideredToRun() {
@@ -113,7 +113,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 				} else {
 					mutex.Lock()
 					log.Verbose(fmt.Sprintf("Extracted chart information from chart [ %s ] with version [ %s ]: %s %s", chart, version, info.Name, info.Version))
-					extractedChartInfo[chart][version] = *info
+					extractedChartInfo[chart][version] = info
 					mutex.Unlock()
 				}
 			}(chart, version)
@@ -131,12 +131,12 @@ func (cs *currentState) makePlan(s *state) *plan {
 		r.checkChartDepUpdate()
 		sem <- struct{}{}
 		wg.Add(1)
-		go func(r *release, c chartInfo) {
+		go func(r *release, c *chartInfo) {
 			defer func() {
 				wg.Done()
 				<-sem
 			}()
-			cs.decide(r, s.Namespaces[r.Namespace], p, c.Name, c.Version)
+			cs.decide(r, s.Namespaces[r.Namespace], p, c)
 		}(r, extractedChartInfo[r.Chart][r.Version])
 	}
 	wg.Wait()
@@ -146,7 +146,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 
 // decide makes a decision about what commands (actions) need to be executed
 // to make a release section of the desired state come true.
-func (cs *currentState) decide(r *release, n *namespace, p *plan, chartName, chartVersion string) {
+func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo) {
 	// check for presence in defined targets or groups
 	if !r.isConsideredToRun() {
 		p.addDecision("Release [ "+r.Name+" ] ignored", r.Priority, ignored)
@@ -178,7 +178,7 @@ func (cs *currentState) decide(r *release, n *namespace, p *plan, chartName, cha
 
 	if ok := cs.releaseExists(r, helmStatusDeployed); ok {
 		if !r.isProtected(cs, n) {
-			cs.inspectUpgradeScenario(r, p, chartName, chartVersion) // upgrade or move
+			cs.inspectUpgradeScenario(r, p, c) // upgrade or move
 		} else {
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 				"you remove its protection.", r.Priority, noop)
@@ -346,8 +346,8 @@ func (cs *currentState) cleanUntrackedReleases(s *state, p *plan) {
 // it will be uninstalled and installed in the same namespace using the new chart.
 // - If the release is NOT in the same namespace specified in the input,
 // it will be purge deleted and installed in the new namespace.
-func (cs *currentState) inspectUpgradeScenario(r *release, p *plan, chartName, chartVersion string) {
-	if chartName == "" || chartVersion == "" {
+func (cs *currentState) inspectUpgradeScenario(r *release, p *plan, c *chartInfo) {
+	if c == nil || c.Name == "" || c.Version == "" {
 		return
 	}
 
@@ -357,15 +357,15 @@ func (cs *currentState) inspectUpgradeScenario(r *release, p *plan, chartName, c
 	}
 
 	if r.Namespace == rs.Namespace {
-		r.Version = chartVersion
+		r.Version = c.Version
 
-		if chartName == rs.getChartName() && r.Version != rs.getChartVersion() {
+		if c.Name == rs.getChartName() && r.Version != rs.getChartVersion() {
 			// upgrade
 			r.diff()
 			r.upgrade(p)
 			p.addDecision("Release [ "+r.Name+" ] will be upgraded", r.Priority, change)
 
-		} else if chartName != rs.getChartName() {
+		} else if c.Name != rs.getChartName() {
 			r.reInstall(p)
 			p.addDecision("Release [ "+r.Name+" ] is desired to use a new chart [ "+r.Chart+
 				" ]. Delete of the current release will be planned and new chart will be installed in namespace [ "+
