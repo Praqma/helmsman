@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"sync"
@@ -61,13 +62,8 @@ func (cs *currentState) makePlan(s *state) *plan {
 	p.ReverseDelete = s.Settings.ReverseDelete
 
 	wg := sync.WaitGroup{}
+	mutex := sync.Mutex{}
 	sem := make(chan struct{}, resourcePool)
-	infoC := make(chan struct {
-		c string
-		v string
-		i *chartInfo
-		e error
-	}, len(s.Apps))
 
 	// We store the results of the helm commands
 	extractedChartInfo := make(map[string]map[string]chartInfo)
@@ -97,8 +93,6 @@ func (cs *currentState) makePlan(s *state) *plan {
 	}
 
 	// Concurrently extract chart names and versions
-	// I'm not fond of this concurrency pattern, it's just a continuation of what's already there.
-	// This seems like overkill somehow. Is it necessary to run all the helm commands concurrently? Does that speed it up? (Quick sanity check says: yes, it does)
 	for chart, versions := range charts {
 		for version, shouldRun := range versions {
 			if !shouldRun {
@@ -113,35 +107,20 @@ func (cs *currentState) makePlan(s *state) *plan {
 					<-sem
 				}()
 
-				// even though I wrote it, lines like this are a code smell to me -- we need to rethink the concurrency as i mentioned above.
-				// ideally you just process all helm commands "in a background pool", they return channels,
-				// and we would be looping over select statements until we had the results of the helm commands we wanted.
-				i, e := getChartInfo(chart, version)
-				infoC <- struct {
-					c string
-					v string
-					i *chartInfo
-					e error
-				}{chart, version, i, e}
+				info, err := getChartInfo(chart, version)
+				if err != nil {
+					log.Error(err.Error())
+				} else {
+					mutex.Lock()
+					log.Verbose(fmt.Sprintf("Extracted chart information from chart [ %s ] with version [ %s ]: %s %s", chart, version, info.Name, info.Version))
+					extractedChartInfo[chart][version] = *info
+					mutex.Unlock()
+				}
 			}(chart, version)
 		}
 	}
 
 	wg.Wait()
-	close(infoC)
-
-	// One thing we could do here instead would be:
-	// instead of waiting for everything to come back, just start deciding for releases as their chart names and versions come through.
-
-	for info := range infoC {
-		if info.e != nil {
-			// Better to fail early and return here?
-			log.Error(info.e.Error())
-		} else {
-			log.Verbose("Extracted chart information from chart [ " + info.c + " ] with version [ " + info.v + " ]: '" + info.i.Version + "'")
-			extractedChartInfo[info.c][info.v] = *info.i
-		}
-	}
 
 	// Pass the extracted names and versions back to the apps to decide.
 	// We still have to run decide on all the apps, even the ones we previously filtered out when extracting names and versions.
@@ -252,7 +231,7 @@ func (cs *currentState) releaseExists(r *release, status string) bool {
 	return true
 }
 
-var resourceNameExtractor = regexp.MustCompile(`(^\w+\/|\.v\d+$)`)
+var resourceNameExtractor = regexp.MustCompile(`(^\w+/|\.v\d+$)`)
 var releaseNameExtractor = regexp.MustCompile(`sh\.helm\.release\.v\d+\.`)
 
 // getHelmsmanReleases returns a map of all releases that are labeled with "MANAGED-BY=HELMSMAN"
