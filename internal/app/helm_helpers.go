@@ -106,7 +106,7 @@ func helmPluginExists(plugin string) bool {
 
 // updateChartDep updates dependencies for a local chart
 func updateChartDep(chartPath string) error {
-	cmd := helmCmd([]string{"dependency", "update", chartPath}, "Updating dependency for local chart [ "+chartPath+" ]")
+	cmd := helmCmd([]string{"dependency", "update", "--skip-refresh", chartPath}, "Updating dependency for local chart [ "+chartPath+" ]")
 
 	result := cmd.Exec()
 	if result.code != 0 {
