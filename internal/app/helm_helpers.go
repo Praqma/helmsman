@@ -10,8 +10,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/Masterminds/semver"
 	"github.com/Praqma/helmsman/internal/gcs"
-	"github.com/hashicorp/go-version"
 )
 
 type helmRepo struct {
@@ -54,11 +54,11 @@ func getChartInfo(chartName, chartVersion string) (*chartInfo, error) {
 		log.Fatal(fmt.Sprint(err))
 	}
 
-	constraint, err := version.NewConstraint(chartVersion)
+	constraint, err := semver.NewConstraint(chartVersion)
 	if err != nil {
 		return nil, err
 	}
-	found, err := version.NewVersion(c.Version)
+	found, err := semver.NewVersion(c.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -88,12 +88,12 @@ func checkHelmVersion(constraint string) bool {
 	if !strings.HasPrefix(helmVersion, "v") {
 		extractedHelmVersion = strings.TrimSpace(strings.Split(helmVersion, ":")[1])
 	}
-	v, err := version.NewVersion(extractedHelmVersion)
+	v, err := semver.NewVersion(extractedHelmVersion)
 	if err != nil {
 		return false
 	}
 
-	jsonConstraint, err := version.NewConstraint(constraint)
+	jsonConstraint, err := semver.NewConstraint(constraint)
 	if err != nil {
 		return false
 	}
