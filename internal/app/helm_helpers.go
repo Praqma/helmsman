@@ -4,19 +4,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"net/url"
 	"path/filepath"
 	"strings"
 
-	"github.com/hashicorp/go-version"
+	"gopkg.in/yaml.v2"
 
 	"github.com/Praqma/helmsman/internal/gcs"
+	"github.com/hashicorp/go-version"
 )
 
 type helmRepo struct {
 	Name string `json:"name"`
-	Url  string `json:"url"`
+	URL  string `json:"url"`
 }
 
 type chartInfo struct {
@@ -46,7 +46,7 @@ func getChartInfo(chartName, chartVersion string) (*chartInfo, error) {
 		maybeRepo := filepath.Base(filepath.Dir(chartName))
 		message := strings.TrimSpace(result.errors)
 
-		return nil, fmt.Errorf("Chart [ %s ] version [ %s ] can't be found. Inspection returned error: \"%s\" -- If this is not a local chart, add the repo [ %s ] in your helmRepos stanza.", chartName, chartVersion, message, maybeRepo)
+		return nil, fmt.Errorf("chart [ %s ] version [ %s ] can't be found. Inspection returned error: \"%s\" -- If this is not a local chart, add the repo [ %s ] in your helmRepos stanza", chartName, chartVersion, message, maybeRepo)
 	}
 
 	c := &chartInfo{}
@@ -54,11 +54,17 @@ func getChartInfo(chartName, chartVersion string) (*chartInfo, error) {
 		log.Fatal(fmt.Sprint(err))
 	}
 
-	constraint, _ := version.NewConstraint(chartVersion)
-	found, _ := version.NewVersion(c.Version)
+	constraint, err := version.NewConstraint(chartVersion)
+	if err != nil {
+		return nil, err
+	}
+	found, err := version.NewVersion(c.Version)
+	if err != nil {
+		return nil, err
+	}
 
 	if !constraint.Check(found) {
-		return nil, fmt.Errorf("Chart [ %s ] with version [ %s ] was found with a mismatched version: %s", chartName, chartVersion, c.Version)
+		return nil, fmt.Errorf("chart [ %s ] with version [ %s ] was found with a mismatched version: %s", chartName, chartVersion, c.Version)
 	}
 
 	return c, nil
@@ -82,12 +88,16 @@ func checkHelmVersion(constraint string) bool {
 	if !strings.HasPrefix(helmVersion, "v") {
 		extractedHelmVersion = strings.TrimSpace(strings.Split(helmVersion, ":")[1])
 	}
-	v, _ := version.NewVersion(extractedHelmVersion)
-	jsonConstraint, _ := version.NewConstraint(constraint)
-	if jsonConstraint.Check(v) {
-		return true
+	v, err := version.NewVersion(extractedHelmVersion)
+	if err != nil {
+		return false
 	}
-	return false
+
+	jsonConstraint, err := version.NewConstraint(constraint)
+	if err != nil {
+		return false
+	}
+	return jsonConstraint.Check(v)
 }
 
 // helmPluginExists returns true if the plugin is present in the environment and false otherwise.
@@ -129,7 +139,7 @@ func addHelmRepos(repos map[string]string) error {
 		}
 		// create map of existing repositories
 		for _, repo := range helmRepos {
-			existingRepos[repo.Name] = repo.Url
+			existingRepos[repo.Name] = repo.URL
 		}
 	} else {
 		if !strings.Contains(reposResult.errors, "no repositories to show") {

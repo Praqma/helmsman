@@ -70,8 +70,10 @@ func Test_getChartInfo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Log(tt.want)
-			got, _ := getChartInfo(tt.args.r.Chart, tt.args.r.Version)
+			got, err := getChartInfo(tt.args.r.Chart, tt.args.r.Version)
+			if err != nil && tt.want != nil {
+				t.Errorf("getChartInfo() = Unexpected error: %w", err)
+			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("getChartInfo() = %v, want %v", got, tt.want)
 			}
