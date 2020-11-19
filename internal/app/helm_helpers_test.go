@@ -34,7 +34,7 @@ func Test_getChartInfo(t *testing.T) {
 				r: &release{
 					Name:      "release1",
 					Namespace: "namespace",
-					Version:   "1.0.*",
+					Version:   "~>1.0",
 					Chart:     "./../../tests/chart-test",
 					Enabled:   true,
 				},
