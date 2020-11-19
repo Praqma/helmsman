@@ -12,8 +12,6 @@ import (
 	"github.com/hashicorp/go-version"
 
 	"github.com/Praqma/helmsman/internal/gcs"
-
-	"github.com/Masterminds/semver/v3"
 )
 
 type helmRepo struct {
@@ -36,19 +34,19 @@ func helmCmd(args []string, desc string) Command {
 }
 
 // getChartInfo fetches the latest chart information (name, version) matching the semantic versioning constraints.
-func getChartInfo(chart, version string) (*chartInfo, error) {
-	if isLocalChart(chart) {
-		log.Info("Chart [ " + chart + " ] with version [ " + version + " ] was found locally.")
+func getChartInfo(chartName, chartVersion string) (*chartInfo, error) {
+	if isLocalChart(chartName) {
+		log.Info("Chart [ " + chartName + " ] with version [ " + chartVersion + " ] was found locally.")
 	}
 
-	cmd := helmCmd([]string{"show", "chart", chart, "--version", version}, "Getting latest non-local chart's version "+chart+"-"+version+"")
+	cmd := helmCmd([]string{"show", "chart", chartName, "--version", chartVersion}, "Getting latest non-local chart's version "+chartName+"-"+chartVersion+"")
 
 	result := cmd.Exec()
 	if result.code != 0 {
-		maybeRepo := filepath.Base(filepath.Dir(chart))
+		maybeRepo := filepath.Base(filepath.Dir(chartName))
 		message := strings.TrimSpace(result.errors)
 
-		return nil, fmt.Errorf("Chart [ %s ] version [ %s ] can't be found. Inspection returned error: \"%s\" -- If this is not a local chart, add the repo [ %s ] in your helmRepos stanza.", chart, version, message, maybeRepo)
+		return nil, fmt.Errorf("Chart [ %s ] version [ %s ] can't be found. Inspection returned error: \"%s\" -- If this is not a local chart, add the repo [ %s ] in your helmRepos stanza.", chartName, chartVersion, message, maybeRepo)
 	}
 
 	c := &chartInfo{}
@@ -56,11 +54,11 @@ func getChartInfo(chart, version string) (*chartInfo, error) {
 		log.Fatal(fmt.Sprint(err))
 	}
 
-	constraint, _ := semver.NewConstraint(version)
-	found, _ := semver.NewVersion(c.Version)
+	constraint, _ := version.NewConstraint(chartVersion)
+	found, _ := version.NewVersion(c.Version)
 
 	if !constraint.Check(found) {
-		return nil, fmt.Errorf("Chart [ %s ] with version [ %s ] was found with a mismatched version: %s", chart, version, c.Version)
+		return nil, fmt.Errorf("Chart [ %s ] with version [ %s ] was found with a mismatched version: %s", chartName, chartVersion, c.Version)
 	}
 
 	return c, nil
