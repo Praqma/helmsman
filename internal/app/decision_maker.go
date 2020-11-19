@@ -68,7 +68,6 @@ func (cs *currentState) makePlan(s *state) *plan {
 	for _, r := range s.Apps {
 		// To be honest, the helmCmd function should probably pass back a channel at this point, making the resource pool "global", for all helm commands.
 		// It would make more sense than parallelising *some of the workload* like we do here with r.checkChartDepUpdate(), leaving some helm commands outside the concurrent part.
-		r.checkChartDepUpdate()
 		sem <- struct{}{}
 		wg.Add(1)
 		go func(r *release, c *chartInfo) {
@@ -76,6 +75,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 				wg.Done()
 				<-sem
 			}()
+			r.checkChartDepUpdate()
 			cs.decide(r, s.Namespaces[r.Namespace], p, c)
 		}(r, s.ChartInfo[r.Chart][r.Version])
 	}
