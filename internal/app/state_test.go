@@ -1,9 +1,27 @@
 package app
 
 import (
+	"fmt"
 	"os"
 	"testing"
 )
+
+func setupTestCase(t *testing.T) func(t *testing.T) {
+	t.Log("setup test case")
+	os.MkdirAll(tempFilesDir, 0755)
+	os.MkdirAll(os.TempDir()+"/helmsman-tests/myapp", os.ModePerm)
+	os.MkdirAll(os.TempDir()+"/helmsman-tests/dir-with space/myapp", os.ModePerm)
+	cmd := helmCmd([]string{"create", os.TempDir() + "/helmsman-tests/dir-with space/myapp"}, "creating an empty local chart directory")
+	if result := cmd.Exec(); result.code != 0 {
+		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors))
+	}
+
+	return func(t *testing.T) {
+		t.Log("teardown test case")
+		os.RemoveAll(tempFilesDir)
+		os.RemoveAll(os.TempDir() + "/helmsman-tests/")
+	}
+}
 
 func Test_state_validate(t *testing.T) {
 	type fields struct {
