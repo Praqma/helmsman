@@ -37,13 +37,6 @@ type release struct {
 	disabled     bool
 }
 
-type chartVersion struct {
-	Name        string `json:"name"`
-	Version     string `json:"version"`
-	AppVersion  string `json:"app_version"`
-	Description string `json:"description"`
-}
-
 func (r *release) key() string {
 	return fmt.Sprintf("%s-%s", r.Name, r.Namespace)
 }

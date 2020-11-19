@@ -111,9 +111,8 @@ func Test_inspectUpgradeScenario(t *testing.T) {
 			cs := currentState{releases: *tt.args.s}
 
 			// Act
-			chartName := extractChartName(tt.args.r.Chart)
-			chartVersion, _ := getChartVersion(tt.args.r.Chart, tt.args.r.Version)
-			cs.inspectUpgradeScenario(tt.args.r, &outcome, chartName, chartVersion)
+			c, _ := getChartInfo(tt.args.r.Chart, tt.args.r.Version)
+			cs.inspectUpgradeScenario(tt.args.r, &outcome, c)
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
 
@@ -229,7 +228,7 @@ func Test_decide(t *testing.T) {
 			tt.args.s.disableUntargetedApps([]string{}, tt.targetFlag)
 			outcome := plan{}
 			// Act
-			cs.decide(tt.args.s.Apps[tt.args.r], tt.args.s.Namespaces[tt.args.s.Apps[tt.args.r].Namespace], &outcome, "", "")
+			cs.decide(tt.args.s.Apps[tt.args.r], tt.args.s.Namespaces[tt.args.s.Apps[tt.args.r].Namespace], &outcome, &chartInfo{})
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
 
