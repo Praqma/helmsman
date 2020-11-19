@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"net/url"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/hashicorp/go-version"
@@ -19,6 +19,11 @@ type helmRepo struct {
 	Url  string `json:"url"`
 }
 
+type chartInfo struct {
+	Name    string `yaml:"name"`
+	Version string `yaml:"version"`
+}
+
 // helmCmd prepares a helm command to be executed
 func helmCmd(args []string, desc string) Command {
 	return Command{
@@ -28,99 +33,35 @@ func helmCmd(args []string, desc string) Command {
 	}
 }
 
-// extractChartName extracts the Helm chart name from full chart name in the desired state.
-func extractChartName(releaseChart string) string {
-	cmd := helmCmd([]string{"show", "chart", "--devel", releaseChart}, "Extracting chart information for [ "+releaseChart+" ]")
+// getChartInfo fetches the latest chart information (name, version) matching the semantic versioning constraints.
+func getChartInfo(chartName, chartVersion string) (*chartInfo, error) {
+	if isLocalChart(chartName) {
+		log.Info("Chart [ " + chartName + " ] with version [ " + chartVersion + " ] was found locally.")
+	}
+
+	cmd := helmCmd([]string{"show", "chart", chartName, "--version", chartVersion}, "Getting latest non-local chart's version "+chartName+"-"+chartVersion+"")
 
 	result := cmd.Exec()
 	if result.code != 0 {
-		log.Fatal("While getting chart information: " + result.errors)
+		maybeRepo := filepath.Base(filepath.Dir(chartName))
+		message := strings.TrimSpace(result.errors)
+
+		return nil, fmt.Errorf("Chart [ %s ] version [ %s ] can't be found. Inspection returned error: \"%s\" -- If this is not a local chart, add the repo [ %s ] in your helmRepos stanza.", chartName, chartVersion, message, maybeRepo)
 	}
 
-	name := ""
-	for _, v := range strings.Split(result.output, "\n") {
-		split := strings.Split(v, ":")
-		if len(split) == 2 && split[0] == "name" {
-			name = strings.Trim(split[1], `"' `)
-			break
-		}
-	}
-
-	return name
-}
-
-var versionExtractor = regexp.MustCompile(`[\n]version:\s?(.*)`)
-
-// validateChart validates if chart with the same name and version as specified in the DSF exists
-func validateChart(apps, chart, version string, c chan string) {
-	if isLocalChart(chart) {
-		cmd := helmCmd([]string{"inspect", "chart", chart}, "Validating [ "+chart+" ] chart's availability")
-
-		result := cmd.Exec()
-		if result.code != 0 {
-			maybeRepo := filepath.Base(filepath.Dir(chart))
-			c <- "Chart [ " + chart + " ] for apps [" + apps + "] can't be found. Inspection returned error: \"" +
-				strings.TrimSpace(result.errors) + "\" -- If this is not a local chart, add the repo [ " + maybeRepo + " ] in your helmRepos stanza."
-			return
-		}
-		matches := versionExtractor.FindStringSubmatch(result.output)
-		if len(matches) == 2 {
-			v := strings.Trim(matches[1], `'"`)
-			if strings.Trim(version, `'"`) != v {
-				c <- "Chart [ " + chart + " ] with version [ " + version + " ] is specified for " +
-					"apps [" + apps + "] but the chart found at that path has version [ " + v + " ] which does not match."
-				return
-			}
-		}
-	} else {
-		v := version
-		if len(v) == 0 {
-			v = "*"
-		}
-		cmd := helmCmd([]string{"search", "repo", chart, "--version", v, "-l"}, "Validating [ "+chart+" ] chart's version [ "+version+" ] availability")
-
-		if result := cmd.Exec(); result.code != 0 || strings.Contains(result.output, "No results found") {
-			c <- "Chart [ " + chart + " ] with version [ " + version + " ] is specified for " +
-				"apps [" + apps + "] but was not found. If this is not a local chart, define its helm repo in the helmRepo stanza in your DSF."
-			return
-		}
-	}
-}
-
-// getChartVersion fetches the lastest chart version matching the semantic versioning constraints.
-// If chart is local, returns the given release version
-func getChartVersion(chart, version string) (string, error) {
-	if isLocalChart(chart) {
-		log.Info("Chart [ " + chart + " ] with version [ " + version + " ] was found locally.")
-		return version, nil
-	}
-
-	cmd := helmCmd([]string{"search", "repo", chart, "--version", version, "-o", "json"}, "Getting latest non-local chart's version "+chart+"-"+version+"")
-
-	result := cmd.Exec()
-	if result.code != 0 {
-		return "", fmt.Errorf("Chart [ %s ] with version [ %s ] is specified but not found in the helm repositories", chart, version)
-	}
-
-	chartVersions := make([]chartVersion, 0)
-	if err := json.Unmarshal([]byte(result.output), &chartVersions); err != nil {
+	c := &chartInfo{}
+	if err := yaml.Unmarshal([]byte(result.output), &c); err != nil {
 		log.Fatal(fmt.Sprint(err))
 	}
 
-	filteredChartVersions := make([]chartVersion, 0)
-	for _, c := range chartVersions {
-		if c.Name == chart {
-			filteredChartVersions = append(filteredChartVersions, c)
-		}
+	constraint, _ := version.NewConstraint(chartVersion)
+	found, _ := version.NewVersion(c.Version)
+
+	if !constraint.Check(found) {
+		return nil, fmt.Errorf("Chart [ %s ] with version [ %s ] was found with a mismatched version: %s", chartName, chartVersion, c.Version)
 	}
 
-	if len(filteredChartVersions) < 1 {
-		return "", fmt.Errorf("Chart [ %s ] with version [ %s ] is specified but not found in the helm repositories", chart, version)
-	} else if len(filteredChartVersions) > 1 {
-		return "", fmt.Errorf("Multiple versions of chart [ %s ] with version [ %s ] found in the helm repositories", chart, version)
-	}
-
-	return filteredChartVersions[0].Version, nil
+	return c, nil
 }
 
 // getHelmClientVersion returns Helm client Version
@@ -196,6 +137,11 @@ func addHelmRepos(repos map[string]string) error {
 		}
 	}
 
+	repoAddFlags := ""
+	if checkHelmVersion(">=3.3.2") {
+		repoAddFlags += "--force-update"
+	}
+
 	for repoName, repoLink := range repos {
 		basicAuthArgs := []string{}
 		// check if repo is in GCS, then perform GCS auth -- needed for private GCS helm repos
@@ -224,10 +170,6 @@ func addHelmRepos(repos map[string]string) error {
 			repoLink = u.String()
 		}
 
-		repoAddFlags := ""
-		if checkHelmVersion(">=3.3.2") {
-			repoAddFlags += "--force-update"
-		}
 		cmd := helmCmd(concat([]string{"repo", "add", repoAddFlags, repoName, repoLink}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
 		// check current repository against existing repositories map in order to make sure it's missing and needs to be added
 		if existingRepoUrl, ok := existingRepos[repoName]; ok {

@@ -6,6 +6,16 @@ import (
 	"testing"
 )
 
+func setupStateFileTestCase(t *testing.T) func(t *testing.T) {
+	t.Log("setup test case")
+	os.MkdirAll(tempFilesDir, 0755)
+
+	return func(t *testing.T) {
+		t.Log("teardown test case")
+		os.RemoveAll(tempFilesDir)
+	}
+}
+
 func Test_fromTOML(t *testing.T) {
 	type args struct {
 		file string
@@ -34,6 +44,9 @@ func Test_fromTOML(t *testing.T) {
 	}
 	os.Setenv("ORG_PATH", "sample")
 	os.Setenv("VALUE", "sample")
+
+	teardownTestCase := setupStateFileTestCase(t)
+	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got, _ := tt.args.s.fromTOML(tt.args.file); got != tt.want {
@@ -80,6 +93,9 @@ func Test_fromTOML_Expand(t *testing.T) {
 	os.Setenv("SET_URI", "https://192.168.99.100:8443")
 	os.Setenv("ORG_PATH", "sample")
 	os.Setenv("VALUE", "sample")
+
+	teardownTestCase := setupStateFileTestCase(t)
+	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err, msg := tt.args.s.fromTOML(tt.args.file)
@@ -159,6 +175,9 @@ func Test_fromYAML(t *testing.T) {
 	}
 	os.Setenv("VALUE", "sample")
 	os.Setenv("ORG_PATH", "sample")
+
+	teardownTestCase := setupStateFileTestCase(t)
+	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got, _ := tt.args.s.fromYAML(tt.args.file); got != tt.want {
@@ -200,6 +219,9 @@ func Test_fromYAML_UnsetVars(t *testing.T) {
 			want:      false,
 		},
 	}
+
+	teardownTestCase := setupStateFileTestCase(t)
+	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.targetVar == "ORG_PATH" {
@@ -252,6 +274,9 @@ func Test_fromYAML_Expand(t *testing.T) {
 	os.Setenv("SET_URI", "https://192.168.99.100:8443")
 	os.Setenv("ORG_PATH", "sample")
 	os.Setenv("VALUE", "sample")
+
+	teardownTestCase := setupStateFileTestCase(t)
+	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err, msg := tt.args.s.fromYAML(tt.args.file)

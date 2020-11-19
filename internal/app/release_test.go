@@ -1,28 +1,10 @@
 package app
 
 import (
-	"fmt"
-	"os"
 	"testing"
 )
 
-func setupTestCase(t *testing.T) func(t *testing.T) {
-	t.Log("setup test case")
-	os.MkdirAll(tempFilesDir, 0755)
-	os.MkdirAll(os.TempDir()+"/helmsman-tests/myapp", os.ModePerm)
-	os.MkdirAll(os.TempDir()+"/helmsman-tests/dir-with space/myapp", os.ModePerm)
-	cmd := helmCmd([]string{"create", os.TempDir() + "/helmsman-tests/dir-with space/myapp"}, "creating an empty local chart directory")
-	if result := cmd.Exec(); result.code != 0 {
-		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors))
-	}
-
-	return func(t *testing.T) {
-		t.Log("teardown test case")
-		//os.RemoveAll("/tmp/helmsman-tests/")
-	}
-}
-
-func Test_validateRelease(t *testing.T) {
+func Test_release_validate(t *testing.T) {
 	st := state{
 		Metadata:     make(map[string]string),
 		Certificates: make(map[string]string),
@@ -422,13 +404,13 @@ func Test_validateRelease(t *testing.T) {
 				got = r.Error()
 			}
 			if got != tt.want {
-				t.Errorf("validateRelease() got = %v, want %v", got, tt.want)
+				t.Errorf("release.validate() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_inheritHooks(t *testing.T) {
+func Test_release_inheritHooks(t *testing.T) {
 	st := state{
 		Metadata:     make(map[string]string),
 		Certificates: make(map[string]string),
@@ -485,139 +467,14 @@ func Test_inheritHooks(t *testing.T) {
 			got := tt.args.r.Hooks[preInstall].(string) + " -- " + tt.args.r.Hooks[postInstall].(string) + " -- " + tt.args.r.Hooks[preDelete].(string) +
 				" -- " + tt.args.r.Hooks["successCondition"].(string) + " -- " + tt.args.r.Hooks["successTimeout"].(string)
 			if got != tt.want {
-				t.Errorf("inheritHooks() got = %v, want %v", got, tt.want)
+				t.Errorf("release.inheritHooks() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func createFullReleasePointer(chart, version string) *release {
-	return &release{
-		Name:         "",
-		Description:  "",
-		Namespace:    "",
-		Enabled:      true,
-		Chart:        chart,
-		Version:      version,
-		ValuesFile:   "",
-		ValuesFiles:  []string{},
-		SecretsFile:  "",
-		SecretsFiles: []string{},
-		Test:         false,
-		Protected:    false,
-		Wait:         false,
-		Priority:     0,
-		Set:          make(map[string]string),
-		SetString:    make(map[string]string),
-		HelmFlags:    []string{},
-		NoHooks:      false,
-		Timeout:      0,
-		PostRenderer: "",
-	}
-}
-
-func Test_validateReleaseCharts(t *testing.T) {
-	type args struct {
-		apps map[string]*release
-	}
-
-	tests := []struct {
-		name       string
-		targetFlag []string
-		groupFlag  []string
-		args       args
-		want       bool
-	}{
-		{
-			name: "test case 1: valid local path with no chart",
-			args: args{
-				apps: map[string]*release{
-					"app": createFullReleasePointer(os.TempDir()+"/helmsman-tests/myapp", ""),
-				},
-			},
-			want: false,
-		}, {
-			name: "test case 2: invalid local path",
-			args: args{
-				apps: map[string]*release{
-					"app": createFullReleasePointer(os.TempDir()+"/does-not-exist/myapp", ""),
-				},
-			},
-			want: false,
-		}, {
-			name: "test case 3: valid chart local path with whitespace",
-			args: args{
-				apps: map[string]*release{
-					"app": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
-				},
-			},
-			want: true,
-		}, {
-			name: "test case 4: valid chart from repo",
-			args: args{
-				apps: map[string]*release{
-					"app": createFullReleasePointer("prometheus-community/prometheus", "11.16.5"),
-				},
-			},
-			want: true,
-		}, {
-			name:       "test case 5: invalid local path for chart ignored with -target flag, while other app was targeted",
-			targetFlag: []string{"notThisOne"},
-			args: args{
-				apps: map[string]*release{
-					"app": createFullReleasePointer(os.TempDir()+"/does-not-exist/myapp", ""),
-				},
-			},
-			want: true,
-		}, {
-			name:       "test case 6: invalid local path for chart included with -target flag",
-			targetFlag: []string{"app"},
-			args: args{
-				apps: map[string]*release{
-					"app": createFullReleasePointer(os.TempDir()+"/does-not-exist/myapp", ""),
-				},
-			},
-			want: false,
-		}, {
-			name:       "test case 7: multiple valid local apps with the same chart version",
-			targetFlag: []string{"app"},
-			args: args{
-				apps: map[string]*release{
-					"app1": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
-					"app2": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
-					"app3": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
-					"app4": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
-					"app5": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
-				},
-			},
-			want: true,
-		},
-	}
-
-	teardownTestCase := setupTestCase(t)
-	defer teardownTestCase(t)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			stt := &state{Apps: tt.args.apps}
-			stt.disableUntargetedApps(tt.groupFlag, tt.targetFlag)
-			err := stt.validateReleaseCharts()
-			switch err.(type) {
-			case nil:
-				if tt.want != true {
-					t.Errorf("validateReleaseCharts() = %v, want error", err)
-				}
-			case error:
-				if tt.want != false {
-					t.Errorf("validateReleaseCharts() = %v, want nil", err)
-				}
-			}
-		})
-	}
-}
-
-func Test_getReleaseChartVersion(t *testing.T) {
+func Test_release_getChartVersion(t *testing.T) {
 	// version string = the first semver-valid string after the last hypen in the chart string.
-
 	type args struct {
 		r helmRelease
 	}
@@ -704,55 +561,7 @@ func Test_getReleaseChartVersion(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Log(tt.want)
 			if got := tt.args.r.getChartVersion(); got != tt.want {
-				t.Errorf("getReleaseChartVersion() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_getChartVersion(t *testing.T) {
-	// version string = the first semver-valid string after the last hypen in the chart string.
-	type args struct {
-		r *release
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "getChartVersion - local chart should return given release version",
-			args: args{
-				r: &release{
-					Name:      "release1",
-					Namespace: "namespace",
-					Version:   "1.0.0",
-					Chart:     "./../../tests/chart-test",
-					Enabled:   true,
-				},
-			},
-			want: "1.0.0",
-		},
-		{
-			name: "getChartVersion - unknown chart should error",
-			args: args{
-				r: &release{
-					Name:      "release1",
-					Namespace: "namespace",
-					Version:   "1.0.0",
-					Chart:     "random-chart-name-1f8147",
-					Enabled:   true,
-				},
-			},
-			want: "",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Log(tt.want)
-			got, _ := getChartVersion(tt.args.r.Chart, tt.args.r.Version)
-			if got != tt.want {
-				t.Errorf("getChartVersion() = %v, want %v", got, tt.want)
+				t.Errorf("release.getChartVersion() = %v, want %v", got, tt.want)
 			}
 		})
 	}
