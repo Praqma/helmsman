@@ -8,23 +8,19 @@ import (
 )
 
 type Logger struct {
+	*logger.Logger
 	SlackWebhook string
-	baseLogger   *logger.Logger
-}
-
-func (l *Logger) Info(message string) {
-	l.baseLogger.Info(message)
 }
 
 func (l *Logger) Debug(message string) {
 	if flags.debug {
-		l.baseLogger.Debug(message)
+		l.Logger.Debug(message)
 	}
 }
 
 func (l *Logger) Verbose(message string) {
 	if flags.verbose {
-		l.baseLogger.Info(message)
+		l.Logger.Info(message)
 	}
 }
 
@@ -32,33 +28,21 @@ func (l *Logger) Error(message string) {
 	if _, err := url.ParseRequestURI(l.SlackWebhook); err == nil {
 		notifySlack(message, l.SlackWebhook, true, flags.apply)
 	}
-	l.baseLogger.Error(message)
-}
-
-func (l *Logger) Errorf(message string, args ...interface{}) {
-	l.baseLogger.Errorf(message, args...)
-}
-
-func (l *Logger) Warning(message string) {
-	l.baseLogger.Warning(message)
-}
-
-func (l *Logger) Notice(message string) {
-	l.baseLogger.Notice(message)
+	l.Logger.Error(message)
 }
 
 func (l *Logger) Critical(message string) {
 	if _, err := url.ParseRequestURI(l.SlackWebhook); err == nil {
 		notifySlack(message, l.SlackWebhook, true, flags.apply)
 	}
-	l.baseLogger.Critical(message)
+	l.Logger.Critical(message)
 }
 
 func (l *Logger) Fatal(message string) {
 	if _, err := url.ParseRequestURI(l.SlackWebhook); err == nil {
 		notifySlack(message, l.SlackWebhook, true, flags.apply)
 	}
-	l.baseLogger.Fatal(message)
+	l.Logger.Fatal(message)
 }
 
 func initLogs(verbose bool, noColors bool) {
@@ -71,5 +55,5 @@ func initLogs(verbose bool, noColors bool) {
 	if noColors {
 		colors = 0
 	}
-	log.baseLogger, _ = logger.New("logger", colors, os.Stdout, logLevel)
+	log.Logger, _ = logger.New("logger", colors, os.Stdout, logLevel)
 }
