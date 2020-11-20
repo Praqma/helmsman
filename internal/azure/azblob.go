@@ -23,7 +23,7 @@ var p pipeline.Pipeline
 // auth checks for AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_ACCESS_KEY in the environment
 // if env vars are set, it will authenticate and create an azblob request pipeline
 // returns false and error message if credentials are not set or are invalid
-func auth() (bool, string) {
+func auth() error {
 	accountName, accountKey = os.Getenv("AZURE_STORAGE_ACCOUNT"), os.Getenv("AZURE_STORAGE_ACCESS_KEY")
 	if len(accountName) != 0 && len(accountKey) != 0 {
 		log.Println("AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_ACCESS_KEY are set in the environment. They will be used to connect to Azure storage.")
@@ -31,19 +31,19 @@ func auth() (bool, string) {
 		credential, err := azblob.NewSharedKeyCredential(accountName, accountKey)
 		if err == nil {
 			p = azblob.NewPipeline(credential, azblob.PipelineOptions{})
-			return true, ""
+			return nil
 		}
-		return false, err.Error()
+		return err
 
 	}
-	return false, "either the AZURE_STORAGE_ACCOUNT or AZURE_STORAGE_ACCESS_KEY environment variable is not set"
+	return fmt.Errorf("either the AZURE_STORAGE_ACCOUNT or AZURE_STORAGE_ACCESS_KEY environment variable is not set")
 }
 
 // ReadFile reads a file from storage container and saves it in a desired location.
 func ReadFile(containerName string, filename string, outFile string, noColors bool) {
 	style = aurora.NewAurora(!noColors)
-	if ok, err := auth(); !ok {
-		log.Fatal(style.Bold(style.Red("ERROR: " + err)))
+	if err := auth(); err != nil {
+		log.Fatal(style.Bold(style.Red("ERROR: " + err.Error())))
 	}
 
 	URL, _ := url.Parse(
