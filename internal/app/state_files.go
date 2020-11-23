@@ -164,7 +164,7 @@ func (s *state) expand(relativeToFile string) {
 		for key, val := range s.Settings.GlobalHooks {
 			if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
 				hook := val.(string)
-				if err := isValidFile(hook, []string{".yaml", ".yml"}); err != nil {
+				if err := isValidFile(hook, []string{".yaml", ".yml"}); err == nil {
 					s.Settings.GlobalHooks[key] = substituteVarsInYaml(hook)
 				}
 			}
@@ -180,7 +180,7 @@ func (s *state) expand(relativeToFile string) {
 	for key, val := range s.Settings.GlobalHooks {
 		if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
 			hook := val.(string)
-			if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err != nil {
+			if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err == nil {
 				s.Settings.GlobalHooks[key], _ = resolveOnePath(hook, dir, downloadDest)
 			}
 		}

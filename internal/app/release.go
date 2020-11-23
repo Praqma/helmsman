@@ -485,13 +485,13 @@ func (r *release) getHookCommands(hookType, ns string) []hookCmd {
 	var cmds []hookCmd
 	if _, ok := r.Hooks[hookType]; ok {
 		hook := r.Hooks[hookType].(string)
-		if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err != nil {
+		if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err == nil {
 			cmd := kubectl([]string{"apply", "-n", ns, "-f", hook, flags.getKubeDryRunFlag("apply")}, "Apply "+hook+" manifest "+hookType)
 			cmds = append(cmds, hookCmd{Command: cmd, Type: hookType})
 			if wait, waitCmds := r.shouldWaitForHook(hook, hookType, ns); wait {
 				cmds = append(cmds, waitCmds...)
 			}
-		} else {
+		} else { // shell hook
 			args := strings.Fields(hook)
 			cmds = append(cmds, hookCmd{
 				Command: Command{
