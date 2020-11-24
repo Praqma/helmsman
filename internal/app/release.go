@@ -126,7 +126,7 @@ func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *
 // testRelease creates a Helm command to test a particular release.
 func (r *release) test(afterCommands *[]hookCmd) {
 	cmd := helmCmd(r.getHelmArgsFor("test"), "Running tests for release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
-	*afterCommands = append(*afterCommands, hookCmd{Command: cmd, Type: test})
+	*afterCommands = append([]hookCmd{{Command: cmd, Type: test}}, *afterCommands...)
 }
 
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
