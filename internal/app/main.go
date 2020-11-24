@@ -7,6 +7,7 @@ import (
 
 const (
 	helmBin            = "helm"
+	kubectlBin         = "kubectl"
 	appVersion         = "v3.6.1"
 	tempFilesDir       = ".helmsman-tmp"
 	defaultContextName = "default"
@@ -35,7 +36,20 @@ func Main() {
 		defer s.cleanup()
 	}
 
-	flags.readState(&s)
+	if err := flags.readState(&s); err != nil {
+		log.Fatal(err.Error())
+	}
+
+	if len(flags.target) > 0 && len(s.TargetMap) == 0 {
+		log.Info("No apps defined with -target flag were found, exiting")
+		os.Exit(0)
+	}
+
+	if len(flags.group) > 0 && len(s.TargetMap) == 0 {
+		log.Info("No apps defined with -group flag were found, exiting")
+		os.Exit(0)
+	}
+
 	log.SlackWebhook = s.Settings.SlackWebhook
 
 	settings = &s.Settings

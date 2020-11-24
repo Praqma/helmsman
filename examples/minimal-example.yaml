@@ -2,8 +2,8 @@
 ## It will use your current kube context and will deploy Tiller without RBAC service account.
 ## For the full config spec and options, check https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md
 helmRepos:
-  jenkins = https://charts.jenkins.io
-  center = https://repo.chartcenter.io
+  jenkins: https://charts.jenkins.io
+  center: https://repo.chartcenter.io
 
 namespaces:
   staging:
