@@ -71,8 +71,7 @@ func (s *state) setDefaults() {
 func (s *state) initializeNamespaces() {
 	for nsName, ns := range s.Namespaces {
 		if ns == nil {
-			ns = &namespace{}
-			s.Namespaces[nsName] = ns
+			s.Namespaces[nsName] = &namespace{}
 		}
 	}
 }
