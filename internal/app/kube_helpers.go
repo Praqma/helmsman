@@ -38,7 +38,7 @@ func addNamespaces(s *state) {
 // kubectl prepares a kubectl command to be executed
 func kubectl(args []string, desc string) Command {
 	return Command{
-		Cmd:         "kubectl",
+		Cmd:         kubectlBin,
 		Args:        args,
 		Description: desc,
 	}

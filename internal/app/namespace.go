@@ -52,9 +52,11 @@ func (n *namespace) Disable() {
 
 // print prints the namespace
 func (n *namespace) print() {
-	fmt.Println("")
-	fmt.Println("\tprotected : ", n.Protected)
-	fmt.Println("\tlabels : ")
+	fmt.Println("\tprotected: ", n.Protected)
+	fmt.Println("\tdisabled: ", n.disabled)
+	fmt.Println("\tlabels:")
 	printMap(n.Labels, 2)
-	fmt.Println("------------------- ")
+	fmt.Println("\tannotations:")
+	printMap(n.Annotations, 2)
+	fmt.Println("-------------------")
 }
