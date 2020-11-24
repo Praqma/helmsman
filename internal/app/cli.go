@@ -245,6 +245,7 @@ func (c *cli) readState(s *state) {
 	}
 
 	s.setDefaults()
+	s.initializeNamespaces()
 	s.disableUntargetedApps(c.group, c.target)
 
 	if len(c.target) > 0 && len(s.TargetMap) == 0 {

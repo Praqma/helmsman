@@ -68,6 +68,15 @@ func (s *state) setDefaults() {
 	}
 }
 
+func (s *state) initializeNamespaces() {
+	for nsName, ns := range s.Namespaces {
+		if ns == nil {
+			ns = &namespace{}
+			s.Namespaces[nsName] = ns
+		}
+	}
+}
+
 // validate validates that the values specified in the desired state are valid according to the desired state spec.
 // check https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md for the detailed specification
 func (s *state) validate() error {
