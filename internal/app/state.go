@@ -44,6 +44,11 @@ type state struct {
 	ChartInfo              map[string]map[string]*chartInfo
 }
 
+func (s *state) init() {
+	s.setDefaults()
+	s.initializeNamespaces()
+}
+
 func (s *state) setDefaults() {
 	if s.Settings.StorageBackend != "" {
 		os.Setenv("HELM_DRIVER", s.Settings.StorageBackend)
