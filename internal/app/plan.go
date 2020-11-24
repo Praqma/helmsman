@@ -186,6 +186,7 @@ func execOne(cmd Command, targetRelease *release) error {
 	log.Notice(cmd.Description)
 	result := cmd.Exec()
 	if result.code != 0 {
+		log.Verbose(result.output)
 		errorMsg := result.errors
 		if !flags.verbose {
 			errorMsg = strings.Split(result.errors, "---")[0]
