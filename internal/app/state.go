@@ -308,6 +308,9 @@ func (s *state) disableUntargetedApps(groups, targets []string) {
 		}
 	}
 
+	if s.Namespaces == nil || len(s.Namespaces) == 0 {
+		return
+	}
 	for nsName, ns := range s.Namespaces {
 		if _, ok := namespaces[nsName]; !ok {
 			ns.Disable()
