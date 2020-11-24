@@ -164,7 +164,7 @@ func (c *cli) parse() {
 		os.Setenv("KUBECONFIG", c.kubeconfig)
 	}
 
-	if !ToolExists("kubectl") {
+	if !ToolExists(kubectlBin) {
 		log.Fatal("kubectl is not installed/configured correctly. Aborting!")
 	}
 
@@ -191,13 +191,13 @@ func (c *cli) parse() {
 }
 
 // readState gets the desired state from files
-func (c *cli) readState(s *state) {
+func (c *cli) readState(s *state) error {
 	// read the env file
 	if len(c.envFiles) == 0 {
 		if _, err := os.Stat(".env"); err == nil {
 			err = godotenv.Load()
 			if err != nil {
-				log.Fatal("Error loading .env file")
+				return fmt.Errorf("error loading .env file: %w", err)
 			}
 		}
 	}
@@ -205,7 +205,7 @@ func (c *cli) readState(s *state) {
 	for _, e := range c.envFiles {
 		err := godotenv.Load(e)
 		if err != nil {
-			log.Fatal("Error loading " + e + " env file")
+			return fmt.Errorf("error loading %s env file: %w", e, err)
 		}
 	}
 
@@ -221,49 +221,38 @@ func (c *cli) readState(s *state) {
 		if result {
 			log.Info(msg)
 		} else {
-			log.Fatal(msg)
+			return fmt.Errorf(msg)
 		}
 		// Merge Apps that already existed in the state
 		for appName, app := range fileState.Apps {
 			if _, ok := s.Apps[appName]; ok {
 				if err := mergo.Merge(s.Apps[appName], app, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
-					log.Fatal("Failed to merge " + appName + " from desired state file" + f)
+					return fmt.Errorf("failed to merge %s from desired state file %s: %w", appName, f, err)
 				}
 			}
 		}
 
 		// Merge the remaining Apps
 		if err := mergo.Merge(&s.Apps, &fileState.Apps); err != nil {
-			log.Fatal("Failed to merge desired state file" + f)
+			return fmt.Errorf("failed to merge desired state file %s: %w", f, err)
 		}
 		// All the apps are already merged, make fileState.Apps empty to avoid conflicts in the final merge
 		fileState.Apps = make(map[string]*release)
 
 		if err := mergo.Merge(s, &fileState, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
-			log.Fatal("Failed to merge desired state file" + f)
+			return fmt.Errorf("failed to merge desired state file %s: %w", f, err)
 		}
 	}
 
-	s.setDefaults()
-	s.initializeNamespaces()
+	s.init() // Set defaults
 	s.disableUntargetedApps(c.group, c.target)
-
-	if len(c.target) > 0 && len(s.TargetMap) == 0 {
-		log.Info("No apps defined with -target flag were found, exiting")
-		os.Exit(0)
-	}
-
-	if len(c.group) > 0 && len(s.TargetMap) == 0 {
-		log.Info("No apps defined with -group flag were found, exiting")
-		os.Exit(0)
-	}
 
 	if !c.skipValidation {
 		// validate the desired state content
 		if len(c.files) > 0 {
 			log.Info("Validating desired state definition")
 			if err := s.validate(); err != nil { // syntax validation
-				log.Fatal(err.Error())
+				return err
 			}
 		}
 	} else {
@@ -273,6 +262,7 @@ func (c *cli) readState(s *state) {
 	if c.debug {
 		s.print()
 	}
+	return nil
 }
 
 // getDryRunFlags returns dry-run flag

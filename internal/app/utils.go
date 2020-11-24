@@ -31,8 +31,9 @@ func printMap(m map[string]string, indent int) {
 
 // printObjectMap prints to the console any map of string keys and object values.
 func printNamespacesMap(m map[string]*namespace) {
-	for key, value := range m {
-		fmt.Println(key, " : protected = ", value)
+	for name, ns := range m {
+		fmt.Println(name, ":")
+		ns.print()
 	}
 }
 
