@@ -19,7 +19,7 @@ func (r *release) substituteVarsInStaticFiles() {
 	for key, val := range r.Hooks {
 		if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
 			hook := val.(string)
-			if err := isValidFile(hook, []string{".yaml", ".yml"}); err != nil {
+			if err := isValidFile(hook, []string{".yaml", ".yml"}); err == nil {
 				r.Hooks[key] = substituteVarsInYaml(hook)
 			}
 		}
@@ -45,7 +45,7 @@ func (r *release) resolvePaths(dir, downloadDest string) {
 	for key, val := range r.Hooks {
 		if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
 			hook := val.(string)
-			if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err != nil {
+			if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err == nil {
 				r.Hooks[key], _ = resolveOnePath(hook, dir, downloadDest)
 			}
 		}
