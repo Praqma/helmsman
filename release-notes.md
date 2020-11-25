@@ -1,4 +1,4 @@
-# v3.6.1
+# v3.6.2
 
 If you migrating from Helmsman v1.x, it is recommended you read the [migration guide](https://github.com/Praqma/helmsman/blob/master/docs/how_to/misc/migrate_to_3.md) before using this release.
 
@@ -6,5 +6,6 @@ If you migrating from Helmsman v1.x, it is recommended you read the [migration g
 
 ## Fixes and improvements
 
-- Fixed NPE when no config is passed to the NSs (#551)
-- Fixed wrong detection of executable hook (#549)
+- Commands will optionally (Verbose) log stdout on non-zero exit code (#554)
+- `helm test` command will run immediately after install / upgrade (before hooks and labelling). (#553)
+- Add test cases for `readState`; improved error handling and small order-of-operations refactor. (#552)
