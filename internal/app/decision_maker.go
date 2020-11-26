@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"sync"
@@ -118,7 +119,9 @@ func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo) 
 
 	if ok := cs.releaseExists(r, helmStatusDeployed); ok {
 		if !r.isProtected(cs, n) {
-			cs.inspectUpgradeScenario(r, p, c) // upgrade or move
+			if err := cs.inspectUpgradeScenario(r, p, c); err != nil { // upgrade or move
+				log.Fatal(err.Error())
+			}
 		} else {
 			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
 				"you remove its protection.", r.Priority, noop)
@@ -286,14 +289,14 @@ func (cs *currentState) cleanUntrackedReleases(s *state, p *plan) {
 // it will be uninstalled and installed in the same namespace using the new chart.
 // - If the release is NOT in the same namespace specified in the input,
 // it will be purge deleted and installed in the new namespace.
-func (cs *currentState) inspectUpgradeScenario(r *release, p *plan, c *chartInfo) {
+func (cs *currentState) inspectUpgradeScenario(r *release, p *plan, c *chartInfo) error {
 	if c == nil || c.Name == "" || c.Version == "" {
-		return
+		return nil
 	}
 
 	rs, ok := cs.releases[r.key()]
 	if !ok {
-		return
+		return nil
 	}
 
 	if r.Namespace != rs.Namespace {
@@ -305,31 +308,46 @@ func (cs *currentState) inspectUpgradeScenario(r *release, p *plan, c *chartInfo
 		p.addDecision("WARNING: moving release [ "+r.Name+" ] from [ "+rs.Namespace+" ] to [ "+r.Namespace+
 			" ] might not correctly connect existing volumes. Check https://github.com/Praqma/helmsman/blob/master/docs/how_to/apps/moving_across_namespaces.md#note-on-persistent-volumes"+
 			" for details if this release uses PV and PVC.", r.Priority, change)
-		return
+		return nil
 	}
 
 	r.Version = c.Version
 
+	// Chart changed
 	if c.Name != rs.getChartName() && flags.renameReplace {
-		// Chart changed
 		rs.uninstall(p)
 		r.install(p)
 		p.addDecision("Release [ "+r.Name+" ] is desired to use a new chart [ "+r.Chart+
 			" ]. Delete of the current release will be planned and new chart will be installed in namespace [ "+
 			r.Namespace+" ]", r.Priority, change)
-		return
+		return nil
 	}
 
+	// Version changed or forced upgrade
 	if flags.alwaysUpgrade || r.Version != rs.getChartVersion() || c.Name != rs.getChartName() {
-		// Version changed
+		if flags.verbose || flags.showDiff {
+			if diff, err := r.diff(); err != nil {
+				log.Error(err.Error())
+			} else if diff != "" {
+				fmt.Println(diff)
+			}
+		}
 		r.upgrade(p)
 		p.addDecision("Release [ "+r.Name+" ] will be upgraded", r.Priority, change)
-		return
+		return nil
 	}
-	if diff := r.diff(); diff != "" {
+
+	if diff, err := r.diff(); err != nil {
+		return err
+	} else if diff != "" {
+		if flags.verbose || flags.showDiff {
+			fmt.Println(diff)
+		}
 		r.upgrade(p)
 		p.addDecision("Release [ "+r.Name+" ] will be updated", r.Priority, change)
-		return
+		return nil
 	}
+
 	p.addDecision("Release [ "+r.Name+" ] installed and up-to-date", r.Priority, noop)
+	return nil
 }

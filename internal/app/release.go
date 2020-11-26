@@ -47,6 +47,9 @@ func (r *release) Disable() {
 
 // isReleaseConsideredToRun checks if a release is being targeted for operations as specified by user cmd flags (--group or --target)
 func (r *release) isConsideredToRun() bool {
+	if r == nil {
+		return false
+	}
 	return !r.disabled
 }
 
@@ -160,7 +163,7 @@ func (r *release) uninstall(p *plan, optionalNamespace ...string) {
 }
 
 // diffRelease diffs an existing release with the specified values.yaml
-func (r *release) diff() string {
+func (r *release) diff() (string, error) {
 	colorFlag := ""
 	diffContextFlag := []string{}
 	suppressDiffSecretsFlag := "--suppress-secrets"
@@ -175,14 +178,10 @@ func (r *release) diff() string {
 
 	result := cmd.RetryExec(3)
 	if result.code != 0 {
-		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors))
-	} else {
-		if (flags.verbose || flags.showDiff) && result.output != "" {
-			fmt.Println(result.output)
-		}
+		return "", fmt.Errorf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors)
 	}
 
-	return result.output
+	return result.output, nil
 }
 
 // upgradeRelease upgrades an existing release with the specified values.yaml
@@ -401,6 +400,9 @@ func (r *release) getHelmArgsFor(action string, optionalNamespaceOverride ...str
 }
 
 func (r *release) checkChartDepUpdate() {
+	if !r.isConsideredToRun() {
+		return
+	}
 	if flags.updateDeps && isLocalChart(r.Chart) {
 		if err := updateChartDep(r.Chart); err != nil {
 			log.Fatal("helm dependency update failed: " + err.Error())
