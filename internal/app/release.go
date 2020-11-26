@@ -47,6 +47,9 @@ func (r *release) Disable() {
 
 // isReleaseConsideredToRun checks if a release is being targeted for operations as specified by user cmd flags (--group or --target)
 func (r *release) isConsideredToRun() bool {
+	if r == nil {
+		return false
+	}
 	return !r.disabled
 }
 
@@ -397,6 +400,9 @@ func (r *release) getHelmArgsFor(action string, optionalNamespaceOverride ...str
 }
 
 func (r *release) checkChartDepUpdate() {
+	if !r.isConsideredToRun() {
+		return
+	}
 	if flags.updateDeps && isLocalChart(r.Chart) {
 		if err := updateChartDep(r.Chart); err != nil {
 			log.Fatal("helm dependency update failed: " + err.Error())
