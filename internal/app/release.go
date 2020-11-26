@@ -160,7 +160,7 @@ func (r *release) uninstall(p *plan, optionalNamespace ...string) {
 }
 
 // diffRelease diffs an existing release with the specified values.yaml
-func (r *release) diff() string {
+func (r *release) diff() (string, error) {
 	colorFlag := ""
 	diffContextFlag := []string{}
 	suppressDiffSecretsFlag := "--suppress-secrets"
@@ -175,14 +175,10 @@ func (r *release) diff() string {
 
 	result := cmd.RetryExec(3)
 	if result.code != 0 {
-		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors))
-	} else {
-		if (flags.verbose || flags.showDiff) && result.output != "" {
-			fmt.Println(result.output)
-		}
+		return "", fmt.Errorf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors)
 	}
 
-	return result.output
+	return result.output, nil
 }
 
 // upgradeRelease upgrades an existing release with the specified values.yaml
