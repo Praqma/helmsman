@@ -178,7 +178,7 @@ func (r *release) diff() (string, error) {
 
 	result := cmd.RetryExec(3)
 	if result.code != 0 {
-		return "", fmt.Errorf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors)
+		return "", fmt.Errorf("Diff for release [%s] in namespace [%s] returned with exit code: %d. And error message: %s ", r.Name, r.Namespace, result.code, result.errors)
 	}
 
 	return result.output, nil
