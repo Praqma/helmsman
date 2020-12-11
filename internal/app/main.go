@@ -103,7 +103,7 @@ func Main() {
 	}
 
 	log.Info("Preparing plan")
-	cs := buildState(&s)
+	cs := s.getCurrentState()
 	p := cs.makePlan(&s)
 	if !flags.keepUntrackedReleases {
 		cs.cleanUntrackedReleases(&s, p)
