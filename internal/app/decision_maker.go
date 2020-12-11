@@ -19,8 +19,8 @@ func newCurrentState() *currentState {
 	}
 }
 
-// buildState builds the currentState map containing information about all releases existing in a k8s cluster
-func buildState(s *state) *currentState {
+// getCurrentState builds the currentState map containing information about all releases existing in a k8s cluster
+func (s *state) getCurrentState() *currentState {
 	log.Info("Acquiring current Helm state from cluster")
 
 	cs := newCurrentState()
