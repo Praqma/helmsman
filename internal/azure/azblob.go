@@ -15,10 +15,12 @@ import (
 )
 
 // colorizer
-var style aurora.Aurora
-var accountName string
-var accountKey string
-var p pipeline.Pipeline
+var (
+	style       aurora.Aurora
+	accountName string
+	accountKey  string
+	p           pipeline.Pipeline
+)
 
 // auth checks for AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_ACCESS_KEY in the environment
 // if env vars are set, it will authenticate and create an azblob request pipeline

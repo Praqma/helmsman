@@ -159,7 +159,6 @@ func (r *release) uninstall(p *plan, optionalNamespace ...string) {
 
 	cmd := helmCmd(r.getHelmArgsFor("uninstall", ns), "Delete release [ "+r.Name+" ] in namespace [ "+ns+" ]")
 	p.addCommand(cmd, priority, r, before, after)
-
 }
 
 // diffRelease diffs an existing release with the specified values.yaml
@@ -186,7 +185,6 @@ func (r *release) diff() (string, error) {
 
 // upgradeRelease upgrades an existing release with the specified values.yaml
 func (r *release) upgrade(p *plan) {
-
 	before, after := r.checkHooks("upgrade")
 
 	if r.Test {
@@ -196,7 +194,6 @@ func (r *release) upgrade(p *plan) {
 	cmd := helmCmd(r.getHelmArgsFor("upgrade"), "Upgrade release [ "+r.Name+" ] to version [ "+r.Version+" ] in namespace [ "+r.Namespace+" ]")
 
 	p.addCommand(cmd, r.Priority, r, before, after)
-
 }
 
 // reInstall uninstalls a release and reinstalls it.
