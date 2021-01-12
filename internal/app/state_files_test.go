@@ -8,7 +8,7 @@ import (
 
 func setupStateFileTestCase(t *testing.T) func(t *testing.T) {
 	t.Log("setup test case")
-	os.MkdirAll(tempFilesDir, 0755)
+	os.MkdirAll(tempFilesDir, 0o755)
 
 	return func(t *testing.T) {
 		t.Log("teardown test case")
@@ -57,6 +57,7 @@ func Test_fromTOML(t *testing.T) {
 	os.Unsetenv("ORG_PATH")
 	os.Unsetenv("VALUE")
 }
+
 func Test_fromTOML_Expand(t *testing.T) {
 	type args struct {
 		file string

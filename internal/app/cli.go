@@ -79,7 +79,7 @@ func printUsage() {
 
 // Cli parses cmd flags, validates them and performs some initializations
 func (c *cli) parse() {
-	//parsing command line flags
+	// parsing command line flags
 	flag.Var(&c.files, "f", "desired state file name(s), may be supplied more than once to merge state files")
 	flag.Var(&c.envFiles, "e", "file(s) to load environment variables from (default .env), may be supplied more than once")
 	flag.Var(&c.target, "target", "limit execution to specific app.")
@@ -211,7 +211,7 @@ func (c *cli) readState(s *state) error {
 
 	// wipe & create a temporary directory
 	os.RemoveAll(tempFilesDir)
-	_ = os.MkdirAll(tempFilesDir, 0755)
+	_ = os.MkdirAll(tempFilesDir, 0o755)
 
 	// read the TOML/YAML desired state file
 	var fileState state

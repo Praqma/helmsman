@@ -84,7 +84,6 @@ func (s *state) initializeNamespaces() {
 // validate validates that the values specified in the desired state are valid according to the desired state spec.
 // check https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md for the detailed specification
 func (s *state) validate() error {
-
 	// apps
 	if s.Apps == nil {
 		log.Info("No apps specified. Nothing to be executed.")
@@ -151,7 +150,6 @@ func (s *state) validate() error {
 				return errors.New("certificates validation failed -- connection to cluster is required " +
 					"but no cert/key was given. Please add [caCrt] and [caKey] under Certifications. You might also need to provide [clientCrt]")
 			}
-
 		} else if s.Settings.ClusterURI != "" && s.Settings.BearerToken {
 			if !caCrt {
 				return errors.New("certificates validation failed -- cluster connection with bearer token is enabled but " +
@@ -251,7 +249,7 @@ func (s *state) getReleaseChartsInfo() error {
 					mutex.Unlock()
 				}
 
-				//validateChart(concattedApps, chart, version, chartErrors)
+				// validateChart(concattedApps, chart, version, chartErrors)
 			}(concattedApps, chart, version)
 		}
 	}
@@ -337,7 +335,6 @@ func (s *state) updateContextLabels() {
 
 // print prints the desired state
 func (s *state) print() {
-
 	fmt.Println("\nMetadata: ")
 	fmt.Println("--------- ")
 	printMap(s.Metadata, 0)
