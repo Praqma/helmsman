@@ -80,12 +80,12 @@ func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *
 		return errors.New("valuesFile and valuesFiles should not be used together")
 	} else if r.ValuesFile != "" {
 		if err := isValidFile(r.ValuesFile, validFiles); err != nil {
-			return err
+			return fmt.Errorf("invalid values file: %w", err)
 		}
 	} else if len(r.ValuesFiles) > 0 {
 		for _, filePath := range r.ValuesFiles {
 			if err := isValidFile(filePath, validFiles); err != nil {
-				return err
+				return fmt.Errorf("invalid values file: %w", err)
 			}
 		}
 	}
@@ -94,18 +94,18 @@ func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *
 		return errors.New("secretsFile and secretsFiles should not be used together")
 	} else if r.SecretsFile != "" {
 		if err := isValidFile(r.SecretsFile, validFiles); err != nil {
-			return err
+			return fmt.Errorf("invalid secrets file: %w", err)
 		}
 	} else if len(r.SecretsFiles) > 0 {
 		for _, filePath := range r.SecretsFiles {
 			if err := isValidFile(filePath, validFiles); err != nil {
-				return err
+				return fmt.Errorf("invalid secrets file: %w", err)
 			}
 		}
 	}
 
 	if r.PostRenderer != "" && !ToolExists(r.PostRenderer) {
-		return fmt.Errorf("%s must be valid relative (from dsf file) file path", r.PostRenderer)
+		return fmt.Errorf("%s must be executable and available in your PATH", r.PostRenderer)
 	}
 
 	if r.Priority != 0 && r.Priority > 0 {
