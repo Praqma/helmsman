@@ -1,4 +1,4 @@
-# v3.6.2
+# v3.6.3
 
 If you migrating from Helmsman v1.x, it is recommended you read the [migration guide](https://github.com/Praqma/helmsman/blob/master/docs/how_to/misc/migrate_to_3.md) before using this release.
 
@@ -6,6 +6,9 @@ If you migrating from Helmsman v1.x, it is recommended you read the [migration g
 
 ## Fixes and improvements
 
-- Commands will optionally (Verbose) log stdout on non-zero exit code (#554)
-- `helm test` command will run immediately after install / upgrade (before hooks and labelling). (#553)
-- Add test cases for `readState`; improved error handling and small order-of-operations refactor. (#552)
+- Fixed missing diff on chart version change (#557)
+- Fixed checking for updates on disabled releases (#557)
+- Fixed segmentation fault on slack notifications (#559)
+- Fixed failure to remove untracked releases (#566)
+- The debug flag is now passed down to the helm commands (#568)
+- Improved error reporting (#568)
