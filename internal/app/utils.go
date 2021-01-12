@@ -482,7 +482,7 @@ func isValidFile(filePath string, allowedFileTypes []string) error {
 			return fmt.Errorf("%s must be valid URL path to a raw file", filePath)
 		}
 	} else if _, pathErr := os.Stat(filePath); pathErr != nil {
-		return fmt.Errorf("%s must be valid relative (from dsf file) file path", filePath)
+		return fmt.Errorf("%s must be valid relative (from dsf file) file path: %w", filePath, pathErr)
 	} else if !isOfType(filePath, allowedFileTypes) {
 		return fmt.Errorf("%s must be of one the following file formats: %s", filePath, strings.Join(allowedFileTypes, ", "))
 	}
