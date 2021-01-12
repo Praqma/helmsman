@@ -3,10 +3,10 @@
 set -e
 
 apk add --update --no-cache ca-certificates git openssh ruby curl tar gzip make bash gnupg
-curl -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl
+curl --retry 5 -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl
 chmod +x /usr/local/bin/kubectl
 
-curl -L https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar zxv -C /tmp
+curl --retry 5 -L https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar zxv -C /tmp
 mv /tmp/linux-amd64/helm /usr/local/bin/helm
 rm -rf /tmp/linux-amd64
 chmod +x /usr/local/bin/helm

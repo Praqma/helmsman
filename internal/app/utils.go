@@ -60,7 +60,7 @@ func substituteVarsInYaml(file string) string {
 
 	// output file contents with env variables substituted into temp files
 	outFile := path.Join(dir, filepath.Base(file))
-	err = ioutil.WriteFile(outFile, []byte(yamlFile), 0644)
+	err = ioutil.WriteFile(outFile, []byte(yamlFile), 0o644)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -262,7 +262,7 @@ func copyFile(source string, destination string) {
 	}
 	defer from.Close()
 
-	to, err := os.OpenFile(destination, os.O_RDWR|os.O_CREATE, 0666)
+	to, err := os.OpenFile(destination, os.O_RDWR|os.O_CREATE, 0o666)
 	if err != nil {
 		log.Fatal("while copying " + source + " to " + destination + " : " + err.Error())
 	}
@@ -317,7 +317,7 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 
 	t := time.Now().UTC()
 
-	var jsonStr = []byte(`{
+	jsonStr := []byte(`{
 		"attachments": [
 			{
 				"fallback": "Helmsman results.",
@@ -352,7 +352,6 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 // this func works for S3, Azure and GCS bucket links of the format:
 // s3 or gs://bucketname/dir.../file.ext
 func getBucketElements(link string) map[string]string {
-
 	tmp := strings.SplitAfterN(link, "//", 2)[1]
 	m := make(map[string]string)
 	m["bucketName"] = strings.SplitN(tmp, "/", 2)[0]
@@ -368,7 +367,7 @@ func replaceStringInFile(input []byte, outfile string, replacements map[string]s
 		output = bytes.Replace(output, []byte(k), []byte(v), -1)
 	}
 
-	if err := ioutil.WriteFile(outfile, output, 0666); err != nil {
+	if err := ioutil.WriteFile(outfile, output, 0o666); err != nil {
 		log.Fatal(err.Error())
 	}
 }
@@ -483,7 +482,7 @@ func isValidFile(filePath string, allowedFileTypes []string) error {
 			return fmt.Errorf("%s must be valid URL path to a raw file", filePath)
 		}
 	} else if _, pathErr := os.Stat(filePath); pathErr != nil {
-		return fmt.Errorf("%s must be valid relative (from dsf file) file path", filePath)
+		return fmt.Errorf("%s must be valid relative (from dsf file) file path: %w", filePath, pathErr)
 	} else if !isOfType(filePath, allowedFileTypes) {
 		return fmt.Errorf("%s must be of one the following file formats: %s", filePath, strings.Join(allowedFileTypes, ", "))
 	}

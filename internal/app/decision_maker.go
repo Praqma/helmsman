@@ -174,8 +174,10 @@ func (cs *currentState) releaseExists(r *release, status string) bool {
 	return true
 }
 
-var resourceNameExtractor = regexp.MustCompile(`(^\w+/|\.v\d+$)`)
-var releaseNameExtractor = regexp.MustCompile(`sh\.helm\.release\.v\d+\.`)
+var (
+	resourceNameExtractor = regexp.MustCompile(`(^\w+/|\.v\d+$)`)
+	releaseNameExtractor  = regexp.MustCompile(`sh\.helm\.release\.v\d+\.`)
+)
 
 // getHelmsmanReleases returns a map of all releases that are labeled with "MANAGED-BY=HELMSMAN"
 // The releases are categorized by the namespaces in which they are deployed
@@ -252,7 +254,6 @@ func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool
 				}
 				mutex.Unlock()
 			}
-
 		}(ns)
 	}
 	wg.Wait()
