@@ -489,3 +489,82 @@ func isValidFile(filePath string, allowedFileTypes []string) error {
 	}
 	return nil
 }
+
+// notify MSTeams sends a JSON formatted message to MSTeams channel over a webhook url
+// It takes the content of the message (what changes helmsman is going to do or have done separated by \n)
+// and the webhook URL as well as a flag specifying if this is a failure message or not
+// It returns true if the sending of the message is successful, otherwise returns false
+// This implementation is inspired from Slack notification
+func notifyMSTeams(content string, url string, failure bool, executing bool) bool {
+	log.Info("Posting notifications to MS Teams ... ")
+
+	color := "#36a64f" // green
+	if failure {
+		color = "#FF0000" // red
+	}
+
+	var contentBold string
+	var pretext string
+
+	if content == "" {
+		pretext = "**No actions to perform!**"
+	} else if failure {
+		pretext = "**Failed to generate/execute a plan: **"
+		contentTrimmed := strings.TrimSuffix(content, "\n\n")
+		contentBold = "**" + contentTrimmed + "**"
+	} else if executing && !failure {
+		pretext = "**Here is what I have done: **"
+		contentBold = "**" + content + "**"
+	} else {
+		pretext = "**Here is what I am going to do: **"
+		contentSplit := strings.Split(content, "\n\n")
+		for i := range contentSplit {
+			contentSplit[i] = "* *" + contentSplit[i] + "*"
+		}
+		contentBold = strings.Join(contentSplit, "\n\n")
+	}
+
+	t := time.Now().UTC()
+
+	var jsonStr = []byte(`{
+		"@type": "MessageCard",
+    	"@context": "http://schema.org/extensions",
+    	"themeColor": "`+color+`",
+		"title":"`+pretext+`",
+		"summary":"Helmsman results.",
+		"sections":[
+			{
+				"type":"textBlock",
+				"text":"`+contentBold+`",
+				"wrap": true
+			},
+			{
+				"type":"textBlock",
+				"text":"Helmsman ` + appVersion + `",
+				"wrap": true
+			},
+			{
+				"type":"textBlock",
+				"text":"`+ strconv.FormatInt(t.Unix(), 10) +`",
+				"wrap": true
+			}
+		]
+	}`)
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	if err != nil {
+		log.Errorf("Failed to send MS Teams message: %v", err)
+		return false
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("Failed to send notification to MS Teams: %v", err)
+		return false
+	}
+	defer resp.Body.Close()
+
+	return resp.StatusCode == 200
+}
