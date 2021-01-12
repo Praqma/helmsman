@@ -79,7 +79,7 @@ func (r *helmRelease) key() string {
 
 // uninstall creates the helm command to uninstall an untracked release
 func (r *helmRelease) uninstall(p *plan) {
-	cmd := helmCmd(concat([]string{"uninstall", r.Name, "--namespace", r.Namespace}, flags.getDryRunFlags()), "Delete untracked release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
+	cmd := helmCmd(concat([]string{"uninstall", r.Name, "--namespace", r.Namespace}, flags.getRunFlags()), "Delete untracked release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
 	p.addCommand(cmd, -800, nil, []hookCmd{}, []hookCmd{})
 }

@@ -265,10 +265,13 @@ func (c *cli) readState(s *state) error {
 	return nil
 }
 
-// getDryRunFlags returns dry-run flag
-func (c *cli) getDryRunFlags() []string {
+// getRunFlags returns dry-run and debug flags
+func (c *cli) getRunFlags() []string {
 	if c.dryRun {
 		return []string{"--dry-run", "--debug"}
+	}
+	if c.debug {
+		return []string{"--debug"}
 	}
 	return []string{}
 }
