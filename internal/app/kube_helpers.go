@@ -100,7 +100,6 @@ func annotateNamespace(ns string, annotations map[string]string) {
 
 // setLimits creates a LimitRange resource in the provided Namespace
 func setLimits(ns string, lims limits) {
-
 	if len(lims) == 0 {
 		return
 	}
@@ -121,7 +120,7 @@ spec:
 
 	definition = definition + Indent(string(d), strings.Repeat(" ", 4))
 	targetFile := path.Join(createTempDir(tempFilesDir, "tmp"), "temp-LimitRange.yaml")
-	if err := ioutil.WriteFile(targetFile, []byte(definition), 0666); err != nil {
+	if err := ioutil.WriteFile(targetFile, []byte(definition), 0o666); err != nil {
 		log.Fatal(err.Error())
 	}
 
@@ -133,7 +132,6 @@ spec:
 	}
 
 	deleteFile(targetFile)
-
 }
 
 func setQuotas(ns string, quotas *quotas) {
@@ -155,7 +153,7 @@ spec:
 		definition = definition + Indent(customQuota.Name+": '"+customQuota.Value+"'\n", strings.Repeat(" ", 4))
 	}
 
-	//Special formatting for custom quotas so manually write these and then set to nil for marshalling
+	// Special formatting for custom quotas so manually write these and then set to nil for marshalling
 	quotas.CustomQuotas = nil
 
 	d, err := yaml.Marshal(&quotas)
@@ -165,7 +163,7 @@ spec:
 
 	definition = definition + Indent(string(d), strings.Repeat(" ", 4))
 
-	if err := ioutil.WriteFile("temp-ResourceQuota.yaml", []byte(definition), 0666); err != nil {
+	if err := ioutil.WriteFile("temp-ResourceQuota.yaml", []byte(definition), 0o666); err != nil {
 		log.Fatal(err.Error())
 	}
 

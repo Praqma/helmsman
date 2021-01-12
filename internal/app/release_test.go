@@ -54,7 +54,7 @@ func Test_release_validate(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "xyz.yaml must be valid relative (from dsf file) file path",
+			want: "invalid values file: xyz.yaml must be valid relative (from dsf file) file path: stat xyz.yaml: no such file or directory",
 		}, {
 			name: "test case 3",
 			args: args{
@@ -70,7 +70,7 @@ func Test_release_validate(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "../../tests/values.xml must be of one the following file formats: .yaml, .yml, .json",
+			want: "invalid values file: ../../tests/values.xml must be of one the following file formats: .yaml, .yml, .json",
 		}, {
 			name: "test case 4",
 			args: args{
@@ -215,7 +215,7 @@ func Test_release_validate(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "xyz.yaml must be valid relative (from dsf file) file path",
+			want: "invalid values file: xyz.yaml must be valid relative (from dsf file) file path: stat xyz.yaml: no such file or directory",
 		}, {
 			name: "test case 13",
 			args: args{
@@ -247,7 +247,7 @@ func Test_release_validate(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "xyz.fake must be valid relative (from dsf file) file path",
+			want: "invalid hook manifest: xyz.fake must be valid relative (from dsf file) file path: stat xyz.fake: no such file or directory",
 		}, {
 			name: "test case 15 - invalid hook file type",
 			args: args{
@@ -263,7 +263,7 @@ func Test_release_validate(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "../../tests/values.xml must be of one the following file formats: .yaml, .yml, .json",
+			want: "invalid hook manifest: ../../tests/values.xml must be of one the following file formats: .yaml, .yml, .json",
 		}, {
 			name: "test case 16 - valid hook file type",
 			args: args{
@@ -311,7 +311,7 @@ func Test_release_validate(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml must be valid URL path to a raw file",
+			want: "invalid hook manifest: https//raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml must be valid URL path to a raw file",
 		}, {
 			name: "test case 19 - invalid hook type 1",
 			args: args{
@@ -377,7 +377,7 @@ func Test_release_validate(t *testing.T) {
 				},
 				s: st,
 			},
-			want: "doesnt-exist.sh must be valid relative (from dsf file) file path",
+			want: "doesnt-exist.sh must be executable and available in your PATH",
 		}, {
 			name: "test case 23 - executable hook type",
 			args: args{

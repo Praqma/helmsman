@@ -27,8 +27,7 @@ func Auth() (string, error) {
 		credFile := "/tmp/gcloud_credentials.json"
 		// write the credentials content into a json file
 		d := []byte(os.Getenv("GCLOUD_CREDENTIALS"))
-		err := ioutil.WriteFile(credFile, d, 0644)
-
+		err := ioutil.WriteFile(credFile, d, 0o644)
 		if err != nil {
 			return fmt.Sprintf("Cannot create credentials file: %s", err), err
 		}

@@ -16,11 +16,8 @@ import (
 var style aurora.Aurora
 
 func checkCredentialsEnvVar() bool {
-
 	if os.Getenv("AWS_ACCESS_KEY_ID") == "" || os.Getenv("AWS_SECRET_ACCESS_KEY") == "" {
-
 		return false
-
 	} else if os.Getenv("AWS_REGION") == "" {
 
 		if os.Getenv("AWS_DEFAULT_REGION") == "" {
@@ -42,7 +39,6 @@ func ReadFile(bucketName string, filename string, outFile string, noColors bool)
 
 	// Create Session -- use config (credentials + region) from env vars or aws profile
 	sess, err := session.NewSession()
-
 	if err != nil {
 		log.Fatal(style.Bold(style.Red("ERROR: Can't create AWS session: " + err.Error())))
 	}
@@ -66,7 +62,6 @@ func ReadFile(bucketName string, filename string, outFile string, noColors bool)
 	}
 
 	log.Println("Successfully downloaded " + filename + " from S3 as " + outFile)
-
 }
 
 // ReadSSMParam reads a value from an SSM Parameter
@@ -80,7 +75,6 @@ func ReadSSMParam(keyname string, withDecryption bool, noColors bool) string {
 
 	// Create Session -- use config (credentials + region) from env vars or aws profile
 	sess, err := session.NewSession()
-
 	if err != nil {
 		log.Fatal(style.Bold(style.Red("ERROR: Can't create AWS session: " + err.Error())))
 	}
@@ -90,7 +84,6 @@ func ReadSSMParam(keyname string, withDecryption bool, noColors bool) string {
 		Name:           &keyname,
 		WithDecryption: &withDecryption,
 	})
-
 	if err != nil {
 		log.Fatal(style.Bold(style.Red("ERROR: Can't find the SSM Parameter " + keyname + " : " + err.Error())))
 	}

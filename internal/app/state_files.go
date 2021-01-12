@@ -146,7 +146,7 @@ func (s *state) expand(relativeToFile string) {
 
 		r.resolvePaths(dir, downloadDest)
 		if r.Chart != "" {
-			var repoOrDir = filepath.Dir(r.Chart)
+			repoOrDir := filepath.Dir(r.Chart)
 			_, isRepo := s.HelmRepos[repoOrDir]
 			isRepo = isRepo || stringInSlice(repoOrDir, s.PreconfiguredHelmRepos)
 			if !isRepo {

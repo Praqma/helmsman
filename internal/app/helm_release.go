@@ -79,7 +79,7 @@ func (r *helmRelease) key() string {
 
 // uninstall creates the helm command to uninstall an untracked release
 func (r *helmRelease) uninstall(p *plan) {
-	cmd := helmCmd(concat([]string{"uninstall", r.Name, "--namespace", r.Namespace}, flags.getDryRunFlags()), "Delete untracked release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
+	cmd := helmCmd(concat([]string{"uninstall", r.Name, "--namespace", r.Namespace}, flags.getRunFlags()), "Delete untracked release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
 	p.addCommand(cmd, -800, nil, []hookCmd{}, []hookCmd{})
 }
@@ -92,7 +92,6 @@ func (r *helmRelease) getRevision() string {
 // getChartName extracts and returns the Helm chart name from the chart info in a release state.
 // example: chart in release state is "jenkins-0.9.0" and this function will extract "jenkins" from it.
 func (r *helmRelease) getChartName() string {
-
 	chart := r.Chart
 	runes := []rune(chart)
 	return string(runes[0:strings.LastIndexByte(chart[0:strings.IndexByte(chart, '.')], '-')])

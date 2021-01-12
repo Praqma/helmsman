@@ -40,7 +40,7 @@ func validateHooks(hooks map[string]interface{}) error {
 				return nil
 			}
 			if err := isValidFile(hook, validFiles); err != nil {
-				return err
+				return fmt.Errorf("invalid hook manifest: %w", err)
 			}
 		case "successCondition", "successTimeout", "deleteOnSuccess":
 			continue

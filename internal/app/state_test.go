@@ -8,7 +8,7 @@ import (
 
 func setupTestCase(t *testing.T) func(t *testing.T) {
 	t.Log("setup test case")
-	os.MkdirAll(tempFilesDir, 0755)
+	os.MkdirAll(tempFilesDir, 0o755)
 	os.MkdirAll(os.TempDir()+"/helmsman-tests/myapp", os.ModePerm)
 	os.MkdirAll(os.TempDir()+"/helmsman-tests/dir-with space/myapp", os.ModePerm)
 	cmd := helmCmd([]string{"create", os.TempDir() + "/helmsman-tests/dir-with space/myapp"}, "creating an empty local chart directory")
