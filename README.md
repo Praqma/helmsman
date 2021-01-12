@@ -61,9 +61,9 @@ Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the d
 
 ```sh
 # on Linux
-curl -L https://github.com/Praqma/helmsman/releases/download/v3.6.3/helmsman_3.6.2_linux_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v3.6.3/helmsman_3.6.3_linux_amd64.tar.gz | tar zx
 # on MacOS
-curl -L https://github.com/Praqma/helmsman/releases/download/v3.6.3/helmsman_3.6.2_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v3.6.3/helmsman_3.6.3_darwin_amd64.tar.gz | tar zx
 
 mv helmsman /usr/local/bin/helmsman
 ```
