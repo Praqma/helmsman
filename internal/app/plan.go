@@ -135,47 +135,45 @@ func releaseWithHooks(cmd orderedCommand, storageBackend string, wg *sync.WaitGr
 		wg.Done()
 		<-sem
 	}()
-	if cmd.targetRelease == nil && !flags.destroy {
-		err := fmt.Errorf("nil target release")
-		errors <- err
-		log.Verbose(err.Error())
-		return
-	}
 	var annotations []string
-	for _, c := range cmd.beforeCommands {
-		if err := execOne(c.Command, cmd.targetRelease); err != nil {
-			errors <- err
-			if key, err := c.getAnnotationKey(); err != nil {
-				annotations = append(annotations, key+"=failed")
+	if cmd.targetRelease != nil && !flags.destroy {
+		for _, c := range cmd.beforeCommands {
+			if err := execOne(c.Command, cmd.targetRelease); err != nil {
+				errors <- err
+				if key, err := c.getAnnotationKey(); err != nil {
+					annotations = append(annotations, key+"=failed")
+				}
+				log.Verbose(err.Error())
+				return
 			}
-			log.Verbose(err.Error())
-			return
+			if key, err := c.getAnnotationKey(); err != nil {
+				annotations = append(annotations, key+"=ok")
+			}
 		}
-		if key, err := c.getAnnotationKey(); err != nil {
-			annotations = append(annotations, key+"=ok")
+		if !flags.dryRun && !flags.destroy {
+			defer func() {
+				cmd.targetRelease.mark(storageBackend)
+				cmd.targetRelease.annotate(storageBackend, annotations...)
+			}()
 		}
-	}
-	if !flags.dryRun && !flags.destroy {
-		defer func() {
-			cmd.targetRelease.mark(storageBackend)
-			cmd.targetRelease.annotate(storageBackend, annotations...)
-		}()
 	}
 	if err := execOne(cmd.Command, cmd.targetRelease); err != nil {
 		errors <- err
 		log.Verbose(err.Error())
 		return
 	}
-	for _, c := range cmd.afterCommands {
-		if err := execOne(c.Command, cmd.targetRelease); err != nil {
-			errors <- err
-			if key, err := c.getAnnotationKey(); err != nil {
-				annotations = append(annotations, key+"=failed")
-			}
-			log.Verbose(err.Error())
-		} else {
-			if key, err := c.getAnnotationKey(); err != nil {
-				annotations = append(annotations, key+"=ok")
+	if cmd.targetRelease != nil && !flags.destroy {
+		for _, c := range cmd.afterCommands {
+			if err := execOne(c.Command, cmd.targetRelease); err != nil {
+				errors <- err
+				if key, err := c.getAnnotationKey(); err != nil {
+					annotations = append(annotations, key+"=failed")
+				}
+				log.Verbose(err.Error())
+			} else {
+				if key, err := c.getAnnotationKey(); err != nil {
+					annotations = append(annotations, key+"=ok")
+				}
 			}
 		}
 	}
