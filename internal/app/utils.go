@@ -507,45 +507,42 @@ func notifyMSTeams(content string, url string, failure bool, executing bool) boo
 	var pretext string
 
 	if content == "" {
-		pretext = "**No actions to perform!**"
+		pretext = "No actions to perform!"
 	} else if failure {
-		pretext = "**Failed to generate/execute a plan: **"
-		contentTrimmed := strings.TrimSuffix(content, "\n\n")
+		pretext = "Failed to generate/execute a plan:"
+		contentTrimmed := strings.TrimSuffix(content, "\n")
 		contentBold = "**" + contentTrimmed + "**"
 	} else if executing && !failure {
-		pretext = "**Here is what I have done: **"
+		pretext = "Here is what I have done:"
 		contentBold = "**" + content + "**"
 	} else {
-		pretext = "**Here is what I am going to do: **"
-		contentSplit := strings.Split(content, "\n\n")
+		pretext = "Here is what I am going to do:"
+		contentSplit := strings.Split(content, "\n")
 		for i := range contentSplit {
-			contentSplit[i] = "* *" + contentSplit[i] + "*"
+			contentSplit[i] = "* **" + contentSplit[i] + "**"
 		}
 		contentBold = strings.Join(contentSplit, "\n\n")
 	}
 
 	t := time.Now().UTC()
+	footer := "Helmsman " + appVersion + "  |  " + t.Format(time.UnixDate)
+	summary := "Helmsman results."
 
 	var jsonStr = []byte(`{
 		"@type": "MessageCard",
     	"@context": "http://schema.org/extensions",
-    	"themeColor": "`+color+`",
-		"title":"`+pretext+`",
-		"summary":"Helmsman results.",
+    	"themeColor": "` + color + `",
+		"title":"` + pretext + `",
+		"summary":` + summary + `,
 		"sections":[
 			{
 				"type":"textBlock",
-				"text":"`+contentBold+`",
+				"text":"` + contentBold + `",
 				"wrap": true
 			},
 			{
 				"type":"textBlock",
-				"text":"Helmsman ` + appVersion + `",
-				"wrap": true
-			},
-			{
-				"type":"textBlock",
-				"text":"`+ strconv.FormatInt(t.Unix(), 10) +`",
+				"text": ` + footer + `,
 				"wrap": true
 			}
 		]
