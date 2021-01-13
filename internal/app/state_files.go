@@ -143,15 +143,16 @@ func (s *state) expand(relativeToFile string) {
 	dir := filepath.Dir(relativeToFile)
 	downloadDest, _ := filepath.Abs(createTempDir(tempFilesDir, "tmp"))
 	for _, r := range s.Apps {
-
+		// resolve paths for all release files (values, secrets, hooks, etc...)
 		r.resolvePaths(dir, downloadDest)
+
+		// resolve paths for local charts
 		if r.Chart != "" {
 			repoOrDir := filepath.Dir(r.Chart)
 			_, isRepo := s.HelmRepos[repoOrDir]
 			isRepo = isRepo || stringInSlice(repoOrDir, s.PreconfiguredHelmRepos)
+			// if there is no repo for the chart, we assume it's intended to be a local path
 			if !isRepo {
-				// if there is no repo for the chart, we assume it's intended to be a local path
-
 				// support env vars in path
 				r.Chart = os.ExpandEnv(r.Chart)
 				// respect absolute paths to charts but resolve relative paths
@@ -160,30 +161,24 @@ func (s *state) expand(relativeToFile string) {
 				}
 			}
 		}
-
-		for key, val := range s.Settings.GlobalHooks {
-			if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
-				hook := val.(string)
-				if err := isValidFile(hook, []string{".yaml", ".yml"}); err == nil {
-					s.Settings.GlobalHooks[key] = substituteVarsInYaml(hook)
-				}
+		// expand env variables for all release files
+		r.substituteVarsInStaticFiles()
+	}
+	// resolve paths and expand env variables for global hook files
+	for key, val := range s.Settings.GlobalHooks {
+		if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
+			file := val.(string)
+			if isOfType(file, []string{".yaml", ".yml", ".json", ".sh", ".py", ".rb"}) {
+				s.Settings.GlobalHooks[key], _ = resolveOnePath(file, dir, downloadDest)
+			}
+			if isOfType(file, []string{".yaml", ".yml"}) {
+				s.Settings.GlobalHooks[key] = substituteVarsInYaml(file)
 			}
 		}
-
-		r.substituteVarsInStaticFiles()
 	}
 	// resolving paths for Bearer Token path in settings
 	if s.Settings.BearerTokenPath != "" {
 		s.Settings.BearerTokenPath, _ = resolveOnePath(s.Settings.BearerTokenPath, dir, downloadDest)
-	}
-	// resolve paths for global hooks
-	for key, val := range s.Settings.GlobalHooks {
-		if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
-			hook := val.(string)
-			if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err == nil {
-				s.Settings.GlobalHooks[key], _ = resolveOnePath(hook, dir, downloadDest)
-			}
-		}
 	}
 	// resolving paths for k8s certificate files
 	for k := range s.Certificates {
