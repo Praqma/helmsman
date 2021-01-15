@@ -19,6 +19,7 @@ type config struct {
 	ServiceAccount      string                 `yaml:"serviceAccount"`
 	StorageBackend      string                 `yaml:"storageBackend"`
 	SlackWebhook        string                 `yaml:"slackWebhook"`
+	MSTeamsWebhook      string                 `yaml:"msTeamsWebhook"`
 	ReverseDelete       bool                   `yaml:"reverseDelete"`
 	BearerToken         bool                   `yaml:"bearerToken"`
 	BearerTokenPath     string                 `yaml:"bearerTokenPath"`
@@ -131,6 +132,13 @@ func (s *state) validate() error {
 	if s.Settings.SlackWebhook != "" {
 		if _, err := url.ParseRequestURI(s.Settings.SlackWebhook); err != nil {
 			return errors.New("settings validation failed -- slackWebhook must be a valid URL")
+		}
+	}
+
+	// ms teams webhook validation (if provided)
+	if s.Settings.MSTeamsWebhook != "" {
+		if _, err := url.ParseRequestURI(s.Settings.MSTeamsWebhook); err != nil {
+			return errors.New("settings validation failed -- msTeamsWebhook must be a valid URL")
 		}
 	}
 

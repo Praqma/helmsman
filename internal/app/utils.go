@@ -301,8 +301,14 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 		pretext = "*No actions to perform!*"
 	} else if failure {
 		pretext = "*Failed to generate/execute a plan: *"
-		contentTrimmed := strings.TrimSuffix(content, "\n")
-		contentBold = "*" + contentTrimmed + "*"
+		content = strings.Replace(content, "\"", "\\\"", -1)
+		contentSplit := strings.Split(content, "\n")
+		for i := range contentSplit {
+			if strings.TrimSpace(contentSplit[i]) != "" {
+				contentBold += "*" + contentSplit[i] + "*\n"
+			}
+		}
+		contentBold = strings.TrimRight(contentBold, "\n")
 	} else if executing && !failure {
 		pretext = "*Here is what I have done: *"
 		contentBold = "*" + content + "*"
@@ -345,7 +351,11 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 	}
 	defer resp.Body.Close()
 
-	return resp.StatusCode == 200
+	if resp.StatusCode != 200 {
+		log.Logger.Errorf("Could not deliver message to Slack. HTTP response status: %s", resp.Status)
+		return false
+	}
+	return true
 }
 
 // getBucketElements returns a map containing the bucket name and the file path inside the bucket
@@ -510,8 +520,14 @@ func notifyMSTeams(content string, url string, failure bool, executing bool) boo
 		pretext = "No actions to perform!"
 	} else if failure {
 		pretext = "Failed to generate/execute a plan:"
-		contentTrimmed := strings.TrimSuffix(content, "\n")
-		contentBold = "**" + contentTrimmed + "**"
+		content = strings.Replace(content, "\"", "\\\"", -1)
+		contentSplit := strings.Split(content, "\n")
+		for i := range contentSplit {
+			if strings.TrimSpace(contentSplit[i]) != "" {
+				contentBold += "**" + contentSplit[i] + "**\n\n"
+			}
+		}
+		contentBold = strings.TrimRight(contentBold, "\n\n")
 	} else if executing && !failure {
 		pretext = "Here is what I have done:"
 		contentBold = "**" + content + "**"
@@ -524,25 +540,21 @@ func notifyMSTeams(content string, url string, failure bool, executing bool) boo
 		contentBold = strings.Join(contentSplit, "\n\n")
 	}
 
-	t := time.Now().UTC()
-	footer := "Helmsman " + appVersion + "  |  " + t.Format(time.UnixDate)
-	summary := "Helmsman results."
-
 	var jsonStr = []byte(`{
 		"@type": "MessageCard",
     	"@context": "http://schema.org/extensions",
     	"themeColor": "` + color + `",
-		"title":"` + pretext + `",
-		"summary":` + summary + `,
-		"sections":[
+		"title": "` + pretext + `",
+		"summary": "Helmsman results.",
+		"sections": [
 			{
-				"type":"textBlock",
-				"text":"` + contentBold + `",
+				"type": "textBlock",
+				"text": "` + contentBold + `",
 				"wrap": true
 			},
 			{
-				"type":"textBlock",
-				"text": ` + footer + `,
+				"type": "textBlock",
+				"text": "Helmsman ` + appVersion + `",
 				"wrap": true
 			}
 		]
@@ -563,5 +575,9 @@ func notifyMSTeams(content string, url string, failure bool, executing bool) boo
 	}
 	defer resp.Body.Close()
 
-	return resp.StatusCode == 200
+	if resp.StatusCode != 200 {
+		log.Logger.Errorf("Could not deliver message to MS Teams. HTTP response status: %s", resp.Status)
+		return false
+	}
+	return true
 }
