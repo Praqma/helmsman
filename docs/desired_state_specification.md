@@ -110,6 +110,7 @@ The following options can be skipped if your kubectl context is already created 
 - **bearerTokenPath**: optional. If bearer token is used, you can specify a custom location (URL, cloud bucket, local file path) for the token file.
 - **storageBackend** : by default Helm v3 stores release information in secrets, using secrets for storage is recommended for security.
 - **slackWebhook** : a [Slack](http://slack.com) Webhook URL to receive Helmsman notifications. This can be passed directly or in an environment variable.
+- **msTeamsWebhook** : a [Microsoft Teams](https://www.microsoft.com/pl-pl/microsoft-teams/group-chat-software) Webhook URL to receive Helmsman notifications. This can be passed directly or in an environment variable.
 - **reverseDelete** : if set to `true` it will reverse the priority order whilst deleting.
 - **eyamlEnabled** : if set to `true' it will use [hiera-eyaml](https://github.com/voxpupuli/hiera-eyaml) to decrypt secret files instead of using default helm-secrets based on sops
 - **eyamlPrivateKeyPath** : if set with path to the eyaml private key file, it will use it instead of looking for default one in ./keys directory relative to where Helmsman were run. It needs to be defined in conjunction with eyamlPublicKeyPath.
@@ -128,6 +129,7 @@ kubeContext = "minikube"
 ## clusterURI= "$K8S_URI"
 # storageBackend = "secret"
 # slackWebhook = $MY_SLACK_WEBHOOK
+# msTeamsWebhook = $MY_MS_TEAMS_WEBHOOK
 # reverseDelete = false
 # eyamlEnabled = true
 # eyamlPrivateKeyPath = "../keys/custom-key.pem"
@@ -148,6 +150,7 @@ settings:
   ##clusterURI: "$K8S_URI"
   #storageBackend: "secret"
   #slackWebhook: "$MY_SLACK_WEBHOOK"
+  #msTeamsWebhook: "$MY_MS_TEAMS_WEBHOOK"
   #reverseDelete: false
   # eyamlEnabled: true
   # eyamlPrivateKeyPath: ../keys/custom-key.pem
