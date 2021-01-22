@@ -9,7 +9,8 @@ import (
 
 type Logger struct {
 	*logger.Logger
-	SlackWebhook string
+	SlackWebhook   string
+	MSTeamsWebhook string
 }
 
 func (l *Logger) Debug(message string) {
@@ -25,24 +26,27 @@ func (l *Logger) Verbose(message string) {
 }
 
 func (l *Logger) Error(message string) {
-	if _, err := url.ParseRequestURI(l.SlackWebhook); err == nil {
-		notifySlack(message, l.SlackWebhook, true, flags.apply)
-	}
+	l.notifyAboutFailureUsingWebhooks(message)
 	l.Logger.Error(message)
 }
 
 func (l *Logger) Critical(message string) {
-	if _, err := url.ParseRequestURI(l.SlackWebhook); err == nil {
-		notifySlack(message, l.SlackWebhook, true, flags.apply)
-	}
+	l.notifyAboutFailureUsingWebhooks(message)
 	l.Logger.Critical(message)
 }
 
 func (l *Logger) Fatal(message string) {
+	l.notifyAboutFailureUsingWebhooks(message)
+	l.Logger.Fatal(message)
+}
+
+func (l *Logger) notifyAboutFailureUsingWebhooks(message string) {
 	if _, err := url.ParseRequestURI(l.SlackWebhook); err == nil {
 		notifySlack(message, l.SlackWebhook, true, flags.apply)
 	}
-	l.Logger.Fatal(message)
+	if _, err := url.ParseRequestURI(l.MSTeamsWebhook); err == nil {
+		notifyMSTeams(message, l.MSTeamsWebhook, true, flags.apply)
+	}
 }
 
 func initLogs(verbose bool, noColors bool) {

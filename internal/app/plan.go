@@ -204,6 +204,9 @@ func execOne(cmd Command, targetRelease *release) error {
 		if _, err := url.ParseRequestURI(log.SlackWebhook); err == nil {
 			notifySlack(cmd.Description+" ... SUCCESS!", log.SlackWebhook, false, true)
 		}
+		if _, err := url.ParseRequestURI(log.MSTeamsWebhook); err == nil {
+			notifyMSTeams(cmd.Description+" ... SUCCESS!", log.MSTeamsWebhook, false, true)
+		}
 		return nil
 	}
 }
@@ -245,6 +248,17 @@ func (p *plan) sendToSlack() {
 			str = str + c.Command.Description + "\n"
 		}
 		notifySlack(strings.TrimRight(str, "\n"), log.SlackWebhook, false, false)
+	}
+}
+
+// sendToMSTeams sends the description of plan commands to MS Teams if a webhook is provided.
+func (p *plan) sendToMSTeams() {
+	if _, err := url.ParseRequestURI(log.MSTeamsWebhook); err == nil {
+		str := ""
+		for _, c := range p.Commands {
+			str = str + c.Command.Description + "\n"
+		}
+		notifyMSTeams(strings.TrimRight(str, "\n"), log.MSTeamsWebhook, false, false)
 	}
 }
 

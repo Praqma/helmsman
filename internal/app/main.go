@@ -51,6 +51,7 @@ func Main() {
 	}
 
 	log.SlackWebhook = s.Settings.SlackWebhook
+	log.MSTeamsWebhook = s.Settings.MSTeamsWebhook
 
 	settings = &s.Settings
 	curContext = s.Context
@@ -115,6 +116,7 @@ func Main() {
 		p.printCmds()
 	}
 	p.sendToSlack()
+	p.sendToMSTeams()
 
 	if flags.apply || flags.dryRun || flags.destroy {
 		p.exec()
