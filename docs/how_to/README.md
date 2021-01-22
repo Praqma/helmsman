@@ -49,6 +49,7 @@ It is recommended that you also check the [DSF spec](../desired_state_specificat
   - [Authenticating to cloud storage providers](misc/auth_to_storage_providers.md)
   - [Protecting namespaces and releases](misc/protect_namespaces_and_releases.md)
   - [Send slack notifications from Helmsman](misc/send_slack_notifications_from_helmsman.md)
+  - [Send MS Teams notifications from Helmsman](misc/send_ms_teams_notifications_from_helmsman.md)
   - [Merge multiple desired state files](misc/merge_desired_state_files.md)
   - [Limit Helmsman deployment to specific apps](misc/limit-deployment-to-specific-apps.md)
   - [Limit Helmsman deployment to specific group of apps](misc/limit-deployment-to-specific-group-of-apps.md)

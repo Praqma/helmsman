@@ -301,8 +301,14 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 		pretext = "*No actions to perform!*"
 	} else if failure {
 		pretext = "*Failed to generate/execute a plan: *"
-		contentTrimmed := strings.TrimSuffix(content, "\n")
-		contentBold = "*" + contentTrimmed + "*"
+		content = strings.Replace(content, "\"", "\\\"", -1)
+		contentSplit := strings.Split(content, "\n")
+		for i := range contentSplit {
+			if strings.TrimSpace(contentSplit[i]) != "" {
+				contentBold += "*" + contentSplit[i] + "*\n"
+			}
+		}
+		contentBold = strings.TrimRight(contentBold, "\n")
 	} else if executing && !failure {
 		pretext = "*Here is what I have done: *"
 		contentBold = "*" + content + "*"
@@ -345,7 +351,11 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 	}
 	defer resp.Body.Close()
 
-	return resp.StatusCode == 200
+	if resp.StatusCode != 200 {
+		log.Logger.Errorf("Could not deliver message to Slack. HTTP response status: %s", resp.Status)
+		return false
+	}
+	return true
 }
 
 // getBucketElements returns a map containing the bucket name and the file path inside the bucket
@@ -487,4 +497,86 @@ func isValidFile(filePath string, allowedFileTypes []string) error {
 		return fmt.Errorf("%s must be of one the following file formats: %s", filePath, strings.Join(allowedFileTypes, ", "))
 	}
 	return nil
+}
+
+// notify MSTeams sends a JSON formatted message to MSTeams channel over a webhook url
+// It takes the content of the message (what changes helmsman is going to do or have done separated by \n)
+// and the webhook URL as well as a flag specifying if this is a failure message or not
+// It returns true if the sending of the message is successful, otherwise returns false
+// This implementation is inspired from Slack notification
+func notifyMSTeams(content string, url string, failure bool, executing bool) bool {
+	log.Info("Posting notifications to MS Teams ... ")
+
+	color := "#36a64f" // green
+	if failure {
+		color = "#FF0000" // red
+	}
+
+	var contentBold string
+	var pretext string
+
+	if content == "" {
+		pretext = "No actions to perform!"
+	} else if failure {
+		pretext = "Failed to generate/execute a plan:"
+		content = strings.Replace(content, "\"", "\\\"", -1)
+		contentSplit := strings.Split(content, "\n")
+		for i := range contentSplit {
+			if strings.TrimSpace(contentSplit[i]) != "" {
+				contentBold += "**" + contentSplit[i] + "**\n\n"
+			}
+		}
+		contentBold = strings.TrimRight(contentBold, "\n\n")
+	} else if executing && !failure {
+		pretext = "Here is what I have done:"
+		contentBold = "**" + content + "**"
+	} else {
+		pretext = "Here is what I am going to do:"
+		contentSplit := strings.Split(content, "\n")
+		for i := range contentSplit {
+			contentSplit[i] = "* **" + contentSplit[i] + "**"
+		}
+		contentBold = strings.Join(contentSplit, "\n\n")
+	}
+
+	var jsonStr = []byte(`{
+		"@type": "MessageCard",
+    	"@context": "http://schema.org/extensions",
+    	"themeColor": "` + color + `",
+		"title": "` + pretext + `",
+		"summary": "Helmsman results.",
+		"sections": [
+			{
+				"type": "textBlock",
+				"text": "` + contentBold + `",
+				"wrap": true
+			},
+			{
+				"type": "textBlock",
+				"text": "Helmsman ` + appVersion + `",
+				"wrap": true
+			}
+		]
+	}`)
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	if err != nil {
+		log.Errorf("Failed to send MS Teams message: %v", err)
+		return false
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("Failed to send notification to MS Teams: %v", err)
+		return false
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		log.Logger.Errorf("Could not deliver message to MS Teams. HTTP response status: %s", resp.Status)
+		return false
+	}
+	return true
 }
