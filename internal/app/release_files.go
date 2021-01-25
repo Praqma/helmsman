@@ -80,14 +80,17 @@ func (r *release) getValuesFiles() []string {
 		fileList = append(fileList, r.SecretsFile+".dec")
 	} else if len(r.SecretsFiles) > 0 {
 		for i := 0; i < len(r.SecretsFiles); i++ {
+			if isOfType(r.SecretsFiles[i], []string{".dec"}) {
+				// if .dec extension is added before to the secret filename, don't add it again.
+				// This happens at upgrade time (where diff and upgrade both call this function)
+				// and we don't need to decrypt the file again
+				continue
+			}
+
 			if err := decryptSecret(r.SecretsFiles[i]); err != nil {
 				log.Fatal(err.Error())
 			}
-			// if .dec extension is added before to the secret filename, don't add it again.
-			// This happens at upgrade time (where diff and upgrade both call this function)
-			if !isOfType(r.SecretsFiles[i], []string{".dec"}) {
-				r.SecretsFiles[i] = r.SecretsFiles[i] + ".dec"
-			}
+			r.SecretsFiles[i] = r.SecretsFiles[i] + ".dec"
 		}
 		fileList = append(fileList, r.SecretsFiles...)
 	}
