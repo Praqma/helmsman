@@ -56,7 +56,7 @@ func ReadFile(containerName string, filename string, outFile string, noColors bo
 	ctx := context.Background()
 
 	blobURL := containerURL.NewBlockBlobURL(filename)
-	downloadResponse, err := blobURL.Download(ctx, 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false)
+	downloadResponse, err := blobURL.Download(ctx, 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false, azblob.ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(style.Bold(style.Red("ERROR: failed to download file " + filename + " with error: " + err.Error())))
 	}
