@@ -539,7 +539,7 @@ func notifyMSTeams(content string, url string, failure bool, executing bool) boo
 		contentBold = strings.Join(contentSplit, "\n\n")
 	}
 
-	var jsonStr = []byte(`{
+	jsonStr := []byte(`{
 		"@type": "MessageCard",
     	"@context": "http://schema.org/extensions",
     	"themeColor": "` + color + `",
