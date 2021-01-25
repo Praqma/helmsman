@@ -1,4 +1,4 @@
-# v3.6.3
+# v3.6.4
 
 If you migrating from Helmsman v1.x, it is recommended you read the [migration guide](https://github.com/Praqma/helmsman/blob/master/docs/how_to/misc/migrate_to_3.md) before using this release.
 
@@ -6,9 +6,7 @@ If you migrating from Helmsman v1.x, it is recommended you read the [migration g
 
 ## Fixes and improvements
 
-- Fixed missing diff on chart version change (#557)
-- Fixed checking for updates on disabled releases (#557)
-- Fixed segmentation fault on slack notifications (#559)
-- Fixed failure to remove untracked releases (#566)
-- The debug flag is now passed down to the helm commands (#568)
-- Improved error reporting (#568)
+- Fixed issue when decrypting multiple files would result in an error (#575).
+- Fixed issue when resolving hooks paths (#569).
+- Added support for MS Teams notifications (#574).
+- Updated library dependencies.
