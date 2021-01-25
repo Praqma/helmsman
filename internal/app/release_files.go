@@ -74,10 +74,13 @@ func (r *release) getValuesFiles() []string {
 		}
 	}
 	if r.SecretsFile != "" {
-		if err := decryptSecret(r.SecretsFile); err != nil {
-			log.Fatal(err.Error())
+		if !isOfType(r.SecretsFile, []string{".dec"}) {
+			if err := decryptSecret(r.SecretsFile); err != nil {
+				log.Fatal(err.Error())
+			}
+			r.SecretsFile = r.SecretsFile + ".dec"
 		}
-		fileList = append(fileList, r.SecretsFile+".dec")
+		fileList = append(fileList, r.SecretsFile)
 	} else if len(r.SecretsFiles) > 0 {
 		for i := 0; i < len(r.SecretsFiles); i++ {
 			if isOfType(r.SecretsFiles[i], []string{".dec"}) {
