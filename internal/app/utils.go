@@ -199,37 +199,33 @@ func sliceContains(slice []string, s string) bool {
 // and saves it with a given outfile name and in a given dir
 // if downloaded, returns the outfile name. If the file path is local file system path, it is copied to current directory.
 func downloadFile(file string, dir string, outfile string) string {
-	if strings.HasPrefix(file, "http") {
+	u, err := url.Parse(file)
+	if err != nil {
+		log.Fatalf("%s is not a valid path: %s", file, err)
+	}
+
+	switch u.Scheme {
+	case "https", "http":
 		if err := downloadFileFromURL(file, outfile); err != nil {
 			log.Fatal(err.Error())
 		}
-	} else if strings.HasPrefix(file, "s3") {
-
-		tmp := getBucketElements(file)
-		aws.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors)
-
-	} else if strings.HasPrefix(file, "gs") {
-
-		tmp := getBucketElements(file)
-		msg, err := gcs.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors)
-		if err != nil {
+	case "s3":
+		aws.ReadFile(u.Host, u.Path, outfile, flags.noColors)
+	case "gs":
+		if msg, err := gcs.ReadFile(u.Host, u.Path, outfile, flags.noColors); err != nil {
 			log.Fatal(msg)
 		}
-
-	} else if strings.HasPrefix(file, "az") {
-
-		tmp := getBucketElements(file)
-		azure.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors)
-
-	} else {
-
-		log.Verbose("" + file + " will be used from local file system.")
+	case "az":
+		azure.ReadFile(u.Host, u.Path, outfile, flags.noColors)
+	default:
+		log.Verbose(file + " will be used from local file system.")
 		toCopy := file
 		if !filepath.IsAbs(file) {
 			toCopy, _ = filepath.Abs(filepath.Join(dir, file))
 		}
 		copyFile(toCopy, outfile)
 	}
+
 	return outfile
 }
 
@@ -356,17 +352,6 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 		return false
 	}
 	return true
-}
-
-// getBucketElements returns a map containing the bucket name and the file path inside the bucket
-// this func works for S3, Azure and GCS bucket links of the format:
-// s3 or gs://bucketname/dir.../file.ext
-func getBucketElements(link string) map[string]string {
-	tmp := strings.SplitAfterN(link, "//", 2)[1]
-	m := make(map[string]string)
-	m["bucketName"] = strings.SplitN(tmp, "/", 2)[0]
-	m["filePath"] = strings.SplitN(tmp, "/", 2)[1]
-	return m
 }
 
 // replaceStringInFile takes a map of keys and values and replaces the keys with values within a given file.
