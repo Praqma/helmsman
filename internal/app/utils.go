@@ -199,30 +199,37 @@ func sliceContains(slice []string, s string) bool {
 // and saves it with a given outfile name and in a given dir
 // if downloaded, returns the outfile name. If the file path is local file system path, it is copied to current directory.
 func downloadFile(file string, dir string, outfile string) string {
-	if strings.HasPrefix(file, "http") {
+	u, err := url.Parse(file)
+	if err != nil {
+		log.Fatalf("%s is not a valid path: %s", file, err)
+	}
+
+	switch u.Scheme {
+	case "https", "http":
 		if err := downloadFileFromURL(file, outfile); err != nil {
 			log.Fatal(err.Error())
 		}
-	} else if strings.HasPrefix(file, "s3") {
-
+	case "s3":
 		tmp := getBucketElements(file)
+		if tmp == nil {
+			log.Fatalf("%s is not a valid bucket URL", file)
+		}
 		aws.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors)
-
-	} else if strings.HasPrefix(file, "gs") {
-
+	case "gs":
 		tmp := getBucketElements(file)
-		msg, err := gcs.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors)
-		if err != nil {
+		if tmp == nil {
+			log.Fatalf("%s is not a valid bucket URL", file)
+		}
+		if msg, err := gcs.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors); err != nil {
 			log.Fatal(msg)
 		}
-
-	} else if strings.HasPrefix(file, "az") {
-
+	case "az":
 		tmp := getBucketElements(file)
+		if tmp == nil {
+			log.Fatalf("%s is not a valid bucket URL", file)
+		}
 		azure.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors)
-
-	} else {
-
+	default:
 		log.Verbose("" + file + " will be used from local file system.")
 		toCopy := file
 		if !filepath.IsAbs(file) {
@@ -230,6 +237,7 @@ func downloadFile(file string, dir string, outfile string) string {
 		}
 		copyFile(toCopy, outfile)
 	}
+
 	return outfile
 }
 
@@ -362,10 +370,13 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 // this func works for S3, Azure and GCS bucket links of the format:
 // s3 or gs://bucketname/dir.../file.ext
 func getBucketElements(link string) map[string]string {
-	tmp := strings.SplitAfterN(link, "//", 2)[1]
+	u, err := url.Parse(link)
+	if err != nil {
+		return nil
+	}
 	m := make(map[string]string)
-	m["bucketName"] = strings.SplitN(tmp, "/", 2)[0]
-	m["filePath"] = strings.SplitN(tmp, "/", 2)[1]
+	m["bucketName"] = u.Host
+	m["filePath"] = u.Path
 	return m
 }
 
