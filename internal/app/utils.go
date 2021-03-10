@@ -210,27 +210,15 @@ func downloadFile(file string, dir string, outfile string) string {
 			log.Fatal(err.Error())
 		}
 	case "s3":
-		tmp := getBucketElements(file)
-		if tmp == nil {
-			log.Fatalf("%s is not a valid bucket URL", file)
-		}
-		aws.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors)
+		aws.ReadFile(u.Host, u.Path, outfile, flags.noColors)
 	case "gs":
-		tmp := getBucketElements(file)
-		if tmp == nil {
-			log.Fatalf("%s is not a valid bucket URL", file)
-		}
-		if msg, err := gcs.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors); err != nil {
+		if msg, err := gcs.ReadFile(u.Host, u.Path, outfile, flags.noColors); err != nil {
 			log.Fatal(msg)
 		}
 	case "az":
-		tmp := getBucketElements(file)
-		if tmp == nil {
-			log.Fatalf("%s is not a valid bucket URL", file)
-		}
-		azure.ReadFile(tmp["bucketName"], tmp["filePath"], outfile, flags.noColors)
+		azure.ReadFile(u.Host, u.Path, outfile, flags.noColors)
 	default:
-		log.Verbose("" + file + " will be used from local file system.")
+		log.Verbose(file + " will be used from local file system.")
 		toCopy := file
 		if !filepath.IsAbs(file) {
 			toCopy, _ = filepath.Abs(filepath.Join(dir, file))
@@ -364,20 +352,6 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 		return false
 	}
 	return true
-}
-
-// getBucketElements returns a map containing the bucket name and the file path inside the bucket
-// this func works for S3, Azure and GCS bucket links of the format:
-// s3 or gs://bucketname/dir.../file.ext
-func getBucketElements(link string) map[string]string {
-	u, err := url.Parse(link)
-	if err != nil {
-		return nil
-	}
-	m := make(map[string]string)
-	m["bucketName"] = u.Host
-	m["filePath"] = u.Path
-	return m
 }
 
 // replaceStringInFile takes a map of keys and values and replaces the keys with values within a given file.
