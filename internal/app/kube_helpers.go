@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"path"
+	"os"
 	"strings"
 	"sync"
 
@@ -119,19 +119,10 @@ spec:
 	}
 
 	definition = definition + Indent(string(d), strings.Repeat(" ", 4))
-	targetFile := path.Join(createTempDir(tempFilesDir, "tmp"), "temp-LimitRange.yaml")
-	if err := ioutil.WriteFile(targetFile, []byte(definition), 0o666); err != nil {
+
+	if err := apply(definition, ns, "LimitRange"); err != nil {
 		log.Fatal(err.Error())
 	}
-
-	cmd := kubectl([]string{"apply", "-f", targetFile, "-n", ns, flags.getKubeDryRunFlag("apply")}, "Creating LimitRange in namespace [ "+ns+" ]")
-	result := cmd.Exec()
-
-	if result.code != 0 {
-		log.Fatal("Failed to create LimitRange in namespace [ " + ns + " ] with error: " + result.errors)
-	}
-
-	deleteFile(targetFile)
 }
 
 func setQuotas(ns string, quotas *quotas) {
@@ -163,18 +154,31 @@ spec:
 
 	definition = definition + Indent(string(d), strings.Repeat(" ", 4))
 
-	if err := ioutil.WriteFile("temp-ResourceQuota.yaml", []byte(definition), 0o666); err != nil {
+	if err := apply(definition, ns, "ResourceQuota"); err != nil {
 		log.Fatal(err.Error())
 	}
+}
 
-	cmd := kubectl([]string{"apply", "-f", "temp-ResourceQuota.yaml", "-n", ns, flags.getKubeDryRunFlag("apply")}, "Creating ResourceQuota in namespace [ "+ns+" ]")
+func apply(definition, ns, kind string) error {
+	targetFile, err := ioutil.TempFile(tempFilesDir, kind+"-*.yaml")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(targetFile.Name())
+
+	if _, err = targetFile.Write([]byte(definition)); err != nil {
+		return err
+	}
+
+	cmd := kubectl([]string{"apply", "-f", targetFile.Name(), "-n", ns, flags.getKubeDryRunFlag("apply")},
+		"Creating "+kind+" in namespace [ "+ns+" ]")
 	result := cmd.Exec()
 
-	deleteFile("temp-ResourceQuota.yaml")
-
 	if result.code != 0 {
-		log.Fatal("ERROR: failed to create ResourceQuota in namespace [ " + ns + " ]: " + result.errors)
+		return fmt.Errorf("ERROR: failed to create %s in namespace [ %s ]: %s", kind, ns, result.errors)
 	}
+
+	return nil
 }
 
 // createContext creates a context -connecting to a k8s cluster- in kubectl config.
