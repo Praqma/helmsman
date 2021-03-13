@@ -1,4 +1,4 @@
-# v3.6.5
+# v3.6.6
 
 If you migrating from Helmsman v1.x, it is recommended you read the [migration guide](https://github.com/Praqma/helmsman/blob/master/docs/how_to/misc/migrate_to_3.md) before using this release.
 
@@ -6,4 +6,4 @@ If you migrating from Helmsman v1.x, it is recommended you read the [migration g
 
 ## Fixes and improvements
 
-- Fixed issue when the path to a file would match a URL schema prefix (#587).
+- Fixed race condition when applying namespace quotas (#589)
