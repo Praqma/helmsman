@@ -152,13 +152,17 @@ func addHelmRepos(repos map[string]string) error {
 		repoAddFlags += "--force-update"
 	}
 
-	for repoName, repoLink := range repos {
+	for repoName, repoURL := range repos {
 		basicAuthArgs := []string{}
+		u, err := url.Parse(repoURL)
+		if err != nil {
+			log.Fatal("failed to add helm repo:  " + err.Error())
+		}
 		// check if repo is in GCS, then perform GCS auth -- needed for private GCS helm repos
 		// failed auth would not throw an error here, as it is possible that the repo is public and does not need authentication
-		if strings.HasPrefix(repoLink, "gs://") {
+		if u.Scheme == "gs" {
 			if !helmPluginExists("gcs") {
-				log.Fatal(fmt.Sprintf("repository %s can't be used: helm-gcs plugin is missing", repoLink))
+				log.Fatal(fmt.Sprintf("repository %s can't be used: helm-gcs plugin is missing", repoURL))
 			}
 			msg, err := gcs.Auth()
 			if err != nil {
@@ -166,10 +170,6 @@ func addHelmRepos(repos map[string]string) error {
 			}
 		}
 
-		u, err := url.Parse(repoLink)
-		if err != nil {
-			log.Fatal("failed to add helm repo:  " + err.Error())
-		}
 		if u.User != nil {
 			p, ok := u.User.Password()
 			if !ok {
@@ -177,22 +177,22 @@ func addHelmRepos(repos map[string]string) error {
 			}
 			basicAuthArgs = append(basicAuthArgs, "--username", u.User.Username(), "--password", p)
 			u.User = nil
-			repoLink = u.String()
+			repoURL = u.String()
 		}
 
-		cmd := helmCmd(concat([]string{"repo", "add", repoAddFlags, repoName, repoLink}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
 		// check current repository against existing repositories map in order to make sure it's missing and needs to be added
 		if existingRepoURL, ok := existingRepos[repoName]; ok {
-			if repoLink == existingRepoURL {
+			if repoURL == existingRepoURL {
 				continue
 			}
 		}
+		cmd := helmCmd(concat([]string{"repo", "add", repoAddFlags, repoName, repoURL}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
 		if result := cmd.Exec(); result.code != 0 {
 			return fmt.Errorf("While adding helm repository ["+repoName+"]: %s", result.errors)
 		}
 	}
 
-	if len(repos) > 0 {
+	if !flags.noUpdate && len(repos) > 0 {
 		cmd := helmCmd([]string{"repo", "update"}, "Updating helm repositories")
 
 		if result := cmd.Exec(); result.code != 0 {
