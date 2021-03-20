@@ -66,6 +66,7 @@ type cli struct {
 	migrateContext        bool
 	parallel              int
 	alwaysUpgrade         bool
+	noUpdate              bool
 }
 
 func printUsage() {
@@ -112,6 +113,7 @@ func (c *cli) parse() {
 	flag.BoolVar(&c.noCleanup, "no-cleanup", false, "keeps any credentials files that has been downloaded on the host where helmsman runs.")
 	flag.BoolVar(&c.migrateContext, "migrate-context", false, "updates the context name for all apps defined in the DSF and applies Helmsman labels. Using this flag is required if you want to change context name after it has been set.")
 	flag.BoolVar(&c.alwaysUpgrade, "always-upgrade", false, "upgrade release even if no changes are found")
+	flag.BoolVar(&c.noUpdate, "no-update", false, "skip updating helm repos")
 	flag.Usage = printUsage
 	flag.Parse()
 
