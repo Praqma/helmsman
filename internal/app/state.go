@@ -98,6 +98,8 @@ func (s *state) validate() error {
 			"kubeContext to use. Either define it in the desired state file or pass a kubeconfig with --kubeconfig to use an existing context")
 	}
 
+	_, caClient := s.Certificates["caClient"]
+
 	if s.Settings.ClusterURI != "" {
 		if _, err := url.ParseRequestURI(s.Settings.ClusterURI); err != nil {
 			return errors.New("settings validation failed -- clusterURI must have a valid URL set in an env variable or passed directly. Either the env var is missing/empty or the URL is invalid")
@@ -105,11 +107,13 @@ func (s *state) validate() error {
 		if s.Settings.KubeContext == "" {
 			return errors.New("settings validation failed -- KubeContext needs to be provided in the settings stanza")
 		}
-		if !s.Settings.BearerToken && s.Settings.Username == "" {
-			return errors.New("settings validation failed -- username needs to be provided in the settings stanza")
-		}
-		if !s.Settings.BearerToken && s.Settings.Password == "" {
-			return errors.New("settings validation failed -- password needs to be provided (directly or from env var) in the settings stanza")
+		if !s.Settings.BearerToken && !caClient {
+			if s.Settings.Username == "" {
+				return errors.New("settings validation failed -- username needs to be provided in the settings stanza")
+			}
+			if s.Settings.Password == "" {
+				return errors.New("settings validation failed -- password needs to be provided (directly or from env var) in the settings stanza")
+			}
 		}
 		if s.Settings.BearerToken && s.Settings.BearerTokenPath != "" {
 			if _, err := os.Stat(s.Settings.BearerTokenPath); err != nil {
