@@ -128,6 +128,10 @@ func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *
 
 // testRelease creates a Helm command to test a particular release.
 func (r *release) test(afterCommands *[]hookCmd) {
+	if flags.dryRun {
+		log.Verbose("Dry-run, skipping tests:  " + r.Name)
+		return
+	}
 	cmd := helmCmd(r.getHelmArgsFor("test"), "Running tests for release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 	*afterCommands = append([]hookCmd{{Command: cmd, Type: test}}, *afterCommands...)
 }
