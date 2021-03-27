@@ -74,17 +74,15 @@ func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *
 		return errors.New("version can't be empty")
 	}
 
-	validFiles := []string{".yaml", ".yml", ".json"}
-
 	if r.ValuesFile != "" && len(r.ValuesFiles) > 0 {
 		return errors.New("valuesFile and valuesFiles should not be used together")
 	} else if r.ValuesFile != "" {
-		if err := isValidFile(r.ValuesFile, validFiles); err != nil {
+		if err := isValidFile(r.ValuesFile, validManifestFiles); err != nil {
 			return fmt.Errorf("invalid values file: %w", err)
 		}
 	} else if len(r.ValuesFiles) > 0 {
 		for _, filePath := range r.ValuesFiles {
-			if err := isValidFile(filePath, validFiles); err != nil {
+			if err := isValidFile(filePath, validManifestFiles); err != nil {
 				return fmt.Errorf("invalid values file: %w", err)
 			}
 		}
@@ -93,12 +91,12 @@ func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *
 	if r.SecretsFile != "" && len(r.SecretsFiles) > 0 {
 		return errors.New("secretsFile and secretsFiles should not be used together")
 	} else if r.SecretsFile != "" {
-		if err := isValidFile(r.SecretsFile, validFiles); err != nil {
+		if err := isValidFile(r.SecretsFile, validManifestFiles); err != nil {
 			return fmt.Errorf("invalid secrets file: %w", err)
 		}
 	} else if len(r.SecretsFiles) > 0 {
 		for _, filePath := range r.SecretsFiles {
-			if err := isValidFile(filePath, validFiles); err != nil {
+			if err := isValidFile(filePath, validManifestFiles); err != nil {
 				return fmt.Errorf("invalid secrets file: %w", err)
 			}
 		}
@@ -488,7 +486,7 @@ func (r *release) getHookCommands(hookType, ns string) []hookCmd {
 	var cmds []hookCmd
 	if _, ok := r.Hooks[hookType]; ok {
 		hook := r.Hooks[hookType].(string)
-		if err := isValidFile(hook, []string{".yaml", ".yml", ".json"}); err == nil {
+		if err := isValidFile(hook, validManifestFiles); err == nil {
 			cmd := kubectl([]string{"apply", "-n", ns, "-f", hook, flags.getKubeDryRunFlag("apply")}, "Apply "+hook+" manifest "+hookType)
 			cmds = append(cmds, hookCmd{Command: cmd, Type: hookType})
 			if wait, waitCmds := r.shouldWaitForHook(hook, hookType, ns); wait {
