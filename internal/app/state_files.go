@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"gopkg.in/yaml.v2"
@@ -168,8 +169,11 @@ func (s *state) expand(relativeToFile string) {
 	for key, val := range s.Settings.GlobalHooks {
 		if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
 			file := val.(string)
-			if isOfType(file, []string{".yaml", ".yml", ".json", ".sh", ".py", ".rb"}) {
-				s.Settings.GlobalHooks[key], _ = resolveOnePath(file, dir, downloadDest)
+			hook := strings.Fields(file)
+			if isOfType(hook[0], validHookFiles) && !ToolExists(hook[0]) {
+				hook[0], _ = resolveOnePath(hook[0], dir, downloadDest)
+				file = strings.Join(hook, " ")
+				s.Settings.GlobalHooks[key] = file
 			}
 			if isOfType(file, []string{".yaml", ".yml"}) {
 				s.Settings.GlobalHooks[key] = substituteVarsInYaml(file)

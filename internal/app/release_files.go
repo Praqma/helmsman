@@ -1,5 +1,9 @@
 package app
 
+import (
+	"strings"
+)
+
 // substituteVarsInStaticFiles loops through the values/secrets files and substitutes variables into them.
 func (r *release) substituteVarsInStaticFiles() {
 	if r.ValuesFile != "" {
@@ -44,9 +48,10 @@ func (r *release) resolvePaths(dir, downloadDest string) {
 
 	for key, val := range r.Hooks {
 		if key != "deleteOnSuccess" && key != "successTimeout" && key != "successCondition" {
-			file := val.(string)
-			if isOfType(file, []string{".yaml", ".yml", ".json", ".sh", ".py", ".rb"}) {
-				r.Hooks[key], _ = resolveOnePath(file, dir, downloadDest)
+			hook := strings.Fields(val.(string))
+			if isOfType(hook[0], validHookFiles) && !ToolExists(hook[0]) {
+				hook[0], _ = resolveOnePath(hook[0], dir, downloadDest)
+				r.Hooks[key] = strings.Join(hook, " ")
 			}
 		}
 	}
