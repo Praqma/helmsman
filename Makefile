@@ -95,5 +95,5 @@ helmPlugins: ## Install helm plugins used by Helmsman
 	@helm plugin install https://github.com/hypnoglow/helm-s3.git
 	@helm plugin install https://github.com/nouney/helm-gcs
 	@helm plugin install https://github.com/databus23/helm-diff
-	@helm plugin install https://github.com/futuresimple/helm-secrets
+	@helm plugin install https://github.com/jkroepke/helm-secrets
 .PHONY: helmPlugins

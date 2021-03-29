@@ -73,7 +73,7 @@ BAR: baz
 
 ## Passing secrets using helm secrets plugin
 
-You can also use the [helm secrets plugin](https://github.com/futuresimple/helm-secrets) to pass your secrets.
+You can also use the [helm secrets plugin](https://github.com/jkroepke/helm-secrets) to pass your secrets.
 
 ## Passing secrets using hiera eyaml
 

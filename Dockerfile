@@ -25,7 +25,7 @@ RUN chmod +x /usr/local/bin/helm
 RUN helm plugin install https://github.com/hypnoglow/helm-s3.git
 RUN helm plugin install https://github.com/nouney/helm-gcs
 RUN helm plugin install https://github.com/databus23/helm-diff --version ${HELM_DIFF_VERSION}
-RUN helm plugin install https://github.com/futuresimple/helm-secrets
+RUN helm plugin install https://github.com/jkroepke/helm-secrets
 RUN rm -r /tmp/helm-diff /tmp/helm-diff.tgz
 
 ### Go Builder & Tester ###
