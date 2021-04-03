@@ -3,17 +3,23 @@ ARG ALPINE_VERSION="3.12"
 ARG GLOBAL_KUBE_VERSION="v1.19.0"
 ARG GLOBAL_HELM_VERSION="v3.3.4"
 ARG GLOBAL_HELM_DIFF_VERSION="v3.1.3"
+ARG GLOBAL_SOPS_VERSION="v3.7.0"
 
 ### Helm Installer ###
 FROM alpine:${ALPINE_VERSION} as helm-installer
 ARG GLOBAL_KUBE_VERSION
 ARG GLOBAL_HELM_VERSION
 ARG GLOBAL_HELM_DIFF_VERSION
+ARG GLOBAL_SOPS_VERSION
 ENV KUBE_VERSION=$GLOBAL_KUBE_VERSION
 ENV HELM_VERSION=$GLOBAL_HELM_VERSION
 ENV HELM_DIFF_VERSION=$GLOBAL_HELM_DIFF_VERSION
+ENV SOPS_VERSION=$GLOBAL_SOPS_VERSION
 
 RUN apk add --update --no-cache ca-certificates git openssh ruby curl tar gzip make bash
+
+ADD https://github.com/mozilla/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux /usr/local/bin/sops
+RUN chmod +x /usr/local/bin/sops
 
 RUN curl --retry 5 -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl
 RUN chmod +x /usr/local/bin/kubectl
@@ -25,7 +31,7 @@ RUN chmod +x /usr/local/bin/helm
 RUN helm plugin install https://github.com/hypnoglow/helm-s3.git
 RUN helm plugin install https://github.com/nouney/helm-gcs
 RUN helm plugin install https://github.com/databus23/helm-diff --version ${HELM_DIFF_VERSION}
-RUN helm plugin install https://github.com/futuresimple/helm-secrets
+RUN helm plugin install https://github.com/jkroepke/helm-secrets
 RUN rm -r /tmp/helm-diff /tmp/helm-diff.tgz
 
 ### Go Builder & Tester ###
