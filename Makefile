@@ -73,7 +73,7 @@ repo:
 .PHONY: repo
 
 test: deps vet repo ## Run unit tests
-	@go test -v -cover -p=1 ./... -args -f ../../examples/example.toml
+	@go test -v -cover -p=1 ./...
 .PHONY: test
 
 cross: deps ## Create binaries for all OSs
