@@ -60,7 +60,7 @@ update-deps: ## Update depdendencies. Runs `go get -u` internally.
 	@GOFLAGS="" go mod tidy
 	@GOFLAGS="" go mod vendor
 
-build: deps vet ## Build the package
+build: deps vet test ## Build the package
 	@go build -o helmsman -ldflags '-X main.version="${TAG}-${DATE}" -extldflags "-static"' cmd/helmsman/main.go
 
 generate:
