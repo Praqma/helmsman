@@ -17,7 +17,7 @@ endif
 
 ifneq ($(OS),Windows_NT)
   # Before we start test that we have the mandatory executables available
-  EXECUTABLES = go
+  EXECUTABLES = go helm grep
   OK := $(foreach exec,$(EXECUTABLES),\
     $(if $(shell which $(exec)),some string,$(error "No $(exec) in PATH, please install $(exec)")))
 endif
