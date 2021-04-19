@@ -177,9 +177,9 @@ func (r *release) diff() (string, error) {
 
 	cmd := helmCmd(concat([]string{"diff", colorFlag, suppressDiffSecretsFlag}, diffContextFlag, r.getHelmArgsFor("diff")), "Diffing release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
-	result := cmd.RetryExec(3)
-	if result.code != 0 {
-		return "", fmt.Errorf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors)
+	result, err := cmd.RetryExec(3)
+	if err != nil {
+		return "", fmt.Errorf("command failed: %w", err)
 	}
 
 	return result.output, nil
@@ -253,9 +253,8 @@ func (r *release) label(storageBackend string, labels ...string) {
 		args = append(args, labels...)
 		cmd := kubectl(args, "Applying Helmsman labels to [ "+r.Name+" ] release")
 
-		result := cmd.Exec()
-		if result.code != 0 {
-			log.Fatal(result.errors)
+		if _, err := cmd.Exec(); err != nil {
+			log.Fatalf("%v", err)
 		}
 	}
 }
@@ -271,9 +270,8 @@ func (r *release) annotate(storageBackend string, annotations ...string) {
 		args = append(args, annotations...)
 		cmd := kubectl(args, "Applying Helmsman annotations to [ "+r.Name+" ] release")
 
-		result := cmd.Exec()
-		if result.code != 0 {
-			log.Fatal(result.errors)
+		if _, err := cmd.Exec(); err != nil {
+			log.Fatalf("%v", err)
 		}
 	}
 }
