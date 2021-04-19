@@ -21,13 +21,11 @@ var (
 	log        = &Logger{}
 )
 
-func init() {
-	// Parse cli flags and read config files
-	flags.parse()
-}
-
 // Main is the app main function
 func Main() {
+	// Parse cli flags and read config files
+	flags.parse()
+
 	var s state
 
 	// delete temp files with substituted env vars when the program terminates

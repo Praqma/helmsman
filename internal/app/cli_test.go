@@ -1,6 +1,9 @@
 package app
 
-import "testing"
+import (
+	"github.com/apsdehal/go-logger"
+	"testing"
+)
 
 var _ = func() bool {
 	testing.Init()
@@ -8,6 +11,8 @@ var _ = func() bool {
 }()
 
 func Test_readState(t *testing.T) {
+	l, _ := logger.New()
+	log = &Logger{Logger: l}
 	type result struct {
 		numApps        int
 		numNSs         int
