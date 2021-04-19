@@ -424,18 +424,15 @@ func decryptSecret(name string) error {
 		Description: "Decrypting " + name,
 	}
 
-	result := command.Exec()
+	result, err := command.Exec()
+	if err != nil {
+		return err
+	}
 	if !settings.EyamlEnabled {
 		_, fileNotFound := os.Stat(name + ".dec")
 		if fileNotFound != nil && !isOfType(name, []string{".dec"}) {
-			return errors.New(result.errors)
+			return errors.New(result.String())
 		}
-	}
-
-	if result.code != 0 {
-		return errors.New(result.errors)
-	} else if result.errors != "" {
-		return errors.New(result.errors)
 	}
 
 	if settings.EyamlEnabled {
