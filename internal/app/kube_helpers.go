@@ -47,7 +47,7 @@ func kubectl(args []string, desc string) Command {
 // createNamespace creates a namespace in the k8s cluster
 func createNamespace(ns string) {
 	checkCmd := kubectl([]string{"get", "namespace", ns}, "Looking for namespace [ "+ns+" ]")
-	if _, err := checkCmd.RetryExec(3); err != nil {
+	if _, err := checkCmd.RetryExec(3); err == nil {
 		log.Verbose("Namespace [ " + ns + " ] exists")
 		return
 	}
@@ -113,7 +113,7 @@ spec:
 		log.Fatal(err.Error())
 	}
 
-	definition = definition + Indent(string(d), strings.Repeat(" ", 4))
+	definition += Indent(string(d), strings.Repeat(" ", 4))
 
 	if err := apply(definition, ns, "LimitRange"); err != nil {
 		log.Fatal(err.Error())
@@ -136,7 +136,7 @@ spec:
 `
 
 	for _, customQuota := range quotas.CustomQuotas {
-		definition = definition + Indent(customQuota.Name+": '"+customQuota.Value+"'\n", strings.Repeat(" ", 4))
+		definition += Indent(customQuota.Name+": '"+customQuota.Value+"'\n", strings.Repeat(" ", 4))
 	}
 
 	// Special formatting for custom quotas so manually write these and then set to nil for marshalling
@@ -147,7 +147,7 @@ spec:
 		log.Fatal(err.Error())
 	}
 
-	definition = definition + Indent(string(d), strings.Repeat(" ", 4))
+	definition += Indent(string(d), strings.Repeat(" ", 4))
 
 	if err := apply(definition, ns, "ResourceQuota"); err != nil {
 		log.Fatal(err.Error())
@@ -303,7 +303,7 @@ func getReleaseContext(releaseName, namespace, storageBackend string) string {
 
 	res, err := cmd.Exec()
 	if err != nil {
-		log.Fatalf("%v", err)
+		log.Fatal(err.Error())
 	}
 	rctx := strings.Trim(res.output, `"' `)
 	if rctx == "" {

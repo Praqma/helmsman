@@ -3,7 +3,6 @@ package app
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -127,7 +126,7 @@ func substituteEnv(name string) string {
 	if strings.Contains(name, "$") {
 		// add $$ escaping for $ strings
 		os.Setenv("HELMSMAN_DOLLAR", "$")
-		return os.ExpandEnv(strings.Replace(name, "$$", "${HELMSMAN_DOLLAR}", -1))
+		return os.ExpandEnv(strings.ReplaceAll(name, "$$", "${HELMSMAN_DOLLAR}"))
 	}
 	return name
 }
@@ -138,8 +137,8 @@ func validateEnvVars(s string, filename string) error {
 	if !flags.skipValidation && strings.Contains(s, "$") {
 		log.Info("validating environment variables in " + filename)
 		var key string
-		comment, _ := regexp.Compile("#(.*)$")
-		envVar, _ := regexp.Compile(`\${([a-zA-Z_][a-zA-Z0-9_-]*)}|\$([a-zA-Z_][a-zA-Z0-9_-]*)`)
+		comment := regexp.MustCompile("#(.*)$")
+		envVar := regexp.MustCompile(`\${([a-zA-Z_][a-zA-Z0-9_-]*)}|\$([a-zA-Z_][a-zA-Z0-9_-]*)`)
 		scanner := bufio.NewScanner(strings.NewReader(s))
 		for scanner.Scan() {
 			// remove spaces from the single line, then replace $$ with !? to prevent it from matching the regex,
@@ -297,7 +296,7 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 		pretext = "*No actions to perform!*"
 	} else if failure {
 		pretext = "*Failed to generate/execute a plan: *"
-		content = strings.Replace(content, "\"", "\\\"", -1)
+		content = strings.ReplaceAll(content, "\"", "\\\"")
 		contentSplit := strings.Split(content, "\n")
 		for i := range contentSplit {
 			if strings.TrimSpace(contentSplit[i]) != "" {
@@ -359,7 +358,7 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 func replaceStringInFile(input []byte, outfile string, replacements map[string]string) {
 	output := input
 	for k, v := range replacements {
-		output = bytes.Replace(output, []byte(k), []byte(v), -1)
+		output = bytes.ReplaceAll(output, []byte(k), []byte(v))
 	}
 
 	if err := ioutil.WriteFile(outfile, output, 0o666); err != nil {
@@ -424,14 +423,14 @@ func decryptSecret(name string) error {
 		Description: "Decrypting " + name,
 	}
 
-	result, err := command.Exec()
+	res, err := command.Exec()
 	if err != nil {
 		return err
 	}
 	if !settings.EyamlEnabled {
 		_, fileNotFound := os.Stat(name + ".dec")
 		if fileNotFound != nil && !isOfType(name, []string{".dec"}) {
-			return errors.New(result.String())
+			return fmt.Errorf(res.String())
 		}
 	}
 
@@ -442,7 +441,7 @@ func decryptSecret(name string) error {
 		} else {
 			outfile = name + ".dec"
 		}
-		err := writeStringToFile(outfile, result.output)
+		err := writeStringToFile(outfile, res.output)
 		if err != nil {
 			log.Fatal("Can't write [ " + outfile + " ] file")
 		}
@@ -501,7 +500,7 @@ func notifyMSTeams(content string, url string, failure bool, executing bool) boo
 		pretext = "No actions to perform!"
 	} else if failure {
 		pretext = "Failed to generate/execute a plan:"
-		content = strings.Replace(content, "\"", "\\\"", -1)
+		content = strings.ReplaceAll(content, "\"", "\\\"")
 		contentSplit := strings.Split(content, "\n")
 		for i := range contentSplit {
 			if strings.TrimSpace(contentSplit[i]) != "" {
