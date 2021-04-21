@@ -170,10 +170,8 @@ func releaseWithHooks(cmd orderedCommand, storageBackend string, wg *sync.WaitGr
 					annotations = append(annotations, key+"=failed")
 				}
 				log.Verbose(err.Error())
-			} else {
-				if key, err := c.getAnnotationKey(); err == nil {
-					annotations = append(annotations, key+"=ok")
-				}
+			} else if key, err := c.getAnnotationKey(); err == nil {
+				annotations = append(annotations, key+"=ok")
 			}
 		}
 	}

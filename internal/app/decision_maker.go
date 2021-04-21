@@ -209,13 +209,13 @@ func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool
 			}()
 
 			cmd := kubectl([]string{"get", storageBackend, "-n", ns, "-l", "MANAGED-BY=HELMSMAN", "-o", outputFmt, "--no-headers"}, "Getting Helmsman-managed releases from namespace [ "+ns+" ]")
-			result, err := cmd.RetryExec(3)
+			res, err := cmd.RetryExec(3)
 			if err != nil {
-				log.Fatalf("%v", err)
+				log.Fatal(err.Error())
 			}
 
-			if !strings.EqualFold("No resources found.", strings.TrimSpace(result.output)) {
-				lines = strings.Split(result.output, "\n")
+			if !strings.EqualFold("No resources found.", strings.TrimSpace(res.output)) {
+				lines = strings.Split(res.output, "\n")
 			}
 
 			for _, line := range lines {
