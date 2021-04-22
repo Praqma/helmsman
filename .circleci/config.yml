@@ -32,19 +32,10 @@ jobs:
     machine: true
     steps:
       - checkout
-      # - run:
-      #     name: release helmsman
-      #     command: |
-      #       echo "releasing ..."
-      #       mkdir /home/circleci/.go_workspace/bin
-      #       curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-      #       make build
-      #       curl -sL https://git.io/goreleaser | bash -s -- --release-notes release-notes.md --rm-dist
-
       - run:
           name: build docker images and push them to dockerhub
           command: |
-            helm_versions=( "v3.3.4" "v3.4.2" "v3.5.3" )
+            helm_versions=( "v3.3.4" "v3.4.2" "v3.5.4" )
 
             TAG=$(git describe --abbrev=0 --tags)
             docker login -u $DOCKER_USER -p $DOCKER_PASS
