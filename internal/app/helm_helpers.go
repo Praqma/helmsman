@@ -40,14 +40,14 @@ func getChartInfo(chartName, chartVersion string) (*chartInfo, error) {
 
 	cmd := helmCmd([]string{"show", "chart", chartName, "--version", chartVersion}, "Getting latest non-local chart's version "+chartName+"-"+chartVersion+"")
 
-	result, err := cmd.Exec()
+	res, err := cmd.Exec()
 	if err != nil {
 		maybeRepo := filepath.Base(filepath.Dir(chartName))
 		return nil, fmt.Errorf("chart [ %s ] version [ %s ] can't be found. If this is not a local chart, add the repo [ %s ] in your helmRepos stanza. Error output: %w", chartName, chartVersion, maybeRepo, err)
 	}
 
 	c := &chartInfo{}
-	if err := yaml.Unmarshal([]byte(result.output), &c); err != nil {
+	if err := yaml.Unmarshal([]byte(res.output), &c); err != nil {
 		log.Fatal(fmt.Sprint(err))
 	}
 
@@ -71,12 +71,12 @@ func getChartInfo(chartName, chartVersion string) (*chartInfo, error) {
 func getHelmVersion() string {
 	cmd := helmCmd([]string{"version", "--short", "-c"}, "Checking Helm version")
 
-	result, err := cmd.Exec()
+	res, err := cmd.Exec()
 	if err != nil {
-		log.Fatalf("Error checking helm version: %v", err)
+		log.Fatalf("While checking helm version: %v", err)
 	}
 
-	return result.output
+	return res.output
 }
 
 func checkHelmVersion(constraint string) bool {
@@ -102,12 +102,12 @@ func checkHelmVersion(constraint string) bool {
 func helmPluginExists(plugin string) bool {
 	cmd := helmCmd([]string{"plugin", "list"}, "Validating that [ "+plugin+" ] is installed")
 
-	result, err := cmd.Exec()
+	res, err := cmd.Exec()
 	if err != nil {
 		return false
 	}
 
-	return strings.Contains(result.output, plugin)
+	return strings.Contains(res.output, plugin)
 }
 
 // updateChartDep updates dependencies for a local chart
@@ -128,18 +128,16 @@ func addHelmRepos(repos map[string]string) error {
 
 	// get existing helm repositories
 	cmdList := helmCmd(concat([]string{"repo", "list", "--output", "json"}), "Listing helm repositories")
-	res, err := cmdList.Exec()
-	if err != nil {
-		if err := json.Unmarshal([]byte(res.output), &helmRepos); err != nil {
+	if reposResult, err := cmdList.Exec(); err == nil {
+		if err := json.Unmarshal([]byte(reposResult.output), &helmRepos); err != nil {
 			log.Fatal(fmt.Sprintf("failed to unmarshal Helm CLI output: %s", err))
 		}
 		// create map of existing repositories
 		for _, repo := range helmRepos {
 			existingRepos[repo.Name] = repo.URL
 		}
-	}
-	if !strings.Contains(res.output, "no repositories to show") {
-		return fmt.Errorf("error listing helm repositories: %w", err)
+	} else if !strings.Contains(reposResult.errors, "no repositories to show") {
+		return fmt.Errorf("while listing helm repositories: %w", err)
 	}
 
 	repoAddFlags := ""
@@ -183,7 +181,7 @@ func addHelmRepos(repos map[string]string) error {
 		}
 		cmd := helmCmd(concat([]string{"repo", "add", repoAddFlags, repoName, repoURL}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
 		if _, err := cmd.Exec(); err != nil {
-			return fmt.Errorf("error adding helm repository ["+repoName+"]: %w", err)
+			return fmt.Errorf("While adding helm repository [%s]]: %w", repoName, err)
 		}
 	}
 

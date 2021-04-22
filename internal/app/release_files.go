@@ -83,7 +83,7 @@ func (r *release) getValuesFiles() []string {
 			if err := decryptSecret(r.SecretsFile); err != nil {
 				log.Fatal(err.Error())
 			}
-			r.SecretsFile = r.SecretsFile + ".dec"
+			r.SecretsFile += ".dec"
 		}
 		fileList = append(fileList, r.SecretsFile)
 	} else if len(r.SecretsFiles) > 0 {
@@ -98,7 +98,7 @@ func (r *release) getValuesFiles() []string {
 			if err := decryptSecret(r.SecretsFiles[i]); err != nil {
 				log.Fatal(err.Error())
 			}
-			r.SecretsFiles[i] = r.SecretsFiles[i] + ".dec"
+			r.SecretsFiles[i] += ".dec"
 		}
 		fileList = append(fileList, r.SecretsFiles...)
 	}
