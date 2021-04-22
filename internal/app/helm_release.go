@@ -48,11 +48,11 @@ func getHelmReleases(s *state) []helmRelease {
 			var targetReleases []helmRelease
 			defer wg.Done()
 			cmd := helmCmd([]string{"list", "--all", "--max", "0", "--output", "json", "-n", ns}, "Listing all existing releases in [ "+ns+" ] namespace")
-			result := cmd.RetryExec(3)
-			if result.code != 0 {
-				log.Fatal(result.errors)
+			res, err := cmd.RetryExec(3)
+			if err != nil {
+				log.Fatal(err.Error())
 			}
-			if err := json.Unmarshal([]byte(result.output), &releases); err != nil {
+			if err := json.Unmarshal([]byte(res.output), &releases); err != nil {
 				log.Fatal(fmt.Sprintf("failed to unmarshal Helm CLI output: %s", err))
 			}
 			if len(s.TargetMap) > 0 {

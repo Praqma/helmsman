@@ -1,11 +1,10 @@
 package app
 
 import (
-	"strings"
 	"testing"
 )
 
-func Test_toolExists(t *testing.T) {
+func TestToolExists(t *testing.T) {
 	type args struct {
 		tool string
 	}
@@ -43,51 +42,64 @@ func Test_toolExists(t *testing.T) {
 	}
 }
 
-func Test_command_exec(t *testing.T) {
-	type fields struct {
-		Cmd         string
-		Args        []string
-		Description string
+func TestCommandExec(t *testing.T) {
+	type input struct {
+		cmd  string
+		args []string
+		desc string
+	}
+	type expected struct {
+		code   int
+		err    error
+		output string
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		want   int
-		want1  string
+		name  string
+		input input
+		want  expected
 	}{
 		{
 			name: "echo",
-			fields: fields{
-				Cmd:         "bash",
-				Args:        []string{"-c", "echo this is fun"},
-				Description: "A bash command execution test with echo.",
+			input: input{
+				cmd:  "bash",
+				args: []string{"-c", "echo this is fun"},
+				desc: "A bash command execution test with echo.",
 			},
-			want:  0,
-			want1: "this is fun",
+			want: expected{
+				code:   0,
+				output: "this is fun",
+				err:    nil,
+			},
 		}, {
 			name: "exitCode",
-			fields: fields{
-				Cmd:         "bash",
-				Args:        []string{"-c", "echo $?"},
-				Description: "A bash command execution test with exitCode.",
+			input: input{
+				cmd:  "bash",
+				args: []string{"-c", "echo $?"},
+				desc: "A bash command execution test with exitCode.",
 			},
-			want:  0,
-			want1: "0",
+			want: expected{
+				code:   0,
+				output: "0",
+				err:    nil,
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := Command{
-				Cmd:         tt.fields.Cmd,
-				Args:        tt.fields.Args,
-				Description: tt.fields.Description,
+				Cmd:         tt.input.cmd,
+				Args:        tt.input.args,
+				Description: tt.input.desc,
 			}
-			got := c.Exec()
-			if got.code != tt.want {
-				t.Errorf("command.exec() got = %v, want %v", got.code, tt.want)
+			got, err := c.Exec()
+			if err != tt.want.err {
+				t.Errorf("command.exec() unexpected error got = %v, want %v", err, tt.want.err)
 			}
-			if strings.TrimSpace(got.output) != tt.want1 {
-				t.Errorf("command.exec() got1 = %v, want %v", got.output, tt.want1)
+			if got.code != tt.want.code {
+				t.Errorf("command.exec() unexpected code got = %v, want %v", got.code, tt.want.code)
+			}
+			if got.output != tt.want.output {
+				t.Errorf("command.exec() unexpected output got = %v, want %v", got.output, tt.want.output)
 			}
 		})
 	}

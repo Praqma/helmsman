@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"os"
 	"testing"
 )
@@ -12,8 +11,8 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 	os.MkdirAll(os.TempDir()+"/helmsman-tests/myapp", os.ModePerm)
 	os.MkdirAll(os.TempDir()+"/helmsman-tests/dir-with space/myapp", os.ModePerm)
 	cmd := helmCmd([]string{"create", os.TempDir() + "/helmsman-tests/dir-with space/myapp"}, "creating an empty local chart directory")
-	if result := cmd.Exec(); result.code != 0 {
-		log.Fatal(fmt.Sprintf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors))
+	if _, err := cmd.Exec(); err != nil {
+		log.Fatalf("Command failed: %v", err)
 	}
 
 	return func(t *testing.T) {

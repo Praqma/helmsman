@@ -169,10 +169,8 @@ func (s *state) validate() error {
 			}
 		}
 
-	} else {
-		if s.Settings.ClusterURI != "" {
-			return errors.New("certificates validation failed -- kube context setup is required but no certificates stanza provided")
-		}
+	} else if s.Settings.ClusterURI != "" {
+		return errors.New("certificates validation failed -- kube context setup is required but no certificates stanza provided")
 	}
 
 	if (s.Settings.EyamlPrivateKeyPath != "" && s.Settings.EyamlPublicKeyPath == "") || (s.Settings.EyamlPrivateKeyPath == "" && s.Settings.EyamlPublicKeyPath != "") {
