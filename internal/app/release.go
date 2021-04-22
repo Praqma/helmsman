@@ -154,7 +154,7 @@ func (r *release) uninstall(p *plan, optionalNamespace ...string) {
 	}
 	priority := r.Priority
 	if p.ReverseDelete {
-		priority = priority * -1
+		priority *= -1
 	}
 
 	before, after := r.checkHooks("delete", ns)
@@ -177,12 +177,12 @@ func (r *release) diff() (string, error) {
 
 	cmd := helmCmd(concat([]string{"diff", colorFlag, suppressDiffSecretsFlag}, diffContextFlag, r.getHelmArgsFor("diff")), "Diffing release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
 
-	result := cmd.RetryExec(3)
-	if result.code != 0 {
-		return "", fmt.Errorf("Command returned with exit code: %d. And error message: %s ", result.code, result.errors)
+	res, err := cmd.RetryExec(3)
+	if err != nil {
+		return "", fmt.Errorf("command failed: %w", err)
 	}
 
-	return result.output, nil
+	return res.output, nil
 }
 
 // upgradeRelease upgrades an existing release with the specified values.yaml
@@ -253,9 +253,8 @@ func (r *release) label(storageBackend string, labels ...string) {
 		args = append(args, labels...)
 		cmd := kubectl(args, "Applying Helmsman labels to [ "+r.Name+" ] release")
 
-		result := cmd.Exec()
-		if result.code != 0 {
-			log.Fatal(result.errors)
+		if _, err := cmd.Exec(); err != nil {
+			log.Fatal(err.Error())
 		}
 	}
 }
@@ -271,9 +270,8 @@ func (r *release) annotate(storageBackend string, annotations ...string) {
 		args = append(args, annotations...)
 		cmd := kubectl(args, "Applying Helmsman annotations to [ "+r.Name+" ] release")
 
-		result := cmd.Exec()
-		if result.code != 0 {
-			log.Fatal(result.errors)
+		if _, err := cmd.Exec(); err != nil {
+			log.Fatal(err.Error())
 		}
 	}
 }
@@ -311,39 +309,39 @@ func (r *release) getTimeout() []string {
 
 // getSetValues returns --set params to be used with helm install/upgrade commands
 func (r *release) getSetValues() []string {
-	result := []string{}
+	res := []string{}
 	for k, v := range r.Set {
-		result = append(result, "--set", k+"="+strings.Replace(v, ",", "\\,", -1)+"")
+		res = append(res, "--set", k+"="+strings.ReplaceAll(v, ",", "\\,")+"")
 	}
-	return result
+	return res
 }
 
 // getSetStringValues returns --set-string params to be used with helm install/upgrade commands
 func (r *release) getSetStringValues() []string {
-	result := []string{}
+	res := []string{}
 	for k, v := range r.SetString {
-		result = append(result, "--set-string", k+"="+strings.Replace(v, ",", "\\,", -1)+"")
+		res = append(res, "--set-string", k+"="+strings.ReplaceAll(v, ",", "\\,")+"")
 	}
-	return result
+	return res
 }
 
 // getSetFileValues returns --set-file params to be used with helm install/upgrade commands
 func (r *release) getSetFileValues() []string {
-	result := []string{}
+	res := []string{}
 	for k, v := range r.SetFile {
-		result = append(result, "--set-file", k+"="+strings.Replace(v, ",", "\\,", -1)+"")
+		res = append(res, "--set-file", k+"="+strings.ReplaceAll(v, ",", "\\,")+"")
 	}
-	return result
+	return res
 }
 
 // getWait returns a partial helm command containing the helm wait flag (--wait) if the wait flag for the release was set to true
 // Otherwise, retruns an empty string
 func (r *release) getWait() []string {
-	result := []string{}
+	res := []string{}
 	if r.Wait {
-		result = append(result, "--wait")
+		res = append(res, "--wait")
 	}
-	return result
+	return res
 }
 
 // getDesiredNamespace returns the namespace of a release
@@ -373,11 +371,11 @@ func (r *release) getHelmFlags() []string {
 
 // getPostRenderer returns the post-renderer Helm flag
 func (r *release) getPostRenderer() []string {
-	result := []string{}
+	args := []string{}
 	if r.PostRenderer != "" {
-		result = append(result, "--post-renderer", r.PostRenderer)
+		args = append(args, "--post-renderer", r.PostRenderer)
 	}
-	return result
+	return args
 }
 
 // getHelmArgsFor returns helm arguments for a specific helm operation

@@ -170,10 +170,8 @@ func releaseWithHooks(cmd orderedCommand, storageBackend string, wg *sync.WaitGr
 					annotations = append(annotations, key+"=failed")
 				}
 				log.Verbose(err.Error())
-			} else {
-				if key, err := c.getAnnotationKey(); err == nil {
-					annotations = append(annotations, key+"=ok")
-				}
+			} else if key, err := c.getAnnotationKey(); err == nil {
+				annotations = append(annotations, key+"=ok")
 			}
 		}
 	}
@@ -182,33 +180,23 @@ func releaseWithHooks(cmd orderedCommand, storageBackend string, wg *sync.WaitGr
 // execOne executes a single ordered command
 func execOne(cmd Command, targetRelease *release) error {
 	log.Notice(cmd.Description)
-	result := cmd.Exec()
-	if result.code != 0 {
-		log.Verbose(result.output)
-		errorMsg := result.errors
-		if !flags.verbose {
-			errorMsg = strings.Split(result.errors, "---")[0]
-		}
+	res, err := cmd.Exec()
+	if err != nil {
 		if targetRelease != nil {
-			return fmt.Errorf("command for release [%s] returned [ %d ] exit code and error message [ %s ]",
-				targetRelease.Name, result.code, strings.TrimSpace(errorMsg))
-		} else {
-			return fmt.Errorf("%s returned [ %d ] exit code and error message [ %s ]",
-				cmd.Description, result.code, strings.TrimSpace(errorMsg))
+			return fmt.Errorf("command for release [%s] failed: %w", targetRelease.Name, err)
 		}
-
-	} else {
-		log.Notice(result.output)
-		successMsg := "Finished: " + cmd.Description
-		log.Notice(successMsg)
-		if _, err := url.ParseRequestURI(log.SlackWebhook); err == nil {
-			notifySlack(cmd.Description+" ... SUCCESS!", log.SlackWebhook, false, true)
-		}
-		if _, err := url.ParseRequestURI(log.MSTeamsWebhook); err == nil {
-			notifyMSTeams(cmd.Description+" ... SUCCESS!", log.MSTeamsWebhook, false, true)
-		}
-		return nil
+		return fmt.Errorf("%s failed: %w", cmd.Description, err)
 	}
+	log.Notice(res.output)
+	successMsg := "Finished: " + cmd.Description
+	log.Notice(successMsg)
+	if _, err := url.ParseRequestURI(log.SlackWebhook); err == nil {
+		notifySlack(cmd.Description+" ... SUCCESS!", log.SlackWebhook, false, true)
+	}
+	if _, err := url.ParseRequestURI(log.MSTeamsWebhook); err == nil {
+		notifyMSTeams(cmd.Description+" ... SUCCESS!", log.MSTeamsWebhook, false, true)
+	}
+	return nil
 }
 
 // printPlanCmds prints the actual commands that will be executed as part of a plan.

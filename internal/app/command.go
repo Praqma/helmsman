@@ -6,7 +6,6 @@ import (
 	"math"
 	"os/exec"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -24,36 +23,56 @@ type ExitStatus struct {
 	output string
 }
 
+func (e ExitStatus) String() string {
+	str := strings.TrimSpace(e.output)
+	if errs := strings.TrimSpace(e.errors); errs != "" {
+		str = fmt.Sprintf("%s\n--- stderr ---\n%s", str, errs)
+	}
+	return str
+}
+
 func (c *Command) String() string {
 	return c.Cmd + " " + strings.Join(c.Args, " ")
 }
 
 // RetryExec runs exec command with retry
-func (c *Command) RetryExec(attempts int) ExitStatus {
-	var result ExitStatus
+func (c *Command) RetryExec(attempts int) (ExitStatus, error) {
+	var (
+		result ExitStatus
+		err    error
+	)
 
 	for i := 0; i < attempts; i++ {
-		result = c.Exec()
-		if result.code == 0 {
-			return result
+		result, err = c.Exec()
+		if err == nil {
+			return result, nil
 		}
 		if i < (attempts - 1) {
 			time.Sleep(time.Duration(math.Pow(2, float64(2+i))) * time.Second)
-			log.Info(fmt.Sprintf("Retrying %s due to error: %s", c.Description, result.errors))
+			log.Infof("Retrying %s due to error: %v", c.Description, err)
 		}
 	}
 
-	return ExitStatus{
-		code:   result.code,
-		output: result.output,
-		errors: fmt.Sprintf("After %d attempts of %s, it failed with: %s", attempts, c.Description, result.errors),
-	}
+	return result, fmt.Errorf("%s, failed after %d attempts with: %w", c.Description, attempts, err)
+}
+
+func (c *Command) newExitError(code int, stdout, stderr bytes.Buffer, cause error) error {
+	return fmt.Errorf(
+		"%s failed with non-zero exit code %d: %w\noutput: %s",
+		c.Description, code, cause,
+		fmt.Sprintf(
+			"\n--- stdout ---\n%s\n--- stderr ---\n%s",
+			strings.TrimSpace(stdout.String()),
+			strings.TrimSpace(stderr.String()),
+		),
+	)
 }
 
 // Exec executes the executable command and returns the exit code and execution result
-func (c *Command) Exec() ExitStatus {
+func (c *Command) Exec() (ExitStatus, error) {
 	// Only use non-empty string args
-	args := []string{}
+	var args []string
+
 	for _, str := range c.Args {
 		if str != "" {
 			args = append(args, str)
@@ -73,27 +92,23 @@ func (c *Command) Exec() ExitStatus {
 		return ExitStatus{
 			code:   1,
 			errors: err.Error(),
-		}
+		}, err
 	}
 
-	if err := cmd.Wait(); err != nil {
+	err := cmd.Wait()
+	res := ExitStatus{
+		output: strings.TrimSpace(stdout.String()),
+		errors: strings.TrimSpace(stderr.String()),
+	}
+	if err != nil {
+		res.code = 1
+		err = fmt.Errorf("failed to run %s: %w", c.Description, err)
 		if exiterr, ok := err.(*exec.ExitError); ok {
-			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				return ExitStatus{
-					code:   status.ExitStatus(),
-					output: stdout.String(),
-					errors: stderr.String(),
-				}
-			}
-		} else {
-			log.Fatal("cmd.Wait: " + err.Error())
+			res.code = exiterr.ExitCode()
+			err = c.newExitError(exiterr.ExitCode(), stdout, stderr, err)
 		}
 	}
-	return ExitStatus{
-		code:   0,
-		output: stdout.String(),
-		errors: stderr.String(),
-	}
+	return res, err
 }
 
 // ToolExists returns true if the tool is present in the environment and false otherwise.
