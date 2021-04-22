@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func Test_toolExists(t *testing.T) {
+func TestToolExists(t *testing.T) {
 	type args struct {
 		tool string
 	}
@@ -49,13 +49,14 @@ func TestCommandExec(t *testing.T) {
 		desc string
 	}
 	type expected struct {
+		code   int
 		err    error
 		output string
 	}
 	tests := []struct {
-		name     string
-		input    input
-		expected expected
+		name  string
+		input input
+		want  expected
 	}{
 		{
 			name: "echo",
@@ -64,8 +65,10 @@ func TestCommandExec(t *testing.T) {
 				args: []string{"-c", "echo this is fun"},
 				desc: "A bash command execution test with echo.",
 			},
-			expected: expected{
+			want: expected{
+				code:   0,
 				output: "this is fun",
+				err:    nil,
 			},
 		}, {
 			name: "exitCode",
@@ -74,8 +77,10 @@ func TestCommandExec(t *testing.T) {
 				args: []string{"-c", "echo $?"},
 				desc: "A bash command execution test with exitCode.",
 			},
-			expected: expected{
+			want: expected{
+				code:   0,
 				output: "0",
+				err:    nil,
 			},
 		},
 	}
@@ -86,13 +91,15 @@ func TestCommandExec(t *testing.T) {
 				Args:        tt.input.args,
 				Description: tt.input.desc,
 			}
-			res, err := c.Exec()
-			if err != nil && tt.expected.err.Error() != err.Error() {
-				t.Errorf("unexpected error running command.exec(): %v", err)
+			got, err := c.Exec()
+			if err != tt.want.err {
+				t.Errorf("command.exec() unexpected error got = %v, want %v", err, tt.want.err)
 			}
-
-			if res.output != tt.expected.output {
-				t.Errorf("command.exec() expected: %v, got %v", tt.expected.output, res.output)
+			if got.code != tt.want.code {
+				t.Errorf("command.exec() unexpected code got = %v, want %v", got.code, tt.want.code)
+			}
+			if got.output != tt.want.output {
+				t.Errorf("command.exec() unexpected output got = %v, want %v", got.output, tt.want.output)
 			}
 		})
 	}
