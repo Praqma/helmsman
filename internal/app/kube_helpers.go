@@ -221,7 +221,7 @@ func createContext(s *state) error {
 	// bearer token
 	tokenPath := "bearer.token"
 	if s.Settings.BearerToken && s.Settings.BearerTokenPath != "" {
-		downloadFile(s.Settings.BearerTokenPath, "", tokenPath)
+		tokenPath = downloadFile(s.Settings.BearerTokenPath, "", tokenPath)
 	}
 
 	// connecting to the cluster

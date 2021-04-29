@@ -197,9 +197,9 @@ func sliceContains(slice []string, s string) bool {
 	return false
 }
 
-// downloadFile downloads a file from a URL, GCS, Azure or AWS buckets or local file system
-// and saves it with a given outfile name and in a given dir
-// if downloaded, returns the outfile name. If the file path is local file system path, it is copied to current directory.
+// downloadFile downloads a file from a URL, GCS, Azure or AWS buckets and saves it with a
+// given outfile name and in a given dir
+// If the file path is local file system path, it returns the absolute path to the file
 func downloadFile(file string, dir string, outfile string) string {
 	u, err := url.Parse(file)
 	if err != nil {
@@ -220,12 +220,17 @@ func downloadFile(file string, dir string, outfile string) string {
 	case "az":
 		azure.ReadFile(u.Host, u.Path, outfile, flags.noColors)
 	default:
-		log.Verbose(file + " will be used from local file system.")
-		toCopy := file
 		if !filepath.IsAbs(file) {
-			toCopy, _ = filepath.Abs(filepath.Join(dir, file))
+			file, err = filepath.Abs(filepath.Join(dir, file))
+			if err != nil {
+				log.Fatal("could not get absolute path to " + file + " : " + err.Error())
+			}
 		}
-		copyFile(toCopy, outfile)
+		log.Verbose(file + " will be used from local file system.")
+		if _, err = os.Stat(file); err != nil {
+			log.Fatal("could not stat " + file + " : " + err.Error())
+		}
+		return file
 	}
 
 	return outfile
@@ -250,26 +255,6 @@ func downloadFileFromURL(url string, filepath string) error {
 	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
 	return err
-}
-
-// copyFile copies a file from source to destination
-func copyFile(source string, destination string) {
-	from, err := os.Open(source)
-	if err != nil {
-		log.Fatal("while copying " + source + " to " + destination + " : " + err.Error())
-	}
-	defer from.Close()
-
-	to, err := os.OpenFile(destination, os.O_RDWR|os.O_CREATE, 0o666)
-	if err != nil {
-		log.Fatal("while copying " + source + " to " + destination + " : " + err.Error())
-	}
-	defer to.Close()
-
-	_, err = io.Copy(to, from)
-	if err != nil {
-		log.Fatal("while copying " + source + " to " + destination + " : " + err.Error())
-	}
 }
 
 // deleteFile deletes a file
