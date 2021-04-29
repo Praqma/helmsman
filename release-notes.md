@@ -1,6 +1,5 @@
-# v3.6.8
+# v3.6.9
 
 ## Fixes and improvements
 
-- Updated helm to the latest version, we now have Docker images for the last patch version of the latest 3 minor helm versions.
-- Improved error handling for shell out commands. (#601)
+- Fixed and issue that in some cases would lead local files to be truncated. (#606)
