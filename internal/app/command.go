@@ -102,11 +102,10 @@ func (c *Command) Exec() (ExitStatus, error) {
 	}
 	if err != nil {
 		res.code = 1
-		err = fmt.Errorf("failed to run %s: %w", c.Description, err)
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			res.code = exiterr.ExitCode()
-			err = c.newExitError(exiterr.ExitCode(), stdout, stderr, err)
 		}
+		err = c.newExitError(res.code, stdout, stderr, err)
 	}
 	return res, err
 }
