@@ -67,6 +67,7 @@ type cli struct {
 	parallel              int
 	alwaysUpgrade         bool
 	noUpdate              bool
+	kubectlDiff           bool
 }
 
 func printUsage() {
@@ -107,13 +108,14 @@ func (c *cli) parse() {
 	flag.BoolVar(&c.substEnvValues, "subst-env-values", false, "turn on environment substitution in values files.")
 	flag.BoolVar(&c.noSSMSubst, "no-ssm-subst", false, "turn off SSM parameter substitution globally")
 	flag.BoolVar(&c.substSSMValues, "subst-ssm-values", false, "turn on SSM parameter substitution in values files.")
-	flag.BoolVar(&c.updateDeps, "update-deps", false, "run 'helm dep up' for local chart")
+	flag.BoolVar(&c.updateDeps, "update-deps", false, "run 'helm dep up' for local charts")
 	flag.BoolVar(&c.forceUpgrades, "force-upgrades", false, "use --force when upgrading helm releases. May cause resources to be recreated.")
 	flag.BoolVar(&c.renameReplace, "replace-on-rename", false, "Uninstall the existing release when a chart with a different name is used.")
 	flag.BoolVar(&c.noCleanup, "no-cleanup", false, "keeps any credentials files that has been downloaded on the host where helmsman runs.")
 	flag.BoolVar(&c.migrateContext, "migrate-context", false, "updates the context name for all apps defined in the DSF and applies Helmsman labels. Using this flag is required if you want to change context name after it has been set.")
 	flag.BoolVar(&c.alwaysUpgrade, "always-upgrade", false, "upgrade release even if no changes are found")
 	flag.BoolVar(&c.noUpdate, "no-update", false, "skip updating helm repos")
+	flag.BoolVar(&c.kubectlDiff, "kubectl-diff", false, "use kubectl diff instead of helm diff. Defalts to false if the helm diff plugin is installed.")
 	flag.Usage = printUsage
 	flag.Parse()
 
@@ -174,8 +176,9 @@ func (c *cli) parse() {
 		log.Fatal("" + helmBin + " is not installed/configured correctly. Aborting!")
 	}
 
-	if !helmPluginExists("diff") {
-		log.Fatal("helm diff plugin is not installed/configured correctly. Aborting!")
+	if !c.kubectlDiff && !helmPluginExists("diff") {
+		c.kubectlDiff = true
+		log.Warning("helm diff not found, using kubectl diff")
 	}
 
 	if !c.noEnvSubst {
