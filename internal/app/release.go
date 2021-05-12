@@ -184,7 +184,7 @@ func (r *release) diff() (string, error) {
 	cmd := CmdPipe{helmCmd(args, desc)}
 
 	if flags.kubectlDiff {
-		cmd = append(cmd, kubectl([]string{"diff", "-f", "-"}, desc))
+		cmd = append(cmd, kubectl([]string{"diff", "--namespace", r.Namespace, "-f", "-"}, desc))
 	}
 
 	res, err := cmd.RetryExec(3)
@@ -403,7 +403,7 @@ func (r *release) getHelmArgsFor(action string, optionalNamespaceOverride ...str
 	}
 	switch action {
 	case "template":
-		return concat([]string{"template", r.Name, r.Chart, "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getPostRenderer())
+		return concat([]string{"template", r.Name, r.Chart, "--version", r.Version, "--namespace", r.Namespace, "--skip-tests", "--no-hooks"}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getPostRenderer())
 	case "install", "upgrade":
 		return concat([]string{"upgrade", r.Name, r.Chart, "--install", "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getHelmFlags(), r.getPostRenderer())
 	case "diff":
