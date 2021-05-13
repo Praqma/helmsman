@@ -140,9 +140,9 @@ func addHelmRepos(repos map[string]string) error {
 		return fmt.Errorf("while listing helm repositories: %w", err)
 	}
 
-	repoAddFlags := ""
-	if checkHelmVersion(">=3.3.2") {
-		repoAddFlags += "--force-update"
+	forceUpdateFlag := ""
+	if checkHelmVersion(">=3.3.2") && !flags.noUpdate {
+		forceUpdateFlag += "--force-update"
 	}
 
 	for repoName, repoURL := range repos {
@@ -179,9 +179,9 @@ func addHelmRepos(repos map[string]string) error {
 				continue
 			}
 		}
-		cmd := helmCmd(concat([]string{"repo", "add", repoAddFlags, repoName, repoURL}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
+		cmd := helmCmd(concat([]string{"repo", "add", forceUpdateFlag, repoName, repoURL}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
 		if _, err := cmd.Exec(); err != nil {
-			return fmt.Errorf("While adding helm repository [%s]]: %w", repoName, err)
+			return fmt.Errorf("while adding helm repository [%s]]: %w", repoName, err)
 		}
 	}
 
