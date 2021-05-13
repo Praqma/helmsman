@@ -222,7 +222,7 @@ func (c *cli) readState(s *state) error {
 		if err := fileState.fromFile(f); err != nil {
 			return err
 		}
-		log.Infof("Parsed [[ %s ]] successfully and found [ %d ] apps", f, len(s.Apps))
+		log.Infof("Parsed [[ %s ]] successfully and found [ %d ] apps", f, len(fileState.Apps))
 		// Merge Apps that already existed in the state
 		for appName, app := range fileState.Apps {
 			if _, ok := s.Apps[appName]; ok {
