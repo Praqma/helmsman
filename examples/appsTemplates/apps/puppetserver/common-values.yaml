@@ -1,2 +1,2 @@
 puppetserver:
-  puppeturl: 'https://github.com/puppetlabs/control-repo.git'
+  puppeturl: "https://github.com/puppetlabs/control-repo.git"
