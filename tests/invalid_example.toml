@@ -14,6 +14,6 @@ production = "default"
 
 [helmRepos]
 jenkins = "https://charts.jenkins.io"
-center = "https://repo.chartcenter.io"
+jfrog = "https://charts.jfrog.io"
 
 [apps]

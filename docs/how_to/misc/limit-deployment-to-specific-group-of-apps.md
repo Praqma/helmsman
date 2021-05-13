@@ -28,7 +28,7 @@ apps:
       namespace: "production" # maps to the namespace as defined in namespaces above
       group: "sidecar" # group name
       enabled: true # change to false if you want to delete this app release empty: false:
-      chart: "center/jfrog/artifactory" # changing the chart name means delete and recreate this chart
+      chart: "jfrog/artifactory" # changing the chart name means delete and recreate this chart
       version: "11.4.2" # chart version
 # ...
 ```

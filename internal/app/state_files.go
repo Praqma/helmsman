@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -14,13 +13,13 @@ import (
 )
 
 // invokes either yaml or toml parser considering file extension
-func (s *state) fromFile(file string) (bool, string) {
+func (s *state) fromFile(file string) error {
 	if isOfType(file, []string{".toml"}) {
 		return s.fromTOML(file)
 	} else if isOfType(file, []string{".yaml", ".yml"}) {
 		return s.fromYAML(file)
 	} else {
-		return false, "State file does not have toml/yaml extension."
+		return fmt.Errorf("state file does not have a valid extension")
 	}
 }
 
@@ -36,16 +35,16 @@ func (s *state) toFile(file string) {
 
 // fromTOML reads a toml file and decodes it to a state type.
 // It uses the BurntSuchi TOML parser which throws an error if the TOML file is not valid.
-func (s *state) fromTOML(file string) (bool, string) {
+func (s *state) fromTOML(file string) error {
 	rawTomlFile, err := ioutil.ReadFile(file)
 	if err != nil {
-		return false, err.Error()
+		return err
 	}
 
 	tomlFile := string(rawTomlFile)
 	if !flags.noEnvSubst {
 		if err := validateEnvVars(tomlFile, file); err != nil {
-			return false, err.Error()
+			return err
 		}
 		tomlFile = substituteEnv(tomlFile)
 	}
@@ -53,11 +52,11 @@ func (s *state) fromTOML(file string) (bool, string) {
 		tomlFile = substituteSSM(tomlFile)
 	}
 	if _, err := toml.Decode(tomlFile, s); err != nil {
-		return false, err.Error()
+		return err
 	}
 	s.expand(file)
 
-	return true, "Parsed TOML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps"
+	return nil
 }
 
 // toTOML encodes a state type into a TOML file.
@@ -88,16 +87,16 @@ func (s *state) toTOML(file string) {
 
 // fromYAML reads a yaml file and decodes it to a state type.
 // parser which throws an error if the YAML file is not valid.
-func (s *state) fromYAML(file string) (bool, string) {
+func (s *state) fromYAML(file string) error {
 	rawYamlFile, err := ioutil.ReadFile(file)
 	if err != nil {
-		return false, err.Error()
+		return err
 	}
 
 	yamlFile := string(rawYamlFile)
 	if !flags.noEnvSubst {
 		if err := validateEnvVars(yamlFile, file); err != nil {
-			return false, err.Error()
+			return err
 		}
 		yamlFile = substituteEnv(yamlFile)
 	}
@@ -106,11 +105,11 @@ func (s *state) fromYAML(file string) (bool, string) {
 	}
 
 	if err = yaml.UnmarshalStrict([]byte(yamlFile), s); err != nil {
-		return false, err.Error()
+		return err
 	}
 	s.expand(file)
 
-	return true, "Parsed YAML [[ " + file + " ]] successfully and found [ " + strconv.Itoa(len(s.Apps)) + " ] apps"
+	return nil
 }
 
 // toYaml encodes a state type into a YAML file
@@ -149,17 +148,14 @@ func (s *state) expand(relativeToFile string) {
 
 		// resolve paths for local charts
 		if r.Chart != "" {
-			repoOrDir := filepath.Dir(r.Chart)
-			_, isRepo := s.HelmRepos[repoOrDir]
-			isRepo = isRepo || stringInSlice(repoOrDir, s.PreconfiguredHelmRepos)
+			// support env vars in path
+			r.Chart = os.ExpandEnv(r.Chart)
+			repoName := strings.Split(r.Chart, "/")[0]
+			_, isRepo := s.HelmRepos[repoName]
+			isRepo = isRepo || stringInSlice(repoName, s.PreconfiguredHelmRepos)
 			// if there is no repo for the chart, we assume it's intended to be a local path
 			if !isRepo {
-				// support env vars in path
-				r.Chart = os.ExpandEnv(r.Chart)
-				// respect absolute paths to charts but resolve relative paths
-				if !filepath.IsAbs(r.Chart) {
-					r.Chart, _ = filepath.Abs(filepath.Join(dir, r.Chart))
-				}
+				r.Chart, _ = resolveOnePath(r.Chart, dir, downloadDest)
 			}
 		}
 		// expand env variables for all release files
