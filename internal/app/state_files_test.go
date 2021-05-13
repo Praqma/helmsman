@@ -49,7 +49,9 @@ func Test_fromTOML(t *testing.T) {
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got, _ := tt.args.s.fromTOML(tt.args.file); got != tt.want {
+			err := tt.args.s.fromTOML(tt.args.file)
+			got := err == nil
+			if got != tt.want {
 				t.Errorf("fromToml() = %v, want %v", got, tt.want)
 			}
 		})
@@ -99,9 +101,9 @@ func Test_fromTOML_Expand(t *testing.T) {
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err, msg := tt.args.s.fromTOML(tt.args.file)
-			if !err {
-				t.Errorf("fromToml(), got: %v", msg)
+			err := tt.args.s.fromTOML(tt.args.file)
+			if err != nil {
+				t.Errorf("fromToml(), got: %v", err)
 			}
 
 			tomlVal := reflect.ValueOf(tt.args.s).Elem()
@@ -181,7 +183,9 @@ func Test_fromYAML(t *testing.T) {
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got, _ := tt.args.s.fromYAML(tt.args.file); got != tt.want {
+			err := tt.args.s.fromYAML(tt.args.file)
+			got := err == nil
+			if got != tt.want {
 				t.Errorf("fromYaml() = %v, want %v", got, tt.want)
 			}
 		})
@@ -230,7 +234,9 @@ func Test_fromYAML_UnsetVars(t *testing.T) {
 			} else if tt.targetVar == "VALUE" {
 				os.Setenv("ORG_PATH", "sample")
 			}
-			if got, _ := tt.args.s.fromYAML(tt.args.file); got != tt.want {
+			err := tt.args.s.fromYAML(tt.args.file)
+			got := err == nil
+			if got != tt.want {
 				t.Errorf("fromYaml() = %v, want %v", got, tt.want)
 			}
 		})
@@ -280,9 +286,9 @@ func Test_fromYAML_Expand(t *testing.T) {
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err, msg := tt.args.s.fromYAML(tt.args.file)
-			if !err {
-				t.Errorf("fromYaml(), got: %v", msg)
+			err := tt.args.s.fromYAML(tt.args.file)
+			if err != nil {
+				t.Errorf("fromYaml(), got: %v", err)
 			}
 
 			yamlVal := reflect.ValueOf(tt.args.s).Elem()
