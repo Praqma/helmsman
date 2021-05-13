@@ -60,7 +60,7 @@ context= "test-infra"   # defaults to "default" if not provided
     [[namespaces.production.limits]]
       type = "Pod"
       [namespaces.production.limits.max]
-        memory = "300Mi"      
+        memory = "300Mi"
   [namespaces.staging]
     protected = false
     [namespaces.staging.labels]
@@ -135,6 +135,6 @@ context= "test-infra"   # defaults to "default" if not provided
     # additional helm flags for this release
     helmFlags= [
       "--devel",
-    ] 
+    ]
 
 # See https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md#apps for more apps options

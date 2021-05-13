@@ -3,7 +3,7 @@ metadata:
   maintainer: "devops"
 
 settings:
-  kubeContext: "kind-kind-1"   # the name of the context to be created
+  kubeContext: "kind-kind-1" # the name of the context to be created
   slackWebhook: "$MY_SLACK_WEBHOOK"
 
 namespaces:
@@ -48,61 +48,49 @@ appsTemplates:
 
   testing: &testing
     namespace: "testing"
-    protected: false   # defining all "testing" releases to be protected.
+    protected: false # defining all "testing" releases to be protected.
     wait: true
 
   development: &development
     namespace: "development"
-    protected: true   # defining all "development" releases to be protected.
+    protected: true # defining all "development" releases to be protected.
     wait: false
 
   puppetserver: &puppetserver
     enabled: true
     priority: -1
     chart: "puppet/puppetserver-helm-chart"
-    version: "3.0.2"   # chart version
-    valuesFiles: [
-        "../apps/puppetserver/common-values.yaml",
-    ]
+    version: "3.0.2" # chart version
+    valuesFiles: ["../apps/puppetserver/common-values.yaml"]
 
   tomcat: &tomcat
     enabled: true
     priority: -2
     chart: "bitnami/tomcat"
-    version: "6.5.3"   # chart version
-    valuesFiles: [
-        "../apps/tomcat/common-values.yaml",
-    ]
+    version: "6.5.3" # chart version
+    valuesFiles: ["../apps/tomcat/common-values.yaml"]
 
 apps:
   testing-puppetserver:
     <<: *common
     <<: *testing
     <<: *puppetserver
-    valuesFiles: [
-        "../apps/puppetserver/testing-values.yaml",
-    ]
+    valuesFiles: ["../apps/puppetserver/testing-values.yaml"]
 
   testing-tomcat:
     <<: *common
     <<: *testing
     <<: *tomcat
-    valuesFiles: [
-        "../apps/tomcat/testing-values.yaml",
-    ]
+    valuesFiles: ["../apps/tomcat/testing-values.yaml"]
 
   development-puppetserver:
     <<: *common
     <<: *development
     <<: *puppetserver
-    valuesFiles: [
-        "../apps/puppetserver/development-values.yaml",
-    ]
+    valuesFiles: ["../apps/puppetserver/development-values.yaml"]
 
   development-tomcat:
     <<: *common
     <<: *development
     <<: *tomcat
-    valuesFiles: [
-        "../apps/tomcat/development-values.yaml",
-    ]
+    valuesFiles: ["../apps/tomcat/development-values.yaml"]
