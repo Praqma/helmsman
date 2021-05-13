@@ -47,7 +47,7 @@ You can test 3rd party charts in designated namespaces (e.g, staging) within the
     description = "production artifactory"
     namespace = "production"
     enabled = true
-    chart = "center/jfrog/artifactory"
+    chart = "jfrog/artifactory"
     version = "11.4.2" # chart version
     valuesFile = "../my-artificatory-production-values.yaml"
 
@@ -79,7 +79,7 @@ namespaces:
 
 helmRepos:
   jenkins: https://charts.jenkins.io
-  center: https://repo.chartcenter.io
+  jfrog: https://charts.jfrog.io
 
 apps:
   jenkins:
@@ -96,7 +96,7 @@ apps:
     description: "production artifactory"
     namespace: "production"
     enabled: true
-    chart: "center/jfrog/artifactory"
+    chart: "jfrog/artifactory"
     version: "11.4.2" # chart version
     valuesFile: "../my-artifactory-production-values.yaml"
 
