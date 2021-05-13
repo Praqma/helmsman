@@ -38,7 +38,7 @@ namespaces:
 
 helmRepos:
   jenkins: "https://charts.jenkins.io"
-  center: "https://repo.chartcenter.io"
+  jfrog: "https://charts.jfrog.io"
   bitnami: "https://charts.bitnami.com/bitnami"
   puppet: "https://puppetlabs.github.io/puppetserver-helm-chart"
 

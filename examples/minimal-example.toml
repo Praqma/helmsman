@@ -4,7 +4,7 @@
 
 [helmRepos]
   jenkins = "https://charts.jenkins.io"
-  center = "https://repo.chartcenter.io"
+  jfrog = "https://charts.jfrog.io"
 
 [namespaces]
   [namespaces.staging]
@@ -19,5 +19,5 @@
   [apps.artifactory]
     namespace = "staging"
     enabled = true
-    chart = "center/jfrog/artifactory"
+    chart = "jfrog/artifactory"
     version = "11.4.2"
