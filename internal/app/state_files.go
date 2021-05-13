@@ -148,17 +148,14 @@ func (s *state) expand(relativeToFile string) {
 
 		// resolve paths for local charts
 		if r.Chart != "" {
-			repoOrDir := filepath.Dir(r.Chart)
-			_, isRepo := s.HelmRepos[repoOrDir]
-			isRepo = isRepo || stringInSlice(repoOrDir, s.PreconfiguredHelmRepos)
+			// support env vars in path
+			r.Chart = os.ExpandEnv(r.Chart)
+			repoName := strings.Split(r.Chart, "/")[0]
+			_, isRepo := s.HelmRepos[repoName]
+			isRepo = isRepo || stringInSlice(repoName, s.PreconfiguredHelmRepos)
 			// if there is no repo for the chart, we assume it's intended to be a local path
 			if !isRepo {
-				// support env vars in path
-				r.Chart = os.ExpandEnv(r.Chart)
-				// respect absolute paths to charts but resolve relative paths
-				if !filepath.IsAbs(r.Chart) {
-					r.Chart, _ = filepath.Abs(filepath.Join(dir, r.Chart))
-				}
+				r.Chart, _ = resolveOnePath(r.Chart, dir, downloadDest)
 			}
 		}
 		// expand env variables for all release files
