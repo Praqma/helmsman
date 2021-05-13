@@ -3,7 +3,7 @@
 ## For the full config spec and options, check https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md
 helmRepos:
   jenkins: https://charts.jenkins.io
-  center: https://repo.chartcenter.io
+  jfrog: https://charts.jfrog.io
 
 namespaces:
   staging:
@@ -18,5 +18,5 @@ apps:
   artifactory:
     namespace: staging
     enabled: true
-    chart: center/jfrog/artifactory
+    chart: jfrog/artifactory
     version: 11.4.2
