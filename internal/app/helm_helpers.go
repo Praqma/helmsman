@@ -69,32 +69,22 @@ func getChartInfo(chartName, chartVersion string) (*chartInfo, error) {
 
 // getHelmClientVersion returns Helm client Version
 func getHelmVersion() string {
-	cmd := helmCmd([]string{"version", "--short", "-c"}, "Checking Helm version")
+	cmd := helmCmd([]string{"version", "--short", "--client"}, "Checking Helm version")
 
 	res, err := cmd.Exec()
 	if err != nil {
 		log.Fatalf("While checking helm version: %v", err)
 	}
 
-	return res.output
+	version := strings.TrimSpace(res.output)
+	if !strings.HasPrefix(version, "v") {
+		version = strings.SplitN(version, ":", 2)[1]
+	}
+	return version
 }
 
 func checkHelmVersion(constraint string) bool {
-	helmVersion := strings.TrimSpace(getHelmVersion())
-	extractedHelmVersion := helmVersion
-	if !strings.HasPrefix(helmVersion, "v") {
-		extractedHelmVersion = strings.TrimSpace(strings.Split(helmVersion, ":")[1])
-	}
-	v, err := semver.NewVersion(extractedHelmVersion)
-	if err != nil {
-		return false
-	}
-
-	jsonConstraint, err := semver.NewConstraint(constraint)
-	if err != nil {
-		return false
-	}
-	return jsonConstraint.Check(v)
+	return checkVersion(getHelmVersion(), constraint)
 }
 
 // helmPluginExists returns true if the plugin is present in the environment and false otherwise.
