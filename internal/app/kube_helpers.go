@@ -312,26 +312,44 @@ func getReleaseContext(releaseName, namespace, storageBackend string) string {
 	return rctx
 }
 
-// getKubectlClientVersion returns kubectl client version
-func getKubectlClientVersion() string {
-	cmd := kubectl([]string{"version", "--client", "--short"}, "Checking kubectl version")
+// getKubectlVersion returns kubectl client version
+func getKubectlVersion() string {
+	cmd := kubectl([]string{"version", "--short", "--client"}, "Checking kubectl version")
 
 	res, err := cmd.Exec()
 	if err != nil {
 		log.Fatalf("While checking kubectl version: %v", err)
 	}
-	return res.output
+	version := strings.TrimSpace(res.output)
+	if !strings.HasPrefix(version, "v") {
+		version = strings.SplitN(version, ":", 2)[1]
+	}
+	return version
+}
+
+func checkKubectlVersion(constraint string) bool {
+	return checkVersion(getKubectlVersion(), constraint)
 }
 
 // getKubeDryRunFlag returns kubectl dry-run flag if helmsman --dry-run flag is enabled
+// TODO: this should be cleanup once 1.18 is old enough
 func (c *cli) getKubeDryRunFlag(action string) string {
+	var flag string
 	if c.dryRun {
+		flag = "--dry-run"
+		recent := checkKubectlVersion(">=v1.18.0")
 		switch action {
 		case "apply":
-			return "--server-dry-run"
+			if recent {
+				flag += "=server"
+			} else {
+				flag = "--server-dry-run"
+			}
 		default:
-			return "--dry-run"
+			if recent {
+				flag += "=client"
+			}
 		}
 	}
-	return ""
+	return flag
 }

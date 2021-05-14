@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/Praqma/helmsman/internal/aws"
 	"github.com/Praqma/helmsman/internal/azure"
 	"github.com/Praqma/helmsman/internal/gcs"
@@ -466,6 +467,19 @@ func isValidFile(filePath string, allowedFileTypes []string) error {
 		return fmt.Errorf("%s must be of one the following file formats: %s", filePath, strings.Join(allowedFileTypes, ", "))
 	}
 	return nil
+}
+
+func checkVersion(version, constraint string) bool {
+	v, err := semver.NewVersion(version)
+	if err != nil {
+		return false
+	}
+
+	jsonConstraint, err := semver.NewConstraint(constraint)
+	if err != nil {
+		return false
+	}
+	return jsonConstraint.Check(v)
 }
 
 // notify MSTeams sends a JSON formatted message to MSTeams channel over a webhook url
