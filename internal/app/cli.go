@@ -154,7 +154,7 @@ func (c *cli) parse() {
 		log.Fatal("this version of Helmsman does not work with helm releases older than 3.0.0")
 	}
 
-	kubectlVersion := strings.TrimSpace(strings.SplitN(getKubectlClientVersion(), ": ", 2)[1])
+	kubectlVersion := getKubectlVersion()
 	log.Verbose("kubectl client version: " + kubectlVersion)
 
 	if len(c.files) == 0 {
