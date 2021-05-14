@@ -1,5 +1,10 @@
-# v3.6.10
+# v3.6.11
 
 ## Fixes and improvements
 
-- Added stdout and stderr to all errors returned from cmd.Exec() to avoid dropping relevant information.
+- fix: dont force updates on repo add if the no-update flag is passed
+- refactor: cleanup config files
+- refactor: use errors instead of bool + string
+- fix: the repo name is the fisrt element only
+- chore: remove references to deprecated helm repos
+- fix: --server-dry-run was deprecated in kubectl 1.18
