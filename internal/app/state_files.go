@@ -153,8 +153,11 @@ func (s *state) expand(relativeToFile string) {
 			repoName := strings.Split(r.Chart, "/")[0]
 			_, isRepo := s.HelmRepos[repoName]
 			isRepo = isRepo || stringInSlice(repoName, s.PreconfiguredHelmRepos)
-			// if there is no repo for the chart, we assume it's intended to be a local path
+			// if there is no repo for the chart, we assume it's intended to be a local path or url
 			if !isRepo {
+				if strings.HasPrefix(r.Chart, "oci://") && !strings.HasSuffix(r.Chart, r.Version) {
+					r.Chart = fmt.Sprintf("%s:%s", r.Chart, r.Version)
+				}
 				r.Chart, _ = resolveOnePath(r.Chart, dir, downloadDest)
 			}
 		}

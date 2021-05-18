@@ -110,6 +110,19 @@ func updateChartDep(chartPath string) error {
 	return nil
 }
 
+// helmExportChart pulls chart and exports it to the specified destination
+func helmExportChart(chart, dest string) error {
+	cmd := helmCmd([]string{"chart", "pull", chart}, "Pulling chart [ "+chart+" ] to local registry cache")
+	if _, err := cmd.Exec(); err != nil {
+		return err
+	}
+	cmd = helmCmd([]string{"chart", "export", chart, "-d", dest}, "Exporting chart [ "+chart+" ] to "+dest)
+	if _, err := cmd.Exec(); err != nil {
+		return err
+	}
+	return nil
+}
+
 // addHelmRepos adds repositories to Helm if they don't exist already.
 // Helm does not mind if a repo with the same name exists. It treats it as an update.
 func addHelmRepos(repos map[string]string) error {

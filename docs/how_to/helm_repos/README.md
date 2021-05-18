@@ -9,3 +9,4 @@ Following list contains guides on how to define helm repositories
 - [Using private repos with basic auth](basic_auth.md)
 - [Using pre-configured repos](pre_configured.md)
 - [Using local charts](local.md)
+- [Using OCI registries](oci.md)
