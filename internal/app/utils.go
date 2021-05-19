@@ -88,12 +88,12 @@ func stringInSlice(a string, list []string) bool {
 // and downloads/fetches the file locally into helmsman temp directory and returns
 // its absolute path
 func resolveOnePath(file string, dir string, downloadDest string) (string, error) {
-	if destFile, err := ioutil.TempFile(downloadDest, fmt.Sprintf("*%s", path.Base(file))); err != nil {
+	destFile, err := ioutil.TempFile(downloadDest, fmt.Sprintf("*%s", path.Base(file)))
+	if err != nil {
 		return "", err
-	} else {
-		_ = destFile.Close()
-		return filepath.Abs(downloadFile(file, dir, destFile.Name()))
 	}
+	destFile.Close()
+	return filepath.Abs(downloadFile(file, dir, destFile.Name()))
 }
 
 // createTempDir creates a temp directory in a specific location with a pattern
@@ -208,6 +208,11 @@ func downloadFile(file string, dir string, outfile string) string {
 	}
 
 	switch u.Scheme {
+	case "oci":
+		dest := filepath.Dir(outfile)
+		fileName := strings.Split(filepath.Base(file), ":")[0]
+		helmExportChart(strings.ReplaceAll(file, "oci://", ""), dest)
+		return filepath.Join(dest, fileName)
 	case "https", "http":
 		if err := downloadFileFromURL(file, outfile); err != nil {
 			log.Fatal(err.Error())
@@ -446,18 +451,27 @@ func isLocalChart(chart string) bool {
 
 // isValidCert checks if a certificate/key path/URI is valid
 func isValidCert(value string) bool {
-	if _, err := os.Stat(value); err != nil {
-		_, err1 := url.ParseRequestURI(value)
-		if err1 != nil || (!strings.HasPrefix(value, "s3://") && !strings.HasPrefix(value, "gs://") && !strings.HasPrefix(value, "az://")) {
+	if _, err := os.Stat(value); err == nil {
+		return true
+	}
+	u, err := url.ParseRequestURI(value)
+	if err != nil {
+		return false
+	}
+	switch u.Scheme {
+	case "http", "https", "s3", "gs", "az":
+		if !isOfType(u.Path, []string{".cert", ".key", ".pem", ".crt"}) {
 			return false
 		}
+		return true
+	default:
+		return false
 	}
-	return true
 }
 
 // isValidFile checks if the file exists in the given path or accessible via http and is of allowed file extension (e.g. yaml, json ...)
 func isValidFile(filePath string, allowedFileTypes []string) error {
-	if strings.HasPrefix(filePath, "http") {
+	if strings.HasPrefix(filePath, "http") || strings.HasPrefix(filePath, "s3://") || strings.HasPrefix(filePath, "gs://") || strings.HasPrefix(filePath, "az://") {
 		if _, err := url.ParseRequestURI(filePath); err != nil {
 			return fmt.Errorf("%s must be valid URL path to a raw file", filePath)
 		}
@@ -475,11 +489,11 @@ func checkVersion(version, constraint string) bool {
 		return false
 	}
 
-	jsonConstraint, err := semver.NewConstraint(constraint)
+	c, err := semver.NewConstraint(constraint)
 	if err != nil {
 		return false
 	}
-	return jsonConstraint.Check(v)
+	return c.Check(v)
 }
 
 // notify MSTeams sends a JSON formatted message to MSTeams channel over a webhook url
