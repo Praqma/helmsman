@@ -1,10 +1,7 @@
-# v3.6.11
+# v3.7.0
 
-## Fixes and improvements
+## New features
 
-- fix: dont force updates on repo add if the no-update flag is passed
-- refactor: cleanup config files
-- refactor: use errors instead of bool + string
-- fix: the repo name is the fisrt element only
-- chore: remove references to deprecated helm repos
-- fix: --server-dry-run was deprecated in kubectl 1.18
+- Added support for OCI registries (#612)
+  - more details in [docs/how_to/helm_repos/oci.md](https://github.com/Praqma/helmsman/blob/master/docs/how_to/helm_repos/oci.md)
+- Added support for using `kubectl diff` instead of `helm diff` (#609) - Experimental
