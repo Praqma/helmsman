@@ -10,12 +10,15 @@ import (
 )
 
 // Command type representing all executable commands Helmsman needs
-// to execute in order to inspect the environment/ releases/ charts etc.
+// to execute in order to inspect the environment|releases|charts etc.
 type Command struct {
 	Cmd         string
 	Args        []string
 	Description string
 }
+
+// CmdPipe is a os/exec.Commnad wrapper for UNIX pipe
+type CmdPipe []Command
 
 type ExitStatus struct {
 	code   int
@@ -56,20 +59,7 @@ func (c *Command) RetryExec(attempts int) (ExitStatus, error) {
 	return result, fmt.Errorf("%s, failed after %d attempts with: %w", c.Description, attempts, err)
 }
 
-func (c *Command) newExitError(code int, stdout, stderr bytes.Buffer, cause error) error {
-	return fmt.Errorf(
-		"%s failed with non-zero exit code %d: %w\noutput: %s",
-		c.Description, code, cause,
-		fmt.Sprintf(
-			"\n--- stdout ---\n%s\n--- stderr ---\n%s",
-			strings.TrimSpace(stdout.String()),
-			strings.TrimSpace(stderr.String()),
-		),
-	)
-}
-
-// Exec executes the executable command and returns the exit code and execution result
-func (c *Command) Exec() (ExitStatus, error) {
+func (c *Command) command() *exec.Cmd {
 	// Only use non-empty string args
 	var args []string
 
@@ -82,8 +72,13 @@ func (c *Command) Exec() (ExitStatus, error) {
 	log.Verbose(c.Description)
 	log.Debug(c.String())
 
-	cmd := exec.Command(c.Cmd, args...)
+	return exec.Command(c.Cmd, args...)
+}
+
+// Exec executes the executable command and returns the exit code and execution result
+func (c *Command) Exec() (ExitStatus, error) {
 	var stdout, stderr bytes.Buffer
+	cmd := c.command()
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
@@ -105,9 +100,105 @@ func (c *Command) Exec() (ExitStatus, error) {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			res.code = exiterr.ExitCode()
 		}
-		err = c.newExitError(res.code, stdout, stderr, err)
+		err = newExitError(c.Description, res.code, res.output, res.errors, err)
 	}
 	return res, err
+}
+
+// Exec pipes the executable commands and returns the exit code and execution result
+func (p CmdPipe) Exec() (ExitStatus, error) {
+	var (
+		stdout, stderr bytes.Buffer
+		stack          []*exec.Cmd
+	)
+
+	l := len(p) - 1
+	if l < 0 {
+		// nonthing to do here
+		return ExitStatus{}, nil
+	}
+	if l == 0 {
+		// it's just one command we can just run it
+		return p[0].Exec()
+	}
+
+	for i, c := range p {
+		stack = append(stack, c.command())
+		stack[i].Stderr = &stderr
+		if i > 0 {
+			stack[i].Stdin, _ = stack[i-1].StdoutPipe()
+		}
+	}
+	stack[l].Stdout = &stdout
+
+	err := call(stack)
+	res := ExitStatus{
+		output: strings.TrimSpace(stdout.String()),
+		errors: strings.TrimSpace(stderr.String()),
+	}
+	if err != nil {
+		res.code = 1
+		if exiterr, ok := err.(*exec.ExitError); ok {
+			res.code = exiterr.ExitCode()
+		}
+		err = newExitError(p[l].Description, res.code, res.output, res.errors, err)
+	}
+	return res, err
+}
+
+// RetryExec runs piped commands with retry
+func (p CmdPipe) RetryExec(attempts int) (ExitStatus, error) {
+	var (
+		result ExitStatus
+		err    error
+	)
+
+	l := len(p) - 1
+	for i := 0; i < attempts; i++ {
+		result, err = p.Exec()
+		if err == nil {
+			return result, nil
+		}
+		if i < (attempts - 1) {
+			time.Sleep(time.Duration(math.Pow(2, float64(2+i))) * time.Second)
+			log.Infof("Retrying %s due to error: %v", p[l].Description, err)
+		}
+	}
+
+	return result, fmt.Errorf("%s, failed after %d attempts with: %w", p[l].Description, attempts, err)
+}
+
+func call(stack []*exec.Cmd) (err error) {
+	if stack[0].Process == nil {
+		if err = stack[0].Start(); err != nil {
+			return err
+		}
+	}
+	if len(stack) > 1 {
+		if err = stack[1].Start(); err != nil {
+			return err
+		}
+		defer func() {
+			if err == nil {
+				err = call(stack[1:])
+			} else {
+				stack[1].Wait()
+			}
+		}()
+	}
+	return stack[0].Wait()
+}
+
+func newExitError(cmd string, code int, stdout, stderr string, cause error) error {
+	return fmt.Errorf(
+		"%s failed with non-zero exit code %d: %w\noutput: %s",
+		cmd, code, cause,
+		fmt.Sprintf(
+			"\n--- stdout ---\n%s\n--- stderr ---\n%s",
+			strings.TrimSpace(stdout),
+			strings.TrimSpace(stderr),
+		),
+	)
 }
 
 // ToolExists returns true if the tool is present in the environment and false otherwise.
