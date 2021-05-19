@@ -165,20 +165,37 @@ func (r *release) uninstall(p *plan, optionalNamespace ...string) {
 
 // diffRelease diffs an existing release with the specified values.yaml
 func (r *release) diff() (string, error) {
-	colorFlag := ""
-	diffContextFlag := []string{}
-	suppressDiffSecretsFlag := "--suppress-secrets"
-	if flags.noColors {
-		colorFlag = "--no-color"
-	}
-	if flags.diffContext != -1 {
-		diffContextFlag = []string{"--context", strconv.Itoa(flags.diffContext)}
+	var args []string
+
+	if !flags.kubectlDiff {
+		args = []string{"diff", "--suppress-secrets"}
+		if flags.noColors {
+			args = append(args, "--no-color")
+		}
+		if flags.diffContext != -1 {
+			args = append(args, "--context", strconv.Itoa(flags.diffContext))
+		}
+		args = concat(args, r.getHelmArgsFor("diff"))
+	} else {
+		args = r.getHelmArgsFor("template")
 	}
 
-	cmd := helmCmd(concat([]string{"diff", colorFlag, suppressDiffSecretsFlag}, diffContextFlag, r.getHelmArgsFor("diff")), "Diffing release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ]")
+	desc := "Diffing release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]"
+	cmd := CmdPipe{helmCmd(args, desc)}
+
+	if flags.kubectlDiff {
+		cmd = append(cmd, kubectl([]string{"diff", "--namespace", r.Namespace, "-f", "-"}, desc))
+	}
 
 	res, err := cmd.RetryExec(3)
 	if err != nil {
+		if flags.kubectlDiff && res.code <= 1 {
+			// kubectl diff exit status:
+			//   0 No differences were found.
+			//   1 Differences were found.
+			//   >1 Kubectl or diff failed with an error.
+			return res.output, nil
+		}
 		return "", fmt.Errorf("command failed: %w", err)
 	}
 
@@ -385,6 +402,8 @@ func (r *release) getHelmArgsFor(action string, optionalNamespaceOverride ...str
 		ns = optionalNamespaceOverride[0]
 	}
 	switch action {
+	case "template":
+		return concat([]string{"template", r.Name, r.Chart, "--version", r.Version, "--namespace", r.Namespace, "--skip-tests", "--no-hooks"}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getPostRenderer())
 	case "install", "upgrade":
 		return concat([]string{"upgrade", r.Name, r.Chart, "--install", "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getHelmFlags(), r.getPostRenderer())
 	case "diff":

@@ -48,7 +48,10 @@ This lists available CMD options in Helmsman:
         keep releases that are managed by Helmsman from the used DSFs in the command, and are no longer tracked in your desired state.
 
   `--kubeconfig`
-        path to the kubeconfig file to use for CLI requests.
+        path to the kubeconfig file to use for CLI requests. Defalts to false if the helm diff plugin is installed.
+
+   `--kubectl-diff`
+        Use kubectl diff instead of helm diff
 
   `--migrate-context`
         Updates the context name for all apps defined in the DSF and applies Helmsman labels. Using this flag is required if you want to change context name after it has been set.
