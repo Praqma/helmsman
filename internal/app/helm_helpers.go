@@ -80,7 +80,7 @@ func getHelmVersion() string {
 	if !strings.HasPrefix(version, "v") {
 		version = strings.SplitN(version, ":", 2)[1]
 	}
-	return version
+	return strings.TrimSpace(version)
 }
 
 func checkHelmVersion(constraint string) bool {
