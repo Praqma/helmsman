@@ -47,13 +47,13 @@ func kubectl(args []string, desc string) Command {
 // createNamespace creates a namespace in the k8s cluster
 func createNamespace(ns string) {
 	checkCmd := kubectl([]string{"get", "namespace", ns}, "Looking for namespace [ "+ns+" ]")
-	if _, err := checkCmd.RetryExec(3); err == nil {
+	if _, err := checkCmd.Exec(); err == nil {
 		log.Verbose("Namespace [ " + ns + " ] exists")
 		return
 	}
 
-	cmd := kubectl([]string{"create", "namespace", ns}, "Creating namespace [ "+ns+" ]")
-	if _, err := cmd.Exec(); err != nil {
+	cmd := kubectl([]string{"create", "namespace", ns, flags.getKubeDryRunFlag("create")}, "Creating namespace [ "+ns+" ]")
+	if _, err := cmd.RetryExec(3); err != nil {
 		log.Fatalf("Failed creating namespace [ "+ns+" ] with error: %v", err)
 	}
 	log.Info("Namespace [ " + ns + " ] created")
@@ -324,7 +324,7 @@ func getKubectlVersion() string {
 	if !strings.HasPrefix(version, "v") {
 		version = strings.SplitN(version, ":", 2)[1]
 	}
-	return version
+	return strings.TrimSpace(version)
 }
 
 func checkKubectlVersion(constraint string) bool {
