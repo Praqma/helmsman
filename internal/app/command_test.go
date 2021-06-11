@@ -215,3 +215,50 @@ func TestPipeExec(t *testing.T) {
 		})
 	}
 }
+
+func TestCommand_String(t *testing.T) {
+	tests := []struct {
+		name     string
+		cmd      Command
+		expected string
+	}{
+		{
+			"regular",
+			kubectl([]string{"config", "set-cluster", "CONTEXT", "--server=http://localhost:8080", "--certificate-authority=cacert.crt"}, ""),
+			"kubectl config set-cluster CONTEXT --server=http://localhost:8080 --certificate-authority=cacert.crt",
+		},
+		{
+			"cert-key",
+			kubectl([]string{"config", "set-credentials", "USER", "--client-key=client.key", "--client-certificate=client.crt"}, ""),
+			"kubectl config set-credentials USER --client-key=client.key --client-certificate=client.crt",
+		},
+		{
+			"password",
+			kubectl([]string{"config", "set-credentials", "USER", "--username=foo", "--password=secret"}, ""),
+			"kubectl config set-credentials USER --username=foo --password=******",
+		},
+		{
+			"password2",
+			kubectl([]string{"config", "set-credentials", "USER", "--username", "foo", "--password", "secret"}, ""),
+			"kubectl config set-credentials USER --username foo --password=******",
+		},
+		{
+			"token",
+			kubectl([]string{"config", "set-credentials", "USER", "--token=secret"}, ""),
+			"kubectl config set-credentials USER --token=******",
+		},
+		{
+			"token2",
+			kubectl([]string{"config", "set-credentials", "USER", "--token", "secret"}, ""),
+			"kubectl config set-credentials USER --token=******",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := test.cmd.String()
+			if actual != test.expected {
+				t.Errorf("command.String() unexpected got = %s, want = %s\n", actual, test.expected)
+			}
+		})
+	}
+}
