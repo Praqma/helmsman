@@ -1,5 +1,5 @@
 ---
-version: v3.7.0
+version: v3.7.1
 ---
 
 # Using OCI registries for helm charts

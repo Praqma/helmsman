@@ -1,7 +1,6 @@
-# v3.7.0
+# v3.7.1
 
-## New features
+## Fixes and improvements
 
-- Added support for OCI registries (#612)
-  - more details in [docs/how_to/helm_repos/oci.md](https://github.com/Praqma/helmsman/blob/master/docs/how_to/helm_repos/oci.md)
-- Added support for using `kubectl diff` instead of `helm diff` (#609) - Experimental
+- fixed an issue with checking chart versions (#613)
+- hide tokens and passwords from the logs (#615)
