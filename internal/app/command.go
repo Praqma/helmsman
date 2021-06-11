@@ -35,7 +35,34 @@ func (e ExitStatus) String() string {
 }
 
 func (c *Command) String() string {
-	return c.Cmd + " " + strings.Join(c.Args, " ")
+	var sb strings.Builder
+	sb.WriteString(c.Cmd)
+	for i := 0; i < len(c.Args); i++ {
+		arg := c.Args[i]
+		sb.WriteRune(' ')
+		if strings.HasPrefix(arg, "--token=") {
+			sb.WriteString("--token=******")
+			continue
+		}
+		if strings.HasPrefix(arg, "--password=") {
+			sb.WriteString("--password=******")
+			continue
+		}
+		if arg == "--token" {
+			sb.WriteString(arg)
+			sb.WriteString("=******")
+			i++
+			continue
+		}
+		if arg == "--password" {
+			sb.WriteString(arg)
+			sb.WriteString("=******")
+			i++
+			continue
+		}
+		sb.WriteString(arg)
+	}
+	return sb.String()
 }
 
 // RetryExec runs exec command with retry
