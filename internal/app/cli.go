@@ -219,8 +219,8 @@ func (c *cli) readState(s *state) error {
 	_ = os.MkdirAll(tempFilesDir, 0o755)
 
 	// read the TOML/YAML desired state file
-	var fileState state
 	for _, f := range c.files {
+		var fileState state
 
 		if err := fileState.fromFile(f); err != nil {
 			return err
