@@ -211,7 +211,9 @@ func downloadFile(file string, dir string, outfile string) string {
 	case "oci":
 		dest := filepath.Dir(outfile)
 		fileName := strings.Split(filepath.Base(file), ":")[0]
-		helmExportChart(strings.ReplaceAll(file, "oci://", ""), dest)
+		if err := helmExportChart(strings.ReplaceAll(file, "oci://", ""), dest); err != nil {
+			log.Fatal(err.Error())
+		}
 		return filepath.Join(dest, fileName)
 	case "https", "http":
 		if err := downloadFileFromURL(file, outfile); err != nil {
