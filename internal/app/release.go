@@ -378,13 +378,11 @@ func (r *release) getMaxHistory() []string {
 // getHelmFlags returns helm flags
 func (r *release) getHelmFlags() []string {
 	var flgs []string
-	var force string
 	if flags.forceUpgrades {
-		force = "--force"
+		flgs = append(flgs, "--force")
 	}
 
-	flgs = append(flgs, r.HelmFlags...)
-	return concat(r.getNoHooks(), r.getWait(), r.getTimeout(), r.getMaxHistory(), flags.getRunFlags(), []string{force}, flgs)
+	return concat(r.getNoHooks(), r.getWait(), r.getTimeout(), r.getMaxHistory(), flags.getRunFlags(), r.HelmFlags, flgs)
 }
 
 // getPostRenderer returns the post-renderer Helm flag
