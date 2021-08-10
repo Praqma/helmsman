@@ -86,7 +86,7 @@ Synopsis: defines the context in which a DSF is used. This context is used as th
 
 ```yaml
 context: prod-apps
-...
+# ...
 ```
 
 ## Settings
@@ -112,7 +112,7 @@ The following options can be skipped if your kubectl context is already created 
 - **slackWebhook** : a [Slack](http://slack.com) Webhook URL to receive Helmsman notifications. This can be passed directly or in an environment variable.
 - **msTeamsWebhook** : a [Microsoft Teams](https://www.microsoft.com/pl-pl/microsoft-teams/group-chat-software) Webhook URL to receive Helmsman notifications. This can be passed directly or in an environment variable.
 - **reverseDelete** : if set to `true` it will reverse the priority order whilst deleting.
-- **eyamlEnabled** : if set to `true' it will use [hiera-eyaml](https://github.com/voxpupuli/hiera-eyaml) to decrypt secret files instead of using default helm-secrets based on sops
+- **eyamlEnabled** : if set to `true` it will use [hiera-eyaml](https://github.com/voxpupuli/hiera-eyaml) to decrypt secret files instead of using default helm-secrets based on sops
 - **eyamlPrivateKeyPath** : if set with path to the eyaml private key file, it will use it instead of looking for default one in ./keys directory relative to where Helmsman were run. It needs to be defined in conjunction with eyamlPublicKeyPath.
 - **eyamlPublicKeyPath** : if set with path to the eyaml public key file, it will use it instead of looking for default one in ./keys directory relative to where Helmsman were run. It needs to be defined in conjunction with eyamlPrivateKeyPath.
 - **globalHooks** : defines global lifecycle hooks to apply yaml manifest before and/or after different helmsman operations. Check [here](how_to/apps/lifecycle_hooks.md) for more details.
@@ -358,36 +358,38 @@ Options:
 
 **Required**
 
-- **namespace**    : the namespace where the release should be deployed. The namespace should map to one of the ones defined in [namespaces](#namespaces).
-- **enabled**      : describes the required state of the release (true for enabled, false for disabled). Once a release is deployed, you can change it to false if you want to delete this release [default is false].
-- **chart**        : the chart name. It should contain the repo name as well. Example: repoName/chartName. Changing the chart name means delete and reinstall this release using the new Chart.
-- **version**      : the chart version.
+- **namespace**     : the namespace where the release should be deployed. The namespace should map to one of the ones defined in [namespaces](#namespaces).
+- **enabled**       : describes the required state of the release (true for enabled, false for disabled). Once a release is deployed, you can change it to false if you want to delete this release [default is false].
+- **chart**         : the chart name. It should contain the repo name as well. Example: repoName/chartName. Changing the chart name means delete and reinstall this release using the new Chart.
+- **version**       : the chart version.
 
 **Optional**
 
-- **group**        : group name this apps belongs to. It has no effect until Helmsman's flag `-group` is passed. Check this [doc](how_to/misc/limit-deployment-to-specific-group-of-apps.md) for more details.
-- **description**  : a release metadata for human readers.
-- **valuesFile**   : a valid path (URL, cloud bucket, local absolute/relative file path) to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFiles together. Leaving it empty uses the default chart values.
-- **valuesFiles**  : array of valid paths (URL, cloud bucket, local absolute/relative file path) to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFile together. Leaving it empty uses the default chart values.
-> The values file(s) path is resolved when the DSF yaml/toml file is loaded, relative to the path that the dsf was loaded from.
-- **secretsFile**  : a valid path (URL, cloud bucket, local absolute/relative file path) to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFiles together. Leaving it empty uses the default chart secrets.
-- **secretsFiles** : array of valid paths (URL, cloud bucket, local absolute/relative file path) to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFile together. Leaving it empty uses the default chart secrets.
-> The secrets file(s) path is resolved when the DSF yaml/toml file is loaded, relative to the path that the dsf was loaded from.
-> To use the secrets files you must have the helm-secrets plugin
-- **test**         : defines whether to run the chart tests whenever the release is installed. Default is false.
-- **protected**    : defines if the release should be protected against changes. Namespace-level protection has higher priority than this flag. Check the [protection guide](how_to/misc/protect_namespaces_and_releases.md) for more details. Default is false.
-- **wait**         : defines whether Helmsman should block execution until all k8s resources are in a ready state. Default is false.
-- **timeout**      : helm timeout in seconds. Default 300 seconds.
-- **noHooks**      : helm noHooks option. If true, it will disable pre/post upgrade hooks. Default is false.
-- **priority**     : defines the priority of applying operations on this release. Only negative values allowed and the lower the value, the higher the priority. Default priority is 0. Apps with equal priorities will be applied in the order they were added in your state file (DSF).
-- **set**          : is used to override certain values from values.yaml with values from environment variables (or ,starting from v1.3.0-rc, directly provided in the Desired State File). This is particularly useful for passing secrets to charts. If the an environment variable with the same name as the provided value exists, the environment variable value will be used, otherwise, the provided value will be used as is. The TOML stanza for this is `[apps.<app_name>.set]`
-- **setString**    : is used to override String values from values.yaml or chart's defaults. This uses the `--set-string` flag in helm which is available only in helm >v2.9.0. This option is useful for image tags and the like. The TOML stanza for this is `[apps.<app_name>.setString]`
-- **setFile**      : is used to override values from values.yaml or chart's defaults from provided file. This uses the `--set-file` flag in helm. This option is useful for embedding file contents in the values. The TOML stanza for this is `[apps.<app_name>.setFile]`
-> set, setString and setFile can't take nested elements. If you need to provide nested values, you can combine them in one line with dots e.g. `TOML: "image.tag"=some\_value` `YAML: "image.tag": some\_value`
-- **helmFlags**    : array of `helm` upgrade flags, is used to pass flags to helm install/upgrade commands. **These flags are not passed to helm diff**. For setting values, use **set**, **setString** or **setFile** instead.
+- **group**         : group name this apps belongs to. It has no effect until Helmsman's flag `-group` is passed. Check this [doc](how_to/misc/limit-deployment-to-specific-group-of-apps.md) for more details.
+- **description**   : a release metadata for human readers.
+- **valuesFile**    : a valid path (URL, cloud bucket, local absolute/relative file path) to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFiles together. Leaving it empty uses the default chart values.
+- **valuesFiles**   : array of valid paths (URL, cloud bucket, local absolute/relative file path) to custom Helm values.yaml file. File extension must be `yaml`. Cannot be used with valuesFile together. Leaving it empty uses the default chart values.
+  > The values file(s) path is resolved when the DSF yaml/toml file is loaded, relative to the path that the dsf was loaded from.
+- **secretsFile**   : a valid path (URL, cloud bucket, local absolute/relative file path) to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFiles together. Leaving it empty uses the default chart secrets.
+- **secretsFiles**  : array of valid paths (URL, cloud bucket, local absolute/relative file path) to custom Helm secrets.yaml file. File extension must be `yaml`. Cannot be used with secretsFile together. Leaving it empty uses the default chart secrets.
+  > The secrets file(s) path is resolved when the DSF yaml/toml file is loaded, relative to the path that the dsf was loaded from.
+  > To use the secrets files you must have the helm-secrets plugin
+- **test**          : defines whether to run the chart tests whenever the release is installed. Default is false.
+- **protected**     : defines if the release should be protected against changes. Namespace-level protection has higher priority than this flag. Check the [protection guide](how_to/misc/protect_namespaces_and_releases.md) for more details. Default is false.
+- **wait**          : defines whether Helmsman should block execution until all k8s resources are in a ready state. Default is false.
+- **timeout**       : helm timeout in seconds. Default 300 seconds.
+- **noHooks**       : helm noHooks option. If true, it will disable pre/post upgrade hooks. Default is false.
+- **priority**      : defines the priority of applying operations on this release. Only negative values allowed and the lower the value, the higher the priority. Default priority is 0. Apps with equal priorities will be applied in the order they were added in your state file (DSF).
+- **set**           : is used to override certain values from values.yaml with values from environment variables (or ,starting from v1.3.0-rc, directly provided in the Desired State File). This is particularly useful for passing secrets to charts. If the an environment variable with the same name as the provided value exists, the environment variable value will be used, otherwise, the provided value will be used as is. The TOML stanza for this is `[apps.<app_name>.set]`
+- **setString**     : is used to override String values from values.yaml or chart's defaults. This uses the `--set-string` flag in helm which is available only in helm >v2.9.0. This option is useful for image tags and the like. The TOML stanza for this is `[apps.<app_name>.setString]`
+- **setFile**       : is used to override values from values.yaml or chart's defaults from provided file. This uses the `--set-file` flag in helm. This option is useful for embedding file contents in the values. The TOML stanza for this is `[apps.<app_name>.setFile]`
+  > set, setString and setFile can't take nested elements. If you need to provide nested values, you can combine them in one line with dots e.g. `TOML: "image.tag"=some\_value` `YAML: "image.tag": some\_value`
+- **helmFlags**     : array of `helm upgrade` flags, is used to pass flags to helm install/upgrade commands. **These flags are not passed to helm diff**. For setting values, use **set**, **setString** or **setFile** instead.
+- **helmDiffFlags** : array of `helm diff upgrade` flags, is used to pass flags to helm diff upgrade commands. **These flags are not passed to helm during upgrade**. For setting values, use **set**, **setString** or **setFile** instead.
+    > helmDiffFlags can be useful for example if you need to use the `--disable-openapi-validation` flag, in that case you would need to set it both in helmFlags and helmDiffFlags
 - **hooks** : defines global lifecycle hooks to apply yaml manifest before and/or after different helmsman operations. Check [here](how_to/apps/lifecycle_hooks.md) for more details. Unset hooks for a release are inherited from `globalHooks` in the [settings](#Settings) stanza.
-- **maxHistory**   : defines the maximum number of helm revisions state (secrets/configmap) to keep. If unset, it will inherit the value of `settings.globalMaxHistory`, if that's also unset, it defaults to 10.
-- **postRenderer** : the path to an executable to be used for post rendering (requires Helm 3.1+ and helm-diff v3.1.2+)
+- **maxHistory**    : defines the maximum number of helm revisions state (secrets/configmap) to keep. If unset, it will inherit the value of `settings.globalMaxHistory`, if that's also unset, it defaults to 10.
+- **postRenderer**  : the path to an executable to be used for post rendering (requires Helm 3.1+ and helm-diff v3.1.2+)
 
 Example:
 
