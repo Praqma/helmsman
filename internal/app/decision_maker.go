@@ -94,6 +94,12 @@ func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo) 
 		return
 	}
 
+	if r.isProtected(cs, n) {
+		p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
+			"protection is removed.", r.Priority, noop)
+		return
+	}
+
 	if flags.destroy {
 		if ok := cs.releaseExists(r, ""); ok {
 			p.addDecision("Release [ "+r.Name+" ] will be DELETED (destroy flag enabled).", r.Priority, delete)
@@ -104,48 +110,33 @@ func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo) 
 
 	if !r.Enabled {
 		if ok := cs.releaseExists(r, ""); ok {
-			if r.isProtected(cs, n) {
-				p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
-					"protection is removed.", r.Priority, noop)
-				return
-			}
 			p.addDecision("Release [ "+r.Name+" ] is desired to be DELETED.", r.Priority, delete)
 			r.uninstall(p)
-			return
+		} else {
+			p.addDecision("Release [ "+r.Name+" ] disabled", r.Priority, noop)
 		}
-		p.addDecision("Release [ "+r.Name+" ] disabled", r.Priority, noop)
 		return
 	}
 
-	if ok := cs.releaseExists(r, helmStatusDeployed); ok {
-		if !r.isProtected(cs, n) {
-			if err := cs.inspectUpgradeScenario(r, p, c); err != nil { // upgrade or move
-				log.Fatal(err.Error())
-			}
-		} else {
-			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
-				"you remove its protection.", r.Priority, noop)
+	switch cs.releaseStatus(r) {
+	case helmStatusDeployed:
+		if err := cs.inspectUpgradeScenario(r, p, c); err != nil { // upgrade or move
+			log.Fatal(err.Error())
 		}
-	} else if ok := cs.releaseExists(r, helmStatusUninstalled); ok {
-		if !r.isProtected(cs, n) {
-			r.rollback(cs, p) // rollback
-		} else {
-			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
-				"you remove its protection.", r.Priority, noop)
-		}
-	} else if ok := cs.releaseExists(r, helmStatusFailed); ok {
-		if !r.isProtected(cs, n) {
-			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in FAILED state. Upgrade is scheduled!", r.Priority, change)
-			r.upgrade(p)
-		} else {
-			p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
-				"you remove its protection.", r.Priority, noop)
-		}
-	} else if cs.releaseExists(r, helmStatusPendingInstall) || cs.releaseExists(r, helmStatusPendingUpgrade) || cs.releaseExists(r, helmStatusPendingRollback) || cs.releaseExists(r, helmStatusUninstalling) {
+
+	case helmStatusUninstalled:
+		r.rollback(cs, p) // rollback
+
+	case helmStatusFailed:
+		p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in FAILED state. Upgrade is scheduled!", r.Priority, change)
+		r.upgrade(p)
+		return
+
+	case helmStatusPendingInstall, helmStatusPendingUpgrade, helmStatusPendingRollback, helmStatusUninstalling:
 		log.Fatal("Release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ] is in a pending (install/upgrade/rollback or uninstalling) state. " +
 			"This means application is being operated on outside of this Helmsman invocation's scope." +
 			"Exiting, as this may cause issues when continuing...")
-	} else {
+	default:
 		// If there is no release in the cluster with this name and in this namespace, then install it!
 		if _, ok := cs.releases[r.key()]; !ok {
 			p.addDecision("Release [ "+r.Name+" ] version [ "+r.Version+" ] will be installed in [ "+r.Namespace+" ] namespace", r.Priority, create)
@@ -158,19 +149,30 @@ func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo) 
 	}
 }
 
+// releaseStatus returns the status of a release in the Current State.
+func (cs *currentState) releaseStatus(r *release) string {
+	v, ok := cs.releases[r.key()]
+	if !ok || v.HelmsmanContext != curContext {
+		return helmStatusMissing
+	}
+	return v.Status
+}
+
 // releaseExists checks if a Helm release is/was deployed in a k8s cluster.
 // It searches the Current State for releases.
 // The key format for releases uniqueness is:  <release name - release namespace>
 // If status is provided as an input [deployed, deleted, failed], then the search will verify the release status matches the search status.
 func (cs *currentState) releaseExists(r *release, status string) bool {
-	v, ok := cs.releases[r.key()]
-	if !ok || v.HelmsmanContext != curContext {
+	currentState := cs.releaseStatus(r)
+
+	if status != "" {
+		return currentState == status
+	}
+
+	if currentState == helmStatusMissing {
 		return false
 	}
 
-	if status != "" {
-		return v.Status == status
-	}
 	return true
 }
 
