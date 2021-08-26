@@ -10,31 +10,32 @@ import (
 
 // release type representing Helm releases which are described in the desired state
 type release struct {
-	Name         string                 `yaml:"name"`
-	Description  string                 `yaml:"description"`
-	Namespace    string                 `yaml:"namespace"`
-	Enabled      bool                   `yaml:"enabled"`
-	Group        string                 `yaml:"group"`
-	Chart        string                 `yaml:"chart"`
-	Version      string                 `yaml:"version"`
-	ValuesFile   string                 `yaml:"valuesFile"`
-	ValuesFiles  []string               `yaml:"valuesFiles"`
-	SecretsFile  string                 `yaml:"secretsFile"`
-	SecretsFiles []string               `yaml:"secretsFiles"`
-	PostRenderer string                 `yaml:"postRenderer"`
-	Test         bool                   `yaml:"test"`
-	Protected    bool                   `yaml:"protected"`
-	Wait         bool                   `yaml:"wait"`
-	Priority     int                    `yaml:"priority"`
-	Set          map[string]string      `yaml:"set"`
-	SetString    map[string]string      `yaml:"setString"`
-	SetFile      map[string]string      `yaml:"setFile"`
-	HelmFlags    []string               `yaml:"helmFlags"`
-	NoHooks      bool                   `yaml:"noHooks"`
-	Timeout      int                    `yaml:"timeout"`
-	Hooks        map[string]interface{} `yaml:"hooks"`
-	MaxHistory   int                    `yaml:"maxHistory"`
-	disabled     bool
+	Name          string                 `yaml:"name"`
+	Description   string                 `yaml:"description"`
+	Namespace     string                 `yaml:"namespace"`
+	Enabled       bool                   `yaml:"enabled"`
+	Group         string                 `yaml:"group"`
+	Chart         string                 `yaml:"chart"`
+	Version       string                 `yaml:"version"`
+	ValuesFile    string                 `yaml:"valuesFile"`
+	ValuesFiles   []string               `yaml:"valuesFiles"`
+	SecretsFile   string                 `yaml:"secretsFile"`
+	SecretsFiles  []string               `yaml:"secretsFiles"`
+	PostRenderer  string                 `yaml:"postRenderer"`
+	Test          bool                   `yaml:"test"`
+	Protected     bool                   `yaml:"protected"`
+	Wait          bool                   `yaml:"wait"`
+	Priority      int                    `yaml:"priority"`
+	Set           map[string]string      `yaml:"set"`
+	SetString     map[string]string      `yaml:"setString"`
+	SetFile       map[string]string      `yaml:"setFile"`
+	HelmFlags     []string               `yaml:"helmFlags"`
+	HelmDiffFlags []string               `yaml:"helmDiffFlags"`
+	NoHooks       bool                   `yaml:"noHooks"`
+	Timeout       int                    `yaml:"timeout"`
+	Hooks         map[string]interface{} `yaml:"hooks"`
+	MaxHistory    int                    `yaml:"maxHistory"`
+	disabled      bool
 }
 
 func (r *release) key() string {
@@ -377,13 +378,11 @@ func (r *release) getMaxHistory() []string {
 // getHelmFlags returns helm flags
 func (r *release) getHelmFlags() []string {
 	var flgs []string
-	var force string
 	if flags.forceUpgrades {
-		force = "--force"
+		flgs = append(flgs, "--force")
 	}
 
-	flgs = append(flgs, r.HelmFlags...)
-	return concat(r.getNoHooks(), r.getWait(), r.getTimeout(), r.getMaxHistory(), flags.getRunFlags(), []string{force}, flgs)
+	return concat(r.getNoHooks(), r.getWait(), r.getTimeout(), r.getMaxHistory(), flags.getRunFlags(), r.HelmFlags, flgs)
 }
 
 // getPostRenderer returns the post-renderer Helm flag
@@ -407,7 +406,7 @@ func (r *release) getHelmArgsFor(action string, optionalNamespaceOverride ...str
 	case "install", "upgrade":
 		return concat([]string{"upgrade", r.Name, r.Chart, "--install", "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getHelmFlags(), r.getPostRenderer())
 	case "diff":
-		return concat([]string{"upgrade", r.Name, r.Chart, "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getPostRenderer())
+		return concat([]string{"upgrade", r.Name, r.Chart, "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.HelmDiffFlags, r.getPostRenderer())
 	case "uninstall":
 		return concat([]string{action, "--namespace", ns, r.Name}, flags.getRunFlags())
 	default:
