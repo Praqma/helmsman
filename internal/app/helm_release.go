@@ -9,6 +9,7 @@ import (
 	"sync"
 )
 
+// TODO: can we import these from helm?
 const (
 	helmStatusDeployed        = "deployed"
 	helmStatusUninstalled     = "uninstalled"
@@ -17,6 +18,7 @@ const (
 	helmStatusPendingInstall  = "pending-install"
 	helmStatusPendingRollback = "pending-rollback"
 	helmStatusUninstalling    = "uninstalling"
+	helmStatusMissing         = "missing"
 )
 
 // helmRelease represents the current state of a release
