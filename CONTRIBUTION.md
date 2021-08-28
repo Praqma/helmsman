@@ -4,7 +4,7 @@ Pull requests, feeback/feature requests are all welcome. This guide will be upda
 
 ## Build helmsman from source
 
-To build helmsman from source, you need go:1.13+.  Follow the steps below:
+To build helmsman from source, you need go:1.17+.  Follow the steps below:
 
 ```
 git clone https://github.com/Praqma/helmsman.git
@@ -50,4 +50,3 @@ The following steps are needed to cut a release (They assume that you are on mas
 6. Create a git tag with the following command: `git tag -a <semantic version number> -m "<semantic version number>" <your-last-commit-sha>`
 7. Push your commit and tag with `git push --follow-tags`
 8. This should trigger the [pipeline on circleci](https://circleci.com/gh/Praqma/workflows/helmsman) which eventually releases to Github and dockerhub.
-
