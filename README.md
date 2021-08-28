@@ -1,4 +1,4 @@
-[![GitHub version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=gh&type=6&v=v3.7.2&x2=0)](https://github.com/Praqma/helmsman/releases) [![CircleCI](https://circleci.com/gh/Praqma/helmsman/tree/master.svg?style=svg)](https://circleci.com/gh/Praqma/helmsman/tree/master)
+[![GitHub version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=gh&type=6&v=v3.7.3&x2=0)](https://github.com/Praqma/helmsman/releases) [![CircleCI](https://circleci.com/gh/Praqma/helmsman/tree/master.svg?style=svg)](https://circleci.com/gh/Praqma/helmsman/tree/master)
 
 ![helmsman-logo](docs/images/helmsman.png)
 
@@ -61,9 +61,9 @@ Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the d
 
 ```sh
 # on Linux
-curl -L https://github.com/Praqma/helmsman/releases/download/v3.7.2/helmsman_3.7.2_linux_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v3.7.3/helmsman_3.7.3_linux_amd64.tar.gz | tar zx
 # on MacOS
-curl -L https://github.com/Praqma/helmsman/releases/download/v3.7.2/helmsman_3.7.2_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v3.7.3/helmsman_3.7.3_darwin_amd64.tar.gz | tar zx
 
 mv helmsman /usr/local/bin/helmsman
 ```
