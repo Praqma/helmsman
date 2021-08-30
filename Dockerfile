@@ -16,7 +16,7 @@ ENV HELM_VERSION=$GLOBAL_HELM_VERSION
 ENV HELM_DIFF_VERSION=$GLOBAL_HELM_DIFF_VERSION
 ENV SOPS_VERSION=$GLOBAL_SOPS_VERSION
 
-RUN apk add --update --no-cache ca-certificates git openssh ruby curl tar gzip make bash
+RUN apk add --update --no-cache ca-certificates git openssh openssl ruby curl wget tar gzip make bash
 
 ADD https://github.com/mozilla/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux /usr/local/bin/sops
 RUN chmod +x /usr/local/bin/sops
@@ -37,7 +37,7 @@ RUN rm -r /tmp/helm-diff /tmp/helm-diff.tgz
 ### Go Builder & Tester ###
 FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} as builder
 
-RUN apk add --update --no-cache ca-certificates git openssh ruby bash make
+RUN apk add --update --no-cache ca-certificates git openssh ruby bash make curl
 RUN gem install hiera-eyaml --no-doc
 RUN update-ca-certificates
 
