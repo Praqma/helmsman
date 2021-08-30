@@ -56,7 +56,7 @@ deps: ## Install depdendencies. Runs `go get` internally.
 
 
 update-deps: ## Update depdendencies. Runs `go get -u` internally.
-	@GOFLAGS="" go get -u
+	@GOFLAGS="" go get -t -u ./...
 	@GOFLAGS="" go mod tidy
 	@GOFLAGS="" go mod vendor
 
