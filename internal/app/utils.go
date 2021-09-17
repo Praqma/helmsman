@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/Masterminds/semver"
 	"github.com/Praqma/helmsman/internal/aws"
@@ -198,6 +199,25 @@ func sliceContains(slice []string, s string) bool {
 	return false
 }
 
+// replaceAtIndex replaces the charecter at the given index in the string with the given rune
+func replaceAtIndex(in string, r rune, i int) (string, error) {
+	if i < 0 || i >= utf8.RuneCountInString(in) {
+		return in, fmt.Errorf("index out of bounds")
+	}
+	out := []rune(in)
+	out[i] = r
+	return string(out), nil
+}
+
+// ociRefToFilename computes the helm package filename for a given OCI ref
+func ociRefToFilename(ref string) (string, error) {
+	var err error
+	fileName := filepath.Base(ref)
+	i := strings.LastIndex(fileName, ":")
+	fileName, err = replaceAtIndex(fileName, '-', i)
+	return fmt.Sprintf("%s.tgz", fileName), err
+}
+
 // downloadFile downloads a file from a URL, GCS, Azure or AWS buckets and saves it with a
 // given outfile name and in a given dir
 // If the file path is local file system path, it returns the absolute path to the file
@@ -210,11 +230,23 @@ func downloadFile(file string, dir string, outfile string) string {
 	switch u.Scheme {
 	case "oci":
 		dest := filepath.Dir(outfile)
-		fileName := strings.Split(filepath.Base(file), ":")[0]
-		if err := helmExportChart(strings.ReplaceAll(file, "oci://", ""), dest); err != nil {
-			log.Fatal(err.Error())
+		switch {
+		case checkHelmVersion("<3.7.0"):
+			fileName := strings.Split(filepath.Base(file), ":")[0]
+			if err := helmExportChart(strings.ReplaceAll(file, "oci://", ""), dest); err != nil {
+				log.Fatal(err.Error())
+			}
+			return filepath.Join(dest, fileName)
+		default:
+			fileName, err := ociRefToFilename(file)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			if err := helmPullChart(file, dest); err != nil {
+				log.Fatal(err.Error())
+			}
+			return filepath.Join(dest, fileName)
 		}
-		return filepath.Join(dest, fileName)
 	case "https", "http":
 		if err := downloadFileFromURL(file, outfile); err != nil {
 			log.Fatal(err.Error())

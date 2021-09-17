@@ -111,12 +111,23 @@ func updateChartDep(chartPath string) error {
 }
 
 // helmExportChart pulls chart and exports it to the specified destination
+// this is only compatible with hlem versions lower than 3.0.7
 func helmExportChart(chart, dest string) error {
 	cmd := helmCmd([]string{"chart", "pull", chart}, "Pulling chart [ "+chart+" ] to local registry cache")
 	if _, err := cmd.Exec(); err != nil {
 		return err
 	}
 	cmd = helmCmd([]string{"chart", "export", chart, "-d", dest}, "Exporting chart [ "+chart+" ] to "+dest)
+	if _, err := cmd.Exec(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// helmPullChart pulls chart and exports it to the specified destination
+// this should only be used with helm versions greater or equal to 3.7.0
+func helmPullChart(chart, dest string) error {
+	cmd := helmCmd([]string{"chart", "pull", chart, "-d", dest}, "Pulling chart [ "+chart+" ] to "+dest)
 	if _, err := cmd.Exec(); err != nil {
 		return err
 	}
