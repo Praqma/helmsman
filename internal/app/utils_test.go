@@ -5,6 +5,46 @@ import (
 	"testing"
 )
 
+func TestOciRefToFilename(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{
+			name: "no_repo",
+			in:   "my-chart:1.2.3",
+			want: "my-chart-1.2.3.tgz",
+		},
+		{
+			name: "two_colons",
+			in:   "my:chart:1.2.3",
+			want: "my:chart-1.2.3.tgz",
+		},
+		{
+			name: "with_Host",
+			in:   "my-repo.example.com/charts/my-chart:1.2.3",
+			want: "my-chart-1.2.3.tgz",
+		},
+		{
+			name: "full_url",
+			in:   "oci://my-repo.example.com/charts/my-chart:1.2.3",
+			want: "my-chart-1.2.3.tgz",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ociRefToFilename(tt.in)
+			if err != nil {
+				t.Errorf("ociRefToFilename() unexpected error: %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("ociRefToFilename() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_isOfType(t *testing.T) {
 	type args struct {
 		filename  string
