@@ -1,8 +1,6 @@
-# v3.7.3
+# v3.7.4
 
 ## Fixes and improvements
 
-- feat: allow setting helm diff flags (#620)
-- fix: the release protection flag should be respected even when destroying (#622)
-- fix: Pass error to user if we fail to correctly pull or export oci chart images (#619)
-- refactor: code clean up
+- feat: support the new OCI implementation from helm 3.7.0 (#627)
+- chore: updated the project to use Go 1.17
