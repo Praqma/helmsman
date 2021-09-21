@@ -127,7 +127,13 @@ func helmExportChart(chart, dest string) error {
 // helmPullChart pulls chart and exports it to the specified destination
 // this should only be used with helm versions greater or equal to 3.7.0
 func helmPullChart(chart, dest string) error {
-	cmd := helmCmd([]string{"chart", "pull", chart, "-d", dest}, "Pulling chart [ "+chart+" ] to "+dest)
+	chartParts := strings.Split(chart, ":")
+	if len(chartParts) < 2 {
+		return fmt.Errorf("missing chart version")
+	}
+	version := chartParts[len(chartParts)-1]
+	chart = strings.Join(chartParts[:len(chartParts)-1], ":")
+	cmd := helmCmd([]string{"pull", chart, "-d", dest, "--version", version}, "Pulling chart [ "+chart+" ] to "+dest)
 	if _, err := cmd.Exec(); err != nil {
 		return err
 	}
