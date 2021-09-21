@@ -18,19 +18,34 @@ The desired state file (DSF) follows the [desired state specification](https://g
 Helmsman sees what you desire, validates that your desire makes sense (e.g. that the charts you desire are available in the repos you defined), compares it with the current state of Helm and figures out what to do to make your desire come true.
 
 To plan without executing:
-``` $ helmsman -f example.toml ```
+
+```sh
+helmsman -f example.toml
+```
 
 To plan and execute the plan:
-``` $ helmsman --apply -f example.toml ```
+
+```sh
+helmsman --apply -f example.toml
+```
 
 To show debugging details:
-``` $ helmsman --debug --apply -f example.toml ```
+
+```sh
+helmsman --debug --apply -f example.toml
+```
 
 To run a dry-run:
-``` $ helmsman --debug --dry-run -f example.toml ```
+
+```sh
+helmsman --debug --dry-run -f example.toml
+```
 
 To limit execution to specific application:
-``` $ helmsman --debug --dry-run --target artifactory -f example.toml ```
+
+```sh
+helmsman --debug --dry-run --target artifactory -f example.toml
+```
 
 # Features
 
@@ -61,9 +76,9 @@ Check the [releases page](https://github.com/Praqma/Helmsman/releases) for the d
 
 ```sh
 # on Linux
-curl -L https://github.com/Praqma/helmsman/releases/download/v3.7.4/helmsman_3.7.4_linux_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v3.7.5/helmsman_3.7.5_linux_amd64.tar.gz | tar zx
 # on MacOS
-curl -L https://github.com/Praqma/helmsman/releases/download/v3.7.4/helmsman_3.7.4_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/Praqma/helmsman/releases/download/v3.7.5/helmsman_3.7.5_darwin_amd64.tar.gz | tar zx
 
 mv helmsman /usr/local/bin/helmsman
 ```
@@ -81,9 +96,7 @@ Helmsman has been packaged in Archlinux under `helmsman-bin` for the latest bina
 > Documentation for Helmsman v1.x can be found at: [docs v1.x](https://github.com/Praqma/helmsman/tree/1.x/docs)
 
 - [How-Tos](https://github.com/Praqma/helmsman/blob/master/docs/how_to/).
-
 - [Desired state specification](https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md).
-
 - [CMD reference](https://github.com/Praqma/helmsman/blob/master/docs/cmd_reference.md)
 
 ## Usage
