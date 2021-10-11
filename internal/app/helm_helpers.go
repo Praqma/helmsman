@@ -200,7 +200,7 @@ func addHelmRepos(repos map[string]string) error {
 			}
 		}
 		cmd := helmCmd(concat([]string{"repo", "add", forceUpdateFlag, repoName, repoURL}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
-		if _, err := cmd.Exec(); err != nil {
+		if _, err := cmd.RetryExec(3); err != nil {
 			return fmt.Errorf("while adding helm repository [%s]]: %w", repoName, err)
 		}
 	}
