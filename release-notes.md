@@ -1,5 +1,5 @@
-# v3.7.5
+# v3.7.6
 
 ## Fixes and improvements
 
-- fix: unknown command "chart" for "helm" (#628)
+- fix: retry on issues when adding helm repository (#630)
