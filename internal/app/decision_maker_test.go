@@ -317,8 +317,8 @@ func (dt decisionType) String() string {
 		return "create"
 	case change:
 		return "change"
-	case delete:
-		return "delete"
+	case remove:
+		return "remove"
 	case noop:
 		return "noop"
 	}
