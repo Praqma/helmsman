@@ -112,6 +112,7 @@ The following options can be skipped if your kubectl context is already created 
 - **slackWebhook** : a [Slack](http://slack.com) Webhook URL to receive Helmsman notifications. This can be passed directly or in an environment variable.
 - **msTeamsWebhook** : a [Microsoft Teams](https://www.microsoft.com/pl-pl/microsoft-teams/group-chat-software) Webhook URL to receive Helmsman notifications. This can be passed directly or in an environment variable.
 - **reverseDelete** : if set to `true` it will reverse the priority order whilst deleting.
+- **namespaceLabelsAuthoritative** : if set to `true` it will remove all the namespace's labels that are not defined in DSL for particular namespace
 - **eyamlEnabled** : if set to `true` it will use [hiera-eyaml](https://github.com/voxpupuli/hiera-eyaml) to decrypt secret files instead of using default helm-secrets based on sops
 - **eyamlPrivateKeyPath** : if set with path to the eyaml private key file, it will use it instead of looking for default one in ./keys directory relative to where Helmsman were run. It needs to be defined in conjunction with eyamlPublicKeyPath.
 - **eyamlPublicKeyPath** : if set with path to the eyaml public key file, it will use it instead of looking for default one in ./keys directory relative to where Helmsman were run. It needs to be defined in conjunction with eyamlPrivateKeyPath.
