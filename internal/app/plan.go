@@ -16,7 +16,7 @@ type decisionType int
 const (
 	create decisionType = iota + 1
 	change
-	delete
+	remove
 	noop
 	ignored
 )
@@ -219,7 +219,7 @@ func (p *plan) print() {
 	for _, decision := range p.Decisions {
 		if decision.Type == ignored || decision.Type == noop {
 			log.Info(decision.Description + " -- priority: " + strconv.Itoa(decision.Priority))
-		} else if decision.Type == delete {
+		} else if decision.Type == remove {
 			log.Warning(decision.Description + " -- priority: " + strconv.Itoa(decision.Priority))
 		} else {
 			log.Notice(decision.Description + " -- priority: " + strconv.Itoa(decision.Priority))

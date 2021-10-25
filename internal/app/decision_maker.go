@@ -102,7 +102,7 @@ func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo) 
 
 	if flags.destroy {
 		if ok := cs.releaseExists(r, ""); ok {
-			p.addDecision("Release [ "+r.Name+" ] will be DELETED (destroy flag enabled).", r.Priority, delete)
+			p.addDecision("Release [ "+r.Name+" ] will be DELETED (destroy flag enabled).", r.Priority, remove)
 			r.uninstall(p)
 		}
 		return
@@ -110,7 +110,7 @@ func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo) 
 
 	if !r.Enabled {
 		if ok := cs.releaseExists(r, ""); ok {
-			p.addDecision("Release [ "+r.Name+" ] is desired to be DELETED.", r.Priority, delete)
+			p.addDecision("Release [ "+r.Name+" ] is desired to be DELETED.", r.Priority, remove)
 			r.uninstall(p)
 		} else {
 			p.addDecision("Release [ "+r.Name+" ] disabled", r.Priority, noop)
@@ -275,7 +275,7 @@ func (cs *currentState) cleanUntrackedReleases(s *state, p *plan) {
 			if !tracked {
 				toDelete++
 				r := cs.releases[name+"-"+ns]
-				p.addDecision("Untracked release [ "+r.Name+" ] found and it will be deleted", -1000, delete)
+				p.addDecision("Untracked release [ "+r.Name+" ] found and it will be deleted", -1000, remove)
 				r.uninstall(p)
 			}
 		}

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -24,7 +25,7 @@ func addNamespaces(s *state) {
 		go func(name string, cfg *namespace, wg *sync.WaitGroup) {
 			defer wg.Done()
 			createNamespace(name)
-			labelNamespace(name, cfg.Labels)
+			labelNamespace(name, cfg.Labels, s.Settings.NamespaceLabelsAuthoritative)
 			annotateNamespace(name, cfg.Annotations)
 			if !flags.dryRun {
 				setLimits(name, cfg.Limits)
@@ -60,12 +61,34 @@ func createNamespace(ns string) {
 }
 
 // labelNamespace labels a namespace with provided labels
-func labelNamespace(ns string, labels map[string]string) {
-	if len(labels) == 0 {
+func labelNamespace(ns string, labels map[string]string, authoritative bool) {
+	var nsLabels map[string]string
+
+	args := []string{"label", "--overwrite", "namespace/" + ns, flags.getKubeDryRunFlag("label")}
+
+	if authoritative {
+		cmdGetLabels := kubectl([]string{"get", "namespace", ns, "-o", "jsonpath='{.metadata.labels}'"}, "Getting namespace [ "+ns+" ] current labels")
+		res, err := cmdGetLabels.Exec()
+		if err != nil {
+			log.Error(fmt.Sprintf("Could not get namespace [ %s ] labels. Error message: %v", ns, err))
+		}
+		if err := json.Unmarshal([]byte(strings.Trim(res.output, `'`)), &nsLabels); err != nil {
+			log.Fatal(fmt.Sprintf("failed to unmarshal kubectl get namespace labels output: %s, ended with error: %s", res.output, err))
+		}
+		// ignore default k8s namespace label from being removed
+		delete(nsLabels, "kubernetes.io/metadata.name")
+		// ignore every label defined in DSF for the namespace from being removed
+		for definedLabelKey, _ := range labels {
+			delete(nsLabels, definedLabelKey)
+		}
+		for label, _ := range nsLabels {
+			args = append(args, label+"-")
+		}
+	}
+	if len(labels) == 0 && len(nsLabels) == 0 {
 		return
 	}
 
-	args := []string{"label", "--overwrite", "namespace/" + ns, flags.getKubeDryRunFlag("label")}
 	for k, v := range labels {
 		args = append(args, k+"="+v)
 	}
