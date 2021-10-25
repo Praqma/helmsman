@@ -1,5 +1,5 @@
-# v3.7.6
+# v3.7.7
 
 ## Fixes and improvements
 
-- fix: retry on issues when adding helm repository (#630)
+- feat: Add namespaceLabelsAuthoritative settings option to allow removing undefined ns labels (#631)
