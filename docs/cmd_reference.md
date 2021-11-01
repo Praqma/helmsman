@@ -77,6 +77,9 @@ This lists available CMD options in Helmsman:
   `--no-ssm-subst`
         turn off SSM parameter substitution globally.
 
+  `-spec string`
+        specification file name, contains locations of desired state files to be merged
+
   `--subst-ssm-values`
         turn on SSM parameter substitution in values files.
 
