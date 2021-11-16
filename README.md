@@ -91,6 +91,19 @@ Check the images on [dockerhub](https://hub.docker.com/r/praqma/helmsman/tags/)
 
 Helmsman has been packaged in Archlinux under `helmsman-bin` for the latest binary release, and `helmsman-git` for master.
 
+You can also install Helmsman using [Homebrew](https://brew.sh)
+
+```sh
+brew install helmsman
+```
+
+## As an [asdf-vm](https://asdf-vm.com/) plugin
+
+```sh
+asdf plugin-add helmsman
+asdf install helmsman latest
+```
+
 # Documentation
 
 > Documentation for Helmsman v1.x can be found at: [docs v1.x](https://github.com/Praqma/helmsman/tree/1.x/docs)
