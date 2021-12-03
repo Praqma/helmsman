@@ -226,15 +226,96 @@ func Test_decide(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cs := newCurrentState()
 			tt.args.s.disableUntargetedApps([]string{}, tt.targetFlag)
+			settings := config{}
 			outcome := plan{}
 			// Act
-			cs.decide(tt.args.s.Apps[tt.args.r], tt.args.s.Namespaces[tt.args.s.Apps[tt.args.r].Namespace], &outcome, &chartInfo{})
+			cs.decide(tt.args.s.Apps[tt.args.r], tt.args.s.Namespaces[tt.args.s.Apps[tt.args.r].Namespace], &outcome, &chartInfo{}, settings)
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
 
 			// Assert
 			if got != tt.want {
 				t.Errorf("decide() = %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_decide_skip_ignored_apps(t *testing.T) {
+	type args struct {
+		rs []string
+		s  *state
+	}
+	tests := []struct {
+		name       string
+		targetFlag []string
+		args       args
+		want       int
+	}{
+		{
+			name:       "decide() - skipIgnoredApps is defined and target flag contains 2 app names - plan should have 2 decisions",
+			targetFlag: []string{"service1", "service2"},
+			args: args{
+				rs: []string{"service1", "service2"},
+				s: &state{
+					Apps: map[string]*release{
+						"service1": {
+							Name:      "service1",
+							Namespace: "namespace",
+							Enabled:   true,
+						},
+						"service2": {
+							Name:      "service2",
+							Namespace: "namespace",
+							Enabled:   true,
+						},
+					},
+				},
+			},
+			want: 2,
+		},
+		{
+			name:       "decide() - skipIgnoredApps is defined and target flag contains just 1 app name - plan should have 1 decision - one app should be ignored",
+			targetFlag: []string{"service1"},
+			args: args{
+				rs: []string{"service1", "service2"},
+				s: &state{
+					Apps: map[string]*release{
+						"service1": {
+							Name:      "service1",
+							Namespace: "namespace",
+							Enabled:   true,
+						},
+						"service2": {
+							Name:      "service2",
+							Namespace: "namespace",
+							Enabled:   true,
+						},
+					},
+				},
+			},
+			want: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cs := newCurrentState()
+			tt.args.s.disableUntargetedApps([]string{}, tt.targetFlag)
+			settings := config{
+				SkipIgnoredApps: true,
+			}
+			outcome := plan{}
+			// Act
+			for _, r := range tt.args.rs {
+				cs.decide(tt.args.s.Apps[r], tt.args.s.Namespaces[tt.args.s.Apps[r].Namespace], &outcome, &chartInfo{}, settings)
+			}
+			got := outcome.Decisions
+			t.Log(outcome.Decisions)
+
+			// Assert
+			if len(got) != tt.want {
+				t.Errorf("decide() = %d, want %d", len(got), tt.want)
 			}
 		})
 	}
