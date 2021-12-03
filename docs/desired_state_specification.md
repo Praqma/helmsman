@@ -118,6 +118,7 @@ The following options can be skipped if your kubectl context is already created 
 - **eyamlPublicKeyPath** : if set with path to the eyaml public key file, it will use it instead of looking for default one in ./keys directory relative to where Helmsman were run. It needs to be defined in conjunction with eyamlPrivateKeyPath.
 - **globalHooks** : defines global lifecycle hooks to apply yaml manifest before and/or after different helmsman operations. Check [here](how_to/apps/lifecycle_hooks.md) for more details.
 - **globalMaxHistory** : defines the **global** maximum number of helm revisions state (secrets/configmap) to keep. Releases can override this global value by setting `maxHistory`. If both are not set or are set to `0`, it is defaulted to 10.
+- **skipIgnoredApps** : if set to true apps, that would normally be listed in the plan as `ignored`, will be skipped. They won't show up on the plan output and won't be considered in decisions. This is especially useful when using `-target` or `-group` flags with significant amount of apps where most of them show up as `ignored` in the plan output making it hard to read.
 
 Example:
 
