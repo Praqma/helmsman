@@ -77,7 +77,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 				<-sem
 			}()
 			r.checkChartDepUpdate()
-			cs.decide(r, s.Namespaces[r.Namespace], p, c)
+			cs.decide(r, s.Namespaces[r.Namespace], p, c, s.Settings)
 		}(r, s.ChartInfo[r.Chart][r.Version])
 	}
 	wg.Wait()
@@ -87,10 +87,12 @@ func (cs *currentState) makePlan(s *state) *plan {
 
 // decide makes a decision about what commands (actions) need to be executed
 // to make a release section of the desired state come true.
-func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo) {
+func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo, settings config) {
 	// check for presence in defined targets or groups
 	if !r.isConsideredToRun() {
-		p.addDecision("Release [ "+r.Name+" ] ignored", r.Priority, ignored)
+		if !settings.SkipIgnoredApps {
+			p.addDecision("Release [ "+r.Name+" ] ignored", r.Priority, ignored)
+		}
 		return
 	}
 
