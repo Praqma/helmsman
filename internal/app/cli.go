@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/imdario/mergo"
@@ -45,6 +46,14 @@ func (f *fileOptionArray) Set(value string) error {
 	fo.name = value
 	*f = append(*f, fo)
 	return nil
+}
+
+func (f fileOptionArray) sort() {
+	log.Verbose("Sorting files listed in the -spec file based on their priorities... ")
+
+	sort.SliceStable(f, func(i, j int) bool {
+		return (f)[i].priority < (f)[j].priority
+	})
 }
 
 func (i *stringArray) String() string {
@@ -256,9 +265,12 @@ func (c *cli) readState(s *state) error {
 			fo := fileOption{}
 			fo.name = val.Path
 			fo.priority = val.Priority
-			checkSpecValid(fo.name)
+			if err := isValidFile(fo.name, validManifestFiles); err != nil {
+				return fmt.Errorf("invalid -spec file: %w", err)
+			}
 			c.files = append(c.files, fo)
 		}
+		c.files.sort()
 	}
 
 	// read the TOML/YAML desired state file
