@@ -33,15 +33,6 @@ func (pc *StateFiles) specFromYAML(file string) error {
 	return nil
 }
 
-func checkSpecValid(f string) error {
-	if err := isValidFile(f, []string{"yaml", "yml"}); err != nil {
-		// exit
-		return err
-	}
-
-	return nil
-}
-
 func (s *state) patchPriority(priority int) error {
 	for app, _ := range s.Apps {
 		if s.Apps[app].Priority > priority {
