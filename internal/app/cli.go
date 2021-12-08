@@ -264,7 +264,6 @@ func (c *cli) readState(s *state) error {
 		for _, val := range sp.StateFiles {
 			fo := fileOption{}
 			fo.name = val.Path
-			fo.priority = val.Priority
 			if err := isValidFile(fo.name, validManifestFiles); err != nil {
 				return fmt.Errorf("invalid -spec file: %w", err)
 			}
@@ -279,10 +278,6 @@ func (c *cli) readState(s *state) error {
 
 		if err := fileState.fromFile(f.name); err != nil {
 			return err
-		}
-
-		if f.priority != 0 {
-			fileState.patchPriority(f.priority)
 		}
 
 		log.Infof("Parsed [[ %s ]] successfully and found [ %d ] apps", f.name, len(fileState.Apps))

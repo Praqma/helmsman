@@ -51,7 +51,7 @@ func Test_specFromYAML(t *testing.T) {
 
 func Test_specFileSort(t *testing.T) {
 	type args struct {
-		files    fileOptionArray
+		files fileOptionArray
 	}
 	tests := []struct {
 		name string
@@ -88,4 +88,3 @@ func Test_specFileSort(t *testing.T) {
 		})
 	}
 }
-

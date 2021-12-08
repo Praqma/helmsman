@@ -1,6 +1,5 @@
 ---
 stateFiles:
   - path: examples/example.yaml
-    priority: -10
   - path: examples/minimal-example.yaml
   - path: examples/minimal-example.toml
