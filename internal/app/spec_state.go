@@ -6,13 +6,12 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type SpecConfig struct {
-	Path     string `yaml:"path"`
-	Priority int    `yaml:"priority"`
+type StatePath struct {
+	Path string `yaml:"path"`
 }
 
 type StateFiles struct {
-	StateFiles []SpecConfig `yaml:"stateFiles"`
+	StateFiles []StatePath `yaml:"stateFiles"`
 }
 
 // fromYAML reads a yaml file and decodes it to a state type.
@@ -30,14 +29,5 @@ func (pc *StateFiles) specFromYAML(file string) error {
 		return err
 	}
 
-	return nil
-}
-
-func (s *state) patchPriority(priority int) error {
-	for app, _ := range s.Apps {
-		if s.Apps[app].Priority > priority {
-			s.Apps[app].Priority = priority
-		}
-	}
 	return nil
 }
