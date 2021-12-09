@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/imdario/mergo"
@@ -24,6 +25,37 @@ const (
 // Allow parsing of multiple string command line options into an array of strings
 type stringArray []string
 
+type fileOptionArray []fileOption
+
+type fileOption struct {
+	name     string
+	priority int
+}
+
+func (f *fileOptionArray) String() string {
+	var a []string
+	for _, v := range *f {
+		a = append(a, v.name)
+	}
+	return strings.Join(a, " ")
+}
+
+func (f *fileOptionArray) Set(value string) error {
+	var fo fileOption
+
+	fo.name = value
+	*f = append(*f, fo)
+	return nil
+}
+
+func (f fileOptionArray) sort() {
+	log.Verbose("Sorting files listed in the -spec file based on their priorities... ")
+
+	sort.SliceStable(f, func(i, j int) bool {
+		return (f)[i].priority < (f)[j].priority
+	})
+}
+
 func (i *stringArray) String() string {
 	return strings.Join(*i, " ")
 }
@@ -35,7 +67,8 @@ func (i *stringArray) Set(value string) error {
 
 type cli struct {
 	debug                 bool
-	files                 stringArray
+	files                 fileOptionArray
+	spec                  string
 	envFiles              stringArray
 	target                stringArray
 	group                 stringArray
@@ -88,6 +121,7 @@ func (c *cli) parse() {
 	flag.Var(&c.group, "group", "limit execution to specific group of apps.")
 	flag.IntVar(&c.diffContext, "diff-context", -1, "number of lines of context to show around changes in helm diff output")
 	flag.IntVar(&c.parallel, "p", 1, "max number of concurrent helm releases to run")
+	flag.StringVar(&c.spec, "spec", "", "specification file name, contains locations of desired state files to be merged")
 	flag.StringVar(&c.kubeconfig, "kubeconfig", "", "path to the kubeconfig file to use for CLI requests")
 	flag.StringVar(&c.nsOverride, "ns-override", "", "override defined namespaces with this one")
 	flag.StringVar(&c.contextOverride, "context-override", "", "override releases context defined in release state with this one")
@@ -147,6 +181,10 @@ func (c *cli) parse() {
 		log.Fatal("--target and --group can't be used together.")
 	}
 
+	if len(flags.files) > 0 && len(flags.spec) > 0 {
+		log.Fatal("-f and -spec can't be used together.")
+	}
+
 	if c.parallel < 1 {
 		c.parallel = 1
 	}
@@ -159,7 +197,7 @@ func (c *cli) parse() {
 	kubectlVersion := getKubectlVersion()
 	log.Verbose("kubectl client version: " + kubectlVersion)
 
-	if len(c.files) == 0 {
+	if len(c.files) == 0 && len(c.spec) == 0 {
 		log.Info("No desired state files provided.")
 		os.Exit(0)
 	}
@@ -218,32 +256,49 @@ func (c *cli) readState(s *state) error {
 	os.RemoveAll(tempFilesDir)
 	_ = os.MkdirAll(tempFilesDir, 0o755)
 
+	if len(c.spec) > 0 {
+
+		sp := new(StateFiles)
+		sp.specFromYAML(c.spec)
+
+		for _, val := range sp.StateFiles {
+			fo := fileOption{}
+			fo.name = val.Path
+			if err := isValidFile(fo.name, validManifestFiles); err != nil {
+				return fmt.Errorf("invalid -spec file: %w", err)
+			}
+			c.files = append(c.files, fo)
+		}
+		c.files.sort()
+	}
+
 	// read the TOML/YAML desired state file
 	for _, f := range c.files {
 		var fileState state
 
-		if err := fileState.fromFile(f); err != nil {
+		if err := fileState.fromFile(f.name); err != nil {
 			return err
 		}
-		log.Infof("Parsed [[ %s ]] successfully and found [ %d ] apps", f, len(fileState.Apps))
+
+		log.Infof("Parsed [[ %s ]] successfully and found [ %d ] apps", f.name, len(fileState.Apps))
 		// Merge Apps that already existed in the state
 		for appName, app := range fileState.Apps {
 			if _, ok := s.Apps[appName]; ok {
 				if err := mergo.Merge(s.Apps[appName], app, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
-					return fmt.Errorf("failed to merge %s from desired state file %s: %w", appName, f, err)
+					return fmt.Errorf("failed to merge %s from desired state file %s: %w", appName, f.name, err)
 				}
 			}
 		}
 
 		// Merge the remaining Apps
 		if err := mergo.Merge(&s.Apps, &fileState.Apps); err != nil {
-			return fmt.Errorf("failed to merge desired state file %s: %w", f, err)
+			return fmt.Errorf("failed to merge desired state file %s: %w", f.name, err)
 		}
 		// All the apps are already merged, make fileState.Apps empty to avoid conflicts in the final merge
 		fileState.Apps = make(map[string]*release)
 
 		if err := mergo.Merge(s, &fileState, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
-			return fmt.Errorf("failed to merge desired state file %s: %w", f, err)
+			return fmt.Errorf("failed to merge desired state file %s: %w", f.name, err)
 		}
 	}
 
