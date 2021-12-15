@@ -50,6 +50,7 @@ It is recommended that you also check the [DSF spec](../desired_state_specificat
   - [Protecting namespaces and releases](misc/protect_namespaces_and_releases.md)
   - [Send slack notifications from Helmsman](misc/send_slack_notifications_from_helmsman.md)
   - [Send MS Teams notifications from Helmsman](misc/send_ms_teams_notifications_from_helmsman.md)
+  - [Use multiple desired state files with Specification file (--spec flag)](misc/multiple_desired_state_files_specification.md)
   - [Merge multiple desired state files](misc/merge_desired_state_files.md)
   - [Limit Helmsman deployment to specific apps](misc/limit-deployment-to-specific-apps.md)
   - [Limit Helmsman deployment to specific group of apps](misc/limit-deployment-to-specific-group-of-apps.md)
