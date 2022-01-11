@@ -67,6 +67,10 @@ func (c *Command) String() string {
 
 // RetryExec runs exec command with retry
 func (c *Command) RetryExec(attempts int) (ExitStatus, error) {
+	return c.RetryExecWithThreshold(attempts, 0)
+}
+
+func (c *Command) RetryExecWithThreshold(attempts, exitCodeThreshold int) (ExitStatus, error) {
 	var (
 		result ExitStatus
 		err    error
@@ -74,7 +78,7 @@ func (c *Command) RetryExec(attempts int) (ExitStatus, error) {
 
 	for i := 0; i < attempts; i++ {
 		result, err = c.Exec()
-		if err == nil {
+		if err == nil || (result.code >= 0 && result.code <= exitCodeThreshold) {
 			return result, nil
 		}
 		if i < (attempts - 1) {
@@ -123,7 +127,7 @@ func (c *Command) Exec() (ExitStatus, error) {
 		errors: strings.TrimSpace(stderr.String()),
 	}
 	if err != nil {
-		res.code = 1
+		res.code = 126
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			res.code = exiterr.ExitCode()
 		}
@@ -164,7 +168,7 @@ func (p CmdPipe) Exec() (ExitStatus, error) {
 		errors: strings.TrimSpace(stderr.String()),
 	}
 	if err != nil {
-		res.code = 1
+		res.code = 126
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			res.code = exiterr.ExitCode()
 		}
@@ -175,6 +179,10 @@ func (p CmdPipe) Exec() (ExitStatus, error) {
 
 // RetryExec runs piped commands with retry
 func (p CmdPipe) RetryExec(attempts int) (ExitStatus, error) {
+	return p.RetryExecWithThreshold(attempts, 0)
+}
+
+func (p CmdPipe) RetryExecWithThreshold(attempts, exitCodeThreshold int) (ExitStatus, error) {
 	var (
 		result ExitStatus
 		err    error
@@ -183,7 +191,7 @@ func (p CmdPipe) RetryExec(attempts int) (ExitStatus, error) {
 	l := len(p) - 1
 	for i := 0; i < attempts; i++ {
 		result, err = p.Exec()
-		if err == nil {
+		if err == nil || (result.code >= 0 && result.code <= exitCodeThreshold) {
 			return result, nil
 		}
 		if i < (attempts - 1) {
@@ -209,7 +217,10 @@ func call(stack []*exec.Cmd) (err error) {
 			if err == nil {
 				err = call(stack[1:])
 			} else {
-				stack[1].Wait()
+				err = stack[1].Wait()
+			}
+			if err != nil {
+				log.Infof("call: %v", err)
 			}
 		}()
 	}
