@@ -166,7 +166,10 @@ func (r *release) uninstall(p *plan, optionalNamespace ...string) {
 
 // diffRelease diffs an existing release with the specified values.yaml
 func (r *release) diff() (string, error) {
-	var args []string
+	var (
+		args        []string
+		maxExitCode int
+	)
 
 	if !flags.kubectlDiff {
 		args = []string{"diff", "--suppress-secrets"}
@@ -186,9 +189,10 @@ func (r *release) diff() (string, error) {
 
 	if flags.kubectlDiff {
 		cmd = append(cmd, kubectl([]string{"diff", "--namespace", r.Namespace, "-f", "-"}, desc))
+		maxExitCode = 1
 	}
 
-	res, err := cmd.RetryExec(3)
+	res, err := cmd.RetryExecWithThreshold(3, maxExitCode)
 	if err != nil {
 		if flags.kubectlDiff && res.code <= 1 {
 			// kubectl diff exit status:
