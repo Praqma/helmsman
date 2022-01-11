@@ -31,7 +31,10 @@ func Test_specFromYAML(t *testing.T) {
 		},
 	}
 
-	teardownTestCase := setupStateFileTestCase(t)
+	teardownTestCase, err := setupStateFileTestCase(t)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		// os.Args = append(os.Args, "-f ../../examples/example.yaml")
@@ -72,7 +75,10 @@ func Test_specFileSort(t *testing.T) {
 		},
 	}
 
-	teardownTestCase := setupStateFileTestCase(t)
+	teardownTestCase, err := setupStateFileTestCase(t)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
