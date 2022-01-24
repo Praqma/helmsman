@@ -2,5 +2,5 @@
 
 ## Fixes and improvements
 
-- fix: kubectl diff may return 1 on success (#635)
-- refactor: add missing error checks (#635)
+- fix: kubectl diff may return 1 on success (#637)
+- refactor: add missing error checks (#637)
