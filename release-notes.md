@@ -1,4 +1,4 @@
-# v3.8.0
+# v3.8.1
 
 ## Fixes and improvements
 
