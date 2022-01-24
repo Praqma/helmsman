@@ -6,14 +6,17 @@ import (
 	"testing"
 )
 
-func setupStateFileTestCase(t *testing.T) func(t *testing.T) {
+func setupStateFileTestCase(t *testing.T) (func(t *testing.T), error) {
 	t.Log("setup test case")
-	os.MkdirAll(tempFilesDir, 0o755)
+	if err := os.MkdirAll(tempFilesDir, 0o755); err != nil {
+		t.Errorf("setupStateFileTestCase(), failed to create temp files dir: %v", err)
+		return nil, err
+	}
 
 	return func(t *testing.T) {
 		t.Log("teardown test case")
 		os.RemoveAll(tempFilesDir)
-	}
+	}, nil
 }
 
 func Test_fromTOML(t *testing.T) {
@@ -45,7 +48,10 @@ func Test_fromTOML(t *testing.T) {
 	os.Setenv("ORG_PATH", "sample")
 	os.Setenv("VALUE", "sample")
 
-	teardownTestCase := setupStateFileTestCase(t)
+	teardownTestCase, err := setupStateFileTestCase(t)
+	if err != nil {
+		t.Errorf("setupStateFileTestCase(), got: %v", err)
+	}
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -97,7 +103,10 @@ func Test_fromTOML_Expand(t *testing.T) {
 	os.Setenv("ORG_PATH", "sample")
 	os.Setenv("VALUE", "sample")
 
-	teardownTestCase := setupStateFileTestCase(t)
+	teardownTestCase, err := setupStateFileTestCase(t)
+	if err != nil {
+		t.Errorf("setupStateFileTestCase(), got: %v", err)
+	}
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -179,7 +188,10 @@ func Test_fromYAML(t *testing.T) {
 	os.Setenv("VALUE", "sample")
 	os.Setenv("ORG_PATH", "sample")
 
-	teardownTestCase := setupStateFileTestCase(t)
+	teardownTestCase, err := setupStateFileTestCase(t)
+	if err != nil {
+		t.Errorf("setupStateFileTestCase(), got: %v", err)
+	}
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -225,13 +237,17 @@ func Test_fromYAML_UnsetVars(t *testing.T) {
 		},
 	}
 
-	teardownTestCase := setupStateFileTestCase(t)
+	teardownTestCase, err := setupStateFileTestCase(t)
+	if err != nil {
+		t.Errorf("setupStateFileTestCase(), got: %v", err)
+	}
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.targetVar == "ORG_PATH" {
+			switch tt.targetVar {
+			case "ORG_PATH":
 				os.Setenv("VALUE", "sample")
-			} else if tt.targetVar == "VALUE" {
+			case "VALUE":
 				os.Setenv("ORG_PATH", "sample")
 			}
 			err := tt.args.s.fromYAML(tt.args.file)
@@ -282,7 +298,10 @@ func Test_fromYAML_Expand(t *testing.T) {
 	os.Setenv("ORG_PATH", "sample")
 	os.Setenv("VALUE", "sample")
 
-	teardownTestCase := setupStateFileTestCase(t)
+	teardownTestCase, err := setupStateFileTestCase(t)
+	if err != nil {
+		t.Errorf("setupStateFileTestCase(), got: %v", err)
+	}
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
