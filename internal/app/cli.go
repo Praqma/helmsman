@@ -259,7 +259,9 @@ func (c *cli) readState(s *state) error {
 	if len(c.spec) > 0 {
 
 		sp := new(StateFiles)
-		sp.specFromYAML(c.spec)
+		if err := sp.specFromYAML(c.spec); err != nil {
+			return fmt.Errorf("error parsing spec file: %w", err)
+		}
 
 		for _, val := range sp.StateFiles {
 			fo := fileOption{}

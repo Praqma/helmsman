@@ -5,11 +5,17 @@ import (
 	"testing"
 )
 
-func setupTestCase(t *testing.T) func(t *testing.T) {
+func setupTestCase(t *testing.T) (func(t *testing.T), error) {
 	t.Log("setup test case")
-	os.MkdirAll(tempFilesDir, 0o755)
-	os.MkdirAll(os.TempDir()+"/helmsman-tests/myapp", os.ModePerm)
-	os.MkdirAll(os.TempDir()+"/helmsman-tests/dir-with space/myapp", os.ModePerm)
+	if err := os.MkdirAll(tempFilesDir, 0o755); err != nil {
+		return nil, err
+	}
+	if err := os.MkdirAll(os.TempDir()+"/helmsman-tests/myapp", os.ModePerm); err != nil {
+		return nil, err
+	}
+	if err := os.MkdirAll(os.TempDir()+"/helmsman-tests/dir-with space/myapp", os.ModePerm); err != nil {
+		return nil, err
+	}
 	cmd := helmCmd([]string{"create", os.TempDir() + "/helmsman-tests/dir-with space/myapp"}, "creating an empty local chart directory")
 	if _, err := cmd.Exec(); err != nil {
 		log.Fatalf("Command failed: %v", err)
@@ -19,7 +25,7 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 		t.Log("teardown test case")
 		os.RemoveAll(tempFilesDir)
 		os.RemoveAll(os.TempDir() + "/helmsman-tests/")
-	}
+	}, nil
 }
 
 func Test_state_validate(t *testing.T) {
@@ -494,7 +500,11 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 		},
 	}
 
-	teardownTestCase := setupTestCase(t)
+	teardownTestCase, err := setupTestCase(t)
+	if err != nil {
+		t.Errorf("setupTestCase() = %v", err)
+		return
+	}
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

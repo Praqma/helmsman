@@ -78,10 +78,10 @@ func labelNamespace(ns string, labels map[string]string, authoritative bool) {
 		// ignore default k8s namespace label from being removed
 		delete(nsLabels, "kubernetes.io/metadata.name")
 		// ignore every label defined in DSF for the namespace from being removed
-		for definedLabelKey, _ := range labels {
+		for definedLabelKey := range labels {
 			delete(nsLabels, definedLabelKey)
 		}
-		for label, _ := range nsLabels {
+		for label := range nsLabels {
 			args = append(args, label+"-")
 		}
 	}

@@ -112,7 +112,9 @@ func Test_inspectUpgradeScenario(t *testing.T) {
 
 			// Act
 			c, _ := getChartInfo(tt.args.r.Chart, tt.args.r.Version)
-			cs.inspectUpgradeScenario(tt.args.r, &outcome, c)
+			if err := cs.inspectUpgradeScenario(tt.args.r, &outcome, c); err != nil {
+				t.Errorf("inspectUpgradeScenario() error = %v", err)
+			}
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
 

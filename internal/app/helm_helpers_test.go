@@ -72,7 +72,7 @@ func Test_getChartInfo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := getChartInfo(tt.args.r.Chart, tt.args.r.Version)
 			if err != nil && tt.want != nil {
-				t.Errorf("getChartInfo() = Unexpected error: %w", err)
+				t.Errorf("getChartInfo() = Unexpected error: %v", err)
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("getChartInfo() = %v, want %v", got, tt.want)
