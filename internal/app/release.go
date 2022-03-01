@@ -429,6 +429,23 @@ func (r *release) checkChartDepUpdate() {
 	}
 }
 
+func (r *release) checkChartForUpdates() {
+	if !r.isConsideredToRun() {
+		return
+	}
+
+	if flags.checkForChartUpdates && !isLocalChart(r.Chart) {
+		chartInfo, err := getChartInfo(r.Chart, ">= "+r.Version)
+		if err != nil {
+			log.Fatal("Couldn't check version for " + r.Chart + ": " + err.Error())
+		}
+
+		if checkVersion(r.Version, "< "+chartInfo.Version) {
+			log.Infof("Newer version for release %s, chart %s found: current %s, latest %s", r.Name, r.Chart, r.Version, chartInfo.Version)
+		}
+	}
+}
+
 // overrideNamespace overrides a release defined namespace with a new given one
 func (r *release) overrideNamespace(newNs string) {
 	log.Info("Overriding namespace for app:  " + r.Name)
