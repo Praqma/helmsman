@@ -151,7 +151,7 @@ func (c *cli) parse() {
 	flag.BoolVar(&c.alwaysUpgrade, "always-upgrade", false, "upgrade release even if no changes are found")
 	flag.BoolVar(&c.noUpdate, "no-update", false, "skip updating helm repos")
 	flag.BoolVar(&c.kubectlDiff, "kubectl-diff", false, "use kubectl diff instead of helm diff. Defalts to false if the helm diff plugin is installed.")
-	flag.BoolVar(&c.checkForChartUpdates, "check-for-chart-updates", false, "compares the version in the state file to the latest version in the chart repository")
+	flag.BoolVar(&c.checkForChartUpdates, "check-for-chart-updates", false, "compares the chart versions in the state file to the latest versions in the chart repositories and shows available updates")
 	flag.Usage = printUsage
 	flag.Parse()
 
