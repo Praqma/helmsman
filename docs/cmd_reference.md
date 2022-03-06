@@ -101,4 +101,7 @@ This lists available CMD options in Helmsman:
   `--update-deps`
         run 'helm dep up' for local chart
 
+  `--check-for-chart-updates`
+        compares the chart versions in the state file to the latest versions in the chart repositories and shows available updates
+
   `--v`    show the version.

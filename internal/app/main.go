@@ -103,6 +103,12 @@ func Main() {
 		s.updateContextLabels()
 	}
 
+	if flags.checkForChartUpdates {
+		for _, r := range s.Apps {
+			r.checkChartForUpdates()
+		}
+	}
+
 	log.Info("Preparing plan")
 	cs := s.getCurrentState()
 	p := cs.makePlan(&s)
