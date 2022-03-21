@@ -77,7 +77,7 @@ test: deps vet repo ## Run unit tests
 .PHONY: test
 
 cross: deps ## Create binaries for all OSs
-	@gox -os '!freebsd !netbsd' -arch '!arm' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}' ./...
+	@gox -os 'windows linux darwin' -arch 'arm64 amd64' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}' ./...
 .PHONY: cross
 
 release: ## Generate a new release
