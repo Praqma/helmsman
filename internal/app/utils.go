@@ -117,6 +117,19 @@ func isOfType(filename string, filetypes []string) bool {
 	return result
 }
 
+func isSupportedProtocol(ref string, protocols []string) bool {
+	u, err := url.Parse(ref)
+	if err != nil {
+		log.Fatalf("%s is not a valid path: %s", ref, err)
+	}
+	for _, p := range protocols {
+		if u.Scheme == p {
+			return true
+		}
+	}
+	return false
+}
+
 // readFile returns the content of a file as a string.
 // takes a file path as input. It throws an error and breaks the program execution if it fails to read the file.
 func readFile(filepath string) string {
@@ -375,7 +388,7 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		log.Logger.Errorf("Could not deliver message to Slack. HTTP response status: %s", resp.Status)
+		log.Errorf("Could not deliver message to Slack. HTTP response status: %s", resp.Status)
 		return false
 	}
 	return true
@@ -557,7 +570,7 @@ func notifyMSTeams(content string, url string, failure bool, executing bool) boo
 				contentBold += "**" + contentSplit[i] + "**\n\n"
 			}
 		}
-		contentBold = strings.TrimRight(contentBold, "\n\n")
+		contentBold = strings.TrimSuffix(contentBold, "\n\n")
 	} else if executing && !failure {
 		pretext = "Here is what I have done:"
 		contentBold = "**" + content + "**"
@@ -572,8 +585,8 @@ func notifyMSTeams(content string, url string, failure bool, executing bool) boo
 
 	jsonStr := []byte(`{
 		"@type": "MessageCard",
-    	"@context": "http://schema.org/extensions",
-    	"themeColor": "` + color + `",
+		"@context": "http://schema.org/extensions",
+		"themeColor": "` + color + `",
 		"title": "` + pretext + `",
 		"summary": "Helmsman results.",
 		"sections": [
