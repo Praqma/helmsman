@@ -142,12 +142,17 @@ func (s *state) toYAML(file string) {
 func (s *state) expand(relativeToFile string) {
 	dir := filepath.Dir(relativeToFile)
 	downloadDest, _ := filepath.Abs(createTempDir(tempFilesDir, "tmp"))
+	validProtocols := []string{"http", "https"}
+	if checkHelmVersion(">=3.8.0") {
+		validProtocols = append(validProtocols, "oci")
+	}
 	for _, r := range s.Apps {
 		// resolve paths for all release files (values, secrets, hooks, etc...)
 		r.resolvePaths(dir, downloadDest)
 
 		// resolve paths for local charts
 		if r.Chart != "" {
+			var download bool
 			// support env vars in path
 			r.Chart = os.ExpandEnv(r.Chart)
 			repoName := strings.Split(r.Chart, "/")[0]
@@ -155,6 +160,10 @@ func (s *state) expand(relativeToFile string) {
 			isRepo = isRepo || stringInSlice(repoName, s.PreconfiguredHelmRepos)
 			// if there is no repo for the chart, we assume it's intended to be a local path or url
 			if !isRepo {
+				// unless explicitly requested by the user, we don't need to download if the protocol is natively supported by helm
+				download = flags.downloadCharts || !isSupportedProtocol(r.Chart, validProtocols)
+			}
+			if download {
 				if strings.HasPrefix(r.Chart, "oci://") && !strings.HasSuffix(r.Chart, r.Version) {
 					r.Chart = fmt.Sprintf("%s:%s", r.Chart, r.Version)
 				}
