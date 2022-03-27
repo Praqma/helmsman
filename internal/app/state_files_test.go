@@ -353,3 +353,27 @@ func Test_fromYAML_Expand(t *testing.T) {
 	os.Unsetenv("SET_URI")
 	os.Unsetenv("VALUE")
 }
+
+func Test_build(t *testing.T) {
+	teardownTestCase, err := setupStateFileTestCase(t)
+	if err != nil {
+		t.Errorf("setupStateFileTestCase(), got: %v", err)
+	}
+	defer teardownTestCase(t)
+	s := new(state)
+	files := fileOptionArray{
+		fileOption{name: "../../examples/composition/main.yaml"},
+		fileOption{name: "../../examples/composition/argo.yaml"},
+		fileOption{name: "../../examples/composition/artifactory.yaml"},
+	}
+	err = s.build(files)
+	if err != nil {
+		t.Errorf("build() - unexpected error: %v", err)
+	}
+	if len(s.Apps) != 2 {
+		t.Errorf("build() - unexpected number of apps, wanted 2 got %d", len(s.Apps))
+	}
+	if len(s.HelmRepos) != 2 {
+		t.Errorf("build() - unexpected number of repos, wanted 2 got %d", len(s.Apps))
+	}
+}

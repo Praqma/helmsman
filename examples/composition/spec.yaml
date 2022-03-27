@@ -1,0 +1,5 @@
+---
+stateFiles:
+  - path: main.yaml
+  - path: argo.yaml
+  - path: artifactory.yaml
