@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/imdario/mergo"
 	"github.com/joho/godotenv"
 )
 
@@ -279,36 +278,7 @@ func (c *cli) readState(s *state) error {
 	}
 
 	// read the TOML/YAML desired state file
-	for _, f := range c.files {
-		var fileState state
-
-		if err := fileState.fromFile(f.name); err != nil {
-			return err
-		}
-
-		log.Infof("Parsed [[ %s ]] successfully and found [ %d ] apps", f.name, len(fileState.Apps))
-		// Merge Apps that already existed in the state
-		for appName, app := range fileState.Apps {
-			if _, ok := s.Apps[appName]; ok {
-				if err := mergo.Merge(s.Apps[appName], app, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
-					return fmt.Errorf("failed to merge %s from desired state file %s: %w", appName, f.name, err)
-				}
-			}
-		}
-
-		// Merge the remaining Apps
-		if err := mergo.Merge(&s.Apps, &fileState.Apps); err != nil {
-			return fmt.Errorf("failed to merge desired state file %s: %w", f.name, err)
-		}
-		// All the apps are already merged, make fileState.Apps empty to avoid conflicts in the final merge
-		fileState.Apps = make(map[string]*release)
-
-		if err := mergo.Merge(s, &fileState, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
-			return fmt.Errorf("failed to merge desired state file %s: %w", f.name, err)
-		}
-	}
-
-	s.init() // Set defaults
+	s.build(c.files)
 	s.disableUntargetedApps(c.group, c.target)
 
 	if !c.skipValidation {
