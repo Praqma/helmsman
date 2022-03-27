@@ -76,6 +76,9 @@ test: deps vet repo ## Run unit tests
 	@go test -v -cover -p=1 ./... -args -f ../../examples/example.toml
 .PHONY: test
 
+test-%: deps vet repo ## Run a specific unit test
+	@go test -v -cover -p=1 -run $(*) ./... -args -f ../../examples/example.toml
+
 cross: deps ## Create binaries for all OSs
 	@gox -os 'windows linux darwin' -arch 'arm64 amd64' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" -ldflags '-X main.Version=${TAG}-${DATE}' ./...
 .PHONY: cross
