@@ -9,12 +9,13 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/imdario/mergo"
 	"gopkg.in/yaml.v2"
 )
 
 // invokes either yaml or toml parser considering file extension
 func (s *state) fromFile(file string) error {
-	if isOfType(file, []string{".toml"}) {
+	if isOfType(file, []string{".toml", ".tml"}) {
 		return s.fromTOML(file)
 	} else if isOfType(file, []string{".yaml", ".yml"}) {
 		return s.fromYAML(file)
@@ -135,6 +136,40 @@ func (s *state) toYAML(file string) {
 	}
 	log.Info(fmt.Sprintf("Wrote %d bytes.\n", bytesWritten))
 	newFile.Close()
+}
+
+func (s *state) build(files fileOptionArray) error {
+	for _, f := range files {
+		var fileState state
+
+		if err := fileState.fromFile(f.name); err != nil {
+			return err
+		}
+
+		log.Infof("Parsed [[ %s ]] successfully and found [ %d ] apps", f.name, len(fileState.Apps))
+		// Merge Apps that already existed in the state
+		for appName, app := range fileState.Apps {
+			if _, ok := s.Apps[appName]; ok {
+				if err := mergo.Merge(s.Apps[appName], app, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
+					return fmt.Errorf("failed to merge %s from desired state file %s: %w", appName, f.name, err)
+				}
+			}
+		}
+
+		// Merge the remaining Apps
+		if err := mergo.Merge(&s.Apps, &fileState.Apps); err != nil {
+			return fmt.Errorf("failed to merge desired state file %s: %w", f.name, err)
+		}
+		// All the apps are already merged, make fileState.Apps empty to avoid conflicts in the final merge
+		fileState.Apps = make(map[string]*release)
+
+		if err := mergo.Merge(s, &fileState, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
+			return fmt.Errorf("failed to merge desired state file %s: %w", f.name, err)
+		}
+	}
+
+	s.init() // Set defaults
+	return nil
 }
 
 // expand resolves relative paths of certs/keys/chart/value file/secret files/etc and replace them with a absolute paths
