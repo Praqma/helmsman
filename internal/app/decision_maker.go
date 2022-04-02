@@ -77,7 +77,9 @@ func (cs *currentState) makePlan(s *state) *plan {
 				<-sem
 			}()
 			r.checkChartDepUpdate()
-			cs.decide(r, s.Namespaces[r.Namespace], p, c, s.Settings)
+			if err := cs.decide(r, s.Namespaces[r.Namespace], p, c, s.Settings); err != nil {
+				log.Fatal(err.Error())
+			}
 		}(r, s.ChartInfo[r.Chart][r.Version])
 	}
 	wg.Wait()
@@ -87,68 +89,75 @@ func (cs *currentState) makePlan(s *state) *plan {
 
 // decide makes a decision about what commands (actions) need to be executed
 // to make a release section of the desired state come true.
-func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo, settings config) {
+func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo, settings config) error {
+	prefix := "Release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]"
 	// check for presence in defined targets or groups
 	if !r.isConsideredToRun() {
 		if !settings.SkipIgnoredApps {
-			p.addDecision("Release [ "+r.Name+" ] ignored", r.Priority, ignored)
+			p.addDecision(prefix+" ignored", r.Priority, ignored)
 		}
-		return
+		return nil
 	}
 
 	if r.isProtected(cs, n) {
-		p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is PROTECTED. Operations are not allowed on this release until "+
+		p.addDecision(prefix+" is PROTECTED. Operations are not allowed on this release until "+
 			"protection is removed.", r.Priority, noop)
-		return
+		return nil
 	}
 
 	if flags.destroy {
 		if ok := cs.releaseExists(r, ""); ok {
-			p.addDecision("Release [ "+r.Name+" ] will be DELETED (destroy flag enabled).", r.Priority, remove)
+			p.addDecision(prefix+" will be DELETED (destroy flag enabled).", r.Priority, remove)
 			r.uninstall(p)
 		}
-		return
+		return nil
 	}
 
 	if !r.Enabled {
 		if ok := cs.releaseExists(r, ""); ok {
-			p.addDecision("Release [ "+r.Name+" ] is desired to be DELETED.", r.Priority, remove)
+			p.addDecision(prefix+" is desired to be DELETED.", r.Priority, remove)
 			r.uninstall(p)
 		} else {
-			p.addDecision("Release [ "+r.Name+" ] disabled", r.Priority, noop)
+			p.addDecision(prefix+"is disabled", r.Priority, noop)
 		}
-		return
+		return nil
 	}
 
 	switch cs.releaseStatus(r) {
 	case helmStatusDeployed:
 		if err := cs.inspectUpgradeScenario(r, p, c); err != nil { // upgrade or move
-			log.Fatal(err.Error())
+			return err
 		}
 
 	case helmStatusUninstalled:
 		r.rollback(cs, p) // rollback
 
 	case helmStatusFailed:
-		p.addDecision("Release [ "+r.Name+" ] in namespace [ "+r.Namespace+" ] is in FAILED state. Upgrade is scheduled!", r.Priority, change)
+		p.addDecision(prefix+" is in FAILED state. Upgrade is scheduled!", r.Priority, change)
 		r.upgrade(p)
-		return
+		return nil
 
-	case helmStatusPendingInstall, helmStatusPendingUpgrade, helmStatusPendingRollback, helmStatusUninstalling:
-		log.Fatal("Release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ] is in a pending (install/upgrade/rollback or uninstalling) state. " +
+	case helmStatusPendingInstall, helmStatusPendingUpgrade, helmStatusPendingRollback:
+		return fmt.Errorf(prefix + " is in a pending (install/upgrade/rollback) state. " +
 			"This means application is being operated on outside of this Helmsman invocation's scope." +
 			"Exiting, as this may cause issues when continuing...")
+
+	case helmStatusUninstalling:
+		return fmt.Errorf(prefix + " is being uninstalled. " +
+			"Exiting, as this may cause issues when continuing...")
+
 	default:
 		// If there is no release in the cluster with this name and in this namespace, then install it!
 		if _, ok := cs.releases[r.key()]; !ok {
-			p.addDecision("Release [ "+r.Name+" ] version [ "+r.Version+" ] will be installed in [ "+r.Namespace+" ] namespace", r.Priority, create)
+			p.addDecision(prefix+" will be installed using version [ "+r.Version+" ]", r.Priority, create)
 			r.install(p)
 		} else {
 			// A release with the same name and in the same namespace exists, but it has a different context label (managed by another DSF)
-			log.Fatal("Release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ] already exists but is not managed by the" +
+			return fmt.Errorf(prefix + " already exists but is not managed by the" +
 				" current context. Applying changes will likely cause conflicts. Change the release name or namespace.")
 		}
 	}
+	return nil
 }
 
 // releaseStatus returns the status of a release in the Current State.
