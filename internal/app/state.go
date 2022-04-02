@@ -30,6 +30,7 @@ type config struct {
 	GlobalHooks                  map[string]interface{} `yaml:"globalHooks"`
 	GlobalMaxHistory             int                    `yaml:"globalMaxHistory"`
 	SkipIgnoredApps              bool                   `yaml:"skipIgnoredApps"`
+	SkipPendingApps              bool                   `yaml:"skipPendingApps"`
 }
 
 // state type represents the desired state of applications on a k8s cluster.

@@ -138,11 +138,19 @@ func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo, 
 		return nil
 
 	case helmStatusPendingInstall, helmStatusPendingUpgrade, helmStatusPendingRollback:
+		if settings.SkipPendingApps {
+			p.addDecision(prefix+"is in a pending state and will be ignored", r.Priority, ignored)
+			return nil
+		}
 		return fmt.Errorf(prefix + " is in a pending (install/upgrade/rollback) state. " +
 			"This means application is being operated on outside of this Helmsman invocation's scope." +
 			"Exiting, as this may cause issues when continuing...")
 
 	case helmStatusUninstalling:
+		if settings.SkipPendingApps {
+			p.addDecision(prefix+"is in being uninstalled and will be ignored", r.Priority, ignored)
+			return nil
+		}
 		return fmt.Errorf(prefix + " is being uninstalled. " +
 			"Exiting, as this may cause issues when continuing...")
 
