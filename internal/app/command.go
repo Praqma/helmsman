@@ -70,6 +70,7 @@ func (c *Command) RetryExec(attempts int) (ExitStatus, error) {
 	return c.RetryExecWithThreshold(attempts, 0)
 }
 
+// RetryExecWithThreshold runs exec command with retry and allows specifying the threshold for the exit code to be considered erroneous
 func (c *Command) RetryExecWithThreshold(attempts, exitCodeThreshold int) (ExitStatus, error) {
 	var (
 		result ExitStatus
@@ -182,6 +183,7 @@ func (p CmdPipe) RetryExec(attempts int) (ExitStatus, error) {
 	return p.RetryExecWithThreshold(attempts, 0)
 }
 
+// RetryExecWithThreshold runs piped commands with retry and allows specifying the threshold for the exit code to be considered erroneous
 func (p CmdPipe) RetryExecWithThreshold(attempts, exitCodeThreshold int) (ExitStatus, error) {
 	var (
 		result ExitStatus
