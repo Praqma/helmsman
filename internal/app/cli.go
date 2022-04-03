@@ -104,6 +104,7 @@ type cli struct {
 	checkForChartUpdates  bool
 	skipIgnoredApps       bool
 	skipPendingApps       bool
+	pendingAppRetries     int
 }
 
 func printUsage() {
@@ -157,6 +158,7 @@ func (c *cli) parse() {
 	flag.BoolVar(&c.downloadCharts, "download-charts", false, "download charts referenced by URLs in the state file")
 	flag.BoolVar(&c.skipIgnoredApps, "skip-ignored", false, "skip ignored apps")
 	flag.BoolVar(&c.skipPendingApps, "skip-pending", false, "skip pending helm releases")
+	flag.IntVar(&c.pendingAppRetries, "pending-max-retries", 0, "max number of retries for pending helm releases")
 	flag.Usage = printUsage
 	flag.Parse()
 

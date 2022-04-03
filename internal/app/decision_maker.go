@@ -2,9 +2,11 @@ package app
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 type currentState struct {
@@ -77,7 +79,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 				<-sem
 			}()
 			r.checkChartDepUpdate()
-			if err := cs.decide(r, s.Namespaces[r.Namespace], p, c, s.Settings); err != nil {
+			if err := cs.decide(r, s.Namespaces[r.Namespace], p, c, s.Settings, flags.pendingAppRetries); err != nil {
 				log.Fatal(err.Error())
 			}
 		}(r, s.ChartInfo[r.Chart][r.Version])
@@ -89,7 +91,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 
 // decide makes a decision about what commands (actions) need to be executed
 // to make a release section of the desired state come true.
-func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo, settings config) error {
+func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo, settings config, retries int) error {
 	prefix := "Release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]"
 	// check for presence in defined targets or groups
 	if !r.isConsideredToRun() {
@@ -137,22 +139,20 @@ func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo, 
 		r.upgrade(p)
 		return nil
 
-	case helmStatusPendingInstall, helmStatusPendingUpgrade, helmStatusPendingRollback:
+	case helmStatusPendingInstall, helmStatusPendingUpgrade, helmStatusPendingRollback, helmStatusUninstalling:
 		if settings.SkipPendingApps {
 			p.addDecision(prefix+"is in a pending state and will be ignored", r.Priority, ignored)
 			return nil
 		}
-		return fmt.Errorf(prefix + " is in a pending (install/upgrade/rollback) state. " +
-			"This means application is being operated on outside of this Helmsman invocation's scope." +
-			"Exiting, as this may cause issues when continuing...")
-
-	case helmStatusUninstalling:
-		if settings.SkipPendingApps {
-			p.addDecision(prefix+"is in being uninstalled and will be ignored", r.Priority, ignored)
-			return nil
+		if retries == 0 {
+			return fmt.Errorf(prefix + " is in a pending (install/upgrade/rollback or uninstalling) state. " +
+				"This means application is being operated on outside of this Helmsman invocation's scope." +
+				"Exiting, as this may cause issues when continuing...")
+		} else {
+			retries--
+			time.Sleep(time.Duration(math.Pow(2, float64(2+retries))) * time.Second)
+			return cs.decide(r, n, p, c, settings, retries)
 		}
-		return fmt.Errorf(prefix + " is being uninstalled. " +
-			"Exiting, as this may cause issues when continuing...")
 
 	default:
 		// If there is no release in the cluster with this name and in this namespace, then install it!

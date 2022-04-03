@@ -231,7 +231,7 @@ func Test_decide(t *testing.T) {
 			settings := config{}
 			outcome := plan{}
 			// Act
-			err := cs.decide(tt.args.s.Apps[tt.args.r], tt.args.s.Namespaces[tt.args.s.Apps[tt.args.r].Namespace], &outcome, &chartInfo{}, settings)
+			err := cs.decide(tt.args.s.Apps[tt.args.r], tt.args.s.Namespaces[tt.args.s.Apps[tt.args.r].Namespace], &outcome, &chartInfo{}, settings, 0)
 			if err != nil {
 				t.Errorf("decide() - unexpected error: %v", err)
 			}
@@ -313,7 +313,7 @@ func Test_decide_skip_ignored_apps(t *testing.T) {
 			outcome := plan{}
 			// Act
 			for _, r := range tt.args.rs {
-				err := cs.decide(tt.args.s.Apps[r], tt.args.s.Namespaces[tt.args.s.Apps[r].Namespace], &outcome, &chartInfo{}, settings)
+				err := cs.decide(tt.args.s.Apps[r], tt.args.s.Namespaces[tt.args.s.Apps[r].Namespace], &outcome, &chartInfo{}, settings, 0)
 				if err != nil {
 					t.Errorf("decide() - unexpected error: %v", err)
 				}
