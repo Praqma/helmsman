@@ -102,6 +102,9 @@ type cli struct {
 	kubectlDiff           bool
 	downloadCharts        bool
 	checkForChartUpdates  bool
+	skipIgnoredApps       bool
+	skipPendingApps       bool
+	pendingAppRetries     int
 }
 
 func printUsage() {
@@ -153,6 +156,9 @@ func (c *cli) parse() {
 	flag.BoolVar(&c.kubectlDiff, "kubectl-diff", false, "use kubectl diff instead of helm diff. Defalts to false if the helm diff plugin is installed.")
 	flag.BoolVar(&c.checkForChartUpdates, "check-for-chart-updates", false, "compares the chart versions in the state file to the latest versions in the chart repositories and shows available updates")
 	flag.BoolVar(&c.downloadCharts, "download-charts", false, "download charts referenced by URLs in the state file")
+	flag.BoolVar(&c.skipIgnoredApps, "skip-ignored", false, "skip ignored apps")
+	flag.BoolVar(&c.skipPendingApps, "skip-pending", false, "skip pending helm releases")
+	flag.IntVar(&c.pendingAppRetries, "pending-max-retries", 0, "max number of retries for pending helm releases")
 	flag.Usage = printUsage
 	flag.Parse()
 
@@ -280,6 +286,13 @@ func (c *cli) readState(s *state) error {
 	// read the TOML/YAML desired state file
 	s.build(c.files)
 	s.disableUntargetedApps(c.group, c.target)
+
+	if c.skipIgnoredApps {
+		s.Settings.SkipIgnoredApps = true
+	}
+	if c.skipPendingApps {
+		s.Settings.SkipPendingApps = true
+	}
 
 	if !c.skipValidation {
 		// validate the desired state content
