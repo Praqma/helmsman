@@ -120,7 +120,7 @@ func Test_inspectUpgradeScenario(t *testing.T) {
 
 			// Assert
 			if got != tt.want {
-				t.Errorf("decide() = %s, want %s", got, tt.want)
+				t.Errorf("inspectUpgradeScenario() = %s, want %s", got, tt.want)
 			}
 		})
 	}
@@ -231,7 +231,10 @@ func Test_decide(t *testing.T) {
 			settings := config{}
 			outcome := plan{}
 			// Act
-			cs.decide(tt.args.s.Apps[tt.args.r], tt.args.s.Namespaces[tt.args.s.Apps[tt.args.r].Namespace], &outcome, &chartInfo{}, settings)
+			err := cs.decide(tt.args.s.Apps[tt.args.r], tt.args.s.Namespaces[tt.args.s.Apps[tt.args.r].Namespace], &outcome, &chartInfo{}, settings, 0)
+			if err != nil {
+				t.Errorf("decide() - unexpected error: %v", err)
+			}
 			got := outcome.Decisions[0].Type
 			t.Log(outcome.Decisions[0].Description)
 
@@ -310,7 +313,10 @@ func Test_decide_skip_ignored_apps(t *testing.T) {
 			outcome := plan{}
 			// Act
 			for _, r := range tt.args.rs {
-				cs.decide(tt.args.s.Apps[r], tt.args.s.Namespaces[tt.args.s.Apps[r].Namespace], &outcome, &chartInfo{}, settings)
+				err := cs.decide(tt.args.s.Apps[r], tt.args.s.Namespaces[tt.args.s.Apps[r].Namespace], &outcome, &chartInfo{}, settings, 0)
+				if err != nil {
+					t.Errorf("decide() - unexpected error: %v", err)
+				}
 			}
 			got := outcome.Decisions
 			t.Log(outcome.Decisions)
