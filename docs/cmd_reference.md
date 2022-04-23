@@ -36,7 +36,8 @@ This lists available CMD options in Helmsman:
         apply the dry-run (do not update) option for helm commands.
 
   `-e value`
-        file(s) to load environment variables from (default .env), may be supplied more than once.
+        additional file(s) to load environment variables from, may be supplied more than once, it extends default .env file lookup, every next file takes precedence over previous ones in case of having the same environment variables defined.
+        If a `.env` file exists, it will be loaded by default, if additional env files are specified using the `-e` flag, the environment file will be loaded in order where the last file will take precedence.
 
   `-f value`
         desired state file name(s), may be supplied more than once to merge state files.

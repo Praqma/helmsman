@@ -120,7 +120,7 @@ func printUsage() {
 func (c *cli) parse() {
 	// parsing command line flags
 	flag.Var(&c.files, "f", "desired state file name(s), may be supplied more than once to merge state files")
-	flag.Var(&c.envFiles, "e", "file(s) to load environment variables from (default .env), may be supplied more than once")
+	flag.Var(&c.envFiles, "e", "additional file(s) to load environment variables from, may be supplied more than once, it extends default .env file lookup, every next file takes precedence over previous ones in case of having the same environment variables defined")
 	flag.Var(&c.target, "target", "limit execution to specific app.")
 	flag.Var(&c.group, "group", "limit execution to specific group of apps.")
 	flag.IntVar(&c.diffContext, "diff-context", -1, "number of lines of context to show around changes in helm diff output")
@@ -244,20 +244,15 @@ func (c *cli) parse() {
 
 // readState gets the desired state from files
 func (c *cli) readState(s *state) error {
-	// read the env file
-	if len(c.envFiles) == 0 {
-		if _, err := os.Stat(".env"); err == nil {
-			err = godotenv.Load()
-			if err != nil {
-				return fmt.Errorf("error loading .env file: %w", err)
-			}
-		}
+	// read the env file if it exists
+	if _, err := os.Stat(".env"); err == nil {
+		c.envFiles = append([]string{".env"}, c.envFiles...)
 	}
 
-	for _, e := range c.envFiles {
-		err := godotenv.Load(e)
+	if len(c.envFiles) != 0 {
+		err := godotenv.Overload(c.envFiles...)
 		if err != nil {
-			return fmt.Errorf("error loading %s env file: %w", e, err)
+			return fmt.Errorf("error loading env file: %w", err)
 		}
 	}
 
