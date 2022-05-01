@@ -5,7 +5,7 @@ go 1.17
 require (
 	cloud.google.com/go/storage v1.22.0
 	github.com/Azure/azure-pipeline-go v0.2.3
-	github.com/Azure/azure-storage-blob-go v0.14.0
+	github.com/Azure/azure-storage-blob-go v0.15.0
 	github.com/Azure/go-autorest/autorest/adal v0.9.18 // indirect
 	github.com/BurntSushi/toml v1.1.0
 	github.com/Masterminds/semver v1.5.0
