@@ -10,7 +10,7 @@ require (
 	github.com/BurntSushi/toml v1.1.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/apsdehal/go-logger v0.0.0-20190515212710-b0d6ccfee0e6
-	github.com/aws/aws-sdk-go v1.44.4
+	github.com/aws/aws-sdk-go v1.44.9
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/uuid v1.3.0 // indirect
