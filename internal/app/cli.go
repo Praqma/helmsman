@@ -246,7 +246,9 @@ func (c *cli) parse() {
 func (c *cli) readState(s *state) error {
 	// read the env file if it exists
 	if _, err := os.Stat(".env"); err == nil {
-		c.envFiles = append([]string{".env"}, c.envFiles...)
+		if !stringInSlice(".env", c.envFiles) {
+			c.envFiles = append([]string{".env"}, c.envFiles...)
+		}
 	}
 
 	if len(c.envFiles) != 0 {
