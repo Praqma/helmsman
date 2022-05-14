@@ -6,8 +6,6 @@ import (
 	"os"
 	"sort"
 	"strings"
-
-	"github.com/joho/godotenv"
 )
 
 const (
@@ -251,11 +249,8 @@ func (c *cli) readState(s *state) error {
 		}
 	}
 
-	if len(c.envFiles) != 0 {
-		err := godotenv.Overload(c.envFiles...)
-		if err != nil {
-			return fmt.Errorf("error loading env file: %w", err)
-		}
+	if err := prepareEnv(c.envFiles); err != nil {
+		return err
 	}
 
 	// wipe & create a temporary directory

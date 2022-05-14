@@ -5,6 +5,62 @@ import (
 	"testing"
 )
 
+func TestGetEnv(t *testing.T) {
+	tests := []struct {
+		name     string
+		expected func(key string) string
+		key      string
+	}{
+		{
+			name: "direct",
+			key:  "BAR",
+			expected: func(key string) string {
+				expected := "myValue"
+				os.Setenv(key, expected)
+				return expected
+			},
+		},
+		{
+			name: "string_with_var",
+			key:  "BAR",
+			expected: func(key string) string {
+				expected := "contains myValue"
+				os.Setenv("FOO", "myValue")
+				os.Setenv(key, "contains ${FOO}")
+				return expected
+			},
+		},
+		{
+			name: "nested_one_level",
+			key:  "BAR",
+			expected: func(key string) string {
+				expected := "myValue"
+				os.Setenv("FOO", expected)
+				os.Setenv(key, "${FOO}")
+				return expected
+			},
+		},
+		{
+			name: "nested_two_levels",
+			key:  "BAR",
+			expected: func(key string) string {
+				expected := "myValue"
+				os.Setenv("FOZ", expected)
+				os.Setenv("FOO", "$FOZ")
+				os.Setenv(key, "${FOO}")
+				return expected
+			},
+		},
+	}
+	for _, tt := range tests {
+		expected := tt.expected(tt.key)
+		value := getEnv(tt.key)
+		if value != expected {
+			t.Errorf("getEnv() - unexpected value: wanted: %s got: %s", expected, value)
+		}
+	}
+}
+
 func TestOciRefToFilename(t *testing.T) {
 	tests := []struct {
 		name string

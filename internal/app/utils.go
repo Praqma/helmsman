@@ -18,6 +18,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/Masterminds/semver"
+	"github.com/joho/godotenv"
+
 	"github.com/Praqma/helmsman/internal/aws"
 	"github.com/Praqma/helmsman/internal/azure"
 	"github.com/Praqma/helmsman/internal/gcs"
@@ -140,16 +142,45 @@ func readFile(filepath string) string {
 	return string(data)
 }
 
+// getEnv fetches the value for an environment variable
+// recusively expanding the variable's value
+func getEnv(key string) string {
+	value := os.Getenv(key)
+	for envVar.MatchString(value) {
+		value = os.ExpandEnv(value)
+	}
+	return value
+}
+
+// prepareEnv loads dotenv files and recusively expands all environment variables
+func prepareEnv(envFiles []string) error {
+	if len(envFiles) != 0 {
+		err := godotenv.Overload(envFiles...)
+		if err != nil {
+			return fmt.Errorf("error loading env file: %w", err)
+		}
+	}
+	for _, e := range os.Environ() {
+		if !strings.Contains(e, "$") {
+			continue
+		}
+		e = os.Expand(e, getEnv)
+		pair := strings.SplitN(e, "=", 2)
+		os.Setenv(pair[0], pair[1])
+	}
+	return nil
+}
+
 // substituteEnv checks if a string has an env variable (contains '$'), then it returns its value
 // if the env variable is empty or unset, an empty string is returned
 // if the string does not contain '$', it is returned as is.
-func substituteEnv(name string) string {
-	if strings.Contains(name, "$") {
+func substituteEnv(str string) string {
+	if strings.Contains(str, "$") {
 		// add $$ escaping for $ strings
 		os.Setenv("HELMSMAN_DOLLAR", "$")
-		return os.ExpandEnv(strings.ReplaceAll(name, "$$", "${HELMSMAN_DOLLAR}"))
+		return os.ExpandEnv(strings.ReplaceAll(str, "$$", "${HELMSMAN_DOLLAR}"))
 	}
-	return name
+	return str
 }
 
 // validateEnvVars parses a string line-by-line and detect env variables in

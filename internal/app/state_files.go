@@ -189,7 +189,7 @@ func (s *state) expand(relativeToFile string) {
 		if r.Chart != "" {
 			var download bool
 			// support env vars in path
-			r.Chart = os.ExpandEnv(r.Chart)
+			r.Chart = os.Expand(r.Chart, getEnv)
 			repoName := strings.Split(r.Chart, "/")[0]
 			_, isRepo := s.HelmRepos[repoName]
 			isRepo = isRepo || stringInSlice(repoName, s.PreconfiguredHelmRepos)
