@@ -1,4 +1,4 @@
-# v3.9.0
+# v3.9.1
 
 ## New features
 
