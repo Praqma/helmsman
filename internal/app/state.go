@@ -295,8 +295,24 @@ func (s *state) overrideAppsNamespace(newNs string) {
 	}
 }
 
-// get only those Apps that exist in TargetMap
-func (s *state) disableUntargetedApps(groups, targets []string) {
+// disable Apps defined as excluded by either their name or their group
+// then get only those Apps that exist in TargetMap
+func (s *state) disableApps(groups, targets, groupsExcluded, targetsExcluded []string) {
+excludeAppsLoop:
+	for appName, app := range s.Apps {
+		for _, groupExcluded := range groupsExcluded {
+			if app.Group == groupExcluded {
+				app.Disable()
+				continue excludeAppsLoop
+			}
+		}
+		for _, targetExcluded := range targetsExcluded {
+			if appName == targetExcluded {
+				app.Disable()
+				continue excludeAppsLoop
+			}
+		}
+	}
 	if s.TargetMap == nil {
 		s.TargetMap = make(map[string]bool)
 	}
