@@ -96,8 +96,14 @@ This lists available CMD options in Helmsman:
   `--target`
         limit execution to specific app.
 
+  `--exclude-target`
+        exclude specific app from execution.
+
   `--group`
         limit execution to specific group of apps.
+
+  `--exclude-group`
+        exclude specific group of apps from execution.
 
   `--update-deps`
         run 'helm dep up' for local chart

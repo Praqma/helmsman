@@ -132,14 +132,18 @@ func Test_decide(t *testing.T) {
 		s *state
 	}
 	tests := []struct {
-		name       string
-		targetFlag []string
-		args       args
-		want       decisionType
+		name               string
+		targetFlag         []string
+		excludedTargetFlag []string
+		excludedGroupFlag  []string
+		args               args
+		want               decisionType
 	}{
 		{
-			name:       "decide() - targetMap does not contain this service - skip",
-			targetFlag: []string{"someOtherRelease"},
+			name:               "decide() - targetMap does not contain this service - skip",
+			targetFlag:         []string{"someOtherRelease"},
+			excludedTargetFlag: []string{},
+			excludedGroupFlag:  []string{},
 			args: args{
 				r: "release1",
 				s: &state{
@@ -155,8 +159,10 @@ func Test_decide(t *testing.T) {
 			want: ignored,
 		},
 		{
-			name:       "decide() - targetMap does not contain this service either - skip",
-			targetFlag: []string{"someOtherRelease", "norThisOne"},
+			name:               "decide() - targetMap does not contain this service either - skip",
+			targetFlag:         []string{"someOtherRelease", "norThisOne"},
+			excludedTargetFlag: []string{},
+			excludedGroupFlag:  []string{},
 			args: args{
 				r: "release1",
 				s: &state{
@@ -172,8 +178,10 @@ func Test_decide(t *testing.T) {
 			want: ignored,
 		},
 		{
-			name:       "decide() - targetMap is empty - will install",
-			targetFlag: []string{},
+			name:               "decide() - targetMap is empty - will install",
+			targetFlag:         []string{},
+			excludedTargetFlag: []string{},
+			excludedGroupFlag:  []string{},
 			args: args{
 				r: "release4",
 				s: &state{
@@ -189,8 +197,10 @@ func Test_decide(t *testing.T) {
 			want: create,
 		},
 		{
-			name:       "decide() - targetMap is exactly this service - will install",
-			targetFlag: []string{"thisRelease"},
+			name:               "decide() - targetMap is exactly this service - will install",
+			targetFlag:         []string{"thisRelease"},
+			excludedTargetFlag: []string{},
+			excludedGroupFlag:  []string{},
 			args: args{
 				r: "thisRelease",
 				s: &state{
@@ -206,8 +216,10 @@ func Test_decide(t *testing.T) {
 			want: create,
 		},
 		{
-			name:       "decide() - targetMap contains this service - will install",
-			targetFlag: []string{"notThisOne", "thisRelease"},
+			name:               "decide() - targetMap contains this service - will install",
+			targetFlag:         []string{"notThisOne", "thisRelease"},
+			excludedTargetFlag: []string{},
+			excludedGroupFlag:  []string{},
 			args: args{
 				r: "thisRelease",
 				s: &state{
@@ -222,12 +234,51 @@ func Test_decide(t *testing.T) {
 			},
 			want: create,
 		},
+		{
+			name:               "decide() - targetMap contains this service, but it's excluded by name - will not install",
+			targetFlag:         []string{"notThisOne", "thisRelease"},
+			excludedTargetFlag: []string{"thisRelease"},
+			excludedGroupFlag:  []string{},
+			args: args{
+				r: "thisRelease",
+				s: &state{
+					Apps: map[string]*release{
+						"thisRelease": {
+							Name:      "thisRelease",
+							Namespace: "namespace",
+							Enabled:   true,
+						},
+					},
+				},
+			},
+			want: ignored,
+		},
+		{
+			name:               "decide() - targetMap contains this service, but its group is excluded - will not install",
+			targetFlag:         []string{"notThisOne", "thisRelease"},
+			excludedTargetFlag: []string{"thisRelease"},
+			excludedGroupFlag:  []string{"myGroup"},
+			args: args{
+				r: "thisRelease",
+				s: &state{
+					Apps: map[string]*release{
+						"thisRelease": {
+							Name:      "thisRelease",
+							Namespace: "namespace",
+							Enabled:   true,
+							Group:     "myGroup",
+						},
+					},
+				},
+			},
+			want: ignored,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cs := newCurrentState()
-			tt.args.s.disableUntargetedApps([]string{}, tt.targetFlag)
+			tt.args.s.disableApps([]string{}, tt.targetFlag, tt.excludedGroupFlag, tt.excludedTargetFlag)
 			settings := config{}
 			outcome := plan{}
 			// Act
@@ -306,7 +357,7 @@ func Test_decide_skip_ignored_apps(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cs := newCurrentState()
-			tt.args.s.disableUntargetedApps([]string{}, tt.targetFlag)
+			tt.args.s.disableApps([]string{}, tt.targetFlag, []string{}, []string{})
 			settings := config{
 				SkipIgnoredApps: true,
 			}
@@ -391,7 +442,7 @@ func Test_decide_group(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.args.s.disableUntargetedApps(tt.groupFlag, []string{})
+			tt.args.s.disableApps(tt.groupFlag, []string{}, []string{}, []string{})
 			if len(tt.args.s.TargetMap) != len(tt.want) {
 				t.Errorf("decide() = %d, want %d", len(tt.args.s.TargetMap), len(tt.want))
 			}

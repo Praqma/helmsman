@@ -68,7 +68,9 @@ type cli struct {
 	spec                  string
 	envFiles              stringArray
 	target                stringArray
+	targetExcluded        stringArray
 	group                 stringArray
+	groupExcluded         stringArray
 	kubeconfig            string
 	apply                 bool
 	destroy               bool
@@ -121,6 +123,8 @@ func (c *cli) parse() {
 	flag.Var(&c.envFiles, "e", "additional file(s) to load environment variables from, may be supplied more than once, it extends default .env file lookup, every next file takes precedence over previous ones in case of having the same environment variables defined")
 	flag.Var(&c.target, "target", "limit execution to specific app.")
 	flag.Var(&c.group, "group", "limit execution to specific group of apps.")
+	flag.Var(&c.targetExcluded, "exclude-target", "exclude specific app from execution.")
+	flag.Var(&c.groupExcluded, "exclude-group", "exclude specific group of apps from execution.")
 	flag.IntVar(&c.diffContext, "diff-context", -1, "number of lines of context to show around changes in helm diff output")
 	flag.IntVar(&c.parallel, "p", 1, "max number of concurrent helm releases to run")
 	flag.StringVar(&c.spec, "spec", "", "specification file name, contains locations of desired state files to be merged")
@@ -277,7 +281,7 @@ func (c *cli) readState(s *state) error {
 
 	// read the TOML/YAML desired state file
 	s.build(c.files)
-	s.disableUntargetedApps(c.group, c.target)
+	s.disableApps(c.group, c.target, c.groupExcluded, c.targetExcluded)
 
 	if c.skipIgnoredApps {
 		s.Settings.SkipIgnoredApps = true
