@@ -54,5 +54,6 @@ It is recommended that you also check the [DSF spec](../desired_state_specificat
   - [Merge multiple desired state files](misc/merge_desired_state_files.md)
   - [Limit Helmsman deployment to specific apps](misc/limit-deployment-to-specific-apps.md)
   - [Limit Helmsman deployment to specific group of apps](misc/limit-deployment-to-specific-group-of-apps.md)
+  - [Exclude apps or groups from Helmsman deployment](misc/exclude-apps-or-groups-from-deployment.md)
   - [Use hiera-eyaml as secrets encryption backend](settings/use-hiera-eyaml-as-secrets-encryption.md)
   - [Use DRY-ed code](misc/use-dry-code.md)
