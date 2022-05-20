@@ -509,7 +509,7 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			stt := &state{Apps: tt.args.apps}
-			stt.disableUntargetedApps(tt.groupFlag, tt.targetFlag)
+			stt.disableApps(tt.groupFlag, tt.targetFlag, []string{}, []string{})
 			err := stt.getReleaseChartsInfo()
 			switch err.(type) {
 			case nil:
