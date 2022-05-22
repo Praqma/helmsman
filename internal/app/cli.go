@@ -262,7 +262,6 @@ func (c *cli) readState(s *state) error {
 	_ = os.MkdirAll(tempFilesDir, 0o755)
 
 	if len(c.spec) > 0 {
-
 		sp := new(StateFiles)
 		if err := sp.specFromYAML(c.spec); err != nil {
 			return fmt.Errorf("error parsing spec file: %w", err)
@@ -280,7 +279,10 @@ func (c *cli) readState(s *state) error {
 	}
 
 	// read the TOML/YAML desired state file
-	s.build(c.files)
+	if err := s.build(c.files); err != nil {
+		return fmt.Errorf("error building the state from files: %w", err)
+	}
+
 	s.disableApps(c.group, c.target, c.groupExcluded, c.targetExcluded)
 
 	if c.skipIgnoredApps {
