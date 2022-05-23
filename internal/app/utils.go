@@ -18,7 +18,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/Masterminds/semver"
-	"github.com/joho/godotenv"
+	"github.com/subosito/gotenv"
 
 	"github.com/Praqma/helmsman/internal/aws"
 	"github.com/Praqma/helmsman/internal/azure"
@@ -155,7 +155,7 @@ func getEnv(key string) string {
 // prepareEnv loads dotenv files and recusively expands all environment variables
 func prepareEnv(envFiles []string) error {
 	if len(envFiles) != 0 {
-		err := godotenv.Overload(envFiles...)
+		err := gotenv.OverLoad(envFiles...)
 		if err != nil {
 			return fmt.Errorf("error loading env file: %w", err)
 		}
