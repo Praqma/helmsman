@@ -1,10 +1,11 @@
-# v3.9.1
+# v3.10.0
 
-## New features
+## New features
 
-- Recursively expand environment variables (#657)
+- Add -exclude-target and -exclude-groups CLI options (#659)
 
 ## Fixes and improvements
 
-- Updated dependencies to their latest versions (#653; #654; #655; #658)
-- avoid loading the `.env` file twice
+- Update go to 1.18 (#664)
+- Recursively expand env variables to fix #656 (#657)
+- Pin versions of helm plugins in Dockerfile (#660)
