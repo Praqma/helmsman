@@ -233,16 +233,6 @@ func substituteSSM(name string) string {
 	return name
 }
 
-// sliceContains checks if a string slice contains a given string
-func sliceContains(slice []string, s string) bool {
-	for _, a := range slice {
-		if strings.TrimSpace(a) == s {
-			return true
-		}
-	}
-	return false
-}
-
 // replaceAtIndex replaces the charecter at the given index in the string with the given rune
 func replaceAtIndex(in string, r rune, i int) (string, error) {
 	if i < 0 || i >= utf8.RuneCountInString(in) {
@@ -427,15 +417,20 @@ func notifySlack(content string, url string, failure bool, executing bool) bool 
 
 // replaceStringInFile takes a map of keys and values and replaces the keys with values within a given file.
 // It saves the modified content in a new file
-func replaceStringInFile(input []byte, outfile string, replacements map[string]string) {
-	output := input
+func replaceStringInFile(filename string, replacements map[string]string) error {
+	output, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return fmt.Errorf("failed to read file: %w", err)
+	}
+
 	for k, v := range replacements {
 		output = bytes.ReplaceAll(output, []byte(k), []byte(v))
 	}
 
-	if err := ioutil.WriteFile(outfile, output, 0o666); err != nil {
-		log.Fatal(err.Error())
+	if err := ioutil.WriteFile(filename, output, 0o666); err != nil {
+		return fmt.Errorf("failed to write file: %w", err)
 	}
+	return nil
 }
 
 // Indent inserts prefix at the beginning of each non-empty line of s. The
