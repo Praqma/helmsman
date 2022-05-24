@@ -1,11 +1,5 @@
-# v3.10.0
-
-## New features
-
-- Add -exclude-target and -exclude-groups CLI options (#659)
+# v3.10.1
 
 ## Fixes and improvements
 
-- Update go to 1.18 (#664)
-- Recursively expand env variables to fix #656 (#657)
-- Pin versions of helm plugins in Dockerfile (#660)
+- Replaced `godotenv` with `gotenv` to fix the environment variable resolution (#665)
