@@ -10,7 +10,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/apsdehal/go-logger v0.0.0-20190515212710-b0d6ccfee0e6
 	github.com/aws/aws-sdk-go v1.44.24
-	github.com/imdario/mergo v0.3.12
+	github.com/imdario/mergo v0.3.13
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/subosito/gotenv v1.3.0
 	golang.org/x/net v0.0.0-20220325170049-de3da57026de
