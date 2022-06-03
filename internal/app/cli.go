@@ -90,6 +90,7 @@ type cli struct {
 	substEnvValues        bool
 	noSSMSubst            bool
 	substSSMValues        bool
+	detailedExitCode      bool
 	updateDeps            bool
 	forceUpgrades         bool
 	renameReplace         bool
@@ -144,6 +145,7 @@ func (c *cli) parse() {
 	flag.BoolVar(&c.skipValidation, "skip-validation", false, "skip desired state validation")
 	flag.BoolVar(&c.keepUntrackedReleases, "keep-untracked-releases", false, "keep releases that are managed by Helmsman from the used DSFs in the command, and are no longer tracked in your desired state.")
 	flag.BoolVar(&c.showDiff, "show-diff", false, "show helm diff results. Can expose sensitive information.")
+	flag.BoolVar(&c.detailedExitCode, "detailed-exit-code", false, "returns a detailed exit code (0 - no changes, 1 - error, 2 - changes present)")
 	flag.BoolVar(&c.noEnvSubst, "no-env-subst", false, "turn off environment substitution globally")
 	flag.BoolVar(&c.substEnvValues, "subst-env-values", false, "turn on environment substitution in values files.")
 	flag.BoolVar(&c.noSSMSubst, "no-ssm-subst", false, "turn off SSM parameter substitution globally")
