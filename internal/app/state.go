@@ -46,6 +46,7 @@ type state struct {
 	AppsTemplates          map[string]*release   `yaml:"appsTemplates,omitempty"`
 	TargetMap              map[string]bool
 	ChartInfo              map[string]map[string]*chartInfo
+	mergedState            *state
 }
 
 func (s *state) init() {

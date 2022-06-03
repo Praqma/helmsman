@@ -140,7 +140,7 @@ func (s *state) toYAML(file string) {
 
 func (s *state) build(files fileOptionArray) error {
 	for _, f := range files {
-		var fileState state
+		fileState := state{mergedState: s}
 
 		if err := fileState.fromFile(f.name); err != nil {
 			return err
@@ -190,11 +190,8 @@ func (s *state) expand(relativeToFile string) {
 			var download bool
 			// support env vars in path
 			r.Chart = os.Expand(r.Chart, getEnv)
-			repoName := strings.Split(r.Chart, "/")[0]
-			_, isRepo := s.HelmRepos[repoName]
-			isRepo = isRepo || stringInSlice(repoName, s.PreconfiguredHelmRepos)
 			// if there is no repo for the chart, we assume it's intended to be a local path or url
-			if !isRepo {
+			if !s.isChartFromRepo(r.Chart) {
 				// unless explicitly requested by the user, we don't need to download if the protocol is natively supported by helm
 				download = flags.downloadCharts || !isSupportedProtocol(r.Chart, validProtocols)
 			}
@@ -231,6 +228,17 @@ func (s *state) expand(relativeToFile string) {
 	for k := range s.Certificates {
 		s.Certificates[k], _ = resolveOnePath(s.Certificates[k], "", downloadDest)
 	}
+}
+
+func (s *state) isChartFromRepo(chart string) bool {
+	repoName := strings.Split(chart, "/")[0]
+	if _, isRepo := s.HelmRepos[repoName]; isRepo {
+		return true
+	}
+	if _, isRepo := s.mergedState.HelmRepos[repoName]; isRepo {
+		return true
+	}
+	return stringInSlice(repoName, s.PreconfiguredHelmRepos)
 }
 
 // cleanup deletes the k8s certificates and keys files
