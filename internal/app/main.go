@@ -14,6 +14,11 @@ const (
 	resourcePool       = 10
 )
 
+const (
+	exitCodeSucceed            = 0
+	exitCodeSucceedWithChanges = 2
+)
+
 var (
 	flags      cli
 	settings   *config
@@ -127,4 +132,12 @@ func Main() {
 	if flags.apply || flags.dryRun || flags.destroy {
 		p.exec()
 	}
+
+	exitCode := exitCodeSucceed
+
+	if flags.detailedExitCode && len(p.Commands) > 0 {
+		exitCode = exitCodeSucceedWithChanges
+	}
+
+	os.Exit(exitCode)
 }
