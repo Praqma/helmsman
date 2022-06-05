@@ -3,6 +3,8 @@
 builds:
   - binary: helmsman
     ldflags: -s -w -X main.build={{.Version}} -extldflags "-static"
+    flags:
+      - -trimpath
     env:
       - CGO_ENABLED=0
     goos:
@@ -12,4 +14,4 @@ builds:
     goarch:
       - amd64
       - arm64
-    main: ./cmd/helmsman/main.go   
+    main: ./cmd/helmsman/main.go
