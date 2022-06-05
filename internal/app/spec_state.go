@@ -14,7 +14,7 @@ type StateFiles struct {
 	StateFiles []StatePath `yaml:"stateFiles"`
 }
 
-// fromYAML reads a yaml file and decodes it to a state type.
+// specFromYAML reads a yaml file and decodes it to a state type.
 // parser which throws an error if the YAML file is not valid.
 func (pc *StateFiles) specFromYAML(file string) error {
 	rawYamlFile, err := ioutil.ReadFile(file)
@@ -25,9 +25,5 @@ func (pc *StateFiles) specFromYAML(file string) error {
 
 	yamlFile := string(rawYamlFile)
 
-	if err = yaml.UnmarshalStrict([]byte(yamlFile), pc); err != nil {
-		return err
-	}
-
-	return nil
+	return yaml.UnmarshalStrict([]byte(yamlFile), pc)
 }
