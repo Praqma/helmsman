@@ -26,6 +26,9 @@ This lists available CMD options in Helmsman:
   `--destroy`
         delete all deployed releases.
 
+  `-detailed-exit-code`
+        returns a detailed exit code (0 - no changes, 1 - error, 2 - changes present)
+
   `--diff-context num`
         number of lines of context to show around changes in helm diff output.
 
