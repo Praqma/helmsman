@@ -12,7 +12,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.24
 	github.com/imdario/mergo v0.3.13
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/subosito/gotenv v1.3.0
+	github.com/subosito/gotenv v1.4.0
 	golang.org/x/net v0.0.0-20220325170049-de3da57026de
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -22,7 +22,6 @@ require (
 	cloud.google.com/go/compute v1.6.0 // indirect
 	cloud.google.com/go/iam v0.3.0 // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.9.18 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang-jwt/jwt/v4 v4.3.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
