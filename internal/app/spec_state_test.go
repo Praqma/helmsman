@@ -28,6 +28,13 @@ func Test_specFromYAML(t *testing.T) {
 				s:    new(StateFiles),
 			},
 			want: false,
+		}, {
+			name: "test case 3 -- Commposition example",
+			args: args{
+				file: "../../examples/composition/spec.yaml",
+				s:    new(StateFiles),
+			},
+			want: true,
 		},
 	}
 
@@ -66,9 +73,9 @@ func Test_specFileSort(t *testing.T) {
 			args: args{
 				files: fileOptionArray(
 					[]fileOption{
-						fileOption{"third.yaml", 0},
-						fileOption{"first.yaml", -20},
-						fileOption{"second.yaml", -10},
+						{"third.yaml", 0},
+						{"first.yaml", -20},
+						{"second.yaml", -10},
 					}),
 			},
 			want: [3]int{-20, -10, 0},
