@@ -13,9 +13,6 @@ namespaces:
         - name: "requests.nvidia.com/gpu"
           value: "2"
 
-helmRepos:
-  argo: "https://argoproj.github.io/argo-helm"
-
 apps:
   argo:
     namespace: "staging"
