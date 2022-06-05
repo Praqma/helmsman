@@ -363,6 +363,7 @@ func Test_build(t *testing.T) {
 	s := new(state)
 	files := fileOptionArray{
 		fileOption{name: "../../examples/composition/main.yaml"},
+		fileOption{name: "../../examples/composition/kyverno.yaml"},
 		fileOption{name: "../../examples/composition/argo.yaml"},
 		fileOption{name: "../../examples/composition/artifactory.yaml"},
 	}
@@ -370,10 +371,10 @@ func Test_build(t *testing.T) {
 	if err != nil {
 		t.Errorf("build() - unexpected error: %v", err)
 	}
-	if len(s.Apps) != 2 {
-		t.Errorf("build() - unexpected number of apps, wanted 2 got %d", len(s.Apps))
+	if len(s.Apps) != 5 {
+		t.Errorf("build() - unexpected number of apps, wanted 5 got %d", len(s.Apps))
 	}
-	if len(s.HelmRepos) != 2 {
-		t.Errorf("build() - unexpected number of repos, wanted 2 got %d", len(s.Apps))
+	if len(s.HelmRepos) != 3 {
+		t.Errorf("build() - unexpected number of repos, wanted 3 got %d", len(s.Apps))
 	}
 }
