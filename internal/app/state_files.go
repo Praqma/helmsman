@@ -55,7 +55,6 @@ func (s *state) fromTOML(file string) error {
 	if _, err := toml.Decode(tomlFile, s); err != nil {
 		return err
 	}
-	s.expand(file)
 
 	return nil
 }
@@ -108,7 +107,6 @@ func (s *state) fromYAML(file string) error {
 	if err = yaml.UnmarshalStrict([]byte(yamlFile), s); err != nil {
 		return err
 	}
-	s.expand(file)
 
 	return nil
 }
@@ -147,6 +145,20 @@ func (s *state) build(files fileOptionArray) error {
 		}
 
 		log.Infof("Parsed [[ %s ]] successfully and found [ %d ] apps", f.name, len(fileState.Apps))
+
+		// Add all known repos to the fileState
+		fileState.PreconfiguredHelmRepos = append(fileState.PreconfiguredHelmRepos, s.PreconfiguredHelmRepos...)
+		for n, r := range s.HelmRepos {
+			if fileState.HelmRepos == nil {
+				fileState.HelmRepos = s.HelmRepos
+				break
+			}
+			if _, ok := fileState.HelmRepos[n]; !ok {
+				fileState.HelmRepos[n] = r
+			}
+		}
+		fileState.expand(f.name)
+
 		// Merge Apps that already existed in the state
 		for appName, app := range fileState.Apps {
 			if _, ok := s.Apps[appName]; ok {
@@ -190,11 +202,8 @@ func (s *state) expand(relativeToFile string) {
 			var download bool
 			// support env vars in path
 			r.Chart = os.Expand(r.Chart, getEnv)
-			repoName := strings.Split(r.Chart, "/")[0]
-			_, isRepo := s.HelmRepos[repoName]
-			isRepo = isRepo || stringInSlice(repoName, s.PreconfiguredHelmRepos)
 			// if there is no repo for the chart, we assume it's intended to be a local path or url
-			if !isRepo {
+			if !s.isChartFromRepo(r.Chart) {
 				// unless explicitly requested by the user, we don't need to download if the protocol is natively supported by helm
 				download = flags.downloadCharts || !isSupportedProtocol(r.Chart, validProtocols)
 			}
@@ -231,6 +240,15 @@ func (s *state) expand(relativeToFile string) {
 	for k := range s.Certificates {
 		s.Certificates[k], _ = resolveOnePath(s.Certificates[k], "", downloadDest)
 	}
+}
+
+// isChartFromRepo checks if the chart is from a known repo
+func (s *state) isChartFromRepo(chart string) bool {
+	repoName := strings.Split(chart, "/")[0]
+	if _, isRepo := s.HelmRepos[repoName]; isRepo {
+		return true
+	}
+	return stringInSlice(repoName, s.PreconfiguredHelmRepos)
 }
 
 // cleanup deletes the k8s certificates and keys files

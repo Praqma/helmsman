@@ -13,9 +13,6 @@ namespaces:
         max:
           memory: "300Mi"
 
-helmRepos:
-  jfrog: "https://charts.jfrog.io"
-
 apps:
   artifactory:
     namespace: "production"
