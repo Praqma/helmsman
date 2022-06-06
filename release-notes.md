@@ -1,5 +1,10 @@
-# v3.10.1
+# v3.11.0
+
+## New feature
+
+- Added detailed exit codes (#668)
 
 ## Fixes and improvements
 
-- Replaced `godotenv` with `gotenv` to fix the environment variable resolution (#665)
+- Updated dependencies (#666; #667)
+- Check charts using helm repos from previouly merged DSFs (#673)
