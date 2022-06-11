@@ -32,7 +32,7 @@ type orderedDecision struct {
 type orderedCommand struct {
 	Command        Command
 	Priority       int
-	targetRelease  *release
+	targetRelease  *Release
 	beforeCommands []hookCmd
 	afterCommands  []hookCmd
 }
@@ -57,7 +57,7 @@ func createPlan() *plan {
 }
 
 // addCommand adds a command type to the plan
-func (p *plan) addCommand(cmd Command, priority int, r *release, beforeCommands []hookCmd, afterCommands []hookCmd) {
+func (p *plan) addCommand(cmd Command, priority int, r *Release, beforeCommands []hookCmd, afterCommands []hookCmd) {
 	p.Lock()
 	defer p.Unlock()
 	oc := orderedCommand{
@@ -178,7 +178,7 @@ func releaseWithHooks(cmd orderedCommand, storageBackend string, wg *sync.WaitGr
 }
 
 // execOne executes a single ordered command
-func execOne(cmd Command, targetRelease *release) error {
+func execOne(cmd Command, targetRelease *Release) error {
 	log.Notice(cmd.Description)
 	res, err := cmd.Exec()
 	if err != nil {

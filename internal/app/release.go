@@ -8,46 +8,69 @@ import (
 	"strings"
 )
 
-// release type representing Helm releases which are described in the desired state
-type release struct {
-	Name          string                 `yaml:"name"`
-	Description   string                 `yaml:"description"`
-	Namespace     string                 `yaml:"namespace"`
-	Enabled       bool                   `yaml:"enabled"`
-	Group         string                 `yaml:"group"`
-	Chart         string                 `yaml:"chart"`
-	Version       string                 `yaml:"version"`
-	ValuesFile    string                 `yaml:"valuesFile"`
-	ValuesFiles   []string               `yaml:"valuesFiles"`
-	SecretsFile   string                 `yaml:"secretsFile"`
-	SecretsFiles  []string               `yaml:"secretsFiles"`
-	PostRenderer  string                 `yaml:"postRenderer"`
-	Test          bool                   `yaml:"test"`
-	Protected     bool                   `yaml:"protected"`
-	Wait          bool                   `yaml:"wait"`
-	Priority      int                    `yaml:"priority"`
-	Set           map[string]string      `yaml:"set"`
-	SetString     map[string]string      `yaml:"setString"`
-	SetFile       map[string]string      `yaml:"setFile"`
-	HelmFlags     []string               `yaml:"helmFlags"`
-	HelmDiffFlags []string               `yaml:"helmDiffFlags"`
-	NoHooks       bool                   `yaml:"noHooks"`
-	Timeout       int                    `yaml:"timeout"`
-	Hooks         map[string]interface{} `yaml:"hooks"`
-	MaxHistory    int                    `yaml:"maxHistory"`
-	disabled      bool
+// Release type representing Helm releases which are described in the desired state
+type Release struct {
+	// Name is the helm release name
+	Name string `yaml:"name"`
+	// Description is a user friendly description of the helm release
+	Description string `yaml:"description,omitempty"`
+	// Namespace where to deploy the helm release
+	Namespace string `yaml:"namespace"`
+	// Enabled can be used to togle a helm release
+	Enabled bool   `yaml:"enabled"`
+	Group   string `yaml:"group,omitempty"`
+	Chart   string `yaml:"chart"`
+	// Version of the helm chart to deploy
+	Version string `yaml:"version"`
+	// ValuesFile is the path for a values file for the helm release
+	ValuesFile string `yaml:"valuesFile,omitempty"`
+	// ValuesFiles is a list of paths a values files for the helm release
+	ValuesFiles []string `yaml:"valuesFiles,omitempty"`
+	// SecretsFile is the path for an encrypted values file for the helm release
+	SecretsFile string `yaml:"secretsFile,omitempty"`
+	// SecretsFiles is a list of paths for encrypted values files for the helm release
+	SecretsFiles []string `yaml:"secretsFiles,omitempty"`
+	// PostRenderer is the path to an executable to be used for post rendering
+	PostRenderer string `yaml:"postRenderer,omitempty"`
+	// Test indicates if the chart tests should be executed
+	Test bool `yaml:"test,omitempty"`
+	// Protected defines if the release should be protected against changes
+	Protected bool `yaml:"protected,omitempty"`
+	// Wait defines whether helm should block execution until all k8s resources are in a ready state
+	Wait bool `yaml:"wait,omitempty"`
+	// Priority allows defining the execution order, releases with the same priority can be executed in parallel
+	Priority int `yaml:"priority,omitempty"`
+	// Set can be used to overwrite the chart values
+	Set map[string]string `yaml:"set,omitempty"`
+	// SetString can be used to overwrite string values
+	SetString map[string]string `yaml:"setString,omitempty"`
+	// SetFile can be used to overwrite the chart values
+	SetFile map[string]string `yaml:"setFile,omitempty"`
+	// HelmFlags is a list of additional flags to pass to the helm command
+	HelmFlags []string `yaml:"helmFlags,omitempty"`
+	// HelmDiffFlags is a list of cli flags to pass to helm diff
+	HelmDiffFlags []string `yaml:"helmDiffFlags,omitempty"`
+	// NoHooks can be used to disable the execution of helm hooks
+	NoHooks bool `yaml:"noHooks,omitempty"`
+	// Timeout is the number of seconds to wait for the release to complete
+	Timeout int `yaml:"timeout,omitempty"`
+	// Hooks can be used to define lifecycle hooks specific to this release
+	Hooks map[string]interface{} `yaml:"hooks,omitempty"`
+	// MaxHistory is the maximum number of histoical releases to keep
+	MaxHistory int `yaml:"maxHistory,omitempty"`
+	disabled   bool
 }
 
-func (r *release) key() string {
+func (r *Release) key() string {
 	return fmt.Sprintf("%s-%s", r.Name, r.Namespace)
 }
 
-func (r *release) Disable() {
+func (r *Release) Disable() {
 	r.disabled = true
 }
 
 // isReleaseConsideredToRun checks if a release is being targeted for operations as specified by user cmd flags (--group or --target)
-func (r *release) isConsideredToRun() bool {
+func (r *Release) isConsideredToRun() bool {
 	if r == nil {
 		return false
 	}
@@ -56,7 +79,7 @@ func (r *release) isConsideredToRun() bool {
 
 // validate validates if a release inside a desired state meets the specifications or not.
 // check the full specification @ https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md
-func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *state) error {
+func (r *Release) validate(appLabel string, seen map[string]map[string]bool, s *State) error {
 	if seen[r.Name][r.Namespace] {
 		return errors.New("release name must be unique within a given namespace")
 	}
@@ -126,7 +149,7 @@ func (r *release) validate(appLabel string, seen map[string]map[string]bool, s *
 }
 
 // testRelease creates a Helm command to test a particular release.
-func (r *release) test(afterCommands *[]hookCmd) {
+func (r *Release) test(afterCommands *[]hookCmd) {
 	if flags.dryRun {
 		log.Verbose("Dry-run, skipping tests:  " + r.Name)
 		return
@@ -136,7 +159,7 @@ func (r *release) test(afterCommands *[]hookCmd) {
 }
 
 // installRelease creates a Helm command to install a particular release in a particular namespace using a particular Tiller.
-func (r *release) install(p *plan) {
+func (r *Release) install(p *plan) {
 	before, after := r.checkHooks("install")
 
 	if r.Test {
@@ -148,7 +171,7 @@ func (r *release) install(p *plan) {
 }
 
 // uninstall uninstalls a release
-func (r *release) uninstall(p *plan, optionalNamespace ...string) {
+func (r *Release) uninstall(p *plan, optionalNamespace ...string) {
 	ns := r.Namespace
 	if len(optionalNamespace) > 0 {
 		ns = optionalNamespace[0]
@@ -165,7 +188,7 @@ func (r *release) uninstall(p *plan, optionalNamespace ...string) {
 }
 
 // diffRelease diffs an existing release with the specified values.yaml
-func (r *release) diff() (string, error) {
+func (r *Release) diff() (string, error) {
 	var (
 		args        []string
 		maxExitCode int
@@ -208,7 +231,7 @@ func (r *release) diff() (string, error) {
 }
 
 // upgradeRelease upgrades an existing release with the specified values.yaml
-func (r *release) upgrade(p *plan) {
+func (r *Release) upgrade(p *plan) {
 	before, after := r.checkHooks("upgrade")
 
 	if r.Test {
@@ -224,7 +247,7 @@ func (r *release) upgrade(p *plan) {
 // This is used when moving a release to another namespace or when changing the chart used for it.
 // When the release is being moved to another namespace, the optionalOldNamespace is used to provide
 // the namespace from which the release is deleted.
-func (r *release) reInstall(p *plan, optionalOldNamespace ...string) {
+func (r *Release) reInstall(p *plan, optionalOldNamespace ...string) {
 	oldNamespace := ""
 	if len(optionalOldNamespace) > 0 {
 		oldNamespace = optionalOldNamespace[0]
@@ -236,7 +259,7 @@ func (r *release) reInstall(p *plan, optionalOldNamespace ...string) {
 // rollbackRelease evaluates if a rollback action needs to be taken for a given release.
 // if the release is already deleted but from a different namespace than the one specified in input,
 // it purge deletes it and create it in the specified namespace.
-func (r *release) rollback(cs *currentState, p *plan) {
+func (r *Release) rollback(cs *currentState, p *plan) {
 	rs, ok := cs.releases[r.key()]
 	if !ok {
 		return
@@ -260,12 +283,12 @@ func (r *release) rollback(cs *currentState, p *plan) {
 }
 
 // mark applies Helmsman specific labels to Helm's state resources (secrets/configmaps)
-func (r *release) mark(storageBackend string) {
+func (r *Release) mark(storageBackend string) {
 	r.label(storageBackend, "MANAGED-BY=HELMSMAN", "NAMESPACE="+r.Namespace, "HELMSMAN_CONTEXT="+curContext)
 }
 
 // label labels Helm's state resources (secrets/configmaps)
-func (r *release) label(storageBackend string, labels ...string) {
+func (r *Release) label(storageBackend string, labels ...string) {
 	if len(labels) == 0 {
 		return
 	}
@@ -282,7 +305,7 @@ func (r *release) label(storageBackend string, labels ...string) {
 }
 
 // annotate annotates Helm's state resources (secrets/configmaps)
-func (r *release) annotate(storageBackend string, annotations ...string) {
+func (r *Release) annotate(storageBackend string, annotations ...string) {
 	if len(annotations) == 0 {
 		return
 	}
@@ -302,7 +325,7 @@ func (r *release) annotate(storageBackend string, annotations ...string) {
 // A protected is release is either: a) deployed in a protected namespace b) flagged as protected in the desired state file
 // Any release in a protected namespace is protected by default regardless of its flag
 // returns true if a release is protected, false otherwise
-func (r *release) isProtected(cs *currentState, n *namespace) bool {
+func (r *Release) isProtected(cs *currentState, n *Namespace) bool {
 	// if the release does not exist in the cluster, it is not protected
 	if ok := cs.releaseExists(r, ""); !ok {
 		return false
@@ -314,7 +337,7 @@ func (r *release) isProtected(cs *currentState, n *namespace) bool {
 }
 
 // getNoHooks returns the no-hooks flag for install/upgrade commands
-func (r *release) getNoHooks() []string {
+func (r *Release) getNoHooks() []string {
 	if r.NoHooks {
 		return []string{"--no-hooks"}
 	}
@@ -322,7 +345,7 @@ func (r *release) getNoHooks() []string {
 }
 
 // getTimeout returns the timeout flag for install/upgrade commands
-func (r *release) getTimeout() []string {
+func (r *Release) getTimeout() []string {
 	if r.Timeout != 0 {
 		return []string{"--timeout", strconv.Itoa(r.Timeout) + "s"}
 	}
@@ -330,7 +353,7 @@ func (r *release) getTimeout() []string {
 }
 
 // getSetValues returns --set params to be used with helm install/upgrade commands
-func (r *release) getSetValues() []string {
+func (r *Release) getSetValues() []string {
 	res := []string{}
 	for k, v := range r.Set {
 		res = append(res, "--set", k+"="+strings.ReplaceAll(v, ",", "\\,")+"")
@@ -339,7 +362,7 @@ func (r *release) getSetValues() []string {
 }
 
 // getSetStringValues returns --set-string params to be used with helm install/upgrade commands
-func (r *release) getSetStringValues() []string {
+func (r *Release) getSetStringValues() []string {
 	res := []string{}
 	for k, v := range r.SetString {
 		res = append(res, "--set-string", k+"="+strings.ReplaceAll(v, ",", "\\,")+"")
@@ -348,7 +371,7 @@ func (r *release) getSetStringValues() []string {
 }
 
 // getSetFileValues returns --set-file params to be used with helm install/upgrade commands
-func (r *release) getSetFileValues() []string {
+func (r *Release) getSetFileValues() []string {
 	res := []string{}
 	for k, v := range r.SetFile {
 		res = append(res, "--set-file", k+"="+strings.ReplaceAll(v, ",", "\\,")+"")
@@ -358,7 +381,7 @@ func (r *release) getSetFileValues() []string {
 
 // getWait returns a partial helm command containing the helm wait flag (--wait) if the wait flag for the release was set to true
 // Otherwise, retruns an empty string
-func (r *release) getWait() []string {
+func (r *Release) getWait() []string {
 	res := []string{}
 	if r.Wait {
 		res = append(res, "--wait")
@@ -367,12 +390,12 @@ func (r *release) getWait() []string {
 }
 
 // getDesiredNamespace returns the namespace of a release
-func (r *release) getDesiredNamespace() string {
+func (r *Release) getDesiredNamespace() string {
 	return r.Namespace
 }
 
 // getMaxHistory returns the max-history flag for upgrade commands
-func (r *release) getMaxHistory() []string {
+func (r *Release) getMaxHistory() []string {
 	if r.MaxHistory != 0 {
 		return []string{"--history-max", strconv.Itoa(r.MaxHistory)}
 	}
@@ -380,7 +403,7 @@ func (r *release) getMaxHistory() []string {
 }
 
 // getHelmFlags returns helm flags
-func (r *release) getHelmFlags() []string {
+func (r *Release) getHelmFlags() []string {
 	var flgs []string
 	if flags.forceUpgrades {
 		flgs = append(flgs, "--force")
@@ -390,7 +413,7 @@ func (r *release) getHelmFlags() []string {
 }
 
 // getPostRenderer returns the post-renderer Helm flag
-func (r *release) getPostRenderer() []string {
+func (r *Release) getPostRenderer() []string {
 	args := []string{}
 	if r.PostRenderer != "" {
 		args = append(args, "--post-renderer", r.PostRenderer)
@@ -399,7 +422,7 @@ func (r *release) getPostRenderer() []string {
 }
 
 // getHelmArgsFor returns helm arguments for a specific helm operation
-func (r *release) getHelmArgsFor(action string, optionalNamespaceOverride ...string) []string {
+func (r *Release) getHelmArgsFor(action string, optionalNamespaceOverride ...string) []string {
 	ns := r.Namespace
 	if len(optionalNamespaceOverride) > 0 {
 		ns = optionalNamespaceOverride[0]
@@ -418,7 +441,7 @@ func (r *release) getHelmArgsFor(action string, optionalNamespaceOverride ...str
 	}
 }
 
-func (r *release) checkChartDepUpdate() {
+func (r *Release) checkChartDepUpdate() {
 	if !r.isConsideredToRun() {
 		return
 	}
@@ -429,7 +452,7 @@ func (r *release) checkChartDepUpdate() {
 	}
 }
 
-func (r *release) checkChartForUpdates() {
+func (r *Release) checkChartForUpdates() {
 	if !r.isConsideredToRun() {
 		return
 	}
@@ -447,14 +470,14 @@ func (r *release) checkChartForUpdates() {
 }
 
 // overrideNamespace overrides a release defined namespace with a new given one
-func (r *release) overrideNamespace(newNs string) {
+func (r *Release) overrideNamespace(newNs string) {
 	log.Info("Overriding namespace for app:  " + r.Name)
 	r.Namespace = newNs
 }
 
 // inheritHooks passes global hooks config from the state to the release hooks if they are unset
 // release hooks override the global ones
-func (r *release) inheritHooks(s *state) {
+func (r *Release) inheritHooks(s *State) {
 	if len(s.Settings.GlobalHooks) != 0 {
 		if len(r.Hooks) == 0 {
 			r.Hooks = s.Settings.GlobalHooks
@@ -469,7 +492,7 @@ func (r *release) inheritHooks(s *state) {
 }
 
 // inheritMaxHistory passes global max history from the state to the release if it is unset
-func (r *release) inheritMaxHistory(s *state) {
+func (r *Release) inheritMaxHistory(s *State) {
 	if s.Settings.GlobalMaxHistory != 0 {
 		if r.MaxHistory == 0 {
 			r.MaxHistory = s.Settings.GlobalMaxHistory
@@ -480,7 +503,7 @@ func (r *release) inheritMaxHistory(s *state) {
 // checkHooks checks if a hook of certain type exists and creates its command
 // if success condition for the hook is defined, a "kubectl wait" command is created
 // returns two slices of before and after commands
-func (r *release) checkHooks(action string, optionalNamespace ...string) ([]hookCmd, []hookCmd) {
+func (r *Release) checkHooks(action string, optionalNamespace ...string) ([]hookCmd, []hookCmd) {
 	ns := r.Namespace
 	if len(optionalNamespace) > 0 {
 		ns = optionalNamespace[0]
@@ -519,7 +542,7 @@ func (r *release) checkHooks(action string, optionalNamespace ...string) ([]hook
 	return beforeCmds, afterCmds
 }
 
-func (r *release) getHookCommands(hookType, ns string) []hookCmd {
+func (r *Release) getHookCommands(hookType, ns string) []hookCmd {
 	var cmds []hookCmd
 	if _, ok := r.Hooks[hookType]; ok {
 		hook := r.Hooks[hookType].(string)
@@ -546,7 +569,7 @@ func (r *release) getHookCommands(hookType, ns string) []hookCmd {
 
 // shouldWaitForHook checks if there is a success condition to wait for after applying a hook
 // returns a boolean and the wait command if applicable
-func (r *release) shouldWaitForHook(hookFile string, hookType string, namespace string) (bool, []hookCmd) {
+func (r *Release) shouldWaitForHook(hookFile string, hookType string, namespace string) (bool, []hookCmd) {
 	var cmds []hookCmd
 	if flags.dryRun {
 		return false, cmds
@@ -567,7 +590,7 @@ func (r *release) shouldWaitForHook(hookFile string, hookType string, namespace 
 }
 
 // print prints the details of the release
-func (r release) print() {
+func (r Release) print() {
 	fmt.Println("")
 	fmt.Println("\tname: ", r.Name)
 	fmt.Println("\tdescription: ", r.Description)

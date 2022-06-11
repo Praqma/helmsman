@@ -5,7 +5,7 @@ import (
 )
 
 // substituteVarsInStaticFiles loops through the values/secrets files and substitutes variables into them.
-func (r *release) substituteVarsInStaticFiles() {
+func (r *Release) substituteVarsInStaticFiles() {
 	if r.ValuesFile != "" {
 		r.ValuesFile = substituteVarsInYaml(r.ValuesFile)
 	}
@@ -31,7 +31,7 @@ func (r *release) substituteVarsInStaticFiles() {
 }
 
 // resolvePaths resolves relative paths of certs/keys/chart/value file/secret files/etc and replace them with a absolute paths
-func (r *release) resolvePaths(dir, downloadDest string) {
+func (r *Release) resolvePaths(dir, downloadDest string) {
 	if r.ValuesFile != "" {
 		r.ValuesFile, _ = resolveOnePath(r.ValuesFile, dir, downloadDest)
 	}
@@ -58,7 +58,7 @@ func (r *release) resolvePaths(dir, downloadDest string) {
 }
 
 // getValuesFiles return partial install/upgrade release command to substitute the -f flag in Helm.
-func (r *release) getValuesFiles() []string {
+func (r *Release) getValuesFiles() []string {
 	var fileList []string
 
 	if r.ValuesFile != "" {
