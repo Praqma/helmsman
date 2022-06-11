@@ -178,8 +178,8 @@ func Test_readFile(t *testing.T) {
 
 func Test_eyamlSecrets(t *testing.T) {
 	type args struct {
-		r *release
-		s *config
+		r *Release
+		s *Config
 	}
 	tests := []struct {
 		name string
@@ -189,12 +189,12 @@ func Test_eyamlSecrets(t *testing.T) {
 		{
 			name: "decryptSecrets - valid eyaml-based secrets decryption",
 			args: args{
-				s: &config{
+				s: &Config{
 					EyamlEnabled:        true,
 					EyamlPublicKeyPath:  "./../../tests/keys/public_key.pkcs7.pem",
 					EyamlPrivateKeyPath: "./../../tests/keys/private_key.pkcs7.pem",
 				},
-				r: &release{
+				r: &Release{
 					Name:        "release1",
 					Namespace:   "namespace",
 					Version:     "1.0.0",
@@ -207,12 +207,12 @@ func Test_eyamlSecrets(t *testing.T) {
 		{
 			name: "decryptSecrets - not existing eyaml-based secrets file",
 			args: args{
-				s: &config{
+				s: &Config{
 					EyamlEnabled:        true,
 					EyamlPublicKeyPath:  "./../../tests/keys/public_key.pkcs7.pem",
 					EyamlPrivateKeyPath: "./../../tests/keys/private_key.pkcs7.pem",
 				},
-				r: &release{
+				r: &Release{
 					Name:        "release1",
 					Namespace:   "namespace",
 					Version:     "1.0.0",
@@ -225,12 +225,12 @@ func Test_eyamlSecrets(t *testing.T) {
 		{
 			name: "decryptSecrets - not existing eyaml key",
 			args: args{
-				s: &config{
+				s: &Config{
 					EyamlEnabled:        true,
 					EyamlPublicKeyPath:  "./../../tests/keys/public_key.pkcs7.pem2",
 					EyamlPrivateKeyPath: "./../../tests/keys/private_key.pkcs7.pem",
 				},
-				r: &release{
+				r: &Release{
 					Name:        "release1",
 					Namespace:   "namespace",
 					Version:     "1.0.0",
@@ -244,7 +244,7 @@ func Test_eyamlSecrets(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Log(tt.want)
-			settings = &config{}
+			settings = &Config{}
 			settings.EyamlEnabled = tt.args.s.EyamlEnabled
 			settings.EyamlPublicKeyPath = tt.args.s.EyamlPublicKeyPath
 			settings.EyamlPrivateKeyPath = tt.args.s.EyamlPrivateKeyPath

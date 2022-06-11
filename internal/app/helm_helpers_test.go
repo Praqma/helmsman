@@ -8,17 +8,17 @@ import (
 func Test_getChartInfo(t *testing.T) {
 	// version string = the first semver-valid string after the last hypen in the chart string.
 	type args struct {
-		r *release
+		r *Release
 	}
 	tests := []struct {
 		name string
 		args args
-		want *chartInfo
+		want *ChartInfo
 	}{
 		{
 			name: "getChartInfo - local chart should return given release info",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:      "release1",
 					Namespace: "namespace",
 					Version:   "1.0.0",
@@ -26,12 +26,12 @@ func Test_getChartInfo(t *testing.T) {
 					Enabled:   true,
 				},
 			},
-			want: &chartInfo{Name: "chart-test", Version: "1.0.0"},
+			want: &ChartInfo{Name: "chart-test", Version: "1.0.0"},
 		},
 		{
 			name: "getChartInfo - local chart semver should return latest matching release",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:      "release1",
 					Namespace: "namespace",
 					Version:   "1.0.*",
@@ -39,12 +39,12 @@ func Test_getChartInfo(t *testing.T) {
 					Enabled:   true,
 				},
 			},
-			want: &chartInfo{Name: "chart-test", Version: "1.0.0"},
+			want: &ChartInfo{Name: "chart-test", Version: "1.0.0"},
 		},
 		{
 			name: "getChartInfo - unknown chart should error",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:      "release1",
 					Namespace: "namespace",
 					Version:   "1.0.0",
@@ -57,7 +57,7 @@ func Test_getChartInfo(t *testing.T) {
 		{
 			name: "getChartInfo - wrong local version should error",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:      "release1",
 					Namespace: "namespace",
 					Version:   "0.9.0",

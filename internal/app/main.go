@@ -21,19 +21,21 @@ const (
 
 var (
 	flags      cli
-	settings   *config
+	settings   *Config
 	curContext string
 	log        = &Logger{}
 )
 
 func init() {
 	// Parse cli flags and read config files
-	flags.parse()
+	flags.setup()
 }
 
 // Main is the app main function
 func Main() {
-	var s state
+	var s State
+
+	flags.parse()
 
 	// delete temp files with substituted env vars when the program terminates
 	defer os.RemoveAll(tempFilesDir)
@@ -45,12 +47,12 @@ func Main() {
 		log.Fatal(err.Error())
 	}
 
-	if len(flags.target) > 0 && len(s.TargetMap) == 0 {
+	if len(flags.target) > 0 && len(s.targetMap) == 0 {
 		log.Info("No apps defined with -target flag were found, exiting")
 		os.Exit(0)
 	}
 
-	if len(flags.group) > 0 && len(s.TargetMap) == 0 {
+	if len(flags.group) > 0 && len(s.targetMap) == 0 {
 		log.Info("No apps defined with -group flag were found, exiting")
 		os.Exit(0)
 	}

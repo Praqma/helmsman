@@ -10,50 +10,78 @@ import (
 	"sync"
 )
 
-// config type represents the settings fields
-type config struct {
-	KubeContext                  string                 `yaml:"kubeContext"`
-	Username                     string                 `yaml:"username"`
-	Password                     string                 `yaml:"password"`
-	ClusterURI                   string                 `yaml:"clusterURI"`
-	ServiceAccount               string                 `yaml:"serviceAccount"`
-	StorageBackend               string                 `yaml:"storageBackend"`
-	SlackWebhook                 string                 `yaml:"slackWebhook"`
-	MSTeamsWebhook               string                 `yaml:"msTeamsWebhook"`
-	ReverseDelete                bool                   `yaml:"reverseDelete"`
-	BearerToken                  bool                   `yaml:"bearerToken"`
-	BearerTokenPath              string                 `yaml:"bearerTokenPath"`
-	NamespaceLabelsAuthoritative bool                   `yaml:"namespaceLabelsAuthoritative"`
-	EyamlEnabled                 bool                   `yaml:"eyamlEnabled"`
-	EyamlPrivateKeyPath          string                 `yaml:"eyamlPrivateKeyPath"`
-	EyamlPublicKeyPath           string                 `yaml:"eyamlPublicKeyPath"`
-	GlobalHooks                  map[string]interface{} `yaml:"globalHooks"`
-	GlobalMaxHistory             int                    `yaml:"globalMaxHistory"`
-	SkipIgnoredApps              bool                   `yaml:"skipIgnoredApps"`
-	SkipPendingApps              bool                   `yaml:"skipPendingApps"`
+// Config type represents the settings fields
+type Config struct {
+	// KubeContext is the kube context you want Helmsman to use or create
+	KubeContext string `yaml:"kubeContext,omitempty"`
+	// Username to be used for kubectl credentials
+	Username string `yaml:"username,omitempty"`
+	// Password to be used for kubectl credentials
+	Password string `yaml:"password,omitempty"`
+	// ClusterURI is the URI for your cluster API or the name of an environment variable (starting with `$`) containing the URI
+	ClusterURI string `yaml:"clusterURI,omitempty"`
+	// ServiceAccount to be used for tiller (deprecated)
+	ServiceAccount string `yaml:"serviceAccount,omitempty"`
+	// StorageBackend indicates the storage backened used by helm, defaults to secret
+	StorageBackend string `yaml:"storageBackend,omitempty"`
+	// SlackWebhook is the slack webhook URL for slack notifications
+	SlackWebhook string `yaml:"slackWebhook,omitempty"`
+	// MSTeamsWebhook is the Microsoft teams webhook URL for teams notifications
+	MSTeamsWebhook string `yaml:"msTeamsWebhook,omitempty"`
+	// ReverseDelete indicates if the applications should be deleted in reverse orderin relation to the installation order
+	ReverseDelete bool `yaml:"reverseDelete,omitempty"`
+	// BearerToken indicates whether you want helmsman to connect to the cluster using a bearer token
+	BearerToken bool `yaml:"bearerToken,omitempty"`
+	// BearerTokenPath allows specifying a custom path for the token
+	BearerTokenPath string `yaml:"bearerTokenPath,omitempty"`
+	// NamespaceLabelsAuthoritativei indicates whether helmsman should remove namespace labels that are not in the DSF
+	NamespaceLabelsAuthoritative bool `yaml:"namespaceLabelsAuthoritative,omitempty"`
+	// EyamlEnabled indicates whether eyaml is used for encrypted files
+	EyamlEnabled bool `yaml:"eyamlEnabled,omitempty"`
+	// EyamlPrivateKeyPath is the path to the eyaml private key
+	EyamlPrivateKeyPath string `yaml:"eyamlPrivateKeyPath,omitempty"`
+	// EyamlPublicKeyPath is the path to the eyaml public key
+	EyamlPublicKeyPath string `yaml:"eyamlPublicKeyPath,omitempty"`
+	// GlobalHooks is a set of global lifecycle hooks
+	GlobalHooks map[string]interface{} `yaml:"globalHooks,omitempty"`
+	// GlobalMaxHistory sets the global max number of historical release revisions to keep
+	GlobalMaxHistory int `yaml:"globalMaxHistory,omitempty"`
+	// SkipIgnoredApps if set to true, ignored apps will not be considered in the plan
+	SkipIgnoredApps bool `yaml:"skipIgnoredApps,omitempty"`
+	// SkipPendingApps is set to true,apps in a pending state will be ignored
+	SkipPendingApps bool `yaml:"skipPendingApps,omitempty"`
 }
 
-// state type represents the desired state of applications on a k8s cluster.
-type state struct {
-	Metadata               map[string]string     `yaml:"metadata"`
-	Certificates           map[string]string     `yaml:"certificates"`
-	Settings               config                `yaml:"settings"`
-	Context                string                `yaml:"context"`
-	Namespaces             map[string]*namespace `yaml:"namespaces"`
-	HelmRepos              map[string]string     `yaml:"helmRepos"`
-	PreconfiguredHelmRepos []string              `yaml:"preconfiguredHelmRepos"`
-	Apps                   map[string]*release   `yaml:"apps"`
-	AppsTemplates          map[string]*release   `yaml:"appsTemplates,omitempty"`
-	TargetMap              map[string]bool
-	ChartInfo              map[string]map[string]*chartInfo
+// State type represents the desired State of applications on a k8s cluster.
+type State struct {
+	// Metadata for human reader of the desired state file
+	Metadata map[string]string `yaml:"metadata,omitempty"`
+	// Certificates are used to connect kubectl to a cluster
+	Certificates map[string]string `yaml:"certificates,omitempty"`
+	// Settings for configuring helmsman
+	Settings Config `yaml:"settings,omitempty"`
+	// Context defines an helmsman scope
+	Context string `yaml:"context,omitempty"`
+	// HelmRepos from where to find the application helm charts
+	HelmRepos map[string]string `yaml:"helmRepos,omitempty"`
+	// PreconfiguredHelmRepos is a list of helm repos that are configured outside of the DSF
+	PreconfiguredHelmRepos []string `yaml:"preconfiguredHelmRepos,omitempty"`
+	// Namespaces where helmsman will deploy applications
+	Namespaces map[string]*Namespace `yaml:"namespaces"`
+	// Apps holds the configuration for each helm release managed by helmsman
+	Apps map[string]*Release `yaml:"apps"`
+	// AppsTemplates allow defining YAML objects thatcan be used as a reference with YAML anchors to keep the configuration DRY
+	AppsTemplates map[string]*Release `yaml:"appsTemplates,omitempty"`
+	targetMap     map[string]bool
+	chartInfo     map[string]map[string]*ChartInfo
 }
 
-func (s *state) init() {
+func (s *State) init() {
 	s.setDefaults()
 	s.initializeNamespaces()
 }
 
-func (s *state) setDefaults() {
+func (s *State) setDefaults() {
 	if s.Settings.StorageBackend != "" {
 		os.Setenv("HELM_DRIVER", s.Settings.StorageBackend)
 	} else {
@@ -77,17 +105,17 @@ func (s *state) setDefaults() {
 	}
 }
 
-func (s *state) initializeNamespaces() {
+func (s *State) initializeNamespaces() {
 	for nsName, ns := range s.Namespaces {
 		if ns == nil {
-			s.Namespaces[nsName] = &namespace{}
+			s.Namespaces[nsName] = &Namespace{}
 		}
 	}
 }
 
 // validate validates that the values specified in the desired state are valid according to the desired state spec.
 // check https://github.com/Praqma/helmsman/blob/master/docs/desired_state_specification.md for the detailed specification
-func (s *state) validate() error {
+func (s *State) validate() error {
 	// apps
 	if s.Apps == nil {
 		log.Info("No apps specified. Nothing to be executed.")
@@ -96,7 +124,7 @@ func (s *state) validate() error {
 
 	// settings
 	// use reflect.DeepEqual to compare Settings are empty, since it contains a map
-	if (reflect.DeepEqual(s.Settings, config{}) || s.Settings.KubeContext == "") && !getKubeContext() {
+	if (reflect.DeepEqual(s.Settings, Config{}) || s.Settings.KubeContext == "") && !getKubeContext() {
 		return errors.New("settings validation failed -- you have not defined a " +
 			"kubeContext to use. Either define it in the desired state file or pass a kubeconfig with --kubeconfig to use an existing context")
 	}
@@ -210,7 +238,7 @@ func (s *state) validate() error {
 
 // getReleaseChartsInfo retrieves valid chart information.
 // Valid charts are the ones that can be found in the defined repos.
-func (s *state) getReleaseChartsInfo() error {
+func (s *State) getReleaseChartsInfo() error {
 	var fail bool
 	wg := sync.WaitGroup{}
 	mutex := sync.Mutex{}
@@ -218,7 +246,7 @@ func (s *state) getReleaseChartsInfo() error {
 	chartErrors := make(chan error, len(s.Apps))
 
 	charts := make(map[string]map[string][]string)
-	s.ChartInfo = make(map[string]map[string]*chartInfo)
+	s.chartInfo = make(map[string]map[string]*ChartInfo)
 
 	for app, r := range s.Apps {
 		if !r.isConsideredToRun() {
@@ -233,8 +261,8 @@ func (s *state) getReleaseChartsInfo() error {
 			charts[r.Chart][r.Version] = make([]string, 0)
 		}
 
-		if s.ChartInfo[r.Chart] == nil {
-			s.ChartInfo[r.Chart] = make(map[string]*chartInfo)
+		if s.chartInfo[r.Chart] == nil {
+			s.chartInfo[r.Chart] = make(map[string]*ChartInfo)
 		}
 
 		charts[r.Chart][r.Version] = append(charts[r.Chart][r.Version], app)
@@ -258,7 +286,7 @@ func (s *state) getReleaseChartsInfo() error {
 				} else {
 					log.Verbose(fmt.Sprintf("Extracted chart information from chart [ %s ] with version [ %s ]: %s %s", chart, version, info.Name, info.Version))
 					mutex.Lock()
-					s.ChartInfo[chart][version] = info
+					s.chartInfo[chart][version] = info
 					mutex.Unlock()
 				}
 
@@ -282,13 +310,13 @@ func (s *state) getReleaseChartsInfo() error {
 }
 
 // isNamespaceDefined checks if a given namespace is defined in the namespaces section of the desired state file
-func (s *state) isNamespaceDefined(ns string) bool {
+func (s *State) isNamespaceDefined(ns string) bool {
 	_, ok := s.Namespaces[ns]
 	return ok
 }
 
 // overrideAppsNamespace replaces all apps namespaces with one specific namespace
-func (s *state) overrideAppsNamespace(newNs string) {
+func (s *State) overrideAppsNamespace(newNs string) {
 	log.Info("Overriding apps namespaces with [ " + newNs + " ] ...")
 	for _, r := range s.Apps {
 		r.overrideNamespace(newNs)
@@ -297,7 +325,7 @@ func (s *state) overrideAppsNamespace(newNs string) {
 
 // disable Apps defined as excluded by either their name or their group
 // then get only those Apps that exist in TargetMap
-func (s *state) disableApps(groups, targets, groupsExcluded, targetsExcluded []string) {
+func (s *State) disableApps(groups, targets, groupsExcluded, targetsExcluded []string) {
 excludeAppsLoop:
 	for appName, app := range s.Apps {
 		for _, groupExcluded := range groupsExcluded {
@@ -313,14 +341,14 @@ excludeAppsLoop:
 			}
 		}
 	}
-	if s.TargetMap == nil {
-		s.TargetMap = make(map[string]bool)
+	if s.targetMap == nil {
+		s.targetMap = make(map[string]bool)
 	}
 	if len(targets) == 0 && len(groups) == 0 {
 		return
 	}
 	for _, t := range targets {
-		s.TargetMap[t] = true
+		s.targetMap[t] = true
 	}
 	groupMap := make(map[string]struct{})
 	namespaces := make(map[string]struct{})
@@ -328,12 +356,12 @@ excludeAppsLoop:
 		groupMap[g] = struct{}{}
 	}
 	for appName, app := range s.Apps {
-		if _, ok := s.TargetMap[appName]; ok {
+		if _, ok := s.targetMap[appName]; ok {
 			namespaces[app.Namespace] = struct{}{}
 			continue
 		}
 		if _, ok := groupMap[app.Group]; ok {
-			s.TargetMap[appName] = true
+			s.targetMap[appName] = true
 			namespaces[app.Namespace] = struct{}{}
 		} else {
 			app.Disable()
@@ -351,7 +379,7 @@ excludeAppsLoop:
 }
 
 // updateContextLabels applies Helmsman labels including overriding any previously-set context with the one found in the DSF
-func (s *state) updateContextLabels() {
+func (s *State) updateContextLabels() {
 	for _, r := range s.Apps {
 		if r.isConsideredToRun() {
 			log.Info("Updating context and reapplying Helmsman labels for release [ " + r.Name + " ]")
@@ -363,7 +391,7 @@ func (s *state) updateContextLabels() {
 }
 
 // print prints the desired state
-func (s *state) print() {
+func (s *State) print() {
 	fmt.Println("\nMetadata: ")
 	fmt.Println("--------- ")
 	printMap(s.Metadata, 0)
@@ -389,7 +417,7 @@ func (s *state) print() {
 	}
 	fmt.Println("\nTargets: ")
 	fmt.Println("--------------- ")
-	for t := range s.TargetMap {
+	for t := range s.targetMap {
 		fmt.Println(t)
 	}
 }

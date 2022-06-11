@@ -34,7 +34,7 @@ type helmRelease struct {
 }
 
 // getHelmReleases fetches a list of all releases in a k8s cluster
-func getHelmReleases(s *state) []helmRelease {
+func getHelmReleases(s *State) []helmRelease {
 	var (
 		allReleases []helmRelease
 		wg          sync.WaitGroup
@@ -57,9 +57,9 @@ func getHelmReleases(s *state) []helmRelease {
 			if err := json.Unmarshal([]byte(res.output), &releases); err != nil {
 				log.Fatal(fmt.Sprintf("failed to unmarshal Helm CLI output: %s", err))
 			}
-			if len(s.TargetMap) > 0 {
+			if len(s.targetMap) > 0 {
 				for _, r := range releases {
-					if use, ok := s.TargetMap[r.Name]; ok && use {
+					if use, ok := s.targetMap[r.Name]; ok && use {
 						targetReleases = append(targetReleases, r)
 					}
 				}
@@ -115,6 +115,6 @@ func (r *helmRelease) getChartVersion() string {
 
 // getCurrentNamespaceProtection returns the protection state for the namespace where a release is currently installed.
 // It returns true if a namespace is defined as protected in the desired state file, false otherwise.
-func (r *helmRelease) getCurrentNamespaceProtection(s *state) bool {
+func (r *helmRelease) getCurrentNamespaceProtection(s *State) bool {
 	return s.Namespaces[r.Namespace].Protected
 }

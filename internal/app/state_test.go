@@ -32,10 +32,10 @@ func Test_state_validate(t *testing.T) {
 	type fields struct {
 		Metadata     map[string]string
 		Certificates map[string]string
-		Settings     config
-		Namespaces   map[string]*namespace
+		Settings     Config
+		Namespaces   map[string]*Namespace
 		HelmRepos    map[string]string
-		Apps         map[string]*release
+		Apps         map[string]*Release
 	}
 	tests := []struct {
 		name   string
@@ -50,20 +50,20 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "s3://some-bucket/12345.key",
 				},
-				Settings: config{
+				Settings: Config{
 					KubeContext: "minikube",
 					Username:    "admin",
 					Password:    "$K8S_PASSWORD",
 					ClusterURI:  "https://192.168.99.100:8443",
 				},
-				Namespaces: map[string]*namespace{
-					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
+				Namespaces: map[string]*Namespace{
+					"staging": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo":            "s3://my-repo/charts",
 				},
-				Apps: make(map[string]*release),
+				Apps: make(map[string]*Release),
 			},
 			want: true,
 		}, {
@@ -74,20 +74,20 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "s3://some-bucket/12345.key",
 				},
-				Settings: config{
+				Settings: Config{
 					KubeContext: "",
 					Username:    "admin",
 					Password:    "$K8S_PASSWORD",
 					ClusterURI:  "https://192.168.99.100:8443",
 				},
-				Namespaces: map[string]*namespace{
-					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
+				Namespaces: map[string]*Namespace{
+					"staging": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo":            "s3://my-repo/charts",
 				},
-				Apps: make(map[string]*release),
+				Apps: make(map[string]*Release),
 			},
 			want: false,
 		}, {
@@ -98,17 +98,17 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "s3://some-bucket/12345.key",
 				},
-				Settings: config{
+				Settings: Config{
 					KubeContext: "minikube",
 				},
-				Namespaces: map[string]*namespace{
-					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
+				Namespaces: map[string]*Namespace{
+					"staging": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo":            "s3://my-repo/charts",
 				},
-				Apps: make(map[string]*release),
+				Apps: make(map[string]*Release),
 			},
 			want: true,
 		}, {
@@ -119,20 +119,20 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "s3://some-bucket/12345.key",
 				},
-				Settings: config{
+				Settings: Config{
 					KubeContext: "minikube",
 					Username:    "admin",
 					Password:    "K8S_PASSWORD",
 					ClusterURI:  "https://192.168.99.100:8443",
 				},
-				Namespaces: map[string]*namespace{
-					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
+				Namespaces: map[string]*Namespace{
+					"staging": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo":            "s3://my-repo/charts",
 				},
-				Apps: make(map[string]*release),
+				Apps: make(map[string]*Release),
 			},
 			want: true,
 		}, {
@@ -143,20 +143,20 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "s3://some-bucket/12345.key",
 				},
-				Settings: config{
+				Settings: Config{
 					KubeContext: "minikube",
 					Username:    "admin",
 					Password:    "K8S_PASSWORD",
 					ClusterURI:  "$URI", // unset env
 				},
-				Namespaces: map[string]*namespace{
-					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
+				Namespaces: map[string]*Namespace{
+					"staging": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo":            "s3://my-repo/charts",
 				},
-				Apps: make(map[string]*release),
+				Apps: make(map[string]*Release),
 			},
 			want: false,
 		}, {
@@ -167,20 +167,20 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "s3://some-bucket/12345.key",
 				},
-				Settings: config{
+				Settings: Config{
 					KubeContext: "minikube",
 					Username:    "admin",
 					Password:    "K8S_PASSWORD",
 					ClusterURI:  "https//192.168.99.100:8443", // invalid url
 				},
-				Namespaces: map[string]*namespace{
-					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
+				Namespaces: map[string]*Namespace{
+					"staging": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo":            "s3://my-repo/charts",
 				},
-				Apps: make(map[string]*release),
+				Apps: make(map[string]*Release),
 			},
 			want: false,
 		}, {
@@ -190,20 +190,20 @@ func Test_state_validate(t *testing.T) {
 				Certificates: map[string]string{
 					"caCrt": "s3://some-bucket/12345.crt",
 				},
-				Settings: config{
+				Settings: Config{
 					KubeContext: "minikube",
 					Username:    "admin",
 					Password:    "$K8S_PASSWORD",
 					ClusterURI:  "https://192.168.99.100:8443",
 				},
-				Namespaces: map[string]*namespace{
-					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
+				Namespaces: map[string]*Namespace{
+					"staging": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo":            "s3://my-repo/charts",
 				},
-				Apps: make(map[string]*release),
+				Apps: make(map[string]*Release),
 			},
 			want: false,
 		}, {
@@ -211,20 +211,20 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: config{
+				Settings: Config{
 					KubeContext: "minikube",
 					Username:    "admin",
 					Password:    "$K8S_PASSWORD",
 					ClusterURI:  "https://192.168.99.100:8443",
 				},
-				Namespaces: map[string]*namespace{
-					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
+				Namespaces: map[string]*Namespace{
+					"staging": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo":            "s3://my-repo/charts",
 				},
-				Apps: make(map[string]*release),
+				Apps: make(map[string]*Release),
 			},
 			want: false,
 		}, {
@@ -235,20 +235,20 @@ func Test_state_validate(t *testing.T) {
 					"caCrt": "s3://some-bucket/12345.crt",
 					"caKey": "http://someurl.com/",
 				},
-				Settings: config{
+				Settings: Config{
 					KubeContext: "minikube",
 					Username:    "admin",
 					Password:    "$K8S_PASSWORD",
 					ClusterURI:  "https://192.168.99.100:8443",
 				},
-				Namespaces: map[string]*namespace{
-					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
+				Namespaces: map[string]*Namespace{
+					"staging": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo":            "s3://my-repo/charts",
 				},
-				Apps: make(map[string]*release),
+				Apps: make(map[string]*Release),
 			},
 			want: false,
 		}, {
@@ -256,17 +256,17 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: config{
+				Settings: Config{
 					KubeContext: "minikube",
 				},
-				Namespaces: map[string]*namespace{
-					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
+				Namespaces: map[string]*Namespace{
+					"staging": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo":            "s3://my-repo/charts",
 				},
-				Apps: make(map[string]*release),
+				Apps: make(map[string]*Release),
 			},
 			want: true,
 		}, {
@@ -274,7 +274,7 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: config{
+				Settings: Config{
 					KubeContext: "minikube",
 				},
 				Namespaces: nil,
@@ -282,7 +282,7 @@ func Test_state_validate(t *testing.T) {
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo":            "s3://my-repo/charts",
 				},
-				Apps: make(map[string]*release),
+				Apps: make(map[string]*Release),
 			},
 			want: false,
 		}, {
@@ -290,15 +290,15 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: config{
+				Settings: Config{
 					KubeContext: "minikube",
 				},
-				Namespaces: map[string]*namespace{},
+				Namespaces: map[string]*Namespace{},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo":            "s3://my-repo/charts",
 				},
-				Apps: make(map[string]*release),
+				Apps: make(map[string]*Release),
 			},
 			want: false,
 		}, {
@@ -306,14 +306,14 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: config{
+				Settings: Config{
 					KubeContext: "minikube",
 				},
-				Namespaces: map[string]*namespace{
-					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
+				Namespaces: map[string]*Namespace{
+					"staging": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false},
 				},
 				HelmRepos: nil,
-				Apps:      make(map[string]*release),
+				Apps:      make(map[string]*Release),
 			},
 			want: true,
 		}, {
@@ -321,14 +321,14 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: config{
+				Settings: Config{
 					KubeContext: "minikube",
 				},
-				Namespaces: map[string]*namespace{
-					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
+				Namespaces: map[string]*Namespace{
+					"staging": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false},
 				},
 				HelmRepos: map[string]string{},
-				Apps:      make(map[string]*release),
+				Apps:      make(map[string]*Release),
 			},
 			want: true,
 		}, {
@@ -336,17 +336,17 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: config{
+				Settings: Config{
 					KubeContext: "minikube",
 				},
-				Namespaces: map[string]*namespace{
-					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
+				Namespaces: map[string]*Namespace{
+					"staging": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo":            "",
 				},
-				Apps: make(map[string]*release),
+				Apps: make(map[string]*Release),
 			},
 			want: false,
 		}, {
@@ -354,17 +354,17 @@ func Test_state_validate(t *testing.T) {
 			fields: fields{
 				Metadata:     make(map[string]string),
 				Certificates: nil,
-				Settings: config{
+				Settings: Config{
 					KubeContext: "minikube",
 				},
-				Namespaces: map[string]*namespace{
-					"staging": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false},
+				Namespaces: map[string]*Namespace{
+					"staging": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false},
 				},
 				HelmRepos: map[string]string{
 					"deprecated-stable": "https://kubernetes-charts.storage.googleapis.com",
 					"myrepo":            "s3//my-repo/charts",
 				},
-				Apps: make(map[string]*release),
+				Apps: make(map[string]*Release),
 			},
 			want: false,
 		},
@@ -373,7 +373,7 @@ func Test_state_validate(t *testing.T) {
 	os.Setenv("SET_URI", "https://192.168.99.100:8443")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := state{
+			s := State{
 				Metadata:     tt.fields.Metadata,
 				Certificates: tt.fields.Certificates,
 				Settings:     tt.fields.Settings,
@@ -396,8 +396,8 @@ func Test_state_validate(t *testing.T) {
 	}
 }
 
-func createFullReleasePointer(chart, version string) *release {
-	return &release{
+func createFullReleasePointer(chart, version string) *Release {
+	return &Release{
 		Name:          "",
 		Description:   "",
 		Namespace:     "",
@@ -424,7 +424,7 @@ func createFullReleasePointer(chart, version string) *release {
 
 func Test_state_getReleaseChartsInfo(t *testing.T) {
 	type args struct {
-		apps map[string]*release
+		apps map[string]*Release
 	}
 
 	tests := []struct {
@@ -437,7 +437,7 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 		{
 			name: "test case 1: valid local path with no chart",
 			args: args{
-				apps: map[string]*release{
+				apps: map[string]*Release{
 					"app": createFullReleasePointer(os.TempDir()+"/helmsman-tests/myapp", ""),
 				},
 			},
@@ -445,7 +445,7 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 		}, {
 			name: "test case 2: invalid local path",
 			args: args{
-				apps: map[string]*release{
+				apps: map[string]*Release{
 					"app": createFullReleasePointer(os.TempDir()+"/does-not-exist/myapp", ""),
 				},
 			},
@@ -453,7 +453,7 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 		}, {
 			name: "test case 3: valid chart local path with whitespace",
 			args: args{
-				apps: map[string]*release{
+				apps: map[string]*Release{
 					"app": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
 				},
 			},
@@ -461,7 +461,7 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 		}, {
 			name: "test case 4: valid chart from repo",
 			args: args{
-				apps: map[string]*release{
+				apps: map[string]*Release{
 					"app": createFullReleasePointer("prometheus-community/prometheus", "11.16.5"),
 				},
 			},
@@ -470,7 +470,7 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 			name:       "test case 5: invalid local path for chart ignored with -target flag, while other app was targeted",
 			targetFlag: []string{"notThisOne"},
 			args: args{
-				apps: map[string]*release{
+				apps: map[string]*Release{
 					"app": createFullReleasePointer(os.TempDir()+"/does-not-exist/myapp", ""),
 				},
 			},
@@ -479,7 +479,7 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 			name:       "test case 6: invalid local path for chart included with -target flag",
 			targetFlag: []string{"app"},
 			args: args{
-				apps: map[string]*release{
+				apps: map[string]*Release{
 					"app": createFullReleasePointer(os.TempDir()+"/does-not-exist/myapp", ""),
 				},
 			},
@@ -488,7 +488,7 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 			name:       "test case 7: multiple valid local apps with the same chart version",
 			targetFlag: []string{"app"},
 			args: args{
-				apps: map[string]*release{
+				apps: map[string]*Release{
 					"app1": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
 					"app2": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
 					"app3": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
@@ -508,7 +508,7 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 	defer teardownTestCase(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			stt := &state{Apps: tt.args.apps}
+			stt := &State{Apps: tt.args.apps}
 			stt.disableApps(tt.groupFlag, tt.targetFlag, []string{}, []string{})
 			err := stt.getReleaseChartsInfo()
 			switch err.(type) {

@@ -22,7 +22,7 @@ func setupStateFileTestCase(t *testing.T) (func(t *testing.T), error) {
 func Test_fromTOML(t *testing.T) {
 	type args struct {
 		file string
-		s    *state
+		s    *State
 	}
 	tests := []struct {
 		name string
@@ -33,14 +33,14 @@ func Test_fromTOML(t *testing.T) {
 			name: "test case 1 -- invalid TOML",
 			args: args{
 				file: "../../../tests/invalid_example.toml",
-				s:    new(state),
+				s:    new(State),
 			},
 			want: false,
 		}, {
 			name: "test case 2 -- valid TOML",
 			args: args{
 				file: "../../examples/example.toml",
-				s:    new(state),
+				s:    new(State),
 			},
 			want: true,
 		},
@@ -69,7 +69,7 @@ func Test_fromTOML(t *testing.T) {
 func Test_fromTOML_Expand(t *testing.T) {
 	type args struct {
 		file string
-		s    *state
+		s    *State
 	}
 	tests := []struct {
 		name    string
@@ -82,7 +82,7 @@ func Test_fromTOML_Expand(t *testing.T) {
 			name: "test case 1 -- valid TOML expand ClusterURI",
 			args: args{
 				file: "../../examples/example.toml",
-				s:    new(state),
+				s:    new(State),
 			},
 			section: "Settings",
 			field:   "ClusterURI",
@@ -92,7 +92,7 @@ func Test_fromTOML_Expand(t *testing.T) {
 			name: "test case 2 -- valid TOML expand org",
 			args: args{
 				file: "../../examples/example.toml",
-				s:    new(state),
+				s:    new(State),
 			},
 			section: "Metadata",
 			field:   "org",
@@ -162,7 +162,7 @@ func Test_fromTOML_Expand(t *testing.T) {
 func Test_fromYAML(t *testing.T) {
 	type args struct {
 		file string
-		s    *state
+		s    *State
 	}
 	tests := []struct {
 		name string
@@ -173,14 +173,14 @@ func Test_fromYAML(t *testing.T) {
 			name: "test case 1 -- invalid YAML",
 			args: args{
 				file: "../../tests/invalid_example.yaml",
-				s:    new(state),
+				s:    new(State),
 			},
 			want: false,
 		}, {
 			name: "test case 2 -- valid TOML",
 			args: args{
 				file: "../../examples/example.yaml",
-				s:    new(state),
+				s:    new(State),
 			},
 			want: true,
 		},
@@ -209,7 +209,7 @@ func Test_fromYAML(t *testing.T) {
 func Test_fromYAML_UnsetVars(t *testing.T) {
 	type args struct {
 		file string
-		s    *state
+		s    *State
 	}
 	tests := []struct {
 		name      string
@@ -221,7 +221,7 @@ func Test_fromYAML_UnsetVars(t *testing.T) {
 			name: "test case 1 -- unset ORG_PATH env var",
 			args: args{
 				file: "../../examples/example.yaml",
-				s:    new(state),
+				s:    new(State),
 			},
 			targetVar: "ORG_PATH",
 			want:      false,
@@ -230,7 +230,7 @@ func Test_fromYAML_UnsetVars(t *testing.T) {
 			name: "test case 2 -- unset VALUE var",
 			args: args{
 				file: "../../examples/example.yaml",
-				s:    new(state),
+				s:    new(State),
 			},
 			targetVar: "VALUE",
 			want:      false,
@@ -264,7 +264,7 @@ func Test_fromYAML_UnsetVars(t *testing.T) {
 func Test_fromYAML_Expand(t *testing.T) {
 	type args struct {
 		file string
-		s    *state
+		s    *State
 	}
 	tests := []struct {
 		name    string
@@ -277,7 +277,7 @@ func Test_fromYAML_Expand(t *testing.T) {
 			name: "test case 1 -- valid YAML expand ClusterURI",
 			args: args{
 				file: "../../examples/example.yaml",
-				s:    new(state),
+				s:    new(State),
 			},
 			section: "Settings",
 			field:   "ClusterURI",
@@ -287,7 +287,7 @@ func Test_fromYAML_Expand(t *testing.T) {
 			name: "test case 2 -- valid YAML expand org",
 			args: args{
 				file: "../../examples/example.yaml",
-				s:    new(state),
+				s:    new(State),
 			},
 			section: "Metadata",
 			field:   "org",
@@ -360,7 +360,7 @@ func Test_build(t *testing.T) {
 		t.Errorf("setupStateFileTestCase(), got: %v", err)
 	}
 	defer teardownTestCase(t)
-	s := new(state)
+	s := new(State)
 	files := fileOptionArray{
 		fileOption{name: "../../examples/composition/main.yaml"},
 		fileOption{name: "../../examples/composition/kyverno.yaml"},

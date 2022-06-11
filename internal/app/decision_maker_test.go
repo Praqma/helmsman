@@ -7,7 +7,7 @@ import (
 
 func Test_getValuesFiles(t *testing.T) {
 	type args struct {
-		r *release
+		r *Release
 	}
 	tests := []struct {
 		name string
@@ -17,7 +17,7 @@ func Test_getValuesFiles(t *testing.T) {
 		{
 			name: "test case 1",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release1",
 					Description: "",
 					Namespace:   "namespace",
@@ -34,7 +34,7 @@ func Test_getValuesFiles(t *testing.T) {
 		{
 			name: "test case 2",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release1",
 					Description: "",
 					Namespace:   "namespace",
@@ -51,7 +51,7 @@ func Test_getValuesFiles(t *testing.T) {
 		{
 			name: "test case 1",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release1",
 					Description: "",
 					Namespace:   "namespace",
@@ -77,7 +77,7 @@ func Test_getValuesFiles(t *testing.T) {
 
 func Test_inspectUpgradeScenario(t *testing.T) {
 	type args struct {
-		r *release
+		r *Release
 		s *map[string]helmRelease
 	}
 	tests := []struct {
@@ -88,7 +88,7 @@ func Test_inspectUpgradeScenario(t *testing.T) {
 		{
 			name: "inspectUpgradeScenario() - local chart with different chart name should change",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:      "release1",
 					Namespace: "namespace",
 					Version:   "1.0.0",
@@ -129,7 +129,7 @@ func Test_inspectUpgradeScenario(t *testing.T) {
 func Test_decide(t *testing.T) {
 	type args struct {
 		r string
-		s *state
+		s *State
 	}
 	tests := []struct {
 		name               string
@@ -146,8 +146,8 @@ func Test_decide(t *testing.T) {
 			excludedGroupFlag:  []string{},
 			args: args{
 				r: "release1",
-				s: &state{
-					Apps: map[string]*release{
+				s: &State{
+					Apps: map[string]*Release{
 						"release1": {
 							Name:      "release1",
 							Namespace: "namespace",
@@ -165,8 +165,8 @@ func Test_decide(t *testing.T) {
 			excludedGroupFlag:  []string{},
 			args: args{
 				r: "release1",
-				s: &state{
-					Apps: map[string]*release{
+				s: &State{
+					Apps: map[string]*Release{
 						"release1": {
 							Name:      "release1",
 							Namespace: "namespace",
@@ -184,8 +184,8 @@ func Test_decide(t *testing.T) {
 			excludedGroupFlag:  []string{},
 			args: args{
 				r: "release4",
-				s: &state{
-					Apps: map[string]*release{
+				s: &State{
+					Apps: map[string]*Release{
 						"release4": {
 							Name:      "release4",
 							Namespace: "namespace",
@@ -203,8 +203,8 @@ func Test_decide(t *testing.T) {
 			excludedGroupFlag:  []string{},
 			args: args{
 				r: "thisRelease",
-				s: &state{
-					Apps: map[string]*release{
+				s: &State{
+					Apps: map[string]*Release{
 						"thisRelease": {
 							Name:      "thisRelease",
 							Namespace: "namespace",
@@ -222,8 +222,8 @@ func Test_decide(t *testing.T) {
 			excludedGroupFlag:  []string{},
 			args: args{
 				r: "thisRelease",
-				s: &state{
-					Apps: map[string]*release{
+				s: &State{
+					Apps: map[string]*Release{
 						"thisRelease": {
 							Name:      "thisRelease",
 							Namespace: "namespace",
@@ -241,8 +241,8 @@ func Test_decide(t *testing.T) {
 			excludedGroupFlag:  []string{},
 			args: args{
 				r: "thisRelease",
-				s: &state{
-					Apps: map[string]*release{
+				s: &State{
+					Apps: map[string]*Release{
 						"thisRelease": {
 							Name:      "thisRelease",
 							Namespace: "namespace",
@@ -260,8 +260,8 @@ func Test_decide(t *testing.T) {
 			excludedGroupFlag:  []string{"myGroup"},
 			args: args{
 				r: "thisRelease",
-				s: &state{
-					Apps: map[string]*release{
+				s: &State{
+					Apps: map[string]*Release{
 						"thisRelease": {
 							Name:      "thisRelease",
 							Namespace: "namespace",
@@ -279,10 +279,10 @@ func Test_decide(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cs := newCurrentState()
 			tt.args.s.disableApps([]string{}, tt.targetFlag, tt.excludedGroupFlag, tt.excludedTargetFlag)
-			settings := config{}
+			settings := Config{}
 			outcome := plan{}
 			// Act
-			err := cs.decide(tt.args.s.Apps[tt.args.r], tt.args.s.Namespaces[tt.args.s.Apps[tt.args.r].Namespace], &outcome, &chartInfo{}, settings, 0)
+			err := cs.decide(tt.args.s.Apps[tt.args.r], tt.args.s.Namespaces[tt.args.s.Apps[tt.args.r].Namespace], &outcome, &ChartInfo{}, settings, 0)
 			if err != nil {
 				t.Errorf("decide() - unexpected error: %v", err)
 			}
@@ -300,7 +300,7 @@ func Test_decide(t *testing.T) {
 func Test_decide_skip_ignored_apps(t *testing.T) {
 	type args struct {
 		rs []string
-		s  *state
+		s  *State
 	}
 	tests := []struct {
 		name       string
@@ -313,8 +313,8 @@ func Test_decide_skip_ignored_apps(t *testing.T) {
 			targetFlag: []string{"service1", "service2"},
 			args: args{
 				rs: []string{"service1", "service2"},
-				s: &state{
-					Apps: map[string]*release{
+				s: &State{
+					Apps: map[string]*Release{
 						"service1": {
 							Name:      "service1",
 							Namespace: "namespace",
@@ -335,8 +335,8 @@ func Test_decide_skip_ignored_apps(t *testing.T) {
 			targetFlag: []string{"service1"},
 			args: args{
 				rs: []string{"service1", "service2"},
-				s: &state{
-					Apps: map[string]*release{
+				s: &State{
+					Apps: map[string]*Release{
 						"service1": {
 							Name:      "service1",
 							Namespace: "namespace",
@@ -358,13 +358,13 @@ func Test_decide_skip_ignored_apps(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cs := newCurrentState()
 			tt.args.s.disableApps([]string{}, tt.targetFlag, []string{}, []string{})
-			settings := config{
+			settings := Config{
 				SkipIgnoredApps: true,
 			}
 			outcome := plan{}
 			// Act
 			for _, r := range tt.args.rs {
-				err := cs.decide(tt.args.s.Apps[r], tt.args.s.Namespaces[tt.args.s.Apps[r].Namespace], &outcome, &chartInfo{}, settings, 0)
+				err := cs.decide(tt.args.s.Apps[r], tt.args.s.Namespaces[tt.args.s.Apps[r].Namespace], &outcome, &ChartInfo{}, settings, 0)
 				if err != nil {
 					t.Errorf("decide() - unexpected error: %v", err)
 				}
@@ -382,7 +382,7 @@ func Test_decide_skip_ignored_apps(t *testing.T) {
 
 func Test_decide_group(t *testing.T) {
 	type args struct {
-		s *state
+		s *State
 	}
 	tests := []struct {
 		name      string
@@ -394,8 +394,8 @@ func Test_decide_group(t *testing.T) {
 			name:      "decide() - groupMap does not contain this service - skip",
 			groupFlag: []string{"some-group"},
 			args: args{
-				s: &state{
-					Apps: map[string]*release{
+				s: &State{
+					Apps: map[string]*Release{
 						"release1": {
 							Name:      "release1",
 							Namespace: "namespace",
@@ -411,8 +411,8 @@ func Test_decide_group(t *testing.T) {
 			name:      "decide() - groupMap contains this service - proceed",
 			groupFlag: []string{"run-me"},
 			args: args{
-				s: &state{
-					Apps: map[string]*release{
+				s: &State{
+					Apps: map[string]*Release{
 						"release1": {
 							Name:      "release1",
 							Namespace: "namespace",
@@ -443,8 +443,8 @@ func Test_decide_group(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.args.s.disableApps(tt.groupFlag, []string{}, []string{}, []string{})
-			if len(tt.args.s.TargetMap) != len(tt.want) {
-				t.Errorf("decide() = %d, want %d", len(tt.args.s.TargetMap), len(tt.want))
+			if len(tt.args.s.targetMap) != len(tt.want) {
+				t.Errorf("decide() = %d, want %d", len(tt.args.s.targetMap), len(tt.want))
 			}
 		})
 	}

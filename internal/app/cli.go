@@ -110,15 +110,14 @@ type cli struct {
 
 func printUsage() {
 	fmt.Print(banner)
-	fmt.Printf("Helmsman version: " + appVersion + "\n")
-	fmt.Printf("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
-	fmt.Printf("")
+	fmt.Println("Helmsman version: " + appVersion)
+	fmt.Println("Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts.")
+	fmt.Println("")
 	fmt.Printf("Usage: helmsman [options]\n")
 	flag.PrintDefaults()
 }
 
-// Cli parses cmd flags, validates them and performs some initializations
-func (c *cli) parse() {
+func (c *cli) setup() {
 	// parsing command line flags
 	flag.Var(&c.files, "f", "desired state file name(s), may be supplied more than once to merge state files")
 	flag.Var(&c.envFiles, "e", "additional file(s) to load environment variables from, may be supplied more than once, it extends default .env file lookup, every next file takes precedence over previous ones in case of having the same environment variables defined")
@@ -165,7 +164,10 @@ func (c *cli) parse() {
 	flag.IntVar(&c.pendingAppRetries, "pending-max-retries", 0, "max number of retries for pending helm releases")
 	flag.Usage = printUsage
 	flag.Parse()
+}
 
+// Cli parses cmd flags, validates them and performs some initializations
+func (c *cli) parse() {
 	if c.version {
 		fmt.Println("Helmsman version: " + appVersion)
 		os.Exit(0)
@@ -247,7 +249,7 @@ func (c *cli) parse() {
 }
 
 // readState gets the desired state from files
-func (c *cli) readState(s *state) error {
+func (c *cli) readState(s *State) error {
 	// read the env file if it exists
 	if _, err := os.Stat(".env"); err == nil {
 		if !stringInSlice(".env", c.envFiles) {
