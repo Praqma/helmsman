@@ -15,14 +15,14 @@ import (
 // addNamespaces creates a set of namespaces in your k8s cluster.
 // If a namespace with the same name exists, it will skip it.
 // If --ns-override flag is used, it only creates the provided namespace in that flag
-func addNamespaces(s *state) {
+func addNamespaces(s *State) {
 	var wg sync.WaitGroup
 	for nsName, ns := range s.Namespaces {
 		if ns.disabled {
 			continue
 		}
 		wg.Add(1)
-		go func(name string, cfg *namespace, wg *sync.WaitGroup) {
+		go func(name string, cfg *Namespace, wg *sync.WaitGroup) {
 			defer wg.Done()
 			createNamespace(name)
 			labelNamespace(name, cfg.Labels, s.Settings.NamespaceLabelsAuthoritative)
@@ -117,7 +117,7 @@ func annotateNamespace(ns string, annotations map[string]string) {
 }
 
 // setLimits creates a LimitRange resource in the provided Namespace
-func setLimits(ns string, lims limits) {
+func setLimits(ns string, lims Limits) {
 	if len(lims) == 0 {
 		return
 	}
@@ -143,7 +143,7 @@ spec:
 	}
 }
 
-func setQuotas(ns string, quotas *quotas) {
+func setQuotas(ns string, quotas *Quotas) {
 	if quotas == nil {
 		return
 	}
@@ -200,7 +200,7 @@ func apply(definition, ns, kind string) error {
 
 // createContext creates a context -connecting to a k8s cluster- in kubectl config.
 // It returns true if successful, false otherwise
-func createContext(s *state) error {
+func createContext(s *State) error {
 	if s.Settings.BearerToken && s.Settings.BearerTokenPath == "" {
 		log.Info("Creating kube context with bearer token from K8S service account.")
 		s.Settings.BearerTokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"

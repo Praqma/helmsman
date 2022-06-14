@@ -7,6 +7,10 @@ var _ = func() bool {
 	return true
 }()
 
+func init() {
+	flags.parse()
+}
+
 func Test_readState(t *testing.T) {
 	type result struct {
 		numApps        int
@@ -89,7 +93,7 @@ func Test_readState(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := state{}
+			s := State{}
 			if err := tt.flags.readState(&s); err != nil {
 				t.Errorf("readState() = Unexpected error: %v", err)
 			}

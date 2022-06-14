@@ -5,18 +5,18 @@ import (
 )
 
 func Test_release_validate(t *testing.T) {
-	st := state{
+	st := State{
 		Metadata:     make(map[string]string),
 		Certificates: make(map[string]string),
-		Settings:     (config{}),
-		Namespaces:   map[string]*namespace{"namespace": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false}},
+		Settings:     (Config{}),
+		Namespaces:   map[string]*Namespace{"namespace": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false}},
 		HelmRepos:    make(map[string]string),
-		Apps:         make(map[string]*release),
+		Apps:         make(map[string]*Release),
 	}
 
 	type args struct {
-		s state
-		r *release
+		s State
+		r *Release
 	}
 	tests := []struct {
 		name string
@@ -26,7 +26,7 @@ func Test_release_validate(t *testing.T) {
 		{
 			name: "test case 1",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release1",
 					Description: "",
 					Namespace:   "namespace",
@@ -42,7 +42,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 2",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release2",
 					Description: "",
 					Namespace:   "namespace",
@@ -58,7 +58,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 3",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release3",
 					Description: "",
 					Namespace:   "namespace",
@@ -74,7 +74,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 4",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release1",
 					Description: "",
 					Namespace:   "namespace",
@@ -90,7 +90,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 5",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "",
 					Description: "",
 					Namespace:   "namespace",
@@ -106,7 +106,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 6",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release6",
 					Description: "",
 					Namespace:   "",
@@ -122,7 +122,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 7",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release7",
 					Description: "",
 					Namespace:   "namespace",
@@ -138,7 +138,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 8",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release8",
 					Description: "",
 					Namespace:   "namespace",
@@ -154,7 +154,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 9",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release9",
 					Description: "",
 					Namespace:   "namespace",
@@ -170,7 +170,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 10",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release10",
 					Description: "",
 					Namespace:   "namespace",
@@ -186,7 +186,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 11",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release11",
 					Description: "",
 					Namespace:   "namespace",
@@ -203,7 +203,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 12",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release12",
 					Description: "",
 					Namespace:   "namespace",
@@ -219,7 +219,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 13",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release13",
 					Description: "",
 					Namespace:   "namespace",
@@ -235,7 +235,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 14 - non-existing hook file",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release14",
 					Description: "",
 					Namespace:   "namespace",
@@ -251,7 +251,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 15 - invalid hook file type",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release15",
 					Description: "",
 					Namespace:   "namespace",
@@ -267,7 +267,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 16 - valid hook file type",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release16",
 					Description: "",
 					Namespace:   "namespace",
@@ -283,7 +283,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 17 - valid hook file URL",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release17",
 					Description: "",
 					Namespace:   "namespace",
@@ -299,7 +299,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 18 - invalid hook file URL",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release18",
 					Description: "",
 					Namespace:   "namespace",
@@ -315,7 +315,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 19 - invalid hook type 1",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release19",
 					Description: "",
 					Namespace:   "namespace",
@@ -331,7 +331,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 20 - invalid hook type 2",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release20",
 					Description: "",
 					Namespace:   "namespace",
@@ -347,7 +347,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 21",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:         "release21",
 					Description:  "",
 					Namespace:    "namespace",
@@ -364,7 +364,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 22",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:         "release22",
 					Description:  "",
 					Namespace:    "namespace",
@@ -381,7 +381,7 @@ func Test_release_validate(t *testing.T) {
 		}, {
 			name: "test case 23 - executable hook type",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release20",
 					Description: "",
 					Namespace:   "namespace",
@@ -411,10 +411,10 @@ func Test_release_validate(t *testing.T) {
 }
 
 func Test_release_inheritHooks(t *testing.T) {
-	st := state{
+	st := State{
 		Metadata:     make(map[string]string),
 		Certificates: make(map[string]string),
-		Settings: config{
+		Settings: Config{
 			GlobalHooks: map[string]interface{}{
 				preInstall:         "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
 				postInstall:        "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.14/deploy/manifests/00-crds.yaml",
@@ -422,14 +422,14 @@ func Test_release_inheritHooks(t *testing.T) {
 				"successTimeout":   "60s",
 			},
 		},
-		Namespaces: map[string]*namespace{"namespace": {false, limits{}, make(map[string]string), make(map[string]string), &quotas{}, false}},
+		Namespaces: map[string]*Namespace{"namespace": {false, Limits{}, make(map[string]string), make(map[string]string), &Quotas{}, false}},
 		HelmRepos:  make(map[string]string),
-		Apps:       make(map[string]*release),
+		Apps:       make(map[string]*Release),
 	}
 
 	type args struct {
-		s state
-		r *release
+		s State
+		r *Release
 	}
 	tests := []struct {
 		name string
@@ -439,7 +439,7 @@ func Test_release_inheritHooks(t *testing.T) {
 		{
 			name: "test case 1",
 			args: args{
-				r: &release{
+				r: &Release{
 					Name:        "release1 - Global hooks correctly inherited",
 					Description: "",
 					Namespace:   "namespace",

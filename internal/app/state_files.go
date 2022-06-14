@@ -14,7 +14,7 @@ import (
 )
 
 // invokes either yaml or toml parser considering file extension
-func (s *state) fromFile(file string) error {
+func (s *State) fromFile(file string) error {
 	if isOfType(file, []string{".toml", ".tml"}) {
 		return s.fromTOML(file)
 	} else if isOfType(file, []string{".yaml", ".yml"}) {
@@ -24,7 +24,7 @@ func (s *state) fromFile(file string) error {
 	}
 }
 
-func (s *state) toFile(file string) {
+func (s *State) toFile(file string) {
 	if isOfType(file, []string{".toml"}) {
 		s.toTOML(file)
 	} else if isOfType(file, []string{".yaml", ".yml"}) {
@@ -36,7 +36,7 @@ func (s *state) toFile(file string) {
 
 // fromTOML reads a toml file and decodes it to a state type.
 // It uses the BurntSuchi TOML parser which throws an error if the TOML file is not valid.
-func (s *state) fromTOML(file string) error {
+func (s *State) fromTOML(file string) error {
 	rawTomlFile, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func (s *state) fromTOML(file string) error {
 
 // toTOML encodes a state type into a TOML file.
 // It uses the BurntSuchi TOML parser.
-func (s *state) toTOML(file string) {
+func (s *State) toTOML(file string) {
 	log.Info("Printing generated toml ... ")
 	var buff bytes.Buffer
 	var (
@@ -87,7 +87,7 @@ func (s *state) toTOML(file string) {
 
 // fromYAML reads a yaml file and decodes it to a state type.
 // parser which throws an error if the YAML file is not valid.
-func (s *state) fromYAML(file string) error {
+func (s *State) fromYAML(file string) error {
 	rawYamlFile, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err
@@ -112,7 +112,7 @@ func (s *state) fromYAML(file string) error {
 }
 
 // toYaml encodes a state type into a YAML file
-func (s *state) toYAML(file string) {
+func (s *State) toYAML(file string) {
 	log.Info("Printing generated yaml ... ")
 	var buff bytes.Buffer
 	var (
@@ -136,9 +136,9 @@ func (s *state) toYAML(file string) {
 	newFile.Close()
 }
 
-func (s *state) build(files fileOptionArray) error {
+func (s *State) build(files fileOptionArray) error {
 	for _, f := range files {
-		var fileState state
+		var fileState State
 
 		if err := fileState.fromFile(f.name); err != nil {
 			return err
@@ -173,7 +173,7 @@ func (s *state) build(files fileOptionArray) error {
 			return fmt.Errorf("failed to merge desired state file %s: %w", f.name, err)
 		}
 		// All the apps are already merged, make fileState.Apps empty to avoid conflicts in the final merge
-		fileState.Apps = make(map[string]*release)
+		fileState.Apps = make(map[string]*Release)
 
 		if err := mergo.Merge(s, &fileState, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
 			return fmt.Errorf("failed to merge desired state file %s: %w", f.name, err)
@@ -186,7 +186,7 @@ func (s *state) build(files fileOptionArray) error {
 
 // expand resolves relative paths of certs/keys/chart/value file/secret files/etc and replace them with a absolute paths
 // it also loops through the values/secrets files and substitutes variables into them.
-func (s *state) expand(relativeToFile string) {
+func (s *State) expand(relativeToFile string) {
 	dir := filepath.Dir(relativeToFile)
 	downloadDest, _ := filepath.Abs(createTempDir(tempFilesDir, "tmp"))
 	validProtocols := []string{"http", "https"}
@@ -243,7 +243,7 @@ func (s *state) expand(relativeToFile string) {
 }
 
 // isChartFromRepo checks if the chart is from a known repo
-func (s *state) isChartFromRepo(chart string) bool {
+func (s *State) isChartFromRepo(chart string) bool {
 	repoName := strings.Split(chart, "/")[0]
 	if _, isRepo := s.HelmRepos[repoName]; isRepo {
 		return true
@@ -254,7 +254,7 @@ func (s *state) isChartFromRepo(chart string) bool {
 // cleanup deletes the k8s certificates and keys files
 // It also deletes any Tiller TLS certs and keys
 // and secret files
-func (s *state) cleanup() {
+func (s *State) cleanup() {
 	log.Verbose("Cleaning up sensitive and temp files")
 	if _, err := os.Stat("ca.crt"); err == nil {
 		deleteFile("ca.crt")

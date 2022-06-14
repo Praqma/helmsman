@@ -18,7 +18,7 @@ type helmRepo struct {
 	URL  string `json:"url"`
 }
 
-type chartInfo struct {
+type ChartInfo struct {
 	Name    string `yaml:"name"`
 	Version string `yaml:"version"`
 }
@@ -33,7 +33,7 @@ func helmCmd(args []string, desc string) Command {
 }
 
 // getChartInfo fetches the latest chart information (name, version) matching the semantic versioning constraints.
-func getChartInfo(chartName, chartVersion string) (*chartInfo, error) {
+func getChartInfo(chartName, chartVersion string) (*ChartInfo, error) {
 	if isLocalChart(chartName) {
 		log.Info("Chart [ " + chartName + " ] with version [ " + chartVersion + " ] was found locally.")
 	}
@@ -46,7 +46,7 @@ func getChartInfo(chartName, chartVersion string) (*chartInfo, error) {
 		return nil, fmt.Errorf("chart [ %s ] version [ %s ] can't be found. If this is not a local chart, add the repo [ %s ] in your helmRepos stanza. Error output: %w", chartName, chartVersion, maybeRepo, err)
 	}
 
-	c := &chartInfo{}
+	c := &ChartInfo{}
 	if err := yaml.Unmarshal([]byte(res.output), &c); err != nil {
 		log.Fatal(fmt.Sprint(err))
 	}
