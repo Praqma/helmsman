@@ -60,19 +60,22 @@ update-deps: ## Update depdendencies. Runs `go get -u` internally.
 	@GOFLAGS="" go mod tidy
 	@GOFLAGS="" go mod vendor
 
-build: deps vet ## Build the package
+build: deps vet schema ## Build the package
 	@go build -o helmsman -ldflags '-X main.version="${TAG}-${DATE}" -extldflags "-static"' cmd/helmsman/main.go
 
 generate:
 	@go generate #${PKGS}
 .PHONY: generate
 
+schema: ## Generate the schema.json file
+	@go run schema.go
+
 repo:
 	@helm repo list | grep -q "^prometheus-community " || helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 	@helm repo update
 .PHONY: repo
 
-test: deps vet repo ## Run unit tests
+test: deps vet schema repo ## Run unit tests
 	@go test -v -cover -p=1 ./... -args -f ../../examples/example.toml
 .PHONY: test
 

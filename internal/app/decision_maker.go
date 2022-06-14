@@ -22,7 +22,7 @@ func newCurrentState() *currentState {
 }
 
 // getCurrentState builds the currentState map containing information about all releases existing in a k8s cluster
-func (s *state) getCurrentState() *currentState {
+func (s *State) getCurrentState() *currentState {
 	log.Info("Acquiring current Helm state from cluster")
 
 	cs := newCurrentState()
@@ -57,7 +57,7 @@ func (s *state) getCurrentState() *currentState {
 }
 
 // makePlan creates a plan of the actions needed to make the desired state come true.
-func (cs *currentState) makePlan(s *state) *plan {
+func (cs *currentState) makePlan(s *State) *plan {
 	p := createPlan()
 	p.StorageBackend = s.Settings.StorageBackend
 	p.ReverseDelete = s.Settings.ReverseDelete
@@ -73,7 +73,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 		// It would make more sense than parallelising *some of the workload* like we do here with r.checkChartDepUpdate(), leaving some helm commands outside the concurrent part.
 		sem <- struct{}{}
 		wg.Add(1)
-		go func(r *release, c *chartInfo) {
+		go func(r *Release, c *ChartInfo) {
 			defer func() {
 				wg.Done()
 				<-sem
@@ -82,7 +82,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 			if err := cs.decide(r, s.Namespaces[r.Namespace], p, c, s.Settings, flags.pendingAppRetries); err != nil {
 				log.Fatal(err.Error())
 			}
-		}(r, s.ChartInfo[r.Chart][r.Version])
+		}(r, s.chartInfo[r.Chart][r.Version])
 	}
 	wg.Wait()
 
@@ -91,7 +91,7 @@ func (cs *currentState) makePlan(s *state) *plan {
 
 // decide makes a decision about what commands (actions) need to be executed
 // to make a release section of the desired state come true.
-func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo, settings config, retries int) error {
+func (cs *currentState) decide(r *Release, n *Namespace, p *plan, c *ChartInfo, settings Config, retries int) error {
 	prefix := "Release [ " + r.Name + " ] in namespace [ " + r.Namespace + " ]"
 	// check for presence in defined targets or groups
 	if !r.isConsideredToRun() {
@@ -169,7 +169,7 @@ func (cs *currentState) decide(r *release, n *namespace, p *plan, c *chartInfo, 
 }
 
 // releaseStatus returns the status of a release in the Current State.
-func (cs *currentState) releaseStatus(r *release) string {
+func (cs *currentState) releaseStatus(r *Release) string {
 	v, ok := cs.releases[r.key()]
 	if !ok || v.HelmsmanContext != curContext {
 		return helmStatusMissing
@@ -181,7 +181,7 @@ func (cs *currentState) releaseStatus(r *release) string {
 // It searches the Current State for releases.
 // The key format for releases uniqueness is:  <release name - release namespace>
 // If status is provided as an input [deployed, deleted, failed], then the search will verify the release status matches the search status.
-func (cs *currentState) releaseExists(r *release, status string) bool {
+func (cs *currentState) releaseExists(r *Release, status string) bool {
 	currentState := cs.releaseStatus(r)
 
 	if status != "" {
@@ -203,7 +203,7 @@ var (
 // getHelmsmanReleases returns a map of all releases that are labeled with "MANAGED-BY=HELMSMAN"
 // The releases are categorized by the namespaces in which they are deployed
 // The returned map format is: map[<namespace>:map[<helmRelease>:true]]
-func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool {
+func (cs *currentState) getHelmsmanReleases(s *State) map[string]map[string]bool {
 	const outputFmt = "custom-columns=NAME:.metadata.name,CTX:.metadata.labels.HELMSMAN_CONTEXT"
 	var (
 		wg    sync.WaitGroup
@@ -250,8 +250,8 @@ func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool
 				if len(flds) > 1 {
 					rctx = flds[1]
 				}
-				if len(s.TargetMap) > 0 {
-					if use, ok := s.TargetMap[name]; !ok || !use {
+				if len(s.targetMap) > 0 {
+					if use, ok := s.targetMap[name]; !ok || !use {
 						continue
 					}
 				}
@@ -286,7 +286,7 @@ func (cs *currentState) getHelmsmanReleases(s *state) map[string]map[string]bool
 // For all untracked releases found, a decision is made to uninstall them and is added to the Helmsman plan
 // NOTE: Untracked releases don't benefit from either namespace or application protection.
 // NOTE: Removing/Commenting out an app from the desired state makes it untracked.
-func (cs *currentState) cleanUntrackedReleases(s *state, p *plan) {
+func (cs *currentState) cleanUntrackedReleases(s *State, p *plan) {
 	toDelete := 0
 	log.Info("Checking if any Helmsman managed releases are no longer tracked by your desired state ...")
 	for ns, hr := range cs.getHelmsmanReleases(s) {
@@ -311,7 +311,7 @@ func (cs *currentState) cleanUntrackedReleases(s *state, p *plan) {
 // it will be uninstalled and installed in the same namespace using the new chart.
 // - If the release is NOT in the same namespace specified in the input,
 // it will be purge deleted and installed in the new namespace.
-func (cs *currentState) inspectUpgradeScenario(r *release, p *plan, c *chartInfo) error {
+func (cs *currentState) inspectUpgradeScenario(r *Release, p *plan, c *ChartInfo) error {
 	if c == nil || c.Name == "" || c.Version == "" {
 		return nil
 	}
