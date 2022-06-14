@@ -57,6 +57,7 @@ helmsman --debug --dry-run --target artifactory -f example.toml
 - **Portable**: Helmsman can be used to manage charts deployments on any k8s cluster.
 - **Protect Namespaces/Releases**: you can define certain namespaces/releases to be protected against accidental human mistakes.
 - **Define the order of managing releases**: you can define the priorities at which releases are managed by helmsman (useful for dependencies).
+- **Parallelise**: Releases with the same priority can be executed in parallel.
 - **Idempotency**: As long your desired state file does not change, you can execute Helmsman several times and get the same result.
 - **Continue from failures**: In the case of partial deployment due to a specific chart deployment failure, fix your helm chart and execute Helmsman again without needing to rollback the partial successes first.
 
