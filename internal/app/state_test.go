@@ -396,9 +396,9 @@ func Test_state_validate(t *testing.T) {
 	}
 }
 
-func createFullReleasePointer(chart, version string) *Release {
+func createFullReleasePointer(name, chart, version string) *Release {
 	return &Release{
-		Name:          "",
+		Name:          name,
 		Description:   "",
 		Namespace:     "",
 		Enabled:       true,
@@ -438,7 +438,7 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 			name: "test case 1: valid local path with no chart",
 			args: args{
 				apps: map[string]*Release{
-					"app": createFullReleasePointer(os.TempDir()+"/helmsman-tests/myapp", ""),
+					"app": createFullReleasePointer("app", os.TempDir()+"/helmsman-tests/myapp", ""),
 				},
 			},
 			want: false,
@@ -446,7 +446,7 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 			name: "test case 2: invalid local path",
 			args: args{
 				apps: map[string]*Release{
-					"app": createFullReleasePointer(os.TempDir()+"/does-not-exist/myapp", ""),
+					"app": createFullReleasePointer("app", os.TempDir()+"/does-not-exist/myapp", ""),
 				},
 			},
 			want: false,
@@ -454,7 +454,7 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 			name: "test case 3: valid chart local path with whitespace",
 			args: args{
 				apps: map[string]*Release{
-					"app": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
+					"app": createFullReleasePointer("app", os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
 				},
 			},
 			want: true,
@@ -462,7 +462,7 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 			name: "test case 4: valid chart from repo",
 			args: args{
 				apps: map[string]*Release{
-					"app": createFullReleasePointer("prometheus-community/prometheus", "11.16.5"),
+					"app": createFullReleasePointer("app", "prometheus-community/prometheus", "11.16.5"),
 				},
 			},
 			want: true,
@@ -471,7 +471,7 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 			targetFlag: []string{"notThisOne"},
 			args: args{
 				apps: map[string]*Release{
-					"app": createFullReleasePointer(os.TempDir()+"/does-not-exist/myapp", ""),
+					"app": createFullReleasePointer("app", os.TempDir()+"/does-not-exist/myapp", ""),
 				},
 			},
 			want: true,
@@ -480,7 +480,7 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 			targetFlag: []string{"app"},
 			args: args{
 				apps: map[string]*Release{
-					"app": createFullReleasePointer(os.TempDir()+"/does-not-exist/myapp", ""),
+					"app": createFullReleasePointer("app", os.TempDir()+"/does-not-exist/myapp", ""),
 				},
 			},
 			want: false,
@@ -489,11 +489,11 @@ func Test_state_getReleaseChartsInfo(t *testing.T) {
 			targetFlag: []string{"app"},
 			args: args{
 				apps: map[string]*Release{
-					"app1": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
-					"app2": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
-					"app3": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
-					"app4": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
-					"app5": createFullReleasePointer(os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
+					"app1": createFullReleasePointer("app2", os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
+					"app2": createFullReleasePointer("app3", os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
+					"app3": createFullReleasePointer("app4", os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
+					"app4": createFullReleasePointer("app5", os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
+					"app5": createFullReleasePointer("app5", os.TempDir()+"/helmsman-tests/dir-with space/myapp", "0.1.0"),
 				},
 			},
 			want: true,
