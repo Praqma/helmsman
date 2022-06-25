@@ -327,7 +327,7 @@ func (s *State) overrideAppsNamespace(newNs string) {
 // then get only those Apps that exist in TargetMap
 func (s *State) disableApps(groups, targets, groupsExcluded, targetsExcluded []string) {
 excludeAppsLoop:
-	for appName, app := range s.Apps {
+	for _, app := range s.Apps {
 		for _, groupExcluded := range groupsExcluded {
 			if app.Group == groupExcluded {
 				app.Disable()
@@ -335,7 +335,7 @@ excludeAppsLoop:
 			}
 		}
 		for _, targetExcluded := range targetsExcluded {
-			if appName == targetExcluded {
+			if app.Name == targetExcluded {
 				app.Disable()
 				continue excludeAppsLoop
 			}
@@ -355,13 +355,13 @@ excludeAppsLoop:
 	for _, g := range groups {
 		groupMap[g] = struct{}{}
 	}
-	for appName, app := range s.Apps {
-		if _, ok := s.targetMap[appName]; ok {
+	for _, app := range s.Apps {
+		if _, ok := s.targetMap[app.Name]; ok {
 			namespaces[app.Namespace] = struct{}{}
 			continue
 		}
 		if _, ok := groupMap[app.Group]; ok {
-			s.targetMap[appName] = true
+			s.targetMap[app.Name] = true
 			namespaces[app.Namespace] = struct{}{}
 		} else {
 			app.Disable()
