@@ -1,10 +1,9 @@
-# v3.11.0
+# v3.12.0
 
 ## New feature
 
-- Added detailed exit codes (#668)
+- Added JSON schema generator for DSF (#675)
 
 ## Fixes and improvements
 
-- Updated dependencies (#666; #667)
-- Check charts using helm repos from previouly merged DSFs (#673)
+- Fix -target flag inconsistency between app yaml key and app release name (#678)
