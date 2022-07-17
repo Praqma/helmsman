@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 
 	"github.com/Masterminds/semver"
 	"github.com/Praqma/helmsman/internal/gcs"
@@ -19,8 +19,8 @@ type helmRepo struct {
 }
 
 type ChartInfo struct {
-	Name    string `yaml:"name"`
-	Version string `yaml:"version"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
 }
 
 // helmCmd prepares a helm command to be executed
