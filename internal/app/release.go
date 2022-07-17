@@ -11,53 +11,53 @@ import (
 // Release type representing Helm releases which are described in the desired state
 type Release struct {
 	// Name is the helm release name
-	Name string `yaml:"name"`
+	Name string `json:"name"`
 	// Description is a user friendly description of the helm release
-	Description string `yaml:"description,omitempty"`
+	Description string `json:"description,omitempty"`
 	// Namespace where to deploy the helm release
-	Namespace string `yaml:"namespace"`
+	Namespace string `json:"namespace"`
 	// Enabled can be used to togle a helm release
-	Enabled bool   `yaml:"enabled"`
-	Group   string `yaml:"group,omitempty"`
-	Chart   string `yaml:"chart"`
+	Enabled bool   `json:"enabled"`
+	Group   string `json:"group,omitempty"`
+	Chart   string `json:"chart"`
 	// Version of the helm chart to deploy
-	Version string `yaml:"version"`
+	Version string `json:"version"`
 	// ValuesFile is the path for a values file for the helm release
-	ValuesFile string `yaml:"valuesFile,omitempty"`
+	ValuesFile string `json:"valuesFile,omitempty"`
 	// ValuesFiles is a list of paths a values files for the helm release
-	ValuesFiles []string `yaml:"valuesFiles,omitempty"`
+	ValuesFiles []string `json:"valuesFiles,omitempty"`
 	// SecretsFile is the path for an encrypted values file for the helm release
-	SecretsFile string `yaml:"secretsFile,omitempty"`
+	SecretsFile string `json:"secretsFile,omitempty"`
 	// SecretsFiles is a list of paths for encrypted values files for the helm release
-	SecretsFiles []string `yaml:"secretsFiles,omitempty"`
+	SecretsFiles []string `json:"secretsFiles,omitempty"`
 	// PostRenderer is the path to an executable to be used for post rendering
-	PostRenderer string `yaml:"postRenderer,omitempty"`
+	PostRenderer string `json:"postRenderer,omitempty"`
 	// Test indicates if the chart tests should be executed
-	Test bool `yaml:"test,omitempty"`
+	Test bool `json:"test,omitempty"`
 	// Protected defines if the release should be protected against changes
-	Protected bool `yaml:"protected,omitempty"`
+	Protected bool `json:"protected,omitempty"`
 	// Wait defines whether helm should block execution until all k8s resources are in a ready state
-	Wait bool `yaml:"wait,omitempty"`
+	Wait bool `json:"wait,omitempty"`
 	// Priority allows defining the execution order, releases with the same priority can be executed in parallel
-	Priority int `yaml:"priority,omitempty"`
+	Priority int `json:"priority,omitempty"`
 	// Set can be used to overwrite the chart values
-	Set map[string]string `yaml:"set,omitempty"`
+	Set map[string]string `json:"set,omitempty"`
 	// SetString can be used to overwrite string values
-	SetString map[string]string `yaml:"setString,omitempty"`
+	SetString map[string]string `json:"setString,omitempty"`
 	// SetFile can be used to overwrite the chart values
-	SetFile map[string]string `yaml:"setFile,omitempty"`
+	SetFile map[string]string `json:"setFile,omitempty"`
 	// HelmFlags is a list of additional flags to pass to the helm command
-	HelmFlags []string `yaml:"helmFlags,omitempty"`
+	HelmFlags []string `json:"helmFlags,omitempty"`
 	// HelmDiffFlags is a list of cli flags to pass to helm diff
-	HelmDiffFlags []string `yaml:"helmDiffFlags,omitempty"`
+	HelmDiffFlags []string `json:"helmDiffFlags,omitempty"`
 	// NoHooks can be used to disable the execution of helm hooks
-	NoHooks bool `yaml:"noHooks,omitempty"`
+	NoHooks bool `json:"noHooks,omitempty"`
 	// Timeout is the number of seconds to wait for the release to complete
-	Timeout int `yaml:"timeout,omitempty"`
+	Timeout int `json:"timeout,omitempty"`
 	// Hooks can be used to define lifecycle hooks specific to this release
-	Hooks map[string]interface{} `yaml:"hooks,omitempty"`
+	Hooks map[string]interface{} `json:"hooks,omitempty"`
 	// MaxHistory is the maximum number of histoical releases to keep
-	MaxHistory int `yaml:"maxHistory,omitempty"`
+	MaxHistory int `json:"maxHistory,omitempty"`
 	disabled   bool
 }
 

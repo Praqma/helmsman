@@ -131,6 +131,13 @@
       ],
       "description": "Limit represents a resource limit"
     },
+    "Limits": {
+      "items": {
+        "$ref": "#/$defs/Limit"
+      },
+      "type": "array",
+      "description": "Limits type"
+    },
     "Namespace": {
       "properties": {
         "protected": {
@@ -138,10 +145,7 @@
           "description": "Protected if set to true no changes can be applied to the namespace"
         },
         "limits": {
-          "items": {
-            "$ref": "#/$defs/Limit"
-          },
-          "type": "array",
+          "$ref": "#/$defs/Limits",
           "description": "Limits to set on the namespace"
         },
         "labels": {
