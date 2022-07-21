@@ -337,17 +337,25 @@ func getReleaseContext(releaseName, namespace, storageBackend string) string {
 
 // getKubectlVersion returns kubectl client version
 func getKubectlVersion() string {
-	cmd := kubectl([]string{"version", "--short", "--client"}, "Checking kubectl version")
+	var kubectlVersion struct {
+		ClientVersion map[string]string `json:"clientVersion"`
+	}
 
-	res, err := cmd.Exec()
+	cmd := kubectl([]string{"version", "--output=json", "--client"}, "Checking kubectl version")
+	ver, err := cmd.Exec()
 	if err != nil {
 		log.Fatalf("While checking kubectl version: %v", err)
 	}
-	version := strings.TrimSpace(res.output)
-	if !strings.HasPrefix(version, "v") {
-		version = strings.SplitN(version, ":", 2)[1]
+
+	if err := json.Unmarshal([]byte(ver.output), &kubectlVersion); err != nil {
+		log.Fatal(fmt.Sprintf("failed to unmarshal kubectl version CLI output: %s", err))
 	}
-	return strings.TrimSpace(version)
+
+	version := kubectlVersion.ClientVersion["gitVersion"]
+	if version == "" {
+		log.Fatal("Could not get 'gitVersion' from kubectl version cmd output")
+	}
+	return version
 }
 
 func checkKubectlVersion(constraint string) bool {
