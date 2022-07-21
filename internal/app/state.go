@@ -13,65 +13,65 @@ import (
 // Config type represents the settings fields
 type Config struct {
 	// KubeContext is the kube context you want Helmsman to use or create
-	KubeContext string `yaml:"kubeContext,omitempty"`
+	KubeContext string `json:"kubeContext,omitempty"`
 	// Username to be used for kubectl credentials
-	Username string `yaml:"username,omitempty"`
+	Username string `json:"username,omitempty"`
 	// Password to be used for kubectl credentials
-	Password string `yaml:"password,omitempty"`
+	Password string `json:"password,omitempty"`
 	// ClusterURI is the URI for your cluster API or the name of an environment variable (starting with `$`) containing the URI
-	ClusterURI string `yaml:"clusterURI,omitempty"`
+	ClusterURI string `json:"clusterURI,omitempty"`
 	// ServiceAccount to be used for tiller (deprecated)
-	ServiceAccount string `yaml:"serviceAccount,omitempty"`
+	ServiceAccount string `json:"serviceAccount,omitempty"`
 	// StorageBackend indicates the storage backened used by helm, defaults to secret
-	StorageBackend string `yaml:"storageBackend,omitempty"`
+	StorageBackend string `json:"storageBackend,omitempty"`
 	// SlackWebhook is the slack webhook URL for slack notifications
-	SlackWebhook string `yaml:"slackWebhook,omitempty"`
+	SlackWebhook string `json:"slackWebhook,omitempty"`
 	// MSTeamsWebhook is the Microsoft teams webhook URL for teams notifications
-	MSTeamsWebhook string `yaml:"msTeamsWebhook,omitempty"`
+	MSTeamsWebhook string `json:"msTeamsWebhook,omitempty"`
 	// ReverseDelete indicates if the applications should be deleted in reverse orderin relation to the installation order
-	ReverseDelete bool `yaml:"reverseDelete,omitempty"`
+	ReverseDelete bool `json:"reverseDelete,omitempty"`
 	// BearerToken indicates whether you want helmsman to connect to the cluster using a bearer token
-	BearerToken bool `yaml:"bearerToken,omitempty"`
+	BearerToken bool `json:"bearerToken,omitempty"`
 	// BearerTokenPath allows specifying a custom path for the token
-	BearerTokenPath string `yaml:"bearerTokenPath,omitempty"`
+	BearerTokenPath string `json:"bearerTokenPath,omitempty"`
 	// NamespaceLabelsAuthoritativei indicates whether helmsman should remove namespace labels that are not in the DSF
-	NamespaceLabelsAuthoritative bool `yaml:"namespaceLabelsAuthoritative,omitempty"`
+	NamespaceLabelsAuthoritative bool `json:"namespaceLabelsAuthoritative,omitempty"`
 	// EyamlEnabled indicates whether eyaml is used for encrypted files
-	EyamlEnabled bool `yaml:"eyamlEnabled,omitempty"`
+	EyamlEnabled bool `json:"eyamlEnabled,omitempty"`
 	// EyamlPrivateKeyPath is the path to the eyaml private key
-	EyamlPrivateKeyPath string `yaml:"eyamlPrivateKeyPath,omitempty"`
+	EyamlPrivateKeyPath string `json:"eyamlPrivateKeyPath,omitempty"`
 	// EyamlPublicKeyPath is the path to the eyaml public key
-	EyamlPublicKeyPath string `yaml:"eyamlPublicKeyPath,omitempty"`
+	EyamlPublicKeyPath string `json:"eyamlPublicKeyPath,omitempty"`
 	// GlobalHooks is a set of global lifecycle hooks
-	GlobalHooks map[string]interface{} `yaml:"globalHooks,omitempty"`
+	GlobalHooks map[string]interface{} `json:"globalHooks,omitempty"`
 	// GlobalMaxHistory sets the global max number of historical release revisions to keep
-	GlobalMaxHistory int `yaml:"globalMaxHistory,omitempty"`
+	GlobalMaxHistory int `json:"globalMaxHistory,omitempty"`
 	// SkipIgnoredApps if set to true, ignored apps will not be considered in the plan
-	SkipIgnoredApps bool `yaml:"skipIgnoredApps,omitempty"`
+	SkipIgnoredApps bool `json:"skipIgnoredApps,omitempty"`
 	// SkipPendingApps is set to true,apps in a pending state will be ignored
-	SkipPendingApps bool `yaml:"skipPendingApps,omitempty"`
+	SkipPendingApps bool `json:"skipPendingApps,omitempty"`
 }
 
 // State type represents the desired State of applications on a k8s cluster.
 type State struct {
 	// Metadata for human reader of the desired state file
-	Metadata map[string]string `yaml:"metadata,omitempty"`
+	Metadata map[string]string `json:"metadata,omitempty"`
 	// Certificates are used to connect kubectl to a cluster
-	Certificates map[string]string `yaml:"certificates,omitempty"`
+	Certificates map[string]string `json:"certificates,omitempty"`
 	// Settings for configuring helmsman
-	Settings Config `yaml:"settings,omitempty"`
+	Settings Config `json:"settings,omitempty"`
 	// Context defines an helmsman scope
-	Context string `yaml:"context,omitempty"`
+	Context string `json:"context,omitempty"`
 	// HelmRepos from where to find the application helm charts
-	HelmRepos map[string]string `yaml:"helmRepos,omitempty"`
+	HelmRepos map[string]string `json:"helmRepos,omitempty"`
 	// PreconfiguredHelmRepos is a list of helm repos that are configured outside of the DSF
-	PreconfiguredHelmRepos []string `yaml:"preconfiguredHelmRepos,omitempty"`
+	PreconfiguredHelmRepos []string `json:"preconfiguredHelmRepos,omitempty"`
 	// Namespaces where helmsman will deploy applications
-	Namespaces map[string]*Namespace `yaml:"namespaces"`
+	Namespaces map[string]*Namespace `json:"namespaces"`
 	// Apps holds the configuration for each helm release managed by helmsman
-	Apps map[string]*Release `yaml:"apps"`
+	Apps map[string]*Release `json:"apps"`
 	// AppsTemplates allow defining YAML objects thatcan be used as a reference with YAML anchors to keep the configuration DRY
-	AppsTemplates map[string]*Release `yaml:"appsTemplates,omitempty"`
+	AppsTemplates map[string]*Release `json:"appsTemplates,omitempty"`
 	targetMap     map[string]bool
 	chartInfo     map[string]map[string]*ChartInfo
 }
