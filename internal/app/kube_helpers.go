@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 )
 
 // addNamespaces creates a set of namespaces in your k8s cluster.

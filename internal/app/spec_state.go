@@ -3,15 +3,15 @@ package app
 import (
 	"io/ioutil"
 
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 )
 
 type StatePath struct {
-	Path string `yaml:"path"`
+	Path string `json:"path"`
 }
 
 type StateFiles struct {
-	StateFiles []StatePath `yaml:"stateFiles"`
+	StateFiles []StatePath `json:"stateFiles"`
 }
 
 // specFromYAML reads a yaml file and decodes it to a state type.

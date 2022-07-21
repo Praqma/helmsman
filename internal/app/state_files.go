@@ -10,7 +10,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/imdario/mergo"
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 )
 
 // invokes either yaml or toml parser considering file extension
@@ -64,25 +64,15 @@ func (s *State) fromTOML(file string) error {
 func (s *State) toTOML(file string) {
 	log.Info("Printing generated toml ... ")
 	var buff bytes.Buffer
-	var (
-		newFile *os.File
-		err     error
-	)
 
 	if err := toml.NewEncoder(&buff).Encode(s); err != nil {
 		log.Fatal(err.Error())
 		os.Exit(1)
 	}
-	newFile, err = os.Create(file)
-	if err != nil {
+	if err := os.WriteFile(file, buff.Bytes(), 0644); err != nil {
 		log.Fatal(err.Error())
 	}
-	bytesWritten, err := newFile.Write(buff.Bytes())
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	log.Info(fmt.Sprintf("Wrote %d bytes.\n", bytesWritten))
-	newFile.Close()
+	log.Info(fmt.Sprintf("Wrote to %s.\n", file))
 }
 
 // fromYAML reads a yaml file and decodes it to a state type.
@@ -114,26 +104,16 @@ func (s *State) fromYAML(file string) error {
 // toYaml encodes a state type into a YAML file
 func (s *State) toYAML(file string) {
 	log.Info("Printing generated yaml ... ")
-	var buff bytes.Buffer
-	var (
-		newFile *os.File
-		err     error
-	)
 
-	if err := yaml.NewEncoder(&buff).Encode(s); err != nil {
+	ymlBytes, err := yaml.Marshal(s)
+	if err != nil {
 		log.Fatal(err.Error())
 		os.Exit(1)
 	}
-	newFile, err = os.Create(file)
-	if err != nil {
+	if err := os.WriteFile(file, ymlBytes, 0644); err != nil {
 		log.Fatal(err.Error())
 	}
-	bytesWritten, err := newFile.Write(buff.Bytes())
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	log.Info(fmt.Sprintf("Wrote %d bytes.\n", bytesWritten))
-	newFile.Close()
+	log.Info(fmt.Sprintf("Wrote to %s.\n", file))
 }
 
 func (s *State) build(files fileOptionArray) error {
