@@ -1,9 +1,8 @@
-# v3.12.0
+# v3.13.0
 
 ## New feature
 
-- Added JSON schema generator for DSF (#675)
-
 ## Fixes and improvements
 
-- Fix -target flag inconsistency between app yaml key and app release name (#678)
+- Replace gopkg.in/yaml.v2 with sigs.k8s.io/yaml (#686)
+- Get kubectl version by taking json output instead of parsing a string (#688)
