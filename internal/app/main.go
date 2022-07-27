@@ -32,7 +32,7 @@ func init() {
 }
 
 // Main is the app main function
-func Main() {
+func Main() int {
 	var s State
 
 	flags.parse()
@@ -141,5 +141,5 @@ func Main() {
 		exitCode = exitCodeSucceedWithChanges
 	}
 
-	os.Exit(exitCode)
+	return exitCode
 }

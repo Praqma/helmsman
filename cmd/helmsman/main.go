@@ -2,8 +2,10 @@ package main
 
 import (
 	"github.com/Praqma/helmsman/internal/app"
+	"os"
 )
 
 func main() {
-	app.Main()
+	exitCode := app.Main()
+	os.Exit(exitCode)
 }
