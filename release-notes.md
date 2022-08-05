@@ -1,8 +1,7 @@
-# v3.13.0
+# v3.13.1
 
 ## New feature
 
 ## Fixes and improvements
 
-- Replace gopkg.in/yaml.v2 with sigs.k8s.io/yaml (#686)
-- Get kubectl version by taking json output instead of parsing a string (#688)
+- Fix .helmsman-tmp not being removed after execution is done (#693)
