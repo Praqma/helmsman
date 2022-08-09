@@ -72,6 +72,10 @@ func (r *Release) getValuesFiles() []string {
 			if !ToolExists("eyaml") {
 				log.Fatal("hiera-eyaml is not installed/configured correctly. Aborting!")
 			}
+		} else if settings.VaultEnabled {
+			if !helmPluginExists("vault") {
+				log.Fatal("helm vault plugin is not installed/configured correctly. Aborting!")
+			}
 		} else {
 			if !helmPluginExists("secrets") {
 				log.Fatal("helm secrets plugin is not installed/configured correctly. Aborting!")
