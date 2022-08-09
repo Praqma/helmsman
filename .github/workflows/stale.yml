@@ -27,3 +27,5 @@ jobs:
         stale-pr-message: 'This PR has been marked stale due to an inactivity.'
         stale-issue-label: 'stale'
         stale-pr-label: 'stale'
+        ascending: true
+        operations-per-run: '60'
