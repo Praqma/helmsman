@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/Praqma/helmsman/internal/app/state",
   "$ref": "#/$defs/State",
   "$defs": {
@@ -52,6 +52,34 @@
         "namespaceLabelsAuthoritative": {
           "type": "boolean",
           "description": "NamespaceLabelsAuthoritativei indicates whether helmsman should remove namespace labels that are not in the DSF"
+        },
+        "vaultEnabled": {
+          "type": "boolean",
+          "description": "VaultEnabled indicates whether the helm vault plugin is used for encrypted files"
+        },
+        "vaultDeliminator": {
+          "type": "string",
+          "description": "VaultDeliminator allows secret deliminator used when parsing to be overridden"
+        },
+        "vaultPath": {
+          "type": "string",
+          "description": "VaultPath allows the secret mount location in Vault to be overridden"
+        },
+        "vaultMountPoint": {
+          "type": "string",
+          "description": "VaultMountPoint allows the Vault Mount Point to be overridden"
+        },
+        "vaultTemplate": {
+          "type": "string",
+          "description": "VaultTemplate Substring with path to vault key instead of deliminator"
+        },
+        "vaultKvVersion": {
+          "type": "string",
+          "description": "VaultKvVersion The version of the KV secrets engine in Vault"
+        },
+        "vaultEnvironment": {
+          "type": "string",
+          "description": "VaultEnvironment Environment that secrets should be stored under"
         },
         "eyamlEnabled": {
           "type": "boolean",
