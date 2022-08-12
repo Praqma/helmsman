@@ -482,6 +482,27 @@ func decryptSecret(name string) error {
 		if settings.EyamlPrivateKeyPath != "" && settings.EyamlPublicKeyPath != "" {
 			args = append(args, []string{"--pkcs7-private-key", settings.EyamlPrivateKeyPath, "--pkcs7-public-key", settings.EyamlPublicKeyPath}...)
 		}
+	} else if settings.VaultEnabled {
+		args = []string{"vault", "dec"}
+		if settings.VaultDeliminator != "" {
+			args = append(args, []string{"--deliminator", settings.VaultDeliminator}...)
+		}
+		if settings.VaultPath != "" {
+			args = append(args, []string{"--vaultpath", settings.VaultPath}...)
+		}
+		if settings.VaultMountPoint != "" {
+			args = append(args, []string{"--mountpoint", settings.VaultMountPoint}...)
+		}
+		if settings.VaultTemplate != "" {
+			args = append(args, []string{"--vaulttemplate", settings.VaultTemplate}...)
+		}
+		if settings.VaultKvVersion != "" {
+			args = append(args, []string{"--kvversion", settings.VaultKvVersion}...)
+		}
+		if settings.VaultEnvironment != "" {
+			args = append(args, []string{"--environment", settings.VaultEnvironment}...)
+		}
+		args = append(args, []string{name}...)
 	}
 
 	command := Command{

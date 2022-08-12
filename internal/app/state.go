@@ -36,6 +36,20 @@ type Config struct {
 	BearerTokenPath string `json:"bearerTokenPath,omitempty"`
 	// NamespaceLabelsAuthoritativei indicates whether helmsman should remove namespace labels that are not in the DSF
 	NamespaceLabelsAuthoritative bool `json:"namespaceLabelsAuthoritative,omitempty"`
+	// VaultEnabled indicates whether the helm vault plugin is used for encrypted files
+	VaultEnabled bool `json:"vaultEnabled,omitempty"`
+	// VaultDeliminator allows secret deliminator used when parsing to be overridden
+	VaultDeliminator string `json:"vaultDeliminator,omitempty"`
+	// VaultPath allows the secret mount location in Vault to be overridden
+	VaultPath string `json:"vaultPath,omitempty"`
+	// VaultMountPoint allows the Vault Mount Point to be overridden
+	VaultMountPoint string `json:"vaultMountPoint,omitempty"`
+	// VaultTemplate Substring with path to vault key instead of deliminator
+	VaultTemplate string `json:"vaultTemplate,omitempty"`
+	// VaultKvVersion The version of the KV secrets engine in Vault
+	VaultKvVersion string `json:"vaultKvVersion,omitempty"`
+	// VaultEnvironment Environment that secrets should be stored under
+	VaultEnvironment string `json:"vaultEnvironment,omitempty"`
 	// EyamlEnabled indicates whether eyaml is used for encrypted files
 	EyamlEnabled bool `json:"eyamlEnabled,omitempty"`
 	// EyamlPrivateKeyPath is the path to the eyaml private key
