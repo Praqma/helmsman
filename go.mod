@@ -9,7 +9,7 @@ require (
 	github.com/BurntSushi/toml v1.2.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/apsdehal/go-logger v0.0.0-20190515212710-b0d6ccfee0e6
-	github.com/aws/aws-sdk-go v1.44.76
+	github.com/aws/aws-sdk-go v1.44.81
 	github.com/imdario/mergo v0.3.13
 	github.com/invopop/jsonschema v0.6.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
