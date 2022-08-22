@@ -30,11 +30,6 @@ func (l *Logger) Error(message string) {
 	l.Logger.Error(message)
 }
 
-func (l *Logger) Critical(message string) {
-	l.notifyAboutFailureUsingWebhooks(message)
-	l.Logger.Critical(message)
-}
-
 func (l *Logger) Fatal(message string) {
 	l.notifyAboutFailureUsingWebhooks(message)
 	l.Logger.Fatal(message)
