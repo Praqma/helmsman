@@ -57,7 +57,7 @@ func substituteVarsInYaml(file string) string {
 	yamlFile := string(rawYamlFile)
 	if !flags.noEnvSubst && flags.substEnvValues {
 		if err := validateEnvVars(yamlFile, file); err != nil {
-			log.Critical(err.Error())
+			log.Fatal(err.Error())
 		}
 		yamlFile = substituteEnv(yamlFile)
 	}
@@ -207,7 +207,7 @@ func validateEnvVars(s string, filename string) error {
 			}
 		}
 		if err := scanner.Err(); err != nil {
-			log.Critical(err.Error())
+			log.Fatal(err.Error())
 		}
 	}
 	return nil
