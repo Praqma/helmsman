@@ -1,7 +1,10 @@
-# v3.13.1
+# v3.14.0
 
 ## New feature
 
+- Add support for Just-Insane/helm-vault plugin
+
 ## Fixes and improvements
 
-- Fix .helmsman-tmp not being removed after execution is done (#693)
+- Exit when env variables substitution fails (#704)
+- Updated dependencies
