@@ -17,9 +17,9 @@ type Release struct {
 	// Namespace where to deploy the helm release
 	Namespace string `json:"namespace"`
 	// Enabled can be used to togle a helm release
-	Enabled bool   `json:"enabled"`
-	Group   string `json:"group,omitempty"`
-	Chart   string `json:"chart"`
+	Enabled NullBool `json:"enabled"`
+	Group   string   `json:"group,omitempty"`
+	Chart   string   `json:"chart"`
 	// Version of the helm chart to deploy
 	Version string `json:"version"`
 	// ValuesFile is the path for a values file for the helm release
@@ -33,11 +33,11 @@ type Release struct {
 	// PostRenderer is the path to an executable to be used for post rendering
 	PostRenderer string `json:"postRenderer,omitempty"`
 	// Test indicates if the chart tests should be executed
-	Test bool `json:"test,omitempty"`
+	Test NullBool `json:"test,omitempty"`
 	// Protected defines if the release should be protected against changes
-	Protected bool `json:"protected,omitempty"`
+	Protected NullBool `json:"protected,omitempty"`
 	// Wait defines whether helm should block execution until all k8s resources are in a ready state
-	Wait bool `json:"wait,omitempty"`
+	Wait NullBool `json:"wait,omitempty"`
 	// Priority allows defining the execution order, releases with the same priority can be executed in parallel
 	Priority int `json:"priority,omitempty"`
 	// Set can be used to overwrite the chart values
@@ -51,7 +51,7 @@ type Release struct {
 	// HelmDiffFlags is a list of cli flags to pass to helm diff
 	HelmDiffFlags []string `json:"helmDiffFlags,omitempty"`
 	// NoHooks can be used to disable the execution of helm hooks
-	NoHooks bool `json:"noHooks,omitempty"`
+	NoHooks NullBool `json:"noHooks,omitempty"`
 	// Timeout is the number of seconds to wait for the release to complete
 	Timeout int `json:"timeout,omitempty"`
 	// Hooks can be used to define lifecycle hooks specific to this release
@@ -162,7 +162,7 @@ func (r *Release) test(afterCommands *[]hookCmd) {
 func (r *Release) install(p *plan) {
 	before, after := r.checkHooks("install")
 
-	if r.Test {
+	if r.Test.Value {
 		r.test(&after)
 	}
 
@@ -234,7 +234,7 @@ func (r *Release) diff() (string, error) {
 func (r *Release) upgrade(p *plan) {
 	before, after := r.checkHooks("upgrade")
 
-	if r.Test {
+	if r.Test.Value {
 		r.test(&after)
 	}
 
@@ -292,7 +292,7 @@ func (r *Release) label(storageBackend string, labels ...string) {
 	if len(labels) == 0 {
 		return
 	}
-	if r.Enabled {
+	if r.Enabled.Value {
 
 		args := []string{"label", "--overwrite", storageBackend, "-n", r.Namespace, "-l", "owner=helm,name=" + r.Name}
 		args = append(args, labels...)
@@ -309,7 +309,7 @@ func (r *Release) annotate(storageBackend string, annotations ...string) {
 	if len(annotations) == 0 {
 		return
 	}
-	if r.Enabled {
+	if r.Enabled.Value {
 
 		args := []string{"annotate", "--overwrite", storageBackend, "-n", r.Namespace, "-l", "owner=helm,name=" + r.Name}
 		args = append(args, annotations...)
@@ -330,7 +330,7 @@ func (r *Release) isProtected(cs *currentState, n *Namespace) bool {
 	if ok := cs.releaseExists(r, ""); !ok {
 		return false
 	}
-	if n.Protected || r.Protected {
+	if n.Protected || r.Protected.Value {
 		return true
 	}
 	return false
@@ -338,7 +338,7 @@ func (r *Release) isProtected(cs *currentState, n *Namespace) bool {
 
 // getNoHooks returns the no-hooks flag for install/upgrade commands
 func (r *Release) getNoHooks() []string {
-	if r.NoHooks {
+	if r.NoHooks.Value {
 		return []string{"--no-hooks"}
 	}
 	return []string{}
@@ -383,7 +383,7 @@ func (r *Release) getSetFileValues() []string {
 // Otherwise, retruns an empty string
 func (r *Release) getWait() []string {
 	res := []string{}
-	if r.Wait {
+	if r.Wait.Value {
 		res = append(res, "--wait")
 	}
 	return res
@@ -595,15 +595,15 @@ func (r Release) print() {
 	fmt.Println("\tname: ", r.Name)
 	fmt.Println("\tdescription: ", r.Description)
 	fmt.Println("\tnamespace: ", r.Namespace)
-	fmt.Println("\tenabled: ", r.Enabled)
+	fmt.Println("\tenabled: ", r.Enabled.Value)
 	fmt.Println("\tchart: ", r.Chart)
 	fmt.Println("\tversion: ", r.Version)
 	fmt.Println("\tvaluesFile: ", r.ValuesFile)
 	fmt.Println("\tvaluesFiles: ", strings.Join(r.ValuesFiles, ","))
 	fmt.Println("\tpostRenderer: ", r.PostRenderer)
-	fmt.Println("\ttest: ", r.Test)
-	fmt.Println("\tprotected: ", r.Protected)
-	fmt.Println("\twait: ", r.Wait)
+	fmt.Println("\ttest: ", r.Test.Value)
+	fmt.Println("\tprotected: ", r.Protected.Value)
+	fmt.Println("\twait: ", r.Wait.Value)
 	fmt.Println("\tpriority: ", r.Priority)
 	fmt.Println("\tSuccessCondition: ", r.Hooks["successCondition"])
 	fmt.Println("\tSuccessTimeout: ", r.Hooks["successTimeout"])
@@ -614,7 +614,7 @@ func (r Release) print() {
 	fmt.Println("\tpostUpgrade: ", r.Hooks[postUpgrade])
 	fmt.Println("\tpreDelete: ", r.Hooks[preDelete])
 	fmt.Println("\tpostDelete: ", r.Hooks[postDelete])
-	fmt.Println("\tno-hooks: ", r.NoHooks)
+	fmt.Println("\tno-hooks: ", r.NoHooks.Value)
 	fmt.Println("\ttimeout: ", r.Timeout)
 	fmt.Println("\tvalues to override from env:")
 	printMap(r.Set, 2)

@@ -115,7 +115,7 @@ func (cs *currentState) decide(r *Release, n *Namespace, p *plan, c *ChartInfo, 
 		return nil
 	}
 
-	if !r.Enabled {
+	if !r.Enabled.Value {
 		if ok := cs.releaseExists(r, ""); ok {
 			p.addDecision(prefix+" is desired to be DELETED.", r.Priority, remove)
 			r.uninstall(p)

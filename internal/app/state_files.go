@@ -142,7 +142,10 @@ func (s *State) build(files fileOptionArray) error {
 		// Merge Apps that already existed in the state
 		for appName, app := range fileState.Apps {
 			if _, ok := s.Apps[appName]; ok {
-				if err := mergo.Merge(s.Apps[appName], app, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
+				if err := mergo.Merge(s.Apps[appName], app,
+					mergo.WithAppendSlice,
+					mergo.WithOverride,
+					mergo.WithTransformers(MergoTransformer(NullBoolTransformer))); err != nil {
 					return fmt.Errorf("failed to merge %s from desired state file %s: %w", appName, f.name, err)
 				}
 			}
