@@ -378,3 +378,29 @@ func Test_build(t *testing.T) {
 		t.Errorf("build() - unexpected number of repos, wanted 3 got %d", len(s.Apps))
 	}
 }
+
+func Test_DSFMergeWithOverwrite(t *testing.T) {
+	teardownTestCase, err := setupStateFileTestCase(t)
+	if err != nil {
+		t.Errorf("setupStateFileTestCase(), got: %v", err)
+	}
+	defer teardownTestCase(t)
+	s := new(State)
+	files := fileOptionArray{
+		fileOption{name: "../../examples/minimal-example.yaml"},
+		fileOption{name: "../../examples/minimal-example-overwrite.yaml"},
+	}
+	err = s.build(files)
+	if err != nil {
+		t.Errorf("build() - unexpected error: %v", err)
+	}
+	if len(s.Apps) != 2 {
+		t.Errorf("build() - unexpected number of apps, wanted 5 got %d", len(s.Apps))
+	}
+	if len(s.HelmRepos) != 2 {
+		t.Errorf("build() - unexpected number of repos, wanted 3 got %d", len(s.Apps))
+	}
+	if s.Apps["jenkins"].Enabled.Value != false {
+		t.Errorf("build() - unexpected status of a release, wanted 'enabled'=false got %v", s.Apps["jenkins"].Enabled.Value)
+	}
+}

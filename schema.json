@@ -205,6 +205,9 @@
       ],
       "description": "Namespace type represents the fields of a Namespace"
     },
+    "NullBool": {
+      "type": "boolean"
+    },
     "Quotas": {
       "properties": {
         "pods": {
@@ -253,7 +256,7 @@
           "description": "Namespace where to deploy the helm release"
         },
         "enabled": {
-          "type": "boolean",
+          "$ref": "#/$defs/NullBool",
           "description": "Enabled can be used to togle a helm release"
         },
         "group": {
@@ -293,15 +296,15 @@
           "description": "PostRenderer is the path to an executable to be used for post rendering"
         },
         "test": {
-          "type": "boolean",
+          "$ref": "#/$defs/NullBool",
           "description": "Test indicates if the chart tests should be executed"
         },
         "protected": {
-          "type": "boolean",
+          "$ref": "#/$defs/NullBool",
           "description": "Protected defines if the release should be protected against changes"
         },
         "wait": {
-          "type": "boolean",
+          "$ref": "#/$defs/NullBool",
           "description": "Wait defines whether helm should block execution until all k8s resources are in a ready state"
         },
         "priority": {
@@ -350,7 +353,7 @@
           "description": "HelmDiffFlags is a list of cli flags to pass to helm diff"
         },
         "noHooks": {
-          "type": "boolean",
+          "$ref": "#/$defs/NullBool",
           "description": "NoHooks can be used to disable the execution of helm hooks"
         },
         "timeout": {
