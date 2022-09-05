@@ -1,10 +1,8 @@
-# v3.14.0
+# v3.15.0
 
 ## New feature
 
-- Add support for Just-Insane/helm-vault plugin
+- Use nullable boolean type for the Release boolean fields (#707) fixes (#137)
 
 ## Fixes and improvements
 
-- Exit when env variables substitution fails (#704)
-- Updated dependencies
