@@ -322,15 +322,18 @@ func getReleaseContext(releaseName, namespace, storageBackend string) string {
 	// kubectl get secrets -n test1 -l MANAGED-BY=HELMSMAN -o=jsonpath='{.items[0].metadata.labels.HELMSMAN_CONTEXT}'
 	// kubectl get secret sh.helm.release.v1.argo.v1  -n test1  -o=jsonpath='{.metadata.labels.HELMSMAN_CONTEXT}'
 	// kubectl get secret -l owner=helm,name=argo -n test1 -o=jsonpath='{.items[-1].metadata.labels.HELMSMAN_CONTEXT}'
-	cmd := kubectl([]string{"get", storageBackend, "-n", namespace, "-l", "owner=helm", "-l", "name=" + releaseName, "-o", "jsonpath='{.items[-1].metadata.labels.HELMSMAN_CONTEXT}'"}, "Getting Helmsman context for [ "+releaseName+" ] release")
+	rctx := defaultContextName
+	if storageBackend != "sql" {
+		cmd := kubectl([]string{"get", storageBackend, "-n", namespace, "-l", "owner=helm", "-l", "name=" + releaseName, "-o", "jsonpath='{.items[-1].metadata.labels.HELMSMAN_CONTEXT}'"}, "Getting Helmsman context for [ "+releaseName+" ] release")
 
-	res, err := cmd.Exec()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	rctx := strings.Trim(res.output, `"' `)
-	if rctx == "" {
-		rctx = defaultContextName
+		res, err := cmd.Exec()
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		ctx := strings.Trim(res.output, `"' `)
+		if ctx != "" {
+			rctx = ctx
+		}
 	}
 	return rctx
 }
