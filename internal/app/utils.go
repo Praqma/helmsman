@@ -475,6 +475,9 @@ func writeStringToFile(filename string, data string) error {
 func decryptSecret(name string) error {
 	cmd := helmBin
 	args := []string{"secrets", "dec", name}
+	if checkHelmPlugVersion("secrets", ">=4.0.0") {
+		args[1] = "decrypt"
+	}
 
 	if settings.EyamlEnabled {
 		cmd = "eyaml"
