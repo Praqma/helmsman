@@ -100,6 +100,29 @@ func helmPluginExists(plugin string) bool {
 	return strings.Contains(res.output, plugin)
 }
 
+func getHelmPlugVersion(plugin string) string {
+	cmd := helmCmd([]string{"plugin", "list"}, "Validating that [ "+plugin+" ] is installed")
+
+	res, err := cmd.Exec()
+	if err != nil {
+		return "0.0.0"
+	}
+	for _, line := range strings.Split(strings.TrimSuffix(res.output, "\n"), "\n") {
+		info := strings.Fields(line)
+		if len(info) < 2 {
+			continue
+		}
+		if strings.TrimSpace(info[0]) == plugin {
+			return strings.TrimSpace(info[1])
+		}
+	}
+	return "0.0.0"
+}
+
+func checkHelmPlugVersion(plugin, constraint string) bool {
+	return checkVersion(getHelmPlugVersion(plugin), constraint)
+}
+
 // updateChartDep updates dependencies for a local chart
 func updateChartDep(chartPath string) error {
 	cmd := helmCmd([]string{"dependency", "update", "--skip-refresh", chartPath}, "Updating dependency for local chart [ "+chartPath+" ]")
