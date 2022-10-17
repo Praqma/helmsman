@@ -475,7 +475,9 @@ func writeStringToFile(filename string, data string) error {
 func decryptSecret(name string) error {
 	cmd := helmBin
 	args := []string{"secrets", "dec", name}
-	if checkHelmPlugVersion("secrets", ">=4.0.0") {
+	// helm-secrets >=4.0.0 decrypts to stdout, not to a .dec-file
+	useHelmOutput := checkHelmPlugVersion("secrets", ">=4.0.0") || settings.EyamlEnabled
+	if useHelmOutput {
 		args[1] = "decrypt"
 	}
 
@@ -518,14 +520,12 @@ func decryptSecret(name string) error {
 	if err != nil {
 		return err
 	}
-	if !settings.EyamlEnabled {
+	if !useHelmOutput {
 		_, fileNotFound := os.Stat(name + ".dec")
 		if fileNotFound != nil && !isOfType(name, []string{".dec"}) {
 			return fmt.Errorf(res.String())
 		}
-	}
-
-	if settings.EyamlEnabled {
+	} else {
 		var outfile string
 		if isOfType(name, []string{".dec"}) {
 			outfile = name
