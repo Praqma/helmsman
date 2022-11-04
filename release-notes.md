@@ -1,8 +1,7 @@
-# v3.15.0
+# v3.15.1
 
 ## New feature
 
-- Use nullable boolean type for the Release boolean fields (#707) fixes (#137)
-
 ## Fixes and improvements
 
+- Fix broken helm-secrets support for plugin version >= 4.x (#721 & #723) fixes (#715)
