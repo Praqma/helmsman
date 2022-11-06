@@ -9,12 +9,12 @@ require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/Masterminds/semver v1.5.0
 	github.com/apsdehal/go-logger v0.0.0-20190515212710-b0d6ccfee0e6
-	github.com/aws/aws-sdk-go v1.44.126
+	github.com/aws/aws-sdk-go v1.44.131
 	github.com/imdario/mergo v0.3.13
 	github.com/invopop/jsonschema v0.6.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/subosito/gotenv v1.4.1
-	golang.org/x/net v0.0.0-20220909164309-bea034e7d591
+	golang.org/x/net v0.1.0
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -37,8 +37,8 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220312131142-6068a2e6cfdc // indirect
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1 // indirect
-	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/api v0.97.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
