@@ -14,7 +14,7 @@ require (
 	github.com/invopop/jsonschema v0.7.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/subosito/gotenv v1.4.1
-	golang.org/x/net v0.1.0
+	golang.org/x/net v0.2.0
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -38,7 +38,7 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220312131142-6068a2e6cfdc // indirect
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783 // indirect
-	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.102.0 // indirect
