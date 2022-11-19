@@ -25,5 +25,5 @@ func (pc *StateFiles) specFromYAML(file string) error {
 
 	yamlFile := string(rawYamlFile)
 
-	return yaml.UnmarshalStrict([]byte(yamlFile), pc)
+	return yaml.Unmarshal([]byte(yamlFile), pc)
 }
