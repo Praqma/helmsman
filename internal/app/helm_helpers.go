@@ -38,7 +38,11 @@ func getChartInfo(chartName, chartVersion string) (*ChartInfo, error) {
 		log.Info("Chart [ " + chartName + " ] with version [ " + chartVersion + " ] was found locally.")
 	}
 
-	cmd := helmCmd([]string{"show", "chart", chartName, "--version", chartVersion}, "Getting latest non-local chart's version "+chartName+"-"+chartVersion+"")
+	args := []string{"show", "chart", chartName}
+	if chartVersion != "latest" {
+		args = append(args, "--version", chartVersion)
+	}
+	cmd := helmCmd(args, "Getting latest non-local chart's version "+chartName+"-"+chartVersion+"")
 
 	res, err := cmd.Exec()
 	if err != nil {
@@ -150,13 +154,17 @@ func helmExportChart(chart, dest string) error {
 // helmPullChart pulls chart and exports it to the specified destination
 // this should only be used with helm versions greater or equal to 3.7.0
 func helmPullChart(chart, dest string) error {
+	version := "latest"
 	chartParts := strings.Split(chart, ":")
-	if len(chartParts) < 2 {
-		return fmt.Errorf("missing chart version")
+	if len(chartParts) >= 2 {
+		version = chartParts[len(chartParts)-1]
+		chart = strings.Join(chartParts[:len(chartParts)-1], ":")
 	}
-	version := chartParts[len(chartParts)-1]
-	chart = strings.Join(chartParts[:len(chartParts)-1], ":")
-	cmd := helmCmd([]string{"pull", chart, "-d", dest, "--version", version}, "Pulling chart [ "+chart+" ] to "+dest)
+	args := []string{"pull", chart, "-d", dest}
+	if version != "latest" {
+		args = append(args, "--version", version)
+	}
+	cmd := helmCmd(args, "Pulling chart [ "+chart+" ] to "+dest)
 	if _, err := cmd.Exec(); err != nil {
 		return err
 	}
