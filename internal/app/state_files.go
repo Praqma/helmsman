@@ -94,7 +94,7 @@ func (s *State) fromYAML(file string) error {
 		yamlFile = substituteSSM(yamlFile)
 	}
 
-	if err = yaml.UnmarshalStrict([]byte(yamlFile), s); err != nil {
+	if err = yaml.Unmarshal([]byte(yamlFile), s); err != nil {
 		return err
 	}
 
