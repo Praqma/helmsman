@@ -476,7 +476,7 @@ func decryptSecret(name string) error {
 	cmd := helmBin
 	args := []string{"secrets", "dec", name}
 	// helm-secrets >=4.0.0 decrypts to stdout, not to a .dec-file
-	useHelmOutput := checkHelmPlugVersion("secrets", ">=4.0.0") || settings.EyamlEnabled
+	useHelmOutput := checkHelmPlugVersion("secrets", ">=4.0.0-0") || settings.EyamlEnabled
 	if useHelmOutput {
 		args[1] = "decrypt"
 	}
