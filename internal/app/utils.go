@@ -476,7 +476,7 @@ func decryptSecret(name string) error {
 	cmd := helmBin
 	args := []string{"secrets", "dec", name}
 	// helm-secrets >=4.0.0 decrypts to stdout, not to a .dec-file
-	useHelmOutput := checkHelmPlugVersion("secrets", ">=4.0.0") || settings.EyamlEnabled
+	useHelmOutput := checkHelmPlugVersion("secrets", ">=4.0.0-0") || settings.EyamlEnabled
 	if useHelmOutput {
 		args[1] = "decrypt"
 	}
@@ -520,22 +520,21 @@ func decryptSecret(name string) error {
 	if err != nil {
 		return err
 	}
+
+	outfile := name
+	if !isOfType(name, []string{".dec"}) {
+		outfile += ".dec"
+	}
+
 	if !useHelmOutput {
-		_, fileNotFound := os.Stat(name + ".dec")
-		if fileNotFound != nil && !isOfType(name, []string{".dec"}) {
-			return fmt.Errorf(res.String())
+		if _, err := os.Stat(outfile); err != nil {
+			return fmt.Errorf("decryption failed: %s", res.String())
 		}
-	} else {
-		var outfile string
-		if isOfType(name, []string{".dec"}) {
-			outfile = name
-		} else {
-			outfile = name + ".dec"
-		}
-		err := writeStringToFile(outfile, res.output)
-		if err != nil {
-			log.Fatal("Can't write [ " + outfile + " ] file")
-		}
+		return nil
+	}
+
+	if err := writeStringToFile(outfile, res.output); err != nil {
+		return fmt.Errorf("can't write [ %s ] file: %w", outfile, err)
 	}
 	return nil
 }
