@@ -427,13 +427,17 @@ func (r *Release) getHelmArgsFor(action string, optionalNamespaceOverride ...str
 	if len(optionalNamespaceOverride) > 0 {
 		ns = optionalNamespaceOverride[0]
 	}
+	args := []string{r.Name, r.Chart, "--namespace", ns}
+	if r.Version != "latest" {
+		args = append(args, "--version", r.Version)
+	}
 	switch action {
 	case "template":
-		return concat([]string{"template", r.Name, r.Chart, "--version", r.Version, "--namespace", r.Namespace, "--skip-tests", "--no-hooks"}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getPostRenderer())
+		return concat([]string{"template"}, args, []string{"--skip-tests", "--no-hooks"}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getPostRenderer())
 	case "install", "upgrade":
-		return concat([]string{"upgrade", r.Name, r.Chart, "--install", "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getHelmFlags(), r.getPostRenderer())
+		return concat([]string{"upgrade", "--install"}, args, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.getHelmFlags(), r.getPostRenderer())
 	case "diff":
-		return concat([]string{"upgrade", r.Name, r.Chart, "--version", r.Version, "--namespace", r.Namespace}, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.HelmDiffFlags, r.getPostRenderer())
+		return concat([]string{"upgrade"}, args, r.getValuesFiles(), r.getSetValues(), r.getSetStringValues(), r.getSetFileValues(), r.HelmDiffFlags, r.getPostRenderer())
 	case "uninstall":
 		return concat([]string{action, "--namespace", ns, r.Name}, flags.getRunFlags())
 	default:
