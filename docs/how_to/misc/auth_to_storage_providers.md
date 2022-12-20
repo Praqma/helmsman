@@ -21,6 +21,8 @@ You need to provide ONE of the following env variables:
 - `GOOGLE_APPLICATION_CREDENTIALS` the absolute path to your Google cloud credentials.json file.
 - Or, `GCLOUD_CREDENTIALS` the content of the credentials.json file.
 
+If running inside GCP helmsman can use metadata server to use Service Account permissions.
+
 ## Microsoft Azure
 
 You need to provide ALL of the following env variables:

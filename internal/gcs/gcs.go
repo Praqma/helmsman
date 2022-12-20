@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 
 	// Imports the Google Cloud Storage client package.
@@ -15,8 +16,15 @@ import (
 // colorizer
 var style aurora.Aurora
 
+func IsRunningInGCP() bool {
+	resp, err := http.Get("http://metadata.google.internal")
+	resp.Body.Close()
+	return err == nil
+}
+
 // Auth checks for GCLOUD_CREDENTIALS in the environment
 // returns true if they exist and creates a json credentials file and sets the GOOGLE_APPLICATION_CREDENTIALS env var
+// returns true if GCP metadata server is present
 // returns false if credentials are not found
 func Auth() (string, error) {
 	if os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") != "" {
@@ -35,6 +43,11 @@ func Auth() (string, error) {
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", credFile)
 		return "ok", nil
 	}
+
+	if IsRunningInGCP() {
+		return "Metadata server present, running in GCP", nil
+	}
+
 	return "can't authenticate", fmt.Errorf("can't authenticate")
 }
 
