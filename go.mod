@@ -13,7 +13,7 @@ require (
 	github.com/imdario/mergo v0.3.13
 	github.com/invopop/jsonschema v0.7.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/subosito/gotenv v1.4.1
+	github.com/subosito/gotenv v1.4.2
 	golang.org/x/net v0.5.0
 	sigs.k8s.io/yaml v1.3.0
 )
