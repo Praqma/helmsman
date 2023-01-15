@@ -39,7 +39,7 @@ func getChartInfo(chartName, chartVersion string) (*ChartInfo, error) {
 	}
 
 	args := []string{"show", "chart", chartName}
-	if chartVersion != "latest" {
+	if chartVersion != "latest" && chartVersion != "" {
 		args = append(args, "--version", chartVersion)
 	}
 	cmd := helmCmd(args, "Getting latest non-local chart's version "+chartName+"-"+chartVersion+"")
