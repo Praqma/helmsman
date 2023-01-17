@@ -80,6 +80,9 @@ This lists available CMD options in Helmsman:
 
   `--no-ssm-subst`
         turn off SSM parameter substitution globally.
+   
+  `--replace-on-rename`
+        uninstall the existing release when a chart with a different name is used.
 
   `--spec string`
         specification file name, contains locations of desired state files to be merged
