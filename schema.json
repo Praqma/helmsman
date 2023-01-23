@@ -73,6 +73,10 @@
           "type": "string",
           "description": "VaultTemplate Substring with path to vault key instead of deliminator"
         },
+        "vaultTemplatePath": {
+          "type": "string",
+          "description": "VaultTemplatePath A Vault path to prefix to the vaultTemplate value"
+        },
         "vaultKvVersion": {
           "type": "string",
           "description": "VaultKvVersion The version of the KV secrets engine in Vault"

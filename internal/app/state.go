@@ -46,6 +46,8 @@ type Config struct {
 	VaultMountPoint string `json:"vaultMountPoint,omitempty"`
 	// VaultTemplate Substring with path to vault key instead of deliminator
 	VaultTemplate string `json:"vaultTemplate,omitempty"`
+	// VaultTemplatePath allows the path to the vault template to be overridden
+	VaultTemplatePath string `json:"vaultTemplatePath,omitempty"`
 	// VaultKvVersion The version of the KV secrets engine in Vault
 	VaultKvVersion string `json:"vaultKvVersion,omitempty"`
 	// VaultEnvironment Environment that secrets should be stored under

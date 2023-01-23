@@ -10,14 +10,15 @@ jobs:
       - run:
           name: build docker image
           command: |
-            docker pull praqma/helmsman:latest
-            docker build --cache-from=praqma/helmsman:latest -t helmsman .
+            docker login af.switchmedia.asia -u $DOCKER_USER -p $DOCKER_PASS
+            docker pull af.switchmedia.asia/helmsman:latest || true
+            docker build --cache-from=af.switchmedia.asia/helmsman:latest -t helmsman .
 
   release:
     docker:
       - image: goreleaser/goreleaser
         entrypoint: /bin/bash
-    working_directory: "/go/src/github.com/Praqma/helmsman"
+    working_directory: "/go/src/github.com/Switch-TV/helmsman"
     steps:
       - run:
           name: install git
@@ -39,12 +40,12 @@ jobs:
             helm_versions=( "v3.7.2" "v3.8.2" "v3.9.4" "v3.10.2" )
 
             TAG=$(git describe --abbrev=0 --tags)
-            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker login af.switchmedia.asia -u $DOCKER_USER -p $DOCKER_PASS
 
             for HELM_VERSION in "${helm_versions[@]}"
             do
-              docker build -t praqma/helmsman:$TAG-helm-$HELM_VERSION --build-arg GLOBAL_HELM_VERSION=$HELM_VERSION . --no-cache
-              docker push praqma/helmsman:$TAG-helm-$HELM_VERSION
+              docker build -t af.switchmedia.asia/helmsman:$TAG-helm-$HELM_VERSION --build-arg GLOBAL_HELM_VERSION=$HELM_VERSION . --no-cache
+              docker push af.switchmedia.asia/helmsman:$TAG-helm-$HELM_VERSION
             done
 
 workflows:

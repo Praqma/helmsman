@@ -507,6 +507,9 @@ func decryptSecret(name string) error {
 		if settings.VaultEnvironment != "" {
 			args = append(args, []string{"--environment", settings.VaultEnvironment}...)
 		}
+		if settings.VaultTemplatePath != "" {
+			args = append(args, []string{"--vaulttemplatepath", settings.VaultTemplatePath}...)
+		}
 		args = append(args, []string{name}...)
 	}
 

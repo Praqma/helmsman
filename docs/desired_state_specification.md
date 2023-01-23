@@ -115,9 +115,10 @@ The following options can be skipped if your kubectl context is already created 
 - **namespaceLabelsAuthoritative** : if set to `true` it will remove all the namespace's labels that are not defined in DSL for particular namespace
 - **vaultEnabled**: if set to `true` it will use [helm-vault](https://github.com/Just-Insane/helm-vault) to decrypt secret files instead of using default helm-secrets
 - **vaultDeliminator**: secret deliminator used when parsing value files. See [helm-vault](https://github.com/Just-Insane/helm-vault#available-flags) docs
-- **vaultPath**: vault path (secret mount location in Vault). See [helm-vault](https://github.com/Just-Insane/helm-vault#available-flags) docs
+- **vaultPath**: vault path (secret mount location in Vault). See [helm-vault](https://github.com/Just-Insane/helm-vault#available-flags) docs 
 - **vaultMountPoint**: vault secret engine mount point. See [helm-vault](https://github.com/Just-Insane/helm-vault#available-flags) docs
 - **vaultTemplate**: substring with path to vault key instead of deliminator. See [helm-vault](https://github.com/Just-Insane/helm-vault#available-flags) docs
+- **vaultTemplatePath**: base path to restrict vaultTemplate to. See [helm-vault](https://github.com/Just-Insane/helm-vault#available-flags) docs
 - **vaultKvVersion**: version of the KV secrets engine in Vault. See [helm-vault](https://github.com/Just-Insane/helm-vault#available-flags) docs
 - **vaultEnvironment**: environment that secrets should be stored under. See [helm-vault](https://github.com/Just-Insane/helm-vault#available-flags) docs
 - **eyamlEnabled** : if set to `true` it will use [hiera-eyaml](https://github.com/voxpupuli/hiera-eyaml) to decrypt secret files instead of using default helm-secrets based on sops
