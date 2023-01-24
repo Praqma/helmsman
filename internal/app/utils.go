@@ -526,6 +526,19 @@ func decryptSecret(name string) error {
 		outfile += ".dec"
 	}
 
+	if settings.VaultEnabled {
+		// helm-vault plugin doesn't write to stdout
+		useHelmOutput = false
+		if settings.VaultEnvironment != "" {
+			// helm-vault decryption with an environment interpolate the environment name into the output filename
+			vaultOutFile := name + "." + settings.VaultEnvironment + ".dec"
+			if _, err := os.Stat(vaultOutFile); err != nil {
+				return fmt.Errorf("decrypted vault file not found: %s", vaultOutFile)
+			}
+			os.Rename(vaultOutFile, outfile)
+		}
+	}
+
 	if !useHelmOutput {
 		if _, err := os.Stat(outfile); err != nil {
 			return fmt.Errorf("decryption failed: %s", res.String())
