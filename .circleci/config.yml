@@ -21,7 +21,7 @@ jobs:
     steps:
       - run:
           name: install git
-          command: apk update && apk add --no-cache git openssh
+          command: apk update && apk add --no-cache git openssh-client
       - checkout
       - run:
           name: release
