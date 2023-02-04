@@ -1,5 +1,7 @@
-# v3.16.1
+# v3.16.2
 
 ## Fixes and improvements
 
-- Fix issue with checking for local chart updates
+- Dependency version upgrades
+- Fixed helm-vault decryption (#759)
+- Documentation fixes (#753)
