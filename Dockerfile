@@ -26,7 +26,7 @@ ENV HELM_SECRETS_VERSION=$GLOBAL_HELM_SECRETS_VERSION
 ENV SOPS_VERSION=$GLOBAL_SOPS_VERSION
 ENV HELM_DIFF_THREE_WAY_MERGE=true
 
-RUN apk add --update --no-cache ca-certificates git openssh openssl ruby curl wget tar gzip make bash
+RUN apk add --update --no-cache ca-certificates git openssh-client openssl ruby curl wget tar gzip make bash
 
 ADD https://github.com/mozilla/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux /usr/local/bin/sops
 RUN chmod +x /usr/local/bin/sops
@@ -46,7 +46,7 @@ RUN helm plugin install https://github.com/jkroepke/helm-secrets --version ${HEL
 ### Go Builder & Tester ###
 FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} as builder
 
-RUN apk add --update --no-cache ca-certificates git openssh ruby bash make curl
+RUN apk add --update --no-cache ca-certificates git openssh-client ruby bash make curl
 RUN gem install hiera-eyaml --no-doc
 RUN update-ca-certificates
 
@@ -69,7 +69,7 @@ RUN make test \
 ### Final Image ###
 FROM alpine:${ALPINE_VERSION} as base
 
-RUN apk add --update --no-cache ca-certificates git openssh ruby curl bash gnupg
+RUN apk add --update --no-cache ca-certificates git openssh-client ruby curl bash gnupg
 RUN gem install hiera-eyaml --no-doc
 RUN update-ca-certificates
 
