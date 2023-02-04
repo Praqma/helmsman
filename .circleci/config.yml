@@ -36,7 +36,7 @@ jobs:
       - run:
           name: build docker images and push them to dockerhub
           command: |
-            helm_versions=( "v3.7.2" "v3.8.2" "v3.9.4" "v3.10.2" )
+            helm_versions=( "v3.8.2" "v3.9.4" "v3.10.3" "v3.11.0" )
 
             TAG=$(git describe --abbrev=0 --tags)
             docker login -u $DOCKER_USER -p $DOCKER_PASS
