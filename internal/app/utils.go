@@ -146,8 +146,10 @@ func readFile(filepath string) string {
 // recusively expanding the variable's value
 func getEnv(key string) string {
 	value := os.Getenv(key)
-	for envVar.MatchString(value) {
-		value = os.ExpandEnv(value)
+	if !flags.noRecursiveEnvExpand {
+		for envVar.MatchString(value) {
+			value = os.ExpandEnv(value)
+		}
 	}
 	return value
 }
