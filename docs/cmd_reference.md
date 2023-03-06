@@ -69,6 +69,9 @@ This lists available CMD options in Helmsman:
   `--no-env-subst`
         turn off environment substitution globally.
 
+  `--no-recursive-env-expand`
+        disable recursive environment variables expansion.
+
   `--subst-env-values`
         turn on environment substitution in values files.
 
