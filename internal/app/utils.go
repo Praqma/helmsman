@@ -162,13 +162,15 @@ func prepareEnv(envFiles []string) error {
 			return fmt.Errorf("error loading env file: %w", err)
 		}
 	}
-	for _, e := range os.Environ() {
-		if !strings.Contains(e, "$") {
-			continue
+	if !flags.noRecursiveEnvExpand {
+		for _, e := range os.Environ() {
+			if !strings.Contains(e, "$") {
+				continue
+			}
+			e = os.Expand(e, getEnv)
+			pair := strings.SplitN(e, "=", 2)
+			os.Setenv(pair[0], pair[1])
 		}
-		e = os.Expand(e, getEnv)
-		pair := strings.SplitN(e, "=", 2)
-		os.Setenv(pair[0], pair[1])
 	}
 	return nil
 }
@@ -180,7 +182,7 @@ func substituteEnv(str string) string {
 	if strings.Contains(str, "$") {
 		// add $$ escaping for $ strings
 		os.Setenv("HELMSMAN_DOLLAR", "$")
-		return os.ExpandEnv(strings.ReplaceAll(str, "$$", "${HELMSMAN_DOLLAR}"))
+		return os.Expand(strings.ReplaceAll(str, "$$", "${HELMSMAN_DOLLAR}"), getEnv)
 	}
 	return str
 }
