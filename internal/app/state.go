@@ -56,6 +56,16 @@ type Config struct {
 	EyamlPrivateKeyPath string `json:"eyamlPrivateKeyPath,omitempty"`
 	// EyamlPublicKeyPath is the path to the eyaml public key
 	EyamlPublicKeyPath string `json:"eyamlPublicKeyPath,omitempty"`
+	// EyamlGkms indicates whether to use GKMS for eyaml
+	EyamlGkms bool `json:"eyamlGkms,omitepty"`
+	// EyamlGkmsProject is the GCP project where GKMS keys are stored
+	EyamlGkmsProject string `json:"eyamlGkmsProject,omitempty"`
+	// EyamlGkmsLocation is the KMS location
+	EyamlGkmsLocation string `json:"eyamlGkmsLocation,omitempty"`
+	// EyamlGkmsKeyring is the ID of the Cloud KMS key ring
+	EyamlGkmsKeyring string `json:"eyamlGkmsKeyring,omitempty"`
+	// EyamlGkmsCryptoKey is the ID of the key to use
+	EyamlGkmsCryptoKey string `json:"eyamlGkmsCryptoKey,omitempty"`
 	// GlobalHooks is a set of global lifecycle hooks
 	GlobalHooks map[string]interface{} `json:"globalHooks,omitempty"`
 	// GlobalMaxHistory sets the global max number of historical release revisions to keep
@@ -221,7 +231,12 @@ func (s *State) validate() error {
 	if (s.Settings.EyamlPrivateKeyPath != "" && s.Settings.EyamlPublicKeyPath == "") || (s.Settings.EyamlPrivateKeyPath == "" && s.Settings.EyamlPublicKeyPath != "") {
 		return errors.New("both EyamlPrivateKeyPath and EyamlPublicKeyPath are required")
 	}
-
+	
+	if s.Settings.EyamlGkms {
+		if (s.Settings.EyamlGkmsProject == "" || s.Settings.EyamlGkmsLocation == "" || s.Settings.EyamlGkmsKeyring == "" || s.Settings.EyamlGkmsCryptoKey == "") {
+			return errors.New("all arguments are required: EyamlGkmsProject, EyamlGkmsLocation, EyamlGkmsKeyring, EyamlGkmsCryptoKey")
+		}
+	}
 	// namespaces
 	if flags.nsOverride == "" {
 		if s.Namespaces == nil || len(s.Namespaces) == 0 {
