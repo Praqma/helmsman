@@ -93,6 +93,26 @@
           "type": "string",
           "description": "EyamlPublicKeyPath is the path to the eyaml public key"
         },
+        "eyamlGkms": {
+          "type": "boolean",
+          "description": "EyamlGkms indicates whether to use GKMS for eyaml"
+        },
+        "eyamlGkmsProject": {
+          "type": "string",
+          "description": "EyamlGkmsProject is the GCP project where GKMS keys are stored"
+        },
+        "eyamlGkmsLocation": {
+          "type": "string",
+          "description": "EyamlGkmsLocation is the KMS location"
+        },
+        "eyamlGkmsKeyring": {
+          "type": "string",
+          "description": "EyamlGkmsKeyring is the ID of the Cloud KMS key ring"
+        },
+        "eyamlGkmsCryptoKey": {
+          "type": "string",
+          "description": "EyamlGkmsCryptoKey is the ID of the key to use"
+        },
         "globalHooks": {
           "type": "object",
           "description": "GlobalHooks is a set of global lifecycle hooks"
