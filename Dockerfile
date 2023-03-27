@@ -47,7 +47,7 @@ RUN helm plugin install https://github.com/jkroepke/helm-secrets --version ${HEL
 FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} as builder
 
 RUN apk add --update --no-cache ca-certificates git openssh-client ruby bash make curl
-RUN gem install hiera-eyaml --no-doc
+RUN gem install hiera-eyaml hiera-eyaml-gkms --no-doc
 RUN update-ca-certificates
 
 COPY --from=helm-installer /usr/local/bin/kubectl /usr/local/bin/kubectl
@@ -70,7 +70,7 @@ RUN make test \
 FROM alpine:${ALPINE_VERSION} as base
 
 RUN apk add --update --no-cache ca-certificates git openssh-client ruby curl bash gnupg
-RUN gem install hiera-eyaml --no-doc
+RUN gem install hiera-eyaml hiera-eyaml-gkms --no-doc
 RUN update-ca-certificates
 
 COPY --from=helm-installer /usr/local/bin/kubectl /usr/local/bin/kubectl
