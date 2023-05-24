@@ -488,7 +488,11 @@ func decryptSecret(name string) error {
 	if settings.EyamlEnabled {
 		cmd = "eyaml"
 		args = []string{"decrypt", "-f", name}
-		if settings.EyamlPrivateKeyPath != "" && settings.EyamlPublicKeyPath != "" {
+		if settings.EyamlGkms {
+			if settings.EyamlGkmsProject != "" && settings.EyamlGkmsLocation != "" && settings.EyamlGkmsKeyring != "" && settings.EyamlGkmsCryptoKey != "" {
+				args = append(args, []string{"--gkms-auth-type", "default", "--gkms-project", settings.EyamlGkmsProject, "--gkms-location", settings.EyamlGkmsLocation, "--gkms-keyring", settings.EyamlGkmsKeyring, "--gkms-crypto-key", settings.EyamlGkmsCryptoKey}...)
+			}
+		} else if settings.EyamlPrivateKeyPath != "" && settings.EyamlPublicKeyPath != "" {
 			args = append(args, []string{"--pkcs7-private-key", settings.EyamlPrivateKeyPath, "--pkcs7-public-key", settings.EyamlPublicKeyPath}...)
 		}
 	} else if settings.VaultEnabled {

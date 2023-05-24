@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"sort"
 	"strings"
 )
 
@@ -43,14 +42,6 @@ func (f *fileOptionArray) Set(value string) error {
 	fo.name = value
 	*f = append(*f, fo)
 	return nil
-}
-
-func (f fileOptionArray) sort() {
-	log.Verbose("Sorting files listed in the -spec file based on their priorities... ")
-
-	sort.SliceStable(f, func(i, j int) bool {
-		return (f)[i].priority < (f)[j].priority
-	})
 }
 
 func (i *stringArray) String() string {
@@ -286,7 +277,6 @@ func (c *cli) readState(s *State) error {
 			}
 			c.files = append(c.files, fo)
 		}
-		c.files.sort()
 	}
 
 	// read the TOML/YAML desired state file
