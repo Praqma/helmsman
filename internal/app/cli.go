@@ -79,6 +79,7 @@ type cli struct {
 	diffContext           int
 	noEnvSubst            bool
 	substEnvValues        bool
+	noRecursiveEnvExpand  bool
 	noSSMSubst            bool
 	substSSMValues        bool
 	detailedExitCode      bool
@@ -138,6 +139,7 @@ func (c *cli) setup() {
 	flag.BoolVar(&c.detailedExitCode, "detailed-exit-code", false, "returns a detailed exit code (0 - no changes, 1 - error, 2 - changes present)")
 	flag.BoolVar(&c.noEnvSubst, "no-env-subst", false, "turn off environment substitution globally")
 	flag.BoolVar(&c.substEnvValues, "subst-env-values", false, "turn on environment substitution in values files.")
+	flag.BoolVar(&c.noRecursiveEnvExpand, "no-recursive-env-expand", false, "disable recursive environment values expansion")
 	flag.BoolVar(&c.noSSMSubst, "no-ssm-subst", false, "turn off SSM parameter substitution globally")
 	flag.BoolVar(&c.substSSMValues, "subst-ssm-values", false, "turn on SSM parameter substitution in values files.")
 	flag.BoolVar(&c.updateDeps, "update-deps", false, "run 'helm dep up' for local charts")
@@ -231,6 +233,11 @@ func (c *cli) parse() {
 			log.Verbose("Substitution of env variables in values enabled")
 		}
 	}
+
+	if !c.noRecursiveEnvExpand {
+		log.Verbose("Recursive environment variables expansion is enabled")
+	}
+
 	if !c.noSSMSubst {
 		log.Verbose("Substitution of SSM variables enabled")
 		if c.substSSMValues {
