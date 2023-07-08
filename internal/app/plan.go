@@ -199,7 +199,7 @@ func execOne(cmd Command, targetRelease *Release) error {
 	return nil
 }
 
-// printPlanCmds prints the actual commands that will be executed as part of a plan.
+// printCmds prints the actual commands that will be executed as part of a plan.
 func (p *plan) printCmds() {
 	log.Info("Printing the commands of the current plan ...")
 	for _, cmd := range p.Commands {
@@ -213,7 +213,7 @@ func (p *plan) printCmds() {
 	}
 }
 
-// printPlan prints the decisions made in a plan.
+// print prints the decisions made in a plan.
 func (p *plan) print() {
 	log.Notice("-------- PLAN starts here --------------")
 	for _, decision := range p.Decisions {
@@ -228,7 +228,7 @@ func (p *plan) print() {
 	log.Notice("-------- PLAN ends here --------------")
 }
 
-// sendPlanToSlack sends the description of plan commands to slack if a webhook is provided.
+// sendToSlack sends the description of plan commands to slack if a webhook is provided.
 func (p *plan) sendToSlack() {
 	if _, err := url.ParseRequestURI(log.SlackWebhook); err == nil {
 		str := ""
@@ -250,7 +250,7 @@ func (p *plan) sendToMSTeams() {
 	}
 }
 
-// sortPlan sorts the slices of commands and decisions based on priorities
+// sort sorts the slices of commands and decisions based on priorities
 // the lower the priority value the earlier a command should be attempted
 func (p *plan) sort() {
 	log.Verbose("Sorting the commands in the plan based on priorities (order flags) ... ")
