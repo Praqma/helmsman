@@ -1,7 +1,10 @@
-# v3.16.4
+# v3.17.0
+
+## New feature
+
+- Add support for hiera-eyaml-gkms (#776)
+- Add optioned recursive environment variables expansion (#793)
 
 ## Fixes and improvements
 
-- Dependency version upgrades
-- Fixed helm-vault decryption (#759)
-- Documentation fixes (#753)
+- Remove 'priority' field from -spec docs (#781)
