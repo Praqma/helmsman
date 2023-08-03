@@ -69,7 +69,7 @@ RUN make test \
 ### Final Image ###
 FROM alpine:${ALPINE_VERSION} as base
 
-RUN apk add --update --no-cache ca-certificates git openssh-client ruby curl bash gnupg
+RUN apk add --update --no-cache ca-certificates git openssh-client ruby curl bash gnupg gcompat
 RUN gem install hiera-eyaml hiera-eyaml-gkms --no-doc
 RUN update-ca-certificates
 
