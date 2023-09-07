@@ -16,4 +16,4 @@ settings:
   kubeContext: "minikube"
 ```
 
-In the examples above, Helmsman tries to set the kube context to `minikube`. If that fails, it will attempt to create that kube context. Creating kube context requires more infromation provided. See [this guide](creating_kube_context_with_certs.md) for more details on creating a context with certs or [here](creating_kube_context_with_token.md) for details on creating context with bearer token.
+In the examples above, Helmsman tries to set the kube context to `minikube`. If that fails, it will attempt to create that kube context. Creating kube context requires more information provided. See [this guide](creating_kube_context_with_certs.md) for more details on creating a context with certs or [here](creating_kube_context_with_token.md) for details on creating context with bearer token.
