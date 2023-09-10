@@ -3,7 +3,7 @@ module github.com/Praqma/helmsman
 go 1.18
 
 require (
-	cloud.google.com/go/storage v1.32.0
+	cloud.google.com/go/storage v1.33.0
 	github.com/Azure/azure-pipeline-go v0.2.3
 	github.com/Azure/azure-storage-blob-go v0.15.0
 	github.com/BurntSushi/toml v1.3.2
