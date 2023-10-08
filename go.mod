@@ -11,7 +11,7 @@ require (
 	github.com/apsdehal/go-logger v0.0.0-20190515212710-b0d6ccfee0e6
 	github.com/aws/aws-sdk-go v1.45.24
 	github.com/imdario/mergo v0.3.16
-	github.com/invopop/jsonschema v0.10.0
+	github.com/invopop/jsonschema v0.12.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/subosito/gotenv v1.6.0
 	golang.org/x/net v0.16.0
