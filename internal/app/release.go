@@ -195,7 +195,10 @@ func (r *Release) diff() (string, error) {
 	)
 
 	if !flags.kubectlDiff {
-		args = []string{"diff", "--suppress-secrets"}
+		args = []string{"diff"}
+		if !flags.showSecrets {
+			args = append(args, "--suppress-secrets")
+		}
 		if flags.noColors {
 			args = append(args, "--no-color")
 		}
