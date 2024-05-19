@@ -2,11 +2,11 @@ version: 2
 jobs:
   build:
     docker:
-      - image: docker:20.10.6-git
+      - image: docker:25.0.5-git
     steps:
       - checkout
       - setup_remote_docker:
-          version: 20.10.6
+          version: default
       - run:
           name: build docker image
           command: |
@@ -36,7 +36,7 @@ jobs:
       - run:
           name: build docker images and push them to dockerhub
           command: |
-            helm_versions=( "v3.12.2" "v3.11.3" "v3.10.3" )
+            helm_versions=( "v3.15.0" "v3.14.4" "v3.13.3" )
 
             TAG=$(git describe --abbrev=0 --tags)
             docker login -u $DOCKER_USER -p $DOCKER_PASS

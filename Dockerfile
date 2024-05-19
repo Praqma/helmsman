@@ -1,12 +1,12 @@
-ARG GO_VERSION="1.21.4"
-ARG ALPINE_VERSION="3.18"
-ARG GLOBAL_KUBE_VERSION="v1.24.10"
-ARG GLOBAL_HELM_VERSION="v3.11.0"
-ARG GLOBAL_HELM_DIFF_VERSION="v3.6.0"
-ARG GLOBAL_HELM_GCS_VERSION="0.3.21"
-ARG GLOBAL_HELM_S3_VERSION="v0.10.0"
-ARG GLOBAL_HELM_SECRETS_VERSION="v3.13.0"
-ARG GLOBAL_SOPS_VERSION="v3.7.3"
+ARG GO_VERSION="1.22.3"
+ARG ALPINE_VERSION="3.19"
+ARG GLOBAL_KUBE_VERSION="v1.29.2"
+ARG GLOBAL_HELM_VERSION="v3.15.0"
+ARG GLOBAL_HELM_DIFF_VERSION="v3.9.6"
+ARG GLOBAL_HELM_GCS_VERSION="0.4.2"
+ARG GLOBAL_HELM_S3_VERSION="v0.16.0"
+ARG GLOBAL_HELM_SECRETS_VERSION="v4.6.0"
+ARG GLOBAL_SOPS_VERSION="v3.8.1"
 
 ### Helm Installer ###
 FROM alpine:${ALPINE_VERSION} as helm-installer
@@ -28,8 +28,8 @@ ENV HELM_DIFF_THREE_WAY_MERGE=true
 
 RUN apk add --update --no-cache ca-certificates git openssh-client openssl ruby curl wget tar gzip make bash
 
-ADD https://github.com/mozilla/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux /usr/local/bin/sops
-RUN chmod +x /usr/local/bin/sops
+RUN curl -L https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64 -o /usr/local/bin/sops \
+    && chmod +x /usr/local/bin/sops
 
 RUN curl --retry 5 -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl
 RUN chmod +x /usr/local/bin/kubectl
