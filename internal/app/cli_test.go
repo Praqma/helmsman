@@ -26,7 +26,7 @@ func Test_readState(t *testing.T) {
 		{
 			name: "yaml minimal example; no validation",
 			flags: cli{
-				files:          fileOptionArray([]fileOption{fileOption{"../../examples/minimal-example.yaml", 0}}),
+				files:          fileOptionArray([]fileOption{{"../../examples/minimal-example.yaml", 0}}),
 				skipValidation: true,
 			},
 			want: result{
@@ -39,7 +39,7 @@ func Test_readState(t *testing.T) {
 		{
 			name: "toml minimal example; no validation",
 			flags: cli{
-				files:          fileOptionArray([]fileOption{fileOption{"../../examples/minimal-example.toml", 0}}),
+				files:          fileOptionArray([]fileOption{{"../../examples/minimal-example.toml", 0}}),
 				skipValidation: true,
 			},
 			want: result{

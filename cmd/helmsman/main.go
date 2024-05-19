@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/Praqma/helmsman/internal/app"
 	"os"
+
+	"github.com/Praqma/helmsman/internal/app"
 )
 
 func main() {

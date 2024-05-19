@@ -2,9 +2,10 @@ package app
 
 import (
 	"encoding/json"
-	"github.com/invopop/jsonschema"
 	"reflect"
 	"strconv"
+
+	"github.com/invopop/jsonschema"
 )
 
 // truthy and falsy NullBool values

@@ -131,6 +131,9 @@
         }
       },
       "type": "object",
+      "required": [
+        "eyamlGkms"
+      ],
       "description": "Config type represents the settings fields"
     },
     "CustomResource": {
@@ -197,19 +200,15 @@
           "description": "Limits to set on the namespace"
         },
         "labels": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
+          "additionalProperties": {
+            "type": "string"
           },
           "type": "object",
           "description": "Labels to set to the namespace"
         },
         "annotations": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
+          "additionalProperties": {
+            "type": "string"
           },
           "type": "object",
           "description": "Annotations to set on the namespace"
@@ -332,28 +331,22 @@
           "description": "Priority allows defining the execution order, releases with the same priority can be executed in parallel"
         },
         "set": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
+          "additionalProperties": {
+            "type": "string"
           },
           "type": "object",
           "description": "Set can be used to overwrite the chart values"
         },
         "setString": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
+          "additionalProperties": {
+            "type": "string"
           },
           "type": "object",
           "description": "SetString can be used to overwrite string values"
         },
         "setFile": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
+          "additionalProperties": {
+            "type": "string"
           },
           "type": "object",
           "description": "SetFile can be used to overwrite the chart values"
@@ -416,19 +409,15 @@
     "State": {
       "properties": {
         "metadata": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
+          "additionalProperties": {
+            "type": "string"
           },
           "type": "object",
           "description": "Metadata for human reader of the desired state file"
         },
         "certificates": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
+          "additionalProperties": {
+            "type": "string"
           },
           "type": "object",
           "description": "Certificates are used to connect kubectl to a cluster"
@@ -442,10 +431,8 @@
           "description": "Context defines an helmsman scope"
         },
         "helmRepos": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
+          "additionalProperties": {
+            "type": "string"
           },
           "type": "object",
           "description": "HelmRepos from where to find the application helm charts"
@@ -458,28 +445,22 @@
           "description": "PreconfiguredHelmRepos is a list of helm repos that are configured outside of the DSF"
         },
         "namespaces": {
-          "patternProperties": {
-            ".*": {
-              "$ref": "#/$defs/Namespace"
-            }
+          "additionalProperties": {
+            "$ref": "#/$defs/Namespace"
           },
           "type": "object",
           "description": "Namespaces where helmsman will deploy applications"
         },
         "apps": {
-          "patternProperties": {
-            ".*": {
-              "$ref": "#/$defs/Release"
-            }
+          "additionalProperties": {
+            "$ref": "#/$defs/Release"
           },
           "type": "object",
           "description": "Apps holds the configuration for each helm release managed by helmsman"
         },
         "appsTemplates": {
-          "patternProperties": {
-            ".*": {
-              "$ref": "#/$defs/Release"
-            }
+          "additionalProperties": {
+            "$ref": "#/$defs/Release"
           },
           "type": "object",
           "description": "AppsTemplates allow defining YAML objects thatcan be used as a reference with YAML anchors to keep the configuration DRY"

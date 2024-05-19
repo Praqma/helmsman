@@ -69,7 +69,7 @@ func (s *State) toTOML(file string) {
 		log.Fatal(err.Error())
 		os.Exit(1)
 	}
-	if err := os.WriteFile(file, buff.Bytes(), 0644); err != nil {
+	if err := os.WriteFile(file, buff.Bytes(), 0o644); err != nil {
 		log.Fatal(err.Error())
 	}
 	log.Info(fmt.Sprintf("Wrote to %s.\n", file))
@@ -110,7 +110,7 @@ func (s *State) toYAML(file string) {
 		log.Fatal(err.Error())
 		os.Exit(1)
 	}
-	if err := os.WriteFile(file, ymlBytes, 0644); err != nil {
+	if err := os.WriteFile(file, ymlBytes, 0o644); err != nil {
 		log.Fatal(err.Error())
 	}
 	log.Info(fmt.Sprintf("Wrote to %s.\n", file))

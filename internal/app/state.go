@@ -231,9 +231,9 @@ func (s *State) validate() error {
 	if (s.Settings.EyamlPrivateKeyPath != "" && s.Settings.EyamlPublicKeyPath == "") || (s.Settings.EyamlPrivateKeyPath == "" && s.Settings.EyamlPublicKeyPath != "") {
 		return errors.New("both EyamlPrivateKeyPath and EyamlPublicKeyPath are required")
 	}
-	
+
 	if s.Settings.EyamlGkms {
-		if (s.Settings.EyamlGkmsProject == "" || s.Settings.EyamlGkmsLocation == "" || s.Settings.EyamlGkmsKeyring == "" || s.Settings.EyamlGkmsCryptoKey == "") {
+		if s.Settings.EyamlGkmsProject == "" || s.Settings.EyamlGkmsLocation == "" || s.Settings.EyamlGkmsKeyring == "" || s.Settings.EyamlGkmsCryptoKey == "" {
 			return errors.New("all arguments are required: EyamlGkmsProject, EyamlGkmsLocation, EyamlGkmsKeyring, EyamlGkmsCryptoKey")
 		}
 	}
