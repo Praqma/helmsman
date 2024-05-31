@@ -223,12 +223,12 @@ func Test_eyamlSecrets(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "decryptSecrets - not existing eyaml key",
+			name: "decryptSecrets - not existing private eyaml key",
 			args: args{
 				s: &Config{
 					EyamlEnabled:        true,
-					EyamlPublicKeyPath:  "./../../tests/keys/public_key.pkcs7.pem2",
-					EyamlPrivateKeyPath: "./../../tests/keys/private_key.pkcs7.pem",
+					EyamlPublicKeyPath:  "./../../tests/keys/public_key.pkcs7.pem",
+					EyamlPrivateKeyPath: "./../../tests/keys/invalid_private_key.pkcs7.pem",
 				},
 				r: &Release{
 					Name:        "release1",
@@ -239,6 +239,25 @@ func Test_eyamlSecrets(t *testing.T) {
 				},
 			},
 			want: false,
+		},
+		{
+			name: "decryptSecrets - not existing public eyaml key",
+			args: args{
+				s: &Config{
+					EyamlEnabled: true,
+					// https://github.com/voxpupuli/hiera-eyaml/commit/760fd05e7cbb34b5380f87a87290deb790ae0aaf
+					EyamlPublicKeyPath:  "./../../tests/keys/invalid_public_key.pkcs7.pem",
+					EyamlPrivateKeyPath: "./../../tests/keys/private_key.pkcs7.pem",
+				},
+				r: &Release{
+					Name:        "release1",
+					Namespace:   "namespace",
+					Version:     "1.0.0",
+					Enabled:     True,
+					SecretsFile: "./../../tests/secrets/valid_eyaml_secrets.yaml",
+				},
+			},
+			want: true,
 		},
 	}
 	for _, tt := range tests {
