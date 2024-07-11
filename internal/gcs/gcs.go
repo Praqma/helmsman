@@ -18,7 +18,11 @@ var style aurora.Aurora
 
 func IsRunningInGCP() bool {
 	resp, err := http.Get("http://metadata.google.internal")
-	resp.Body.Close()
+
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
+
 	return err == nil
 }
 
