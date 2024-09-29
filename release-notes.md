@@ -1,10 +1,11 @@
-# v3.17.0
+# v3.17.1
 
 ## New feature
 
-- Add support for hiera-eyaml-gkms (#776)
-- Add optioned recursive environment variables expansion (#793)
+- Allow recursive environment variable expansion (#793)
 
 ## Fixes and improvements
 
-- Remove 'priority' field from -spec docs (#781)
+- Updated dependencies (dependabot)
+- Fixed priorities when loading multiple spec files (#781)
+- Improved docs (#807)
