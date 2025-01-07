@@ -24,7 +24,7 @@ func addNamespaces(s *State) {
 		wg.Add(1)
 		go func(name string, cfg *Namespace, wg *sync.WaitGroup) {
 			defer wg.Done()
-			createNamespace(name)
+			createNamespace(name, cfg.Labels, cfg.Annotations)
 			labelNamespace(name, cfg.Labels, s.Settings.NamespaceLabelsAuthoritative)
 			annotateNamespace(name, cfg.Annotations)
 			if !flags.dryRun {
@@ -46,18 +46,57 @@ func kubectl(args []string, desc string) Command {
 }
 
 // createNamespace creates a namespace in the k8s cluster
-func createNamespace(ns string) {
+func createNamespace(ns string, labels map[string]string, annotations map[string]string) {
 	checkCmd := kubectl([]string{"get", "namespace", ns}, "Looking for namespace [ "+ns+" ]")
 	if _, err := checkCmd.Exec(); err == nil {
 		log.Verbose("Namespace [ " + ns + " ] exists")
 		return
 	}
 
-	cmd := kubectl([]string{"create", "namespace", ns, flags.getKubeDryRunFlag("create")}, "Creating namespace [ "+ns+" ]")
-	if _, err := cmd.RetryExec(3); err != nil {
+	targetFile, err := tempBuildNamespaceDefinition(ns, labels, annotations)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer os.Remove(targetFile.Name())
+
+	cmd := kubectl([]string{"apply", "-f", targetFile.Name(), flags.getKubeDryRunFlag("apply")},
+		"Creating namespace [ "+ns+" ]")
+
+	if _, err := cmd.Exec(); err != nil {
 		log.Fatalf("Failed creating namespace [ "+ns+" ] with error: %v", err)
 	}
 	log.Info("Namespace [ " + ns + " ] created")
+}
+
+// tempBuildNamespaceDefinition creates temporary file with Namespace object definition
+func tempBuildNamespaceDefinition(ns string, labels map[string]string, annotations map[string]string) (f *os.File, err error) {
+	definition := `
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+`
+	definition += fmt.Sprintf("  name: \"%s\"\n", ns)
+
+	metadata := make(map[string]map[string]string)
+	metadata["labels"] = labels
+	metadata["annotations"] = annotations
+	d, err := yaml.Marshal(&metadata)
+	if err != nil {
+		return nil, err
+	}
+	definition += Indent(string(d), strings.Repeat(" ", 2))
+
+	targetFile, err := ioutil.TempFile(tempFilesDir, "namespace-*.yaml")
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = targetFile.Write([]byte(definition)); err != nil {
+		return nil, err
+	}
+
+	return targetFile, nil
 }
 
 // labelNamespace labels a namespace with provided labels
