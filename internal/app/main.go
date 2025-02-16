@@ -84,7 +84,7 @@ func Main() int {
 			if flags.nsOverride == "" {
 				addNamespaces(&s)
 			} else {
-				createNamespace(flags.nsOverride)
+				createNamespace(flags.nsOverride, nil, nil)
 				s.overrideAppsNamespace(flags.nsOverride)
 			}
 		}
