@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"dario.cat/mergo"
 	"github.com/BurntSushi/toml"
-	"github.com/imdario/mergo"
 	"sigs.k8s.io/yaml"
 )
 

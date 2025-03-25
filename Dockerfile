@@ -1,15 +1,15 @@
-ARG GO_VERSION="1.22.3"
-ARG ALPINE_VERSION="3.19"
-ARG GLOBAL_KUBE_VERSION="v1.29.2"
-ARG GLOBAL_HELM_VERSION="v3.15.0"
-ARG GLOBAL_HELM_DIFF_VERSION="v3.9.6"
+ARG GO_VERSION="1.24.1"
+ARG ALPINE_VERSION="3.21"
+ARG GLOBAL_KUBE_VERSION="v1.32.2"
+ARG GLOBAL_HELM_VERSION="v3.17.2"
+ARG GLOBAL_HELM_DIFF_VERSION="v3.10.0"
 ARG GLOBAL_HELM_GCS_VERSION="0.4.2"
-ARG GLOBAL_HELM_S3_VERSION="v0.16.0"
-ARG GLOBAL_HELM_SECRETS_VERSION="v4.6.0"
-ARG GLOBAL_SOPS_VERSION="v3.8.1"
+ARG GLOBAL_HELM_S3_VERSION="v0.16.3"
+ARG GLOBAL_HELM_SECRETS_VERSION="v4.6.3"
+ARG GLOBAL_SOPS_VERSION="v3.9.4"
 
 ### Helm Installer ###
-FROM alpine:${ALPINE_VERSION} as helm-installer
+FROM alpine:${ALPINE_VERSION} AS helm-installer
 ARG GLOBAL_KUBE_VERSION
 ARG GLOBAL_HELM_VERSION
 ARG GLOBAL_HELM_DIFF_VERSION
@@ -44,7 +44,7 @@ RUN helm plugin install https://github.com/databus23/helm-diff --version ${HELM_
 RUN helm plugin install https://github.com/jkroepke/helm-secrets --version ${HELM_SECRETS_VERSION}
 
 ### Go Builder & Tester ###
-FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} as builder
+FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS builder
 
 RUN apk add --update --no-cache ca-certificates git openssh-client ruby bash make curl
 RUN gem install hiera-eyaml hiera-eyaml-gkms --no-doc
@@ -67,7 +67,7 @@ RUN make test \
     && make build
 
 ### Final Image ###
-FROM alpine:${ALPINE_VERSION} as base
+FROM alpine:${ALPINE_VERSION} AS base
 
 RUN apk add --update --no-cache ca-certificates git openssh-client ruby curl bash gnupg gcompat
 RUN gem install hiera-eyaml hiera-eyaml-gkms --no-doc
