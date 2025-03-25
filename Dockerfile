@@ -31,7 +31,7 @@ RUN apk add --update --no-cache ca-certificates git openssh-client openssl ruby 
 RUN curl -L https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64 -o /usr/local/bin/sops \
     && chmod +x /usr/local/bin/sops
 
-RUN curl --retry 5 -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl
+RUN curl --retry 5 -L https://dl.k8s.io/release/${KUBE_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl
 RUN chmod +x /usr/local/bin/kubectl
 
 RUN curl --retry 5 -Lk https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar zxv -C /tmp
