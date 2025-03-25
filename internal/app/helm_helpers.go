@@ -24,7 +24,10 @@ type ChartInfo struct {
 }
 
 // helmCmd prepares a helm command to be executed
-func helmCmd(args []string, desc string) Command {
+func helmCmd(args []string, desc string, verify bool) Command {
+	if verify {
+		args = append(args, "--verify")
+	}
 	return Command{
 		Cmd:         helmBin,
 		Args:        args,
@@ -33,7 +36,7 @@ func helmCmd(args []string, desc string) Command {
 }
 
 // getChartInfo fetches the latest chart information (name, version) matching the semantic versioning constraints.
-func getChartInfo(chartName, chartVersion string) (*ChartInfo, error) {
+func getChartInfo(chartName, chartVersion string, verify bool) (*ChartInfo, error) {
 	if isLocalChart(chartName) {
 		log.Info("Chart [ " + chartName + " ] with version [ " + chartVersion + " ] was found locally.")
 	}
@@ -42,7 +45,7 @@ func getChartInfo(chartName, chartVersion string) (*ChartInfo, error) {
 	if chartVersion != "latest" && chartVersion != "" {
 		args = append(args, "--version", chartVersion)
 	}
-	cmd := helmCmd(args, "Getting latest non-local chart's version "+chartName+"-"+chartVersion+"")
+	cmd := helmCmd(args, "Getting latest non-local chart's version "+chartName+"-"+chartVersion+"", verify)
 
 	res, err := cmd.Exec()
 	if err != nil {
@@ -73,7 +76,7 @@ func getChartInfo(chartName, chartVersion string) (*ChartInfo, error) {
 
 // getHelmClientVersion returns Helm client Version
 func getHelmVersion() string {
-	cmd := helmCmd([]string{"version", "--short", "--client"}, "Checking Helm version")
+	cmd := helmCmd([]string{"version", "--short", "--client"}, "Checking Helm version", false)
 
 	res, err := cmd.Exec()
 	if err != nil {
@@ -94,7 +97,7 @@ func checkHelmVersion(constraint string) bool {
 // helmPluginExists returns true if the plugin is present in the environment and false otherwise.
 // It takes as input the plugin's name to check if it is recognizable or not. e.g. diff
 func helmPluginExists(plugin string) bool {
-	cmd := helmCmd([]string{"plugin", "list"}, "Validating that [ "+plugin+" ] is installed")
+	cmd := helmCmd([]string{"plugin", "list"}, "Validating that [ "+plugin+" ] is installed", false)
 
 	res, err := cmd.Exec()
 	if err != nil {
@@ -105,7 +108,7 @@ func helmPluginExists(plugin string) bool {
 }
 
 func getHelmPlugVersion(plugin string) string {
-	cmd := helmCmd([]string{"plugin", "list"}, "Validating that [ "+plugin+" ] is installed")
+	cmd := helmCmd([]string{"plugin", "list"}, "Validating that [ "+plugin+" ] is installed", false)
 
 	res, err := cmd.Exec()
 	if err != nil {
@@ -129,7 +132,7 @@ func checkHelmPlugVersion(plugin, constraint string) bool {
 
 // updateChartDep updates dependencies for a local chart
 func updateChartDep(chartPath string) error {
-	cmd := helmCmd([]string{"dependency", "update", "--skip-refresh", chartPath}, "Updating dependency for local chart [ "+chartPath+" ]")
+	cmd := helmCmd([]string{"dependency", "update", "--skip-refresh", chartPath}, "Updating dependency for local chart [ "+chartPath+" ]", false)
 
 	if _, err := cmd.Exec(); err != nil {
 		return err
@@ -140,11 +143,11 @@ func updateChartDep(chartPath string) error {
 // helmExportChart pulls chart and exports it to the specified destination
 // this is only compatible with hlem versions lower than 3.0.7
 func helmExportChart(chart, dest string) error {
-	cmd := helmCmd([]string{"chart", "pull", chart}, "Pulling chart [ "+chart+" ] to local registry cache")
+	cmd := helmCmd([]string{"chart", "pull", chart}, "Pulling chart [ "+chart+" ] to local registry cache", false)
 	if _, err := cmd.Exec(); err != nil {
 		return err
 	}
-	cmd = helmCmd([]string{"chart", "export", chart, "-d", dest}, "Exporting chart [ "+chart+" ] to "+dest)
+	cmd = helmCmd([]string{"chart", "export", chart, "-d", dest}, "Exporting chart [ "+chart+" ] to "+dest, false)
 	if _, err := cmd.Exec(); err != nil {
 		return err
 	}
@@ -153,7 +156,7 @@ func helmExportChart(chart, dest string) error {
 
 // helmPullChart pulls chart and exports it to the specified destination
 // this should only be used with helm versions greater or equal to 3.7.0
-func helmPullChart(chart, dest string) error {
+func helmPullChart(chart, dest string, verify bool) error {
 	version := "latest"
 	chartParts := strings.Split(chart, ":")
 	if len(chartParts) >= 2 {
@@ -164,7 +167,7 @@ func helmPullChart(chart, dest string) error {
 	if version != "latest" {
 		args = append(args, "--version", version)
 	}
-	cmd := helmCmd(args, "Pulling chart [ "+chart+" ] to "+dest)
+	cmd := helmCmd(args, "Pulling chart [ "+chart+" ] to "+dest, verify)
 	if _, err := cmd.Exec(); err != nil {
 		return err
 	}
@@ -178,7 +181,7 @@ func addHelmRepos(repos map[string]string) error {
 	existingRepos := make(map[string]string)
 
 	// get existing helm repositories
-	cmdList := helmCmd(concat([]string{"repo", "list", "--output", "json"}), "Listing helm repositories")
+	cmdList := helmCmd(concat([]string{"repo", "list", "--output", "json"}), "Listing helm repositories", false)
 	if reposResult, err := cmdList.Exec(); err == nil {
 		if err := json.Unmarshal([]byte(reposResult.output), &helmRepos); err != nil {
 			log.Fatal(fmt.Sprintf("failed to unmarshal Helm CLI output: %s", err))
@@ -230,14 +233,14 @@ func addHelmRepos(repos map[string]string) error {
 				continue
 			}
 		}
-		cmd := helmCmd(concat([]string{"repo", "add", forceUpdateFlag, repoName, repoURL}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]")
+		cmd := helmCmd(concat([]string{"repo", "add", forceUpdateFlag, repoName, repoURL}, basicAuthArgs), "Adding helm repository [ "+repoName+" ]", false)
 		if _, err := cmd.RetryExec(3); err != nil {
 			return fmt.Errorf("while adding helm repository [%s]]: %w", repoName, err)
 		}
 	}
 
 	if !flags.noUpdate && len(repos) > 0 {
-		cmd := helmCmd([]string{"repo", "update"}, "Updating helm repositories")
+		cmd := helmCmd([]string{"repo", "update"}, "Updating helm repositories", false)
 
 		if _, err := cmd.Exec(); err != nil {
 			return fmt.Errorf("err updating helm repos: %w", err)
