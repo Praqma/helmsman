@@ -39,8 +39,8 @@ This lists available CMD options in Helmsman:
         apply the dry-run (do not update) option for helm commands.
 
   `-e value`
-        additional file(s) to load environment variables from, may be supplied more than once, it extends default .env file lookup, every next file takes precedence over previous ones in case of having the same environment variables defined.
-        If a `.env` file exists, it will be loaded by default, if additional env files are specified using the `-e` flag, the environment file will be loaded in order where the last file will take precedence.
+        additional file(s) to load environment variables from, may be supplied more than once, it extends default .env file lookup, every next file takes precedence over previous ones in case of h[...]
+        If a `.env` file exists, it will be loaded by default, if additional env files are specified using the `-e` flag, the environment file will be loaded in order where the last file will take[...]
 
   `-f value`
         desired state file name(s), may be supplied more than once to merge state files.
@@ -83,7 +83,7 @@ This lists available CMD options in Helmsman:
 
   `--no-ssm-subst`
         turn off SSM parameter substitution globally.
-   
+
   `--replace-on-rename`
         uninstall the existing release when a chart with a different name is used.
 
@@ -120,4 +120,8 @@ This lists available CMD options in Helmsman:
   `--check-for-chart-updates`
         compares the chart versions in the state file to the latest versions in the chart repositories and shows available updates
 
-  `--v`    show the version.
+  `--v`    
+        show the version.
+
+  `--verify`
+        verify the downloaded charts.
