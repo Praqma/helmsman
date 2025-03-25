@@ -50,7 +50,7 @@ imports: ## Ensure imports are present and formatted
 .PHONY: goimports
 
 deps: ## Install depdendencies. Runs `go get` internally.
-	@GOFLAGS="" go get -t -d -v ./...
+	@GOFLAGS="" go get -t -v ./...
 	@GOFLAGS="" go mod tidy
 	@GOFLAGS="" go mod vendor
 
