@@ -1,11 +1,8 @@
-# v3.17.1
+# v3.18.0
 
 ## New feature
 
-- Allow recursive environment variable expansion (#793)
-
 ## Fixes and improvements
 
-- Updated dependencies (dependabot)
-- Fixed priorities when loading multiple spec files (#781)
-- Improved docs (#807)
+- Create namespace with labels & annotations in a single request (#935)
+- Update go to 1.24 (#945)
