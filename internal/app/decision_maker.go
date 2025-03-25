@@ -145,9 +145,10 @@ func (cs *currentState) decide(r *Release, n *Namespace, p *plan, c *ChartInfo, 
 			return nil
 		}
 		if retries == 0 {
-			return fmt.Errorf(prefix + " is in a pending (install/upgrade/rollback or uninstalling) state. " +
-				"This means application is being operated on outside of this Helmsman invocation's scope." +
-				"Exiting, as this may cause issues when continuing...")
+			return fmt.Errorf("%s is in a pending (install/upgrade/rollback or uninstalling) state. "+
+				"This means application is being operated on outside of this Helmsman invocation's scope."+
+				"Exiting, as this may cause issues when continuing...",
+				prefix)
 		} else {
 			retries--
 			time.Sleep(time.Duration(math.Pow(2, float64(2+retries))) * time.Second)
@@ -161,8 +162,9 @@ func (cs *currentState) decide(r *Release, n *Namespace, p *plan, c *ChartInfo, 
 			r.install(p)
 		} else {
 			// A release with the same name and in the same namespace exists, but it has a different context label (managed by another DSF)
-			return fmt.Errorf(prefix + " already exists but is not managed by the" +
-				" current context. Applying changes will likely cause conflicts. Change the release name or namespace.")
+			return fmt.Errorf("%s already exists but is not managed by the"+
+				" current context. Applying changes will likely cause conflicts. Change the release name or namespace.",
+				prefix)
 		}
 	}
 	return nil

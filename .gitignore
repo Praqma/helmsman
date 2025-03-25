@@ -11,3 +11,4 @@ keys/*
 !tests/secrets/keys
 !cmd/**/*
 .helmsman-tmp
+.idea
