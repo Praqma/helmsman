@@ -13,6 +13,13 @@ import (
 	"github.com/Praqma/helmsman/internal/gcs"
 )
 
+var verifyFlag bool
+
+// SetVerifyFlag sets the verify flag
+func SetVerifyFlag(verify bool) {
+	verifyFlag = verify
+}
+
 type helmRepo struct {
 	Name string `json:"name"`
 	URL  string `json:"url"`
@@ -25,6 +32,10 @@ type ChartInfo struct {
 
 // helmCmd prepares a helm command to be executed
 func helmCmd(args []string, desc string) Command {
+	// Only append --verify flag to specific commands
+	if verifyFlag && (args[0] == "install" || args[0] == "upgrade" || args[0] == "pull") {
+		args = append(args, "--verify")
+	}
 	return Command{
 		Cmd:         helmBin,
 		Args:        args,
