@@ -99,7 +99,7 @@ type cli struct {
 	skipPendingApps       bool
 	pendingAppRetries     int
 	showSecrets           bool
-	verify 				  bool
+	verify                bool
 }
 
 func printUsage() {
