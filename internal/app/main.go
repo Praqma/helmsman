@@ -34,11 +34,11 @@ func init() {
 // Main is the app main function
 func Main() int {
 	var s State
+	helmHelper := &HelmHelper{} // Utwórz instancję HelmHelper
 
 	flags.parse()
 
-	// Set the verify flag in helm_helpers
-	SetVerifyFlag(flags.verify)
+	helmHelper.SetVerifyFlag(flags.verify)
 
 	// delete temp files with substituted env vars when the program terminates
 	defer os.RemoveAll(tempFilesDir)
