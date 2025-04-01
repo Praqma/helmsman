@@ -38,9 +38,8 @@ func Main() int {
 
 	flags.parse()
 
-	helmHelper.SetVerifyFlag(flags.verify)
+	helmHelper.verifyFlag = flags.verify
 
-	// delete temp files with substituted env vars when the program terminates
 	defer os.RemoveAll(tempFilesDir)
 	if !flags.noCleanup {
 		defer s.cleanup()

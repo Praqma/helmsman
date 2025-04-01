@@ -17,10 +17,6 @@ type HelmHelper struct {
 	verifyFlag bool
 }
 
-func (h *HelmHelper) SetVerifyFlag(verify bool) {
-	h.verifyFlag = verify
-}
-
 func (h *HelmHelper) helmCmd(args []string, desc string) Command {
 	// Only append --verify flag to specific commands
 	if h.verifyFlag && (args[0] == "install" || args[0] == "upgrade" || args[0] == "pull") {
