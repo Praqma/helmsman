@@ -1,7 +1,6 @@
 module github.com/Praqma/helmsman
 
 go 1.24.1
-
 require (
 	cloud.google.com/go/storage v1.51.0
 	dario.cat/mergo v1.0.1
@@ -14,7 +13,7 @@ require (
 	github.com/invopop/jsonschema v0.13.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/subosito/gotenv v1.6.0
-	golang.org/x/net v0.37.0
+	golang.org/x/net v0.38.0
 	sigs.k8s.io/yaml v1.4.0
 )
 
