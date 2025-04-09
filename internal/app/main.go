@@ -34,7 +34,7 @@ func init() {
 // Main is the app main function
 func Main() int {
 	var s State
-	helmHelper := &HelmHelper{} // Utwórz instancję HelmHelper
+	helmHelper := &HelmHelper{} // Initialize HelmHelper with default values
 
 	flags.parse()
 
